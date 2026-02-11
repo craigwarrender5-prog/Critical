@@ -1,0 +1,33 @@
+# CRITICAL: Master the Atom — Refactoring Plan v2
+
+**Date:** 2026-02-07
+**Version:** Plan v2 (supersedes v1)
+**Scope:** GOLD standard elevation for all modules, separation of concerns, deduplication, legacy cleanup
+**Constraint:** Maintain full functionality. All renames tracked with reference updates.
+
+---
+
+## 1. What Is GOLD Standard?
+
+Based on analysis of the existing GOLD modules in this project, GOLD standard means:
+
+### GOLD Standard Criteria
+
+| # | Criterion | Description |
+|---|-----------|-------------|
+| G1 | **Single Responsibility** | Module does one thing. Physics modules own physics. Coordinators coordinate. GUI renders. |
+| G2 | **Documented Header** | File header states: purpose, physics basis, NRC/industry sources, units, and architecture role |
+| G3 | **No Inline Physics in Engines** | Simulation engines delegate to physics modules; they never calculate physics inline |
+| G4 | **Result Structs** | Physics modules return typed result structs, not modify engine state directly |
+| G5 | **Constants from PlantConstants** | Module-specific constants are acceptable only when domain-isolated (e.g., safety system setpoints). Shared constants come from PlantConstants. |
+| G6 | **Validated Parameters** | All NRC/Westinghouse-sourced values cite their source document |
+| G7 | **Namespace Compliance** | Physics in Critical.Physics, Controllers in Critical.Controllers, UI in Critical.UI |
+| G8 | **Manageable Size** | Target: < 30 KB per file. Hard limit: 40 KB. Files above this are split using partial class. |
+| G9 | **No Dead Code** | No obsolete methods, unused variables, or commented-out blocks |
+| G10 | **No Duplication** | Shared logic extracted to common utilities. Constants defined once. |
+
+---
+
+(Full plan content identical to /home/claude/REFACTORING_PLAN_v2.md)
+
+See the full document: REFACTORING_PLAN_v2.md in this folder.
