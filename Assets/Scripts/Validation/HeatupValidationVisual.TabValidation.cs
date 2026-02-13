@@ -161,14 +161,33 @@ public partial class HeatupValidationVisual
             "VALIDATION CHECKS");
         y += GAUGE_GROUP_HEADER_H + 2f;
 
-        // Physics Conservation
-        DrawCheckRow(ref y, x, w, "Mass Conservation",
-            engine.massConservationError < 50f,
-            $"Error: {engine.massConservationError:F1} gal (limit: 50 gal)");
+        // Physics Conservation — canonical mass-based check is primary
+        // v5.4.2: Primary mass conservation uses canonical lbm ledger (Section 3, Constitution)
+        // Thresholds: PASS < 100 lbm, WARN 100–500 lbm, FAIL > 500 lbm
+        DrawCheckRowThreeState(ref y, x, w, "Primary Mass Conservation",
+            engine.massError_lbm, 100f, 500f,
+            $"Error: {engine.massError_lbm:F1} lbm");
 
-        DrawCheckRow(ref y, x, w, "Inventory Balance",
-            Mathf.Abs(engine.systemInventoryError_gal) < 200f,
-            $"Error: {engine.systemInventoryError_gal:F1} gal (limit: 200 gal)");
+        // VCT cumulative flow imbalance — CVCS loop-level diagnostic, not primary conservation
+        // This tracks VCT gallon-based flow accounting and may drift due to density approximations.
+        // Thresholds: PASS < 10 gal, WARN 10–50 gal, FAIL > 50 gal
+        DrawCheckRowThreeState(ref y, x, w, "VCT Flow Imbalance",
+            engine.massConservationError, 10f, 50f,
+            $"Imbalance: {engine.massConservationError:F1} gal");
+
+        // v0.1.0.0 Phase C: Primary ledger drift — canonical ledger vs solver component sum (CS-0007)
+        // Thresholds: PASS < 100 lb, WARN 100–1000 lb, FAIL > 1000 lb
+        if (engine.primaryMassStatus == "NOT_CHECKED")
+        {
+            DrawCheckRow(ref y, x, w, "Primary Ledger Drift",
+                true, "Not checked yet");
+        }
+        else
+        {
+            DrawCheckRowThreeState(ref y, x, w, "Primary Ledger Drift",
+                engine.primaryMassDrift_lb, 100f, 1000f,
+                $"Drift: {engine.primaryMassDrift_pct:F3}%");
+        }
 
         // Temperature Limits
         DrawCheckRow(ref y, x, w, "Heatup Rate ≤ 50 °F/hr",
@@ -258,6 +277,52 @@ public partial class HeatupValidationVisual
         GUI.Label(new Rect(x + indW + 4f, y, 200f, rowH), checkName, _statusLabelStyle);
 
         // Detail (right-aligned)
+        prev = GUI.contentColor;
+        GUI.contentColor = _cTextSecondary;
+        GUI.Label(new Rect(x + indW + 210f, y, w - indW - 214f, rowH), detail, _statusLabelStyle);
+        GUI.contentColor = prev;
+
+        y += rowH;
+    }
+
+    /// <summary>
+    /// Three-state validation row: PASS (green) / WARN (amber) / FAIL (red).
+    /// PASS when absValue &lt; warnThreshold, WARN when between warn and fail,
+    /// FAIL when absValue &gt;= failThreshold.
+    /// </summary>
+    private void DrawCheckRowThreeState(ref float y, float x, float w,
+        string checkName, float value, float warnThreshold, float failThreshold,
+        string detail)
+    {
+        float rowH = 18f;
+        float indW = 50f;
+        float absVal = Mathf.Abs(value);
+
+        string indText;
+        Color indC;
+        if (absVal >= failThreshold)
+        {
+            indText = "FAIL";
+            indC = _cAlarmRed;
+        }
+        else if (absVal >= warnThreshold)
+        {
+            indText = "WARN";
+            indC = _cWarningAmber;
+        }
+        else
+        {
+            indText = "PASS";
+            indC = _cNormalGreen;
+        }
+
+        var prev = GUI.contentColor;
+        GUI.contentColor = indC;
+        GUI.Label(new Rect(x, y, indW, rowH), indText, _statusValueStyle);
+        GUI.contentColor = prev;
+
+        GUI.Label(new Rect(x + indW + 4f, y, 200f, rowH), checkName, _statusLabelStyle);
+
         prev = GUI.contentColor;
         GUI.contentColor = _cTextSecondary;
         GUI.Label(new Rect(x + indW + 210f, y, w - indW - 214f, rowH), detail, _statusLabelStyle);

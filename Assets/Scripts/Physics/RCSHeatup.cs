@@ -27,6 +27,13 @@
 //   - Coupled with stratified surge line model fix in HeatTransfer.cs
 //   - Result: PZR can now heat to saturation and form a bubble
 //
+// v5.4.0 Stage 3 - Canonical Mass Unification
+//   - totalPrimaryMass_lb parameter is now MANDATORY for two-phase operations
+//   - Passed to CoupledThermo.SolveEquilibrium as hard constraint
+//   - Solver accepts ledger value, does NOT recompute from V×ρ
+//   - RCS mass computed as remainder = Total - PZR_water - PZR_steam
+//   - Guarantees exact mass conservation by construction (Rule R5)
+//
 // Units: °F for temperature, psia for pressure, MW for power, hours for time
 
 using System;
@@ -86,7 +93,18 @@ namespace Critical.Physics
         ///         call chain (SGSecondaryThermal.CalculateHeatTransfer) is
         ///         removed from this method. SG heat removal is now an INPUT
         ///         parameter computed by SGMultiNodeThermal.Update() in the engine.
+        /// v5.3.0: Added totalPrimaryMass_lb parameter for mass conservation.
+        /// v5.4.0: This parameter is now MANDATORY for two-phase operations.
+        ///         When > 0, it is passed to CoupledThermo.SolveEquilibrium
+        ///         as an ABSOLUTE constraint. The solver distributes this mass
+        ///         among components but does NOT recompute the total from V×ρ.
+        ///         RCS mass is computed as remainder = Total - PZR_water - PZR_steam,
+        ///         guaranteeing exact conservation by construction.
         /// </summary>
+        /// v0.1.0.0 Phase D (CS-0004): Removed default value (= 0f) from totalPrimaryMass_lb.
+        /// All callers MUST now explicitly provide the canonical mass argument.
+        /// Compile-time enforcement: omitting the argument is a build error.
+        /// This eliminates silent fallback to LEGACY mode in CoupledThermo.
         public static BulkHeatupResult BulkHeatupStep(
             ref SystemState state,
             int rcpCount,
@@ -95,8 +113,9 @@ namespace Critical.Physics
             float rcsHeatCapacity,
             float pzrHeatCapacity,
             float dt_hr,
-            float sgHeatRemoval_MW = 0f,         // v1.3.0: SG heat removal (MW) from multi-node model
-            float T_sg_bulk = 0f)                 // v1.3.0: SG bulk avg temp for display
+            float sgHeatRemoval_MW,               // v1.3.0: SG heat removal (MW) from multi-node model
+            float T_sg_bulk,                       // v1.3.0: SG bulk avg temp for display
+            float totalPrimaryMass_lb)             // v5.3.0: Canonical mass constraint — MANDATORY (no default)
         {
             var result = new BulkHeatupResult();
             
@@ -130,9 +149,24 @@ namespace Critical.Physics
             
             // ================================================================
             // 3. P-T-V COUPLING via CoupledThermo
+            // v5.4.0 Stage 3: CANONICAL MASS ENFORCEMENT
+            //
+            // The totalPrimaryMass_lb is the SOLE AUTHORITY for total mass.
+            // Per Implementation Plan v5.4.0:
+            //   Rule R1: TotalPrimaryMass_lb is the single canonical ledger
+            //   Rule R3: Solver must NOT recalculate total from V×ρ
+            //   Rule R5: RCS = Total - PZR_water - PZR_steam (by construction)
+            //
+            // When totalPrimaryMass_lb > 0, the solver ACCEPTS this value as
+            // an absolute constraint. It distributes mass among components
+            // to satisfy equilibrium, then computes RCS as the remainder.
+            // This guarantees the component sum EXACTLY equals the ledger.
             // ================================================================
             
-            result.Converged = CoupledThermo.SolveEquilibrium(ref state, deltaT);
+            result.Converged = CoupledThermo.SolveEquilibrium(
+                ref state, deltaT, 
+                50, 15f, 2700f,  // maxIterations=50, P_floor=15 psia, P_ceiling=2700 psia
+                totalPrimaryMass_lb);  // MANDATORY canonical mass constraint
             
             if (result.Converged)
             {
@@ -152,7 +186,31 @@ namespace Critical.Physics
             }
             
             result.DeltaP = state.Pressure - P_initial;
-            
+
+            // ================================================================
+            // v0.1.0.0 Phase B: Post-solver conservation guard rail (CS-0008)
+            // Diagnostics only — does NOT modify solver math or state.
+            // Checks that solver output component sum matches canonical ledger.
+            // ================================================================
+            if (totalPrimaryMass_lb > 0f)
+            {
+                float M_out = state.RCSWaterMass + state.PZRWaterMass + state.PZRSteamMass;
+                float massDelta = M_out - totalPrimaryMass_lb;
+                float absDelta = massDelta < 0f ? -massDelta : massDelta;
+                if (absDelta > 100f)
+                {
+                    UnityEngine.Debug.LogError(
+                        $"CoupledThermo conservation ERROR: |M_out - M_ledger| = {absDelta:F2} lb " +
+                        $"(M_out={M_out:F1}, Ledger={totalPrimaryMass_lb:F1})");
+                }
+                else if (absDelta > 10f)
+                {
+                    UnityEngine.Debug.LogWarning(
+                        $"CoupledThermo conservation WARNING: |M_out - M_ledger| = {absDelta:F2} lb " +
+                        $"(M_out={M_out:F1}, Ledger={totalPrimaryMass_lb:F1})");
+                }
+            }
+
             // ================================================================
             // 4. SURGE FLOW from thermal expansion
             // ================================================================
@@ -174,6 +232,9 @@ namespace Critical.Physics
         /// <summary>
         /// Simplified step that updates state in place.
         /// v1.3.0: Updated signature to match new multi-node SG parameters.
+        /// v0.1.0.0 Phase D: Added totalPrimaryMass_lb (mandatory) — callers
+        ///   MUST provide canonical mass. Passes 0f explicitly for validation-only
+        ///   use (triggers LEGACY mode warning in CoupledThermo).
         /// </summary>
         public static void Step(
             ref SystemState state,
@@ -183,11 +244,13 @@ namespace Critical.Physics
             float pzrHeatCapacity,
             float dt_hr,
             float sgHeatRemoval_MW = 0f,
-            float T_sg_bulk = 0f)
+            float T_sg_bulk = 0f,
+            float totalPrimaryMass_lb = 0f)
         {
             float rcpHeat = rcpCount * PlantConstants.RCP_HEAT_MW_EACH;
-            BulkHeatupStep(ref state, rcpCount, rcpHeat, heaterPower_MW, 
-                          rcsHeatCapacity, pzrHeatCapacity, dt_hr, sgHeatRemoval_MW, T_sg_bulk);
+            BulkHeatupStep(ref state, rcpCount, rcpHeat, heaterPower_MW,
+                          rcsHeatCapacity, pzrHeatCapacity, dt_hr, sgHeatRemoval_MW, T_sg_bulk,
+                          totalPrimaryMass_lb);
         }
         
         #endregion

@@ -48,6 +48,17 @@ public partial class HeatupSimEngine
     /// </summary>
     void InitializeSimulation()
     {
+        // v0.1.0.0: Reset canonical ledger flags for new simulation run
+        firstStepLedgerBaselined = false;
+        CoupledThermo.ResetSessionFlags();
+
+        // v0.1.0.0 Phase C: Reset diagnostic display to pre-run state
+        primaryMassStatus = "NOT_CHECKED";
+        primaryMassConservationOK = true;
+        primaryMassAlarm = false;
+        _previousMassAlarmState = false;
+        _previousMassConservationOK = true;
+
         simTime = 0f;
         T_avg = startTemperature;
         T_cold = startTemperature - 2f;
@@ -141,9 +152,11 @@ public partial class HeatupSimEngine
         auxSprayTestPassed = false;
         auxSprayPressureDrop = 0f;
 
-        // Initialize at solid plant operating pressure (350 psig)
-        // Per NRC HRTD 19.2.1: "pressure controlled between 320 and 400 psig"
-        pressure = PlantConstants.SOLID_PLANT_INITIAL_PRESSURE_PSIA;
+        // v5.4.1 Audit Fix: Initialize at post-fill/vent pressure (100 psig).
+        // CVCS PI controller will ramp pressure up to the 350 psig setpoint.
+        // Previous code used SOLID_PLANT_INITIAL_PRESSURE_PSIA (365 psia = setpoint),
+        // which skipped the pressurization ramp entirely.
+        pressure = PlantConstants.PRESSURIZE_INITIAL_PRESSURE_PSIA;
 
         // Initialize solid plant physics module — owns all P-T-V coupling during solid ops
         solidPlantState = SolidPlantPressure.Initialize(
@@ -176,6 +189,20 @@ public partial class HeatupSimEngine
         physicsState.PZRSteamVolume = 0f;
         physicsState.PZRWaterMass = pzrWaterMass;
         physicsState.PZRSteamMass = 0f;
+
+        // v5.4.1 Audit Fix Stage 0: Populate SOLID canonical fields at init.
+        // These are read by UpdateInventoryAudit() solid branch (Logging.cs:303-310)
+        // and by UpdatePrimaryMassLedgerDiagnostics() (Logging.cs:470-489).
+        physicsState.PZRWaterMassSolid = pzrWaterMass;
+        physicsState.TotalPrimaryMassSolid = rcsWaterMass + pzrWaterMass;
+
+        // v5.4.1 Audit Fix Stage 0: Populate v5.3.0 canonical ledger fields.
+        // TotalPrimaryMass_lb is the authoritative ledger for all regimes (CoupledThermo.cs:768).
+        // InitialPrimaryMass_lb is the baseline for conservation diagnostics (CoupledThermo.cs:778).
+        physicsState.TotalPrimaryMass_lb = rcsWaterMass + pzrWaterMass;
+        physicsState.InitialPrimaryMass_lb = rcsWaterMass + pzrWaterMass;
+        // v5.4.2.0 FF-05 Fix #4: Ledger will be re-baselined after first physics step
+        // to eliminate init-to-first-step density mismatch. See HeatupSimEngine.cs.
 
         vctState = VCTPhysics.InitializeColdShutdown(PlantConstants.BORON_COLD_SHUTDOWN_BOL_PPM);
         rcsBoronConcentration = PlantConstants.BORON_COLD_SHUTDOWN_BOL_PPM;
@@ -231,6 +258,16 @@ public partial class HeatupSimEngine
         physicsState.PZRSteamMass = physicsState.PZRSteamVolume * pzrRhoSteam;
 
         totalSystemMass = physicsState.RCSWaterMass + physicsState.PZRWaterMass + physicsState.PZRSteamMass;
+
+        // v5.4.1 Audit Fix Stage 0: Populate v5.3.0 canonical ledger fields for warm start.
+        // Warm start begins in two-phase, so SOLID fields are not needed,
+        // but the ledger and initial fields must be set for diagnostics.
+        physicsState.TotalPrimaryMass_lb = physicsState.RCSWaterMass
+                                          + physicsState.PZRWaterMass
+                                          + physicsState.PZRSteamMass;
+        physicsState.InitialPrimaryMass_lb = physicsState.TotalPrimaryMass_lb;
+        // v5.4.2.0 FF-05 Fix #4: Ledger will be re-baselined after first physics step
+        // to eliminate init-to-first-step density mismatch. See HeatupSimEngine.cs.
 
         rcsWaterMass = physicsState.RCSWaterMass;
         pzrWaterVolume = physicsState.PZRWaterVolume;
@@ -317,15 +354,25 @@ public partial class HeatupSimEngine
         // v0.9.5: Add initial data point immediately so graphs have something to display
         AddHistory();
 
-        // v0.6.0: Compute initial total system inventory for conservation check
-        // Total = RCS (gal) + PZR (gal) + VCT (gal) + BRS (all compartments)
-        float rcsVol_gal = PlantConstants.RCS_WATER_VOLUME * PlantConstants.FT3_TO_GAL;
-        float pzrVol_gal = pzrWaterVolume * PlantConstants.FT3_TO_GAL;
-        initialSystemInventory_gal = rcsVol_gal + pzrVol_gal + vctState.Volume_gal
-            + brsState.HoldupVolume_gal + brsState.DistillateAvailable_gal
-            + brsState.ConcentrateAvailable_gal;
-        totalSystemInventory_gal = initialSystemInventory_gal;
-        systemInventoryError_gal = 0f;
+        // v5.4.1 Fix B: Compute initial total system MASS for conservation check.
+        // Mass is the conserved quantity — volume varies with T/P.
+        // Total = RCS(lbm) + PZR_water(lbm) + PZR_steam(lbm) + VCT(lbm) + BRS(lbm)
+        {
+            float rhoVCT = WaterProperties.WaterDensity(100f, 14.7f);  // VCT at ~100°F, atmospheric
+
+            // Use tracked masses (already computed in Init paths above)
+            float rcsMass = physicsState.RCSWaterMass;
+            float pzrMass = physicsState.PZRWaterMass + physicsState.PZRSteamMass;
+            float vctMass = (vctState.Volume_gal / PlantConstants.FT3_TO_GAL) * rhoVCT;
+            float brsTotalGal = brsState.HoldupVolume_gal + brsState.DistillateAvailable_gal
+                + brsState.ConcentrateAvailable_gal;
+            float brsMass = (brsTotalGal / PlantConstants.FT3_TO_GAL) * rhoVCT;
+
+            initialSystemMass_lbm = rcsMass + pzrMass + vctMass + brsMass;
+            totalSystemMass_lbm = initialSystemMass_lbm;
+            externalNetMass_lbm = 0f;
+            massError_lbm = 0f;
+        }
 
         // v4.4.0: Initialize pressurizer spray system
         sprayState = CVCSController.InitializeSpray();

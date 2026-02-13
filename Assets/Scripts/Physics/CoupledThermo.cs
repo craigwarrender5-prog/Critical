@@ -39,7 +39,20 @@ namespace Critical.Physics
     public static class CoupledThermo
     {
         #region Constants
-        
+
+        /// <summary>v0.1.0.0: One-time solver mode announcement flag</summary>
+        private static bool _solverModeLogged = false;
+
+        /// <summary>
+        /// v0.1.0.0: Reset static session flags for new simulation run.
+        /// Must be called from InitializeSimulation() to ensure clean state
+        /// when the engine restarts without an application restart.
+        /// </summary>
+        public static void ResetSessionFlags()
+        {
+            _solverModeLogged = false;
+        }
+
         /// <summary>Maximum iterations for solver convergence</summary>
         private const int MAX_ITERATIONS = 50;
         
@@ -69,15 +82,31 @@ namespace Critical.Physics
         /// 
         /// - Temperature rise → density drop → mass surges INTO PZR → level rises → steam compresses → P rises
         /// - Temperature drop → density rise → mass surges OUT of PZR → level drops → steam expands → P drops
+        /// 
+        /// v5.3.0 Stage 3: Added totalPrimaryMass_lb parameter for mass conservation.
+        /// When provided (> 0), the solver uses this as the authoritative total mass
+        /// constraint instead of deriving from V×ρ. RCS mass is computed as the
+        /// remainder (total - PZR water - PZR steam), guaranteeing exact conservation.
+        /// 
+        /// v5.4.0 Stage 3: CANONICAL MASS UNIFICATION
+        /// The totalPrimaryMass_lb parameter is now MANDATORY for two-phase operations.
+        /// The solver MUST accept this value as an absolute constraint — it is NOT
+        /// permitted to recompute total mass from V×ρ. This ensures:
+        ///   Rule R1: Single Canonical Ledger — TotalPrimaryMass_lb is sole authority
+        ///   Rule R3: No V×ρ Overwrite — solver distributes mass, never recalculates total
+        ///   Rule R5: Derived RCS Mass — RCS = Total - PZR_water - PZR_steam (by construction)
         /// </summary>
         /// <param name="state">System state (modified in place if converged)</param>
         /// <param name="deltaT_F">Temperature change in °F</param>
         /// <param name="maxIterations">Maximum solver iterations</param>
         /// <param name="P_floor">Minimum pressure bound in psia (15 for heatup, 1800 for at-power)</param>
         /// <param name="P_ceiling">Maximum pressure bound in psia</param>
+        /// <param name="totalPrimaryMass_lb">v5.3.0: Authoritative total mass constraint. If > 0, 
+        /// RCS mass is derived as remainder to guarantee exact conservation.</param>
         /// <returns>True if converged, false otherwise</returns>
         public static bool SolveEquilibrium(ref SystemState state, float deltaT_F, 
-            int maxIterations = MAX_ITERATIONS, float P_floor = 15f, float P_ceiling = 2700f)
+            int maxIterations = MAX_ITERATIONS, float P_floor = 15f, float P_ceiling = 2700f,
+            float totalPrimaryMass_lb = 0f)
         {
             // Save initial conditions
             float P0 = state.Pressure;
@@ -88,8 +117,63 @@ namespace Critical.Physics
             // Target temperature
             float T_new = T0 + deltaT_F;
             
-            // Initial total mass (must be conserved)
-            float M_total = state.RCSWaterMass + state.PZRWaterMass + state.PZRSteamMass;
+            // =============================================================
+            // v5.4.0 Stage 3: CANONICAL MASS CONSTRAINT (MANDATORY)
+            // =============================================================
+            // Rule R1: TotalPrimaryMass_lb is the SOLE authority for total mass.
+            // Rule R3: The solver must NOT recalculate total mass from V×ρ.
+            //
+            // When totalPrimaryMass_lb > 0, it is the canonical ledger from
+            // HeatupSimEngine, updated ONLY by boundary flows (CVCS, relief).
+            // The solver ACCEPTS this value as an absolute constraint and
+            // distributes mass among components to satisfy equilibrium.
+            //
+            // If totalPrimaryMass_lb <= 0 (legacy mode), we fall back to
+            // deriving from component masses. This is DEPRECATED and should
+            // only occur in validation tests or standalone solver use.
+            // =============================================================
+            float M_total;
+            bool useCanonicalMass = (totalPrimaryMass_lb > 0f);
+            if (useCanonicalMass)
+            {
+                // CANONICAL MODE: Ledger is authoritative
+                M_total = totalPrimaryMass_lb;
+                if (!_solverModeLogged)
+                {
+                    UnityEngine.Debug.Log("CoupledThermo: CANONICAL mode active — ledger authoritative");
+                    _solverModeLogged = true;
+                }
+            }
+            else
+            {
+                // ============================================================
+                // DEPRECATED — LEGACY MODE (v0.1.0.0 Phase D, CS-0004)
+                //
+                // This else-branch fires when totalPrimaryMass_lb <= 0,
+                // meaning no canonical ledger value was provided by the caller.
+                //
+                // In production simulation (HeatupSimEngine Regime 2/3),
+                // this path should NEVER execute. Phase D removed the default
+                // parameter (= 0f) from BulkHeatupStep, so the engine is
+                // compile-time forced to provide the ledger value.
+                //
+                // The only legitimate callers that reach this path are:
+                //   - RCSHeatup.ValidateCalculations() (formula-only self-tests)
+                //   - RCSHeatup.Step() wrapper when called with mass = 0
+                //   - Any future standalone unit test that exercises the solver
+                //     without a full engine context
+                //
+                // WARNING: V×ρ derivation violates INV-1 (Single Mass Authority).
+                // The component sum computed here has no relationship to the
+                // canonical ledger and will NOT reflect CVCS boundary flows.
+                //
+                // Target: Remove this branch entirely when all call sites
+                // (including validation) provide canonical mass. Tracked as
+                // future architecture hardening.
+                // ============================================================
+                M_total = state.RCSWaterMass + state.PZRWaterMass + state.PZRSteamMass;
+                UnityEngine.Debug.LogWarning("CoupledThermo: LEGACY mode — V×ρ derivation active (DEPRECATED)");
+            }
             
             // Initial pressure estimate using quick estimate
             float dP_est = QuickPressureEstimate(T0, P0, deltaT_F, V_RCS, state.PZRSteamVolume);
@@ -171,16 +255,79 @@ namespace Critical.Physics
                 float rho_PZR_water = WaterProperties.WaterDensity(tSat, P_new);
                 float rho_PZR_steam = WaterProperties.SaturatedSteamDensity(P_new);
                 
-                state.RCSWaterMass = V_RCS * rho_RCS;
+                // =============================================================
+                // v5.4.0 Stage 3: MASS CONSERVATION BY CONSTRUCTION (ENFORCED)
+                // =============================================================
+                // Rule R5: RCS mass = Total - PZR_water - PZR_steam
+                //
+                // When using canonical mass ledger, RCS mass is computed as
+                // the REMAINDER: total - PZR water - PZR steam.
+                // This guarantees exact conservation — the component sum
+                // ALWAYS equals the ledger, preventing drift.
+                //
+                // Physical justification: The RCS volume is affected by thermal
+                // expansion, surge flows, etc. Making RCS mass the remainder
+                // acknowledges this flexibility. PZR masses are constrained by
+                // the steam bubble (volume-limited). RCS absorbs the "slop."
+                //
+                // CRITICAL: The solver MUST NOT compute total mass from V×ρ.
+                // The ledger value is AUTHORITATIVE. The solver distributes
+                // the ledger mass among components; it does not validate or
+                // override the ledger.
+                // =============================================================
                 
-                float M_PZR_total = M_total - state.RCSWaterMass;
-                state.PZRWaterVolume = (M_PZR_total - V_PZR_total * rho_PZR_steam) / 
-                                       (rho_PZR_water - rho_PZR_steam);
-                state.PZRWaterVolume = Math.Max(0f, Math.Min(state.PZRWaterVolume, PlantConstants.PZR_WATER_MAX));
-                state.PZRSteamVolume = V_PZR_total - state.PZRWaterVolume;
-                
-                state.PZRWaterMass = state.PZRWaterVolume * rho_PZR_water;
-                state.PZRSteamMass = state.PZRSteamVolume * rho_PZR_steam;
+                if (useCanonicalMass)
+                {
+                    // CANONICAL MODE: Solver accepts ledger as hard constraint
+                    
+                    // Step 1: Estimate PZR state from equilibrium mass distribution
+                    // Use RCS V×ρ only to ESTIMATE how mass partitions, NOT to override total
+                    float M_RCS_est = V_RCS * rho_RCS;  // Estimate only
+                    float M_PZR_est = M_total - M_RCS_est;
+                    
+                    // Step 2: Compute PZR water volume from estimated PZR mass
+                    state.PZRWaterVolume = (M_PZR_est - V_PZR_total * rho_PZR_steam) / 
+                                           (rho_PZR_water - rho_PZR_steam);
+                    state.PZRWaterVolume = Math.Max(0f, Math.Min(state.PZRWaterVolume, PlantConstants.PZR_WATER_MAX));
+                    state.PZRSteamVolume = V_PZR_total - state.PZRWaterVolume;
+                    
+                    // Step 3: PZR masses from V×ρ (volume-constrained by PZR geometry)
+                    state.PZRWaterMass = state.PZRWaterVolume * rho_PZR_water;
+                    state.PZRSteamMass = state.PZRSteamVolume * rho_PZR_steam;
+                    
+                    // Step 4: RCS mass is the REMAINDER — guarantees exact conservation
+                    // This is Rule R5: RCS = Total - PZR_water - PZR_steam
+                    // The sum RCS + PZR_water + PZR_steam = M_total BY CONSTRUCTION
+                    state.RCSWaterMass = M_total - state.PZRWaterMass - state.PZRSteamMass;
+                    
+                    // VERIFICATION: Conservation identity must hold exactly
+                    // (within floating-point tolerance)
+                    #if DEBUG
+                    float componentSum = state.RCSWaterMass + state.PZRWaterMass + state.PZRSteamMass;
+                    float conservationError = Math.Abs(componentSum - M_total);
+                    if (conservationError > 0.01f)
+                    {
+                        // This should NEVER happen since RCS is computed as remainder
+                        Console.WriteLine($"[CoupledThermo] CONSERVATION VIOLATION: " +
+                            $"|sum - ledger| = {conservationError:F4} lb");
+                    }
+                    #endif
+                }
+                else
+                {
+                    // LEGACY MODE (deprecated): derive all masses from V×ρ
+                    // WARNING: This path does NOT guarantee conservation with boundary flows
+                    state.RCSWaterMass = V_RCS * rho_RCS;
+                    
+                    float M_PZR_total = M_total - state.RCSWaterMass;
+                    state.PZRWaterVolume = (M_PZR_total - V_PZR_total * rho_PZR_steam) / 
+                                           (rho_PZR_water - rho_PZR_steam);
+                    state.PZRWaterVolume = Math.Max(0f, Math.Min(state.PZRWaterVolume, PlantConstants.PZR_WATER_MAX));
+                    state.PZRSteamVolume = V_PZR_total - state.PZRWaterVolume;
+                    
+                    state.PZRWaterMass = state.PZRWaterVolume * rho_PZR_water;
+                    state.PZRSteamMass = state.PZRSteamVolume * rho_PZR_steam;
+                }
                 
                 state.IterationsUsed = iteration;
             }
@@ -646,6 +793,76 @@ namespace Critical.Physics
         
         // Solver diagnostics
         public int IterationsUsed;
+        
+        // v5.0.2: Solid-ops mass conservation
+        // During solid ops, these two fields are the canonical mass state.
+        // TotalPrimaryMassSolid = loops + PZR, updated only by CVCS boundary flow.
+        // PZRWaterMassSolid = PZR only, updated only by surge transfer.
+        // Loops mass = TotalPrimaryMassSolid - PZRWaterMassSolid (derived, never stored).
+        public float TotalPrimaryMassSolid;  // lb — total primary (loops+PZR), boundary-only
+        public float PZRWaterMassSolid;      // lb — conserved PZR mass from SolidPlantPressure
+        
+        // v5.3.0: Canonical total primary mass ledger (persists across ALL regimes)
+        // This is the authoritative mass ledger for the entire primary system.
+        // Updated ONLY by boundary flows (CVCS, relief). Never derived from V×ρ.
+        // At solid→two-phase transition: TotalPrimaryMass_lb = TotalPrimaryMassSolid
+        // Stage 1: Field exists and is handed off; Stage 2+ will apply boundary flows.
+        public float TotalPrimaryMass_lb;
+        
+        // v5.3.0 Stage 4: Cumulative relief mass tracking
+        // Tracks total mass lost through relief valve(s) for diagnostics.
+        // Relief mass is a true boundary loss — water leaves the primary system.
+        // Used for conservation check: M_expected = M_initial + CVCS_in - CVCS_out - Relief
+        // v0.1.0.0 Phase B: Relief accumulator increments when two-phase relief physics is implemented.
+        // Currently, relief only exists in solid-ops (SolidPlantPressure.cs) where it is folded
+        // into the net CVCS volume balance, not tracked as a separate mass removal.
+        public float CumulativeReliefMass_lb;
+        
+        // v5.3.0 Stage 4: Initial primary mass for conservation diagnostics
+        // Captured at simulation start (or bubble formation) for mass balance tracking.
+        public float InitialPrimaryMass_lb;
+        
+        // v5.3.0 Stage 6: Cumulative CVCS boundary flow tracking for mass balance
+        // These track total mass IN and OUT via CVCS for conservation diagnostics.
+        // Used for expected mass calculation:
+        //   M_expected = InitialPrimaryMass_lb + CumulativeCVCSIn_lb - CumulativeCVCSOut_lb - CumulativeReliefMass_lb
+        // If M_state != M_expected, there's a conservation error (drift).
+        public float CumulativeCVCSIn_lb;    // Total charging mass into RCS (lbm)
+        public float CumulativeCVCSOut_lb;   // Total letdown mass out of RCS (lbm)
+        
+        // v5.3.0 Stage 5: Seal flow and CBO loss tracking for mass conservation
+        // Per NRC IN 93-84: Seal injection (8 gpm/RCP) splits at the seal:
+        //   - 5 gpm/RCP enters RCS via #1 seal (included in net RCS flow)
+        //   - 3 gpm/RCP returns to VCT as seal leakoff (does NOT enter RCS)
+        // CBO (Controlled BleedOff) is a true boundary loss to reactor drain tank.
+        // 
+        // IMPORTANT: The net CVCS flow to RCS must SUBTRACT seal leakoff:
+        //   NetToRCS = ChargingFlow - LetdownFlow - SealLeakoff
+        // Without this correction, phantom mass (12 gpm with 4 RCPs) is added.
+        // 
+        // These fields are for diagnostics only; they don't affect TotalPrimaryMass_lb
+        // because seal leakoff is an internal transfer (to VCT) and CBO is a separate sink.
+        public float CumulativeSealLeakoff_lb;   // Seal leakoff to VCT (for VCT balance)
+        public float CumulativeCBOLoss_lb;        // CBO loss (true boundary sink)
+        
+        // =========================================================================
+        // v5.4.0 Stage 0: SURGE FLOW TRACKING FIELDS (Diagnostic — No Behavior Change)
+        // These fields track mass flowing between PZR and RCS through the surge line.
+        // Used for mass conservation diagnostics and bubble formation analysis.
+        // Positive surgeFlowRate = into PZR (insurge), Negative = out of PZR (outsurge)
+        // =========================================================================
+        
+        /// <summary>Instantaneous surge line mass flow rate (lb/s). Positive = into PZR.</summary>
+        public float SurgeFlowRate_lbps;
+        
+        /// <summary>Cumulative mass transferred through surge line into PZR (lb).</summary>
+        public float CumulativeSurgeIn_lb;
+        
+        /// <summary>Cumulative mass transferred through surge line out of PZR (lb).</summary>
+        public float CumulativeSurgeOut_lb;
+        
+        /// <summary>Net cumulative surge flow (in - out). Positive = net insurge.</summary>
+        public float NetCumulativeSurge_lb => CumulativeSurgeIn_lb - CumulativeSurgeOut_lb;
         
         // Derived properties
         public float TotalMass => RCSWaterMass + PZRWaterMass + PZRSteamMass;

@@ -183,10 +183,20 @@ public partial class HeatupSimEngine
             return;
         }
 
+        // v5.4.1 Stage 2: During DRAIN phase, UpdateDrainPhase() already
+        // applied dm_cvcs to both PZRWaterMass and RCSWaterMass using
+        // mass-conserving transfer semantics. Skip here to prevent
+        // double-counting the CVCS drain mass transfer.
+        if (bubbleDrainActive)
+        {
+            rcsWaterMass = physicsState.RCSWaterMass;  // Sync display variable
+            return;
+        }
+
         // v1.3.1.0 FIX: Correct guard for RCS mass update.
         // NOT in solid-plant-style ops (which handles its own inventory)
         // AND NOT in pre-drain bubble phases (which use solid-plant tracking).
-        // This covers: DRAIN, STABILIZE, PRESSURIZE, and post-bubble-complete.
+        // This covers: STABILIZE, PRESSURIZE, and post-bubble-complete.
         if (!solidPressurizer && !bubblePreDrainPhase)
         {
             float netCVCS_gpm = chargingFlow - letdownFlow;
@@ -194,6 +204,10 @@ public partial class HeatupSimEngine
             float massChange_lb = netCVCS_gpm * dt_sec * PlantConstants.GPM_TO_FT3_SEC * rho_rcs;
             physicsState.RCSWaterMass += massChange_lb;
             rcsWaterMass = physicsState.RCSWaterMass;
+
+            // v0.1.0.0 Phase B: Increment boundary accumulators (CS-0003)
+            physicsState.CumulativeCVCSIn_lb += Mathf.Max(0f, massChange_lb);
+            physicsState.CumulativeCVCSOut_lb += Mathf.Max(0f, -massChange_lb);
 
             // Feed RCS inventory change to VCT mass conservation tracking
             float rcsChange_gal = (massChange_lb / rho_rcs) * PlantConstants.FT3_TO_GAL;
@@ -258,38 +272,37 @@ public partial class HeatupSimEngine
         }
 
         // ==============================================================
-        // v0.6.0: Total system inventory conservation check
-        // Tracks RCS + PZR + VCT + BRS (all compartments).
+        // v5.4.1 Fix B: Canonical MASS-based inventory conservation check.
+        // Mass is the conserved quantity; volume varies with T/P.
+        // Tracks RCS + PZR(water+steam) + VCT + BRS (all compartments).
         // Only true external boundary crossings (RWST additions, CBO
         // losses) change the total. BRS closes the divert/return loop.
         // ==============================================================
         {
-            float rcsVol_gal = (physicsState.RCSWaterMass
-                / WaterProperties.WaterDensity(T_rcs, pressure))
-                * PlantConstants.FT3_TO_GAL;
-            float pzrVol_gal = pzrWaterVolume * PlantConstants.FT3_TO_GAL;
+            // v5.4.1 Fix B: Use tracked mass values (not recomputed from V×ρ)
+            // for RCS and PZR. Recomputing from volume would mask CVCS transfers.
+            float rhoVCT = WaterProperties.WaterDensity(100f, 14.7f);
 
-            totalSystemInventory_gal = rcsVol_gal + pzrVol_gal
-                + vctState.Volume_gal
-                + brsState.HoldupVolume_gal
-                + brsState.DistillateAvailable_gal
+            float rcsMass = physicsState.RCSWaterMass;  // Tracked, includes CVCS changes
+            float pzrWaterMassNow = physicsState.PZRWaterMass;
+            float pzrSteamMassNow = physicsState.PZRSteamMass;
+            float vctMass = (vctState.Volume_gal / PlantConstants.FT3_TO_GAL) * rhoVCT;
+            float brsTotalGal = brsState.HoldupVolume_gal + brsState.DistillateAvailable_gal
                 + brsState.ConcentrateAvailable_gal;
+            float brsMass = (brsTotalGal / PlantConstants.FT3_TO_GAL) * rhoVCT;
 
-            // External additions: RWST makeup, seal return (when not from BRS)
-            // External removals: CBO losses
-            // BRS divert/return are internal transfers and should not affect total
-            // Net external flow crossing the system boundary:
-            // VCT tracks divert as "external out" and BRS tracks the same flow
-            // as CumulativeIn — they cancel. Similarly BRS return to VCT cancels
-            // with VCT's external in for BRS-sourced makeup.
-            // Net effect: only true external flows (RWST add, CBO loss) remain.
-            float externalNet = vctState.CumulativeExternalIn_gal
+            totalSystemMass_lbm = rcsMass + pzrWaterMassNow + pzrSteamMassNow + vctMass + brsMass;
+
+            // External boundary crossings (converted to mass)
+            // Net external flow = RWST additions + BRS in - BRS returned - CBO losses
+            float externalNetGal = vctState.CumulativeExternalIn_gal
                 - vctState.CumulativeExternalOut_gal
                 + brsState.CumulativeIn_gal
                 - brsState.CumulativeReturned_gal;
+            externalNetMass_lbm = (externalNetGal / PlantConstants.FT3_TO_GAL) * rhoVCT;
 
-            systemInventoryError_gal = Mathf.Abs(
-                totalSystemInventory_gal - initialSystemInventory_gal - externalNet);
+            massError_lbm = Mathf.Abs(
+                totalSystemMass_lbm - initialSystemMass_lbm - externalNetMass_lbm);
         }
 
         rcsBoronConcentration = vctState.BoronConcentration_ppm;
