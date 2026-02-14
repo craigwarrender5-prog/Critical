@@ -76,6 +76,13 @@ public partial class HeatupSimEngine
         _previousMassAlarmState = false;
         _previousMassConservationOK = true;
 
+        // IP-0018 DP-0003 deterministic telemetry reset
+        stageE_PrimaryHeatInput_MW = 0f;
+        stageE_TotalPrimaryEnergy_MJ = 0f;
+        stageE_TotalSGEnergyRemoved_MJ = 0f;
+        stageE_PercentMismatch = 0f;
+        stageE_EnergySampleCount = 0;
+
         // IP-0016 RTCC/session-scoped telemetry reset
         rtccTransitionCount = 0;
         rtccAssertionFailureCount = 0;
@@ -133,6 +140,14 @@ public partial class HeatupSimEngine
         sgBoundaryMode = "OPEN";
         sgPressureSourceBranch = "floor";
         sgSteamInventory_lb = 0f;
+        sgStartupBoundaryState = "OPEN_PREHEAT";
+        sgStartupBoundaryStateTicks = 0;
+        sgStartupBoundaryStateTime_hr = 0f;
+        sgHoldTargetPressure_psia = 0f;
+        sgHoldPressureDeviation_pct = 0f;
+        sgHoldNetLeakage_pct = 0f;
+        dp0003BaselineSignature =
+            $"T0={startTemperature:F1}F;P0={startPressure:F1}psia;PZR0={startPZRLevel:F1}%;dt={DP0003_DETERMINISTIC_TIMESTEP_HR:F6}hr;log={DP0003_INTERVAL_LOG_HR:F2}hr";
         netPlantHeat_MW = 0f;
         
         // v3.0.0: Initialize RHR system

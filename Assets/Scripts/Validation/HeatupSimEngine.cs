@@ -152,6 +152,21 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public string sgBoundaryMode = "OPEN";  // OPEN / ISOLATED
     [HideInInspector] public string sgPressureSourceBranch = "floor"; // floor / P_sat / inventory-derived
     [HideInInspector] public float sgSteamInventory_lb;       // SG steam inventory (lb)
+    [HideInInspector] public string sgStartupBoundaryState = "OPEN_PREHEAT";
+    [HideInInspector] public int sgStartupBoundaryStateTicks;
+    [HideInInspector] public float sgStartupBoundaryStateTime_hr;
+    [HideInInspector] public float sgHoldTargetPressure_psia;
+    [HideInInspector] public float sgHoldPressureDeviation_pct;
+    [HideInInspector] public float sgHoldNetLeakage_pct;
+
+    // IP-0018 Stage E telemetry fields (DP-0003 deterministic profile)
+    [HideInInspector] public string dp0003ValidationProfile = "IP-0018 deterministic startup profile";
+    [HideInInspector] public string dp0003BaselineSignature = "";
+    [HideInInspector] public float stageE_PrimaryHeatInput_MW;
+    [HideInInspector] public float stageE_TotalPrimaryEnergy_MJ;
+    [HideInInspector] public float stageE_TotalSGEnergyRemoved_MJ;
+    [HideInInspector] public float stageE_PercentMismatch;
+    [HideInInspector] public int stageE_EnergySampleCount;
 
     // v5.0.0 Stage 4: SG draining & level state
     [HideInInspector] public bool  sgDrainingActive;            // True if SG is actively draining
@@ -489,6 +504,8 @@ public partial class HeatupSimEngine : MonoBehaviour
     // Constants — shared across partials
     const float MAX_RATE = 50f;  // Tech Spec limit °F/hr
     const float PZR_HEATER_POWER_MW = PlantConstants.HEATER_POWER_TOTAL / 1000f;  // 1800 kW = 1.8 MW
+    const float DP0003_DETERMINISTIC_TIMESTEP_HR = 1f / 360f;  // 10-second deterministic physics step
+    const float DP0003_INTERVAL_LOG_HR = 0.25f;                // 15-minute deterministic log period
 
     // v0.9.5: Shutdown flag for immediate termination without blocking
     private volatile bool _shutdownRequested = false;
@@ -715,7 +732,8 @@ public partial class HeatupSimEngine : MonoBehaviour
         // ================================================================
         // FRAME-RATE DECOUPLED SIMULATION LOOP
         // ================================================================
-        float dt = 1f / 360f;  // 10-second physics steps (1/360 hour)
+        float dt = DP0003_DETERMINISTIC_TIMESTEP_HR;
+        float intervalLogHr = DP0003_INTERVAL_LOG_HR;
         float prevTemp = T_rcs;
         float rateTimer = 0f;
         float historyTimer = 0f;
@@ -814,7 +832,7 @@ public partial class HeatupSimEngine : MonoBehaviour
 
                 // v0.7.1: Save detailed log file every 15 sim-minutes (was 30 min)
                 logTimer += dt;
-                if (logTimer >= 0.25f)  // Changed from 0.5f (30 min) to 0.25f (15 min)
+                if (logTimer >= intervalLogHr)
                 {
                     SaveIntervalLog();
                     logCount++;
@@ -1665,6 +1683,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         float currentHeatLoss = HeatTransfer.InsulationHeatLoss_MW(T_rcs);
         netPlantHeat_MW = (rcpHeat + pzrHeaterPower + rhrNetHeat_MW)
                         - (currentHeatLoss + sgHeatTransfer_MW + steamDumpHeat_MW);
+        UpdateIP0018EnergyTelemetry(dt);
         
         // ================================================================
         // 8. v1.1.0 Stage 5: INVENTORY AUDIT
@@ -1706,6 +1725,26 @@ public partial class HeatupSimEngine : MonoBehaviour
     float GetSealLeakoffFlowGpm()
     {
         return rcpCount * PlantConstants.SEAL_LEAKOFF_PER_PUMP_GPM;
+    }
+
+    void UpdateIP0018EnergyTelemetry(float dt_hr)
+    {
+        stageE_PrimaryHeatInput_MW = rcpHeat + pzrHeaterPower;
+
+        float dt_s = dt_hr * 3600f;
+        stageE_TotalPrimaryEnergy_MJ += stageE_PrimaryHeatInput_MW * dt_s;
+        stageE_TotalSGEnergyRemoved_MJ += sgHeatTransfer_MW * dt_s;
+        stageE_EnergySampleCount++;
+
+        if (stageE_TotalPrimaryEnergy_MJ > 0.001f)
+        {
+            stageE_PercentMismatch = 100f * (stageE_TotalSGEnergyRemoved_MJ - stageE_TotalPrimaryEnergy_MJ)
+                                   / stageE_TotalPrimaryEnergy_MJ;
+        }
+        else
+        {
+            stageE_PercentMismatch = 0f;
+        }
     }
 
     void ComputePrimaryBoundaryMassFlows(

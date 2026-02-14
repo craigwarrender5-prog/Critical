@@ -965,6 +965,12 @@ public partial class HeatupSimEngine
         sb.AppendLine($"Wall-Clock Time:  {TimeAcceleration.FormatTime(wallClockTime)}");
         sb.AppendLine($"Effective Speed:  {TimeAcceleration.CurrentMultiplier}x ({TimeAcceleration.SpeedLabelsShort[currentSpeedIndex]})");
         sb.AppendLine();
+        sb.AppendLine("VALIDATION BASELINE (IP-0018 / DP-0003):");
+        sb.AppendLine($"  Profile:          {dp0003ValidationProfile}");
+        sb.AppendLine($"  Baseline Sig:     {dp0003BaselineSignature}");
+        sb.AppendLine($"  Deterministic dt: {DP0003_DETERMINISTIC_TIMESTEP_HR:F6} hr");
+        sb.AppendLine($"  Interval Log:     {DP0003_INTERVAL_LOG_HR:F2} hr");
+        sb.AppendLine();
         sb.AppendLine("THERMAL STATE:");
         sb.AppendLine($"  T_avg:            {T_avg,10:F2} °F");
         sb.AppendLine($"  T_hot:            {T_hot,10:F2} °F");
@@ -1120,6 +1126,12 @@ public partial class HeatupSimEngine
         sb.AppendLine($"    Heat Losses:      {currentHeatLoss,10:F2} MW (temp dependent)");
         sb.AppendLine($"    SG Secondary Loss: {sgHeatTransfer_MW,10:F2} MW");  // v0.8.0 — Heat sink to SG secondary
         sb.AppendLine($"    Net Plant Heat:   {netPlantHeat_MW,10:F2} MW");
+        sb.AppendLine("    IP-0018 Energy Artifact:");
+        sb.AppendLine($"      Primary Heat:      {stageE_PrimaryHeatInput_MW,10:F3} MW");
+        sb.AppendLine($"      TotalPrimaryEnergy_MJ:   {stageE_TotalPrimaryEnergy_MJ,10:F3}");
+        sb.AppendLine($"      TotalSGEnergyRemoved_MJ: {stageE_TotalSGEnergyRemoved_MJ,10:F3}");
+        sb.AppendLine($"      PercentMismatch:         {stageE_PercentMismatch,10:F3} %");
+        sb.AppendLine($"      Sample Count:            {stageE_EnergySampleCount,10}");
         sb.AppendLine();
         sb.AppendLine("  ELECTRICAL:");
         sb.AppendLine($"    RCP Power:        {rcpCount * 6f,10:F1} MW");
@@ -1147,6 +1159,12 @@ public partial class HeatupSimEngine
         sb.AppendLine($"    SG Boundary Mode: {sgBoundaryMode,10}");
         sb.AppendLine($"    Pressure Source:  {sgPressureSourceBranch,10}");
         sb.AppendLine($"    SteamInventory:   {sgSteamInventory_lb,10:F1} lb");
+        sb.AppendLine($"    Startup State:    {sgStartupBoundaryState,10}");
+        sb.AppendLine($"    State Ticks:      {sgStartupBoundaryStateTicks,10}");
+        sb.AppendLine($"    State Time:       {sgStartupBoundaryStateTime_hr,10:F3} hr");
+        sb.AppendLine($"    Hold Target P:    {sgHoldTargetPressure_psia,10:F2} psia");
+        sb.AppendLine($"    Hold Dev:         {sgHoldPressureDeviation_pct,10:F3} %");
+        sb.AppendLine($"    Hold Leak:        {sgHoldNetLeakage_pct,10:F3} %");
         sb.AppendLine($"    Boiling Active:   {(sgBoilingActive ? "YES" : "NO"),10}");
         sb.AppendLine($"    Circulation Frac: {sgCirculationFraction,10:F3} [DEPRECATED]");
         // v5.0.0 Stage 4: SG Draining & Level
@@ -1381,7 +1399,17 @@ public partial class HeatupSimEngine
         sb.AppendLine($"  SG Boundary Mode:     {sgBoundaryMode}");
         sb.AppendLine($"  Pressure Source:      {sgPressureSourceBranch}");
         sb.AppendLine($"  Steam Inventory:      {sgSteamInventory_lb:F1} lb");
+        sb.AppendLine($"  Startup State:        {sgStartupBoundaryState}");
+        sb.AppendLine($"  State Ticks:          {sgStartupBoundaryStateTicks}");
+        sb.AppendLine($"  State Time:           {sgStartupBoundaryStateTime_hr:F3} hr");
+        sb.AppendLine($"  Hold Target Pressure: {sgHoldTargetPressure_psia:F2} psia");
+        sb.AppendLine($"  Hold Pressure Dev:    {sgHoldPressureDeviation_pct:F3} %");
+        sb.AppendLine($"  Hold Net Leakage:     {sgHoldNetLeakage_pct:F3} %");
         sb.AppendLine($"  Net Plant Heat:       {netPlantHeat_MW:F2} MW");
+        sb.AppendLine("  IP-0018 Energy Artifact:");
+        sb.AppendLine($"    TotalPrimaryEnergy_MJ:   {stageE_TotalPrimaryEnergy_MJ:F3}");
+        sb.AppendLine($"    TotalSGEnergyRemoved_MJ: {stageE_TotalSGEnergyRemoved_MJ:F3}");
+        sb.AppendLine($"    PercentMismatch:         {stageE_PercentMismatch:F3} %");
         sb.AppendLine();
         sb.AppendLine("RTCC SUMMARY (IP-0016):");
         sb.AppendLine($"  Telemetry Present:    {(rtccTelemetryPresent ? "YES" : "NO")}");
