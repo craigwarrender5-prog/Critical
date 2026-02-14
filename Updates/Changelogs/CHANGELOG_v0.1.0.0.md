@@ -3,7 +3,7 @@
 **Date:** 2026-02-13
 **Version:** v0.1.0.0
 **Type:** Architecture — Mass Conservation Authority Enforcement
-**Matching Implementation Plan:** IMPLEMENTATION_PLAN_v0.1.0.0.md
+**Matching Implementation Plan:** IP-0001 — Primary Mass Conservation
 **Governing Document:** PROJECT_CONSTITUTION.md v0.1.0.0
 **Issues Resolved:** CS-0001, CS-0002, CS-0003, CS-0004, CS-0005, CS-0006, CS-0007, CS-0008, CS-0013
 
@@ -138,7 +138,7 @@ This release establishes the foundational invariants of primary mass conservatio
 | `Assets/Scripts/Validation/HeatupValidationVisual.TabValidation.cs` | C | UI — drift row |
 | `Updates/ISSUE_REGISTRY.md` | A, B, C, D | Governance — status tracking |
 | `PROJECT_CONSTITUTION.md` | Pre-A | Governance — foundational document |
-| `Updates/IMPLEMENTATION_PLAN_v0.1.0.0.md` | Pre-A | Plan — 4-phase architecture |
-| `Updates/Implementation_Plans/IMPLEMENTATION_PLAN_SG_DOMAIN_v0.2.0.0.md` | Pre-A | Placeholder — deferred |
-| `Updates/Implementation_Plans/IMPLEMENTATION_PLAN_TEST_INFRA_v0.2.1.0.md` | Pre-A | Placeholder — deferred |
-| `Updates/Implementation_Plans/IMPLEMENTATION_PLAN_OBSERVABILITY_v0.2.2.0.md` | Pre-A | Placeholder — deferred |
+| `Updates/Implementation_Plans/IP-0001 — Primary Mass Conservation.md` | Pre-A | Plan — 4-phase architecture |
+| `Updates/Implementation_Plans/IP-0007 — SG Energy and Pressure Validation.md` | Pre-A | Placeholder — deferred |
+| `Updates/Implementation_Plans/IP-0010 — Test Infrastructure.md` | Pre-A | Placeholder — deferred |
+| `Updates/Implementation_Plans/IP-0012 — Observability.md` | Pre-A | Placeholder — deferred |

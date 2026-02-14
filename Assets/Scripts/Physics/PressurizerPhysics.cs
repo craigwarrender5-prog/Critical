@@ -98,7 +98,10 @@ namespace Critical.Physics
             // PZR is 100% water when solid
             state.WaterVolume = PlantConstants.PZR_TOTAL_VOLUME;
             state.SteamVolume = 0f;
-            state.WaterMass = state.WaterVolume * WaterProperties.WaterDensity(state.WaterTemp, pressure_psia);
+            // v5.0.2: Mass is conserved — do NOT recalculate from V × ρ.
+            // Mass was set at initialization; this method has no flow inputs,
+            // so mass is invariant here. (Surge transfer is handled by
+            // SolidPlantPressure.Update(), not this method.)
             state.SteamMass = 0f;
             
             // Zero all phase-change rates
@@ -143,11 +146,17 @@ namespace Critical.Physics
             state.WaterTemp = tSat;
             state.SteamTemp = tSat;
             
+            // v5.4.2.0 FF-05 Fix #2: Preserve total PZR mass across solid→two-phase transition.
+            // Pre-bubble PZR is water-solid: WaterMass is the total conserved mass.
+            // Steam mass fills the new steam volume (geometry-constrained by level).
+            // Water mass is the REMAINDER (total - steam) to guarantee exact conservation.
+            float totalPzrMass = state.WaterMass;
+
             float level = targetLevelPercent / 100f;
             state.WaterVolume = PlantConstants.PZR_TOTAL_VOLUME * level;
             state.SteamVolume = PlantConstants.PZR_TOTAL_VOLUME * (1f - level);
-            state.WaterMass = state.WaterVolume * rhoWater;
             state.SteamMass = state.SteamVolume * rhoSteam;
+            state.WaterMass = totalPzrMass - state.SteamMass;
             
             state.FlashRate = 0f;
             state.SprayCondRate = 0f;
@@ -809,6 +818,15 @@ namespace Critical.Physics
             if (!transState.BubbleFormed) valid = false;
             if (transState.SteamMass <= 0f) valid = false;
             if (Math.Abs(transState.Level - 25f) > 1f) valid = false;
+            
+            // Test 14 (v5.0.2): SolidPressurizerUpdate must NOT change WaterMass
+            // This method has no flow inputs, so mass must be invariant.
+            var solidMassState = InitializeSolidState(365f, 200f);
+            float initialWaterMass = solidMassState.WaterMass;
+            for (int i = 0; i < 50; i++)
+                SolidPressurizerUpdate(ref solidMassState, 1800f, 200f, 365f, 10f);
+            float massDrift = Math.Abs(solidMassState.WaterMass - initialWaterMass);
+            if (massDrift > 0.01f) valid = false;  // Must be zero (no flows)
             
             return valid;
         }

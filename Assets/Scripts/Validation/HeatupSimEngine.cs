@@ -149,6 +149,9 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public float sgMaxSuperheat_F;          // Max node superheat above T_sat (°F)
     [HideInInspector] public bool  sgNitrogenIsolated;        // N₂ blanket isolation status
     [HideInInspector] public float sgBoilingIntensity;        // Peak boiling intensity fraction (0-1)
+    [HideInInspector] public string sgBoundaryMode = "OPEN";  // OPEN / ISOLATED
+    [HideInInspector] public string sgPressureSourceBranch = "floor"; // floor / P_sat / inventory-derived
+    [HideInInspector] public float sgSteamInventory_lb;       // SG steam inventory (lb)
 
     // v5.0.0 Stage 4: SG draining & level state
     [HideInInspector] public bool  sgDrainingActive;            // True if SG is actively draining
@@ -175,6 +178,10 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public float pressureRate;
     [HideInInspector] public float pzrHeatRate;
     [HideInInspector] public float rcsHeatRate;
+
+    // v0.3.2.0 CS-0043: PZR loss values from IsolatedHeatingStep for UpdateDrainPhase
+    private float pzrConductionLoss_MW;
+    private float pzrInsulationLoss_MW;
 
     #endregion
 
@@ -207,6 +214,9 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public float totalSystemMass_lbm;            // RCS+PZR+VCT+BRS current total (lbm)
     [HideInInspector] public float externalNetMass_lbm;            // Net external boundary crossings (lbm)
     [HideInInspector] public float massError_lbm;                  // |actual - expected| conservation error
+    [HideInInspector] public float plantExternalIn_gal;            // Cumulative true external makeup to tracked plant
+    [HideInInspector] public float plantExternalOut_gal;           // Cumulative true external losses from tracked plant
+    [HideInInspector] public float plantExternalNet_gal;           // plantExternalIn_gal - plantExternalOut_gal
 
     // v5.3.0 Stage 6: Primary mass ledger diagnostics (display fields)
     [HideInInspector] public float primaryMassLedger_lb;           // Canonical total primary mass from ledger
@@ -246,6 +256,7 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public float sprayValvePosition;            // Spray valve position (0-1)
     [HideInInspector] public bool sprayActive;                    // True if spray valve open beyond bypass
     [HideInInspector] public float spraySteamCondensed_lbm;       // Steam condensed this step (lbm)
+    [HideInInspector] public float netPlantHeat_MW;               // Net plant heat = sources - sinks (MW)
     
     // SG Secondary Steaming State
     [HideInInspector] public bool sgSteaming;                     // True if SG secondary at saturation
@@ -358,6 +369,24 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public string heatupPhaseDesc = "";
     [HideInInspector] public float pzrHeatRateDisplay;
     [HideInInspector] public float estimatedTotalHeatupTime;
+
+    #region RTCC State (IP-0016)
+
+    [HideInInspector] public int rtccTransitionCount;
+    [HideInInspector] public int rtccAssertionFailureCount;
+    [HideInInspector] public float rtccMaxRawDeltaAbs_lbm;
+    [HideInInspector] public float rtccLastPreMass_lbm;
+    [HideInInspector] public float rtccLastReconstructedMass_lbm;
+    [HideInInspector] public float rtccLastRawDelta_lbm;
+    [HideInInspector] public float rtccLastPostMass_lbm;
+    [HideInInspector] public float rtccLastAssertDelta_lbm;
+    [HideInInspector] public string rtccLastTransition = "NONE";
+    [HideInInspector] public string rtccLastAuthorityFrom = "UNSET";
+    [HideInInspector] public string rtccLastAuthorityTo = "UNSET";
+    [HideInInspector] public bool rtccLastAssertPass = true;
+    [HideInInspector] public bool rtccTelemetryPresent;
+
+    #endregion
 
     #endregion
 
@@ -1015,6 +1044,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             // v3.0.0: Update SG model even with no RCPs (for display state)
             // Heat transfer is negligible (HTC_NO_RCPS ≈ 8), but this keeps
             // thermocline and boiling state current for the dashboard.
+            ApplySGBoundaryAuthority();
             var sgResult_r1 = SGMultiNodeThermal.Update(ref sgMultiNodeState, T_rcs, 0, pressure, dt);
             T_sg_secondary = sgMultiNodeState.BulkAverageTemp_F;
             sgHeatTransfer_MW = sgMultiNodeState.TotalHeatAbsorption_MW;
@@ -1030,6 +1060,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             sgMaxSuperheat_F = sgMultiNodeState.MaxSuperheat_F;
             sgNitrogenIsolated = sgResult_r1.NitrogenIsolated;
             sgBoilingIntensity = sgResult_r1.BoilingIntensity;
+            UpdateSGBoundaryDiagnostics(sgResult_r1);
             // v5.4.2: SG draining/level display sync (forensic fix — 7 fields)
             sgDrainingActive       = sgMultiNodeState.DrainingActive;
             sgDrainingComplete     = sgMultiNodeState.DrainingComplete;
@@ -1070,16 +1101,9 @@ public partial class HeatupSimEngine : MonoBehaviour
                 surgeFlow = solidPlantState.SurgeFlow;
 
                 // RCS INVENTORY UPDATE — CVCS net flow during solid ops
-                float netCVCS_gpm = chargingFlow - letdownFlow;
-                float dt_sec_solid = dt * 3600f;
                 float rho_rcs = WaterProperties.WaterDensity(T_rcs, pressure);
-                float massChange_lb = netCVCS_gpm * dt_sec_solid * PlantConstants.GPM_TO_FT3_SEC * rho_rcs;
-                physicsState.RCSWaterMass += massChange_lb;
+                ApplyPrimaryBoundaryFlowToRcs(dt, rho_rcs);
                 rcsWaterMass = physicsState.RCSWaterMass;
-
-                // v0.1.0.0 Phase B: Increment boundary accumulators (CS-0003)
-                physicsState.CumulativeCVCSIn_lb += Mathf.Max(0f, massChange_lb);
-                physicsState.CumulativeCVCSOut_lb += Mathf.Max(0f, -massChange_lb);
 
                 // v5.4.1 Audit Fix Stage 1: Update SOLID canonical fields every tick.
                 // Single source of truth: PZRWaterMass is already maintained by Init and
@@ -1087,10 +1111,6 @@ public partial class HeatupSimEngine : MonoBehaviour
                 physicsState.PZRWaterMassSolid = physicsState.PZRWaterMass;
                 physicsState.TotalPrimaryMassSolid = physicsState.RCSWaterMass + physicsState.PZRWaterMassSolid;
                 physicsState.TotalPrimaryMass_lb = physicsState.TotalPrimaryMassSolid;
-
-                // Feed RCS inventory change to VCT mass conservation
-                float rcsChange_gal = (massChange_lb / rho_rcs) * PlantConstants.FT3_TO_GAL;
-                VCTPhysics.AccumulateRCSChange(ref vctState, rcsChange_gal);
 
                 // Update display values from physics module
                 T_sat = solidPlantState.T_sat;
@@ -1104,17 +1124,53 @@ public partial class HeatupSimEngine : MonoBehaviour
             }
             else
             {
-                // BUBBLE EXISTS — Regime 1 with isolated PZR
+                // ============================================================
+                // REGIME 1: Bubble exists, no RCPs — Isolated PZR heating
                 // Delegated to RCSHeatup.IsolatedHeatingStep()
+                //
+                // ---- v0.3.0.0 Phase B: AUTHORITY OWNERSHIP (CS-0026/0029/0030) ----
+                // Field Authority:
+                //   TotalPrimaryMass_lb  → ENGINE (mutated only by CVCS boundary flows)
+                //   RCSWaterMass         → PHYSICS (BubbleFormation state machine)
+                //   PZRWaterMass/Steam   → PHYSICS (BubbleFormation state machine)
+                // Order of Operations:
+                //   1. IsolatedHeatingStep → thermal updates (T_pzr, T_rcs, surgeFlow)
+                //      v0.3.2.0: When two-phase active, PZR dT bypassed (CS-0043 fix)
+                //   2. CVCS boundary flow → mutate TotalPrimaryMass_lb
+                //   3. BubbleFormation state machine → mutate component masses (step 3 below)
+                //   4. Post-step assertion → component sum vs ledger
+                // ============================================================
+
+                // v0.3.2.0 CS-0043: Determine two-phase state BEFORE calling IsolatedHeatingStep.
+                // When two-phase is active, IsolatedHeatingStep bypasses PZR sensible heat
+                // (heater energy goes to latent heat in UpdateDrainPhase instead).
+                bool twoPhaseActive = bubblePhase == BubbleFormationPhase.DRAIN
+                                   || bubblePhase == BubbleFormationPhase.STABILIZE
+                                   || bubblePhase == BubbleFormationPhase.PRESSURIZE;
+
                 var isoResult = RCSHeatup.IsolatedHeatingStep(
                     T_pzr, T_rcs, pressure,
                     pzrHeaterPower, pzrWaterVolume,
-                    pzrHeatCap, rcsHeatCap, dt);
+                    pzrHeatCap, rcsHeatCap, dt,
+                    twoPhaseActive);
 
                 T_pzr = isoResult.T_pzr;
                 T_rcs = isoResult.T_rcs;
                 pressure = isoResult.Pressure;
                 surgeFlow = isoResult.SurgeFlow;
+
+                // v0.3.2.0 CS-0043: Store PZR loss values for UpdateDrainPhase energy accounting
+                pzrConductionLoss_MW = isoResult.PZRConductionLoss_MW;
+                pzrInsulationLoss_MW = isoResult.PZRInsulationLoss_MW;
+
+                // v0.3.2.0 CS-0043: Psat override REMOVED.
+                // Previously (v0.3.0.0 Fix 3.2), two-phase pressure was set to Psat(T_pzr).
+                // This created a ratchet: conduction/insulation losses pulled T_pzr below
+                // T_sat(P_old), so Psat(T_pzr) < P_old — monotonic decline.
+                // With the two-phase bypass, IsolatedHeatingStep returns T_pzr = T_sat(P)
+                // and P unchanged. Psat(T_sat(P)) = P (identity, no ratchet).
+                // Pressure during two-phase is now stable by construction.
+
                 T_sat = WaterProperties.SaturationTemperature(pressure);
 
                 // v3.0.0: Apply RHR net heat to RCS
@@ -1122,6 +1178,26 @@ public partial class HeatupSimEngine : MonoBehaviour
                 {
                     float rhrHeat_BTU = rhrNetHeat_MW * PlantConstants.MW_TO_BTU_HR * dt;
                     T_rcs += rhrHeat_BTU / rcsHeatCap;
+                }
+
+                // ============================================================
+                // v0.3.0.0 Phase B (Fix 3.1): CVCS BOUNDARY FLOW — Ledger mutation
+                // INV-2: Boundary flows enter through ledger mutation.
+                // This is the SOLE site where CVCS mutates TotalPrimaryMass_lb
+                // in Regime 1. The post-physics UpdateRCSInventory() is guarded
+                // by regime3CVCSPreApplied and will early-return.
+                //
+                // Note: During DRAIN, UpdateDrainPhase also moves mass between
+                // PZR and RCS components — but those are INTERNAL redistributions
+                // that do not cross the primary system boundary. The ledger does
+                // not change from internal transfers.
+                // ============================================================
+                {
+                    float rho_rcs_r1 = WaterProperties.WaterDensity(T_rcs, pressure);
+                    ApplyPrimaryBoundaryFlowToLedger(dt, rho_rcs_r1);
+
+                    // Set flag so UpdateRCSInventory() doesn't double-count
+                    regime3CVCSPreApplied = true;
                 }
 
                 // Debug heat balance periodically
@@ -1181,6 +1257,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             physicsState.PZRSteamMass = pzrSteamVolume * WaterProperties.SaturatedSteamDensity(pressure);
 
             // v1.3.0: Update multi-node SG model BEFORE RCS physics step
+            ApplySGBoundaryAuthority();
             var sgResult_r2 = SGMultiNodeThermal.Update(
                 ref sgMultiNodeState, T_rcs, rcpCount, pressure, dt);
 
@@ -1211,18 +1288,8 @@ public partial class HeatupSimEngine : MonoBehaviour
             //   may mutate the ledger for CVCS flows in this regime.
             // ============================================================
             {
-                float netCVCS_gpm_r2 = chargingFlow - letdownFlow;
-                float dt_sec_r2 = dt * 3600f;
                 float rho_rcs_r2 = WaterProperties.WaterDensity(T_rcs, pressure);
-                float cvcsNetMass_lb_r2 = netCVCS_gpm_r2 * dt_sec_r2 * PlantConstants.GPM_TO_FT3_SEC * rho_rcs_r2;
-                physicsState.TotalPrimaryMass_lb += cvcsNetMass_lb_r2; // INV-2: Boundary flows enter through ledger mutation
-
-                // v0.1.0.0 Phase B: Increment boundary accumulators (CS-0003)
-                physicsState.CumulativeCVCSIn_lb += Mathf.Max(0f, cvcsNetMass_lb_r2);
-                physicsState.CumulativeCVCSOut_lb += Mathf.Max(0f, -cvcsNetMass_lb_r2);
-
-                float rcsChange_gal_r2 = (cvcsNetMass_lb_r2 / rho_rcs_r2) * PlantConstants.FT3_TO_GAL;
-                VCTPhysics.AccumulateRCSChange(ref vctState, rcsChange_gal_r2);
+                ApplyPrimaryBoundaryFlowToLedger(dt, rho_rcs_r2);
 
                 regime3CVCSPreApplied = true;
             }
@@ -1303,6 +1370,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             sgMaxSuperheat_F = sgMultiNodeState.MaxSuperheat_F;
             sgNitrogenIsolated = sgResult_r2.NitrogenIsolated;
             sgBoilingIntensity = sgResult_r2.BoilingIntensity;
+            UpdateSGBoundaryDiagnostics(sgResult_r2);
             // v5.4.2: SG draining/level display sync (forensic fix — 7 fields)
             sgDrainingActive       = sgMultiNodeState.DrainingActive;
             sgDrainingComplete     = sgMultiNodeState.DrainingComplete;
@@ -1371,6 +1439,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             physicsState.PZRSteamMass = pzrSteamVolume * WaterProperties.SaturatedSteamDensity(pressure);
 
             // v1.3.0: Update multi-node SG model BEFORE RCS physics step
+            ApplySGBoundaryAuthority();
             var sgResult_r3 = SGMultiNodeThermal.Update(
                 ref sgMultiNodeState, T_rcs, rcpCount, pressure, dt);
 
@@ -1408,20 +1477,8 @@ public partial class HeatupSimEngine : MonoBehaviour
             //   may mutate the ledger for CVCS flows in this regime.
             // ============================================================
             {
-                // Net CVCS flow: positive = net addition to RCS, negative = net drain
-                float netCVCS_gpm = chargingFlow - letdownFlow;
-                float dt_sec_r3 = dt * 3600f;
                 float rho_rcs_r3 = WaterProperties.WaterDensity(T_rcs, pressure);
-                float cvcsNetMass_lb = netCVCS_gpm * dt_sec_r3 * PlantConstants.GPM_TO_FT3_SEC * rho_rcs_r3;
-                physicsState.TotalPrimaryMass_lb += cvcsNetMass_lb; // INV-2: Boundary flows enter through ledger mutation
-
-                // v0.1.0.0 Phase B: Increment boundary accumulators (CS-0003)
-                physicsState.CumulativeCVCSIn_lb += Mathf.Max(0f, cvcsNetMass_lb);
-                physicsState.CumulativeCVCSOut_lb += Mathf.Max(0f, -cvcsNetMass_lb);
-
-                // Feed RCS inventory change to VCT mass conservation tracking
-                float rcsChange_gal_r3 = (cvcsNetMass_lb / rho_rcs_r3) * PlantConstants.FT3_TO_GAL;
-                VCTPhysics.AccumulateRCSChange(ref vctState, rcsChange_gal_r3);
+                ApplyPrimaryBoundaryFlowToLedger(dt, rho_rcs_r3);
 
                 // Set flag so UpdateRCSInventory() doesn't double-count
                 regime3CVCSPreApplied = true;
@@ -1478,6 +1535,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             sgMaxSuperheat_F = sgMultiNodeState.MaxSuperheat_F;
             sgNitrogenIsolated = sgResult_r3.NitrogenIsolated;
             sgBoilingIntensity = sgResult_r3.BoilingIntensity;
+            UpdateSGBoundaryDiagnostics(sgResult_r3);
             // v5.4.2: SG draining/level display sync (forensic fix — 7 fields)
             sgDrainingActive       = sgMultiNodeState.DrainingActive;
             sgDrainingComplete     = sgMultiNodeState.DrainingComplete;
@@ -1561,6 +1619,28 @@ public partial class HeatupSimEngine : MonoBehaviour
         // ================================================================
         UpdateCVCSFlows(dt, bubbleDrainActive);
 
+        // ================================================================
+        // 5a. v0.3.0.0 Phase B (Fix 3.1): REGIME 1 MASS LEDGER ASSERTION
+        // Diagnostic check: component sum must match ledger.
+        // This assertion detects bugs — it does NOT correct them.
+        // The ledger remains authoritative (v0.1.0.0 Article III).
+        // Only active during Regime 1 two-phase (DRAIN/STABILIZE/PRESSURIZE).
+        // ================================================================
+        {
+            bool regime1TwoPhase = !solidPressurizer && !bubbleFormed && rcpCount == 0
+                                && bubblePhase != BubbleFormationPhase.NONE;
+            if (regime1TwoPhase)
+            {
+                float componentSum_r1 = physicsState.RCSWaterMass + physicsState.PZRWaterMass + physicsState.PZRSteamMass;
+                float ledgerDrift_r1 = componentSum_r1 - physicsState.TotalPrimaryMass_lb;
+                if (Mathf.Abs(ledgerDrift_r1) > 1.0f)
+                {
+                    Debug.LogWarning($"[T+{simTime:F2}hr] [R1 MASS AUDIT] Ledger drift = {ledgerDrift_r1:F1} lbm " +
+                        $"(components={componentSum_r1:F0}, ledger={physicsState.TotalPrimaryMass_lb:F0}, phase={bubblePhase})");
+                }
+            }
+        }
+
         simTime += dt;
 
         // ================================================================
@@ -1575,6 +1655,11 @@ public partial class HeatupSimEngine : MonoBehaviour
         // Only active when approaching HZP conditions
         // ================================================================
         UpdateHZPSystems(dt);
+
+        // Diagnostic: signed startup net heat (no clipping).
+        float currentHeatLoss = HeatTransfer.InsulationHeatLoss_MW(T_rcs);
+        netPlantHeat_MW = (rcpHeat + pzrHeaterPower + rhrNetHeat_MW)
+                        - (currentHeatLoss + sgHeatTransfer_MW + steamDumpHeat_MW);
         
         // ================================================================
         // 8. v1.1.0 Stage 5: INVENTORY AUDIT
@@ -1590,11 +1675,162 @@ public partial class HeatupSimEngine : MonoBehaviour
         // so all mass values are final for this timestep.
         // ================================================================
         UpdatePrimaryMassLedgerDiagnostics();
+
+        // IP-0016 runtime assertion hardening: fail fast on non-finite mass state.
+        if (float.IsNaN(physicsState.TotalPrimaryMass_lb) || float.IsInfinity(physicsState.TotalPrimaryMass_lb) ||
+            float.IsNaN(physicsState.RCSWaterMass) || float.IsInfinity(physicsState.RCSWaterMass) ||
+            float.IsNaN(physicsState.PZRWaterMass) || float.IsInfinity(physicsState.PZRWaterMass) ||
+            float.IsNaN(physicsState.PZRSteamMass) || float.IsInfinity(physicsState.PZRSteamMass))
+        {
+            throw new InvalidOperationException(
+                $"Non-finite mass state detected at T+{simTime:F4}hr " +
+                $"(ledger={physicsState.TotalPrimaryMass_lb}, rcs={physicsState.RCSWaterMass}, " +
+                $"pzrW={physicsState.PZRWaterMass}, pzrS={physicsState.PZRSteamMass})");
+        }
     }
 
     // ========================================================================
     // HELPER METHODS
     // ========================================================================
+
+    float GetSealInjectionFlowGpm()
+    {
+        return rcpCount * PlantConstants.SEAL_INJECTION_PER_PUMP_GPM;
+    }
+
+    float GetSealLeakoffFlowGpm()
+    {
+        return rcpCount * PlantConstants.SEAL_LEAKOFF_PER_PUMP_GPM;
+    }
+
+    void ComputePrimaryBoundaryMassFlows(
+        float dt_hr,
+        float rho_rcs,
+        out float massIn_lb,
+        out float massOut_lb,
+        out float netMass_lb)
+    {
+        float dt_sec = dt_hr * 3600f;
+        float chargingToPrimary_gpm = Mathf.Max(0f, chargingFlow - GetSealInjectionFlowGpm());
+        float primaryOutflow_gpm = Mathf.Max(0f, letdownFlow) + GetSealLeakoffFlowGpm();
+        float massPerGpmStep = dt_sec * PlantConstants.GPM_TO_FT3_SEC * rho_rcs;
+
+        massIn_lb = chargingToPrimary_gpm * massPerGpmStep;
+        massOut_lb = primaryOutflow_gpm * massPerGpmStep;
+        netMass_lb = massIn_lb - massOut_lb;
+    }
+
+    void ApplyPrimaryBoundaryFlowToRcs(float dt_hr, float rho_rcs)
+    {
+        ComputePrimaryBoundaryMassFlows(dt_hr, rho_rcs, out float massIn_lb, out float massOut_lb, out float netMass_lb);
+
+        physicsState.RCSWaterMass += netMass_lb;
+        physicsState.CumulativeCVCSIn_lb += massIn_lb;
+        physicsState.CumulativeCVCSOut_lb += massOut_lb;
+
+        if (rho_rcs > 0.1f)
+        {
+            float rcsChange_gal = (netMass_lb / rho_rcs) * PlantConstants.FT3_TO_GAL;
+            VCTPhysics.AccumulateRCSChange(ref vctState, rcsChange_gal);
+        }
+    }
+
+    void ApplyPrimaryBoundaryFlowToLedger(float dt_hr, float rho_rcs)
+    {
+        ComputePrimaryBoundaryMassFlows(dt_hr, rho_rcs, out float massIn_lb, out float massOut_lb, out float netMass_lb);
+
+        physicsState.TotalPrimaryMass_lb += netMass_lb;
+        physicsState.CumulativeCVCSIn_lb += massIn_lb;
+        physicsState.CumulativeCVCSOut_lb += massOut_lb;
+
+        if (rho_rcs > 0.1f)
+        {
+            float rcsChange_gal = (netMass_lb / rho_rcs) * PlantConstants.FT3_TO_GAL;
+            VCTPhysics.AccumulateRCSChange(ref vctState, rcsChange_gal);
+        }
+    }
+
+    void RecordRtccTransition(
+        string transitionName,
+        string fromAuthority,
+        string toAuthority,
+        float preMass_lbm,
+        float reconstructedMass_lbm,
+        float rawDelta_lbm,
+        float postMass_lbm,
+        float assertDelta_lbm,
+        bool assertPass)
+    {
+        rtccTransitionCount++;
+        rtccTelemetryPresent = true;
+        rtccLastTransition = transitionName;
+        rtccLastAuthorityFrom = fromAuthority;
+        rtccLastAuthorityTo = toAuthority;
+        rtccLastPreMass_lbm = preMass_lbm;
+        rtccLastReconstructedMass_lbm = reconstructedMass_lbm;
+        rtccLastRawDelta_lbm = rawDelta_lbm;
+        rtccLastPostMass_lbm = postMass_lbm;
+        rtccLastAssertDelta_lbm = assertDelta_lbm;
+        rtccLastAssertPass = assertPass;
+        rtccMaxRawDeltaAbs_lbm = Mathf.Max(rtccMaxRawDeltaAbs_lbm, Mathf.Abs(rawDelta_lbm));
+        if (!assertPass)
+            rtccAssertionFailureCount++;
+
+        EventSeverity severity = assertPass ? EventSeverity.INFO : EventSeverity.ALARM;
+        LogEvent(
+            severity,
+            $"RTCC {transitionName} [{fromAuthority}->{toAuthority}] pre={preMass_lbm:F1}lbm " +
+            $"reconstructed={reconstructedMass_lbm:F1}lbm rawDelta={rawDelta_lbm:+0.0;-0.0;0.0}lbm " +
+            $"post={postMass_lbm:F1}lbm assertDelta={assertDelta_lbm:+0.000;-0.000;0.000}lbm " +
+            $"tol={PlantConstants.RTCC_EPSILON_MASS_LBM:F1}lbm result={(assertPass ? "PASS" : "FAIL")}");
+    }
+
+    void AssertRtccPassOrThrow(string transitionName, float assertDelta_lbm)
+    {
+        float absDelta = Mathf.Abs(assertDelta_lbm);
+        if (absDelta <= PlantConstants.RTCC_EPSILON_MASS_LBM)
+            return;
+
+        throw new InvalidOperationException(
+            $"RTCC assertion failed for {transitionName}: |delta|={absDelta:F3} lbm " +
+            $"exceeds epsilon {PlantConstants.RTCC_EPSILON_MASS_LBM:F1} lbm");
+    }
+
+    void ApplySGBoundaryAuthority()
+    {
+        bool shouldIsolate = ShouldIsolateSGBoundary();
+        SGMultiNodeThermal.SetSteamIsolation(ref sgMultiNodeState, shouldIsolate);
+    }
+
+    bool ShouldIsolateSGBoundary()
+    {
+        if (T_rcs < PlantConstants.SG_NITROGEN_ISOLATION_TEMP_F)
+            return false;
+
+        // Isolate through startup pressurization, then reopen once SG reaches
+        // steam-dump control regime.
+        return sgMultiNodeState.CurrentRegime != SGThermalRegime.SteamDump;
+    }
+
+    void UpdateSGBoundaryDiagnostics(SGMultiNodeResult sgResult)
+    {
+        sgBoundaryMode = sgResult.SteamIsolated ? "ISOLATED" : "OPEN";
+        sgPressureSourceBranch = GetPressureSourceBranchLabel(sgResult.PressureSourceMode);
+        sgSteamInventory_lb = sgResult.SteamInventory_lb;
+    }
+
+    static string GetPressureSourceBranchLabel(SGPressureSourceMode mode)
+    {
+        switch (mode)
+        {
+            case SGPressureSourceMode.Floor:
+                return "floor";
+            case SGPressureSourceMode.Saturation:
+                return "P_sat";
+            default:
+                return "inventory-derived";
+        }
+    }
 
     float GetTsat(float P)
     {

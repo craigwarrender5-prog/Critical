@@ -328,6 +328,33 @@ namespace Critical.Physics
         public const float HEATUP_EXCESS_VOLUME_GAL = 30000f;
         
         /// <summary>
+        /// Fixed letdown flow during post-bubble heatup in gpm.
+        /// Per NRC HRTD 10.3: During heatup, letdown is held constant at 75 gpm.
+        /// The PI level controller adjusts charging flow (variable) against this
+        /// fixed letdown to maintain the programmed PZR level setpoint.
+        /// This is the NRC HRTD 10.2/10.3 control philosophy: constant letdown,
+        /// variable charging. Orifice lineup changes are NOT used for level control
+        /// during normal heatup — the orifices are set to pass 75 gpm at the
+        /// current pressure, and charging does the rest.
+        /// Source: NRC HRTD Section 10.3, Section 4.1
+        /// </summary>
+        public const float HEATUP_FIXED_LETDOWN_GPM = 75f;
+        
+        /// <summary>
+        /// Minimum charging flow during post-bubble heatup in gpm.
+        /// Must at least provide seal injection to running RCPs.
+        /// Source: NRC IN 93-84 — seal injection requirements
+        /// </summary>
+        public const float HEATUP_MIN_CHARGING_GPM = 20f;
+        
+        /// <summary>
+        /// Maximum charging flow during post-bubble heatup in gpm.
+        /// Limited by CCP capacity with seal injection demand.
+        /// Source: NRC HRTD Section 4.1 — CCP rated capacity
+        /// </summary>
+        public const float HEATUP_MAX_CHARGING_GPM = 130f;
+        
+        /// <summary>
         /// VCT divert setpoint (adjustable, operator-set level for LCV-112A) in %.
         /// Source: NRC HRTD Section 4.1 — proportional divert begins at this level
         /// </summary>

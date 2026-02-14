@@ -122,11 +122,15 @@ public partial class HeatupSimEngine
         
         // ================================================================
         // 1. SG SECONDARY STEAMING CHECK
-        // Determine if SG secondary is at saturation (steaming)
+        // v5.0.0 Stage 3: Use multi-node SG model pressure instead of
+        // the old lumped SGSecondaryThermal model. The multi-node model
+        // tracks regime (Subcooled/Boiling/SteamDump) and provides the
+        // correct secondary pressure from the rate-limited open-system model.
         // ================================================================
-        float sgSecondaryPressure_psia = SGSecondaryThermal.GetSecondaryPressure(T_sg_secondary);
+        // sgSecondaryPressure_psia is already set from the SGMultiNodeThermal
+        // result in StepSimulation() (Regime 1/2/3 paths).
         sgSecondaryPressure_psig = sgSecondaryPressure_psia - 14.7f;
-        sgSteaming = SGSecondaryThermal.IsSteaming(T_sg_secondary, sgSecondaryPressure_psia);
+        sgSteaming = sgMultiNodeState.CurrentRegime != SGThermalRegime.Subcooled;
         
         // Steam header pressure for steam dump controller
         steamPressure_psig = sgSecondaryPressure_psig;

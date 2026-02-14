@@ -23,6 +23,36 @@ namespace Critical.Physics
 {
     public static partial class PlantConstants
     {
+        #region Conservation / RTCC Constants (IP-0016)
+
+        /// <summary>
+        /// RTCC regime-transition mass tolerance (lbm).
+        /// IP-0016 default temporary value.
+        /// </summary>
+        public const float RTCC_EPSILON_MASS_LBM = 50f;
+
+        /// <summary>
+        /// Stage E mass conservation pass threshold (lbm).
+        /// </summary>
+        public const float STAGE_E_CONSERVATION_LBM_LIMIT = 500f;
+
+        /// <summary>
+        /// Stage E interval conservation percent threshold (%).
+        /// </summary>
+        public const float STAGE_E_INTERVAL_CONSERVATION_PCT_LIMIT = 0.05f;
+
+        /// <summary>
+        /// Runtime warning threshold for solver ledger mismatch (lbm).
+        /// </summary>
+        public const float RUNTIME_LEDGER_WARN_LBM = 10f;
+
+        /// <summary>
+        /// Runtime error threshold for solver ledger mismatch (lbm).
+        /// </summary>
+        public const float RUNTIME_LEDGER_ERROR_LBM = 100f;
+
+        #endregion
+
         #region Validation Methods
         
         /// <summary>

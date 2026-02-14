@@ -32,12 +32,13 @@
 //     - HeatupValidationVisual.TabRCPElectrical.cs    : Tab 5 — RCP / Electrical
 //     - HeatupValidationVisual.TabEventLog.cs         : Tab 6 — Event Log
 //     - HeatupValidationVisual.TabValidation.cs       : Tab 7 — Validation
+//     - HeatupValidationVisual.TabCritical.cs          : Tab 8 — Critical (v5.2.0)
 //
 //   v5.0.0 Layout (multi-tab, replacing v0.9.3 3-column):
 //     ┌──────────────────────────────────────────────────────┐
 //     │  HEADER BAR: Mode │ Phase │ Sim Time │ Time Accel    │
 //     ├──────────────────────────────────────────────────────┤
-//     │  TAB BAR: OVERVIEW│PZR│CVCS│SG/RHR│RCP│LOG│VALID    │
+//     │  TAB BAR: OV│PZR│CVCS│SG/RHR│RCP│LOG│VAL│CRIT     │
 //     ├──────────────────────────────────────────────────────┤
 //     │                                                      │
 //     │  TAB CONTENT AREA                                    │
@@ -48,6 +49,7 @@
 // GOLD STANDARD: Yes
 // v0.9.6 PERF FIX: OnGUI refresh throttle to respect refreshRate setting
 // v5.0.0: Multi-tab dashboard redesign (Ctrl+1–7 tab switching)
+// v5.2.0: Added CRITICAL tab (Tab 8, Ctrl+8) for at-a-glance validation
 // ============================================================================
 
 using UnityEngine;
@@ -112,7 +114,8 @@ public partial class HeatupValidationVisual : MonoBehaviour
         "SG/RHR",       // Tab 3: Steam Generators / RHR
         "RCP",          // Tab 4: RCP / Electrical / HZP
         "LOG",          // Tab 5: Event Log + Annunciators
-        "VALID"         // Tab 6: Validation / Debug
+        "VALID",        // Tab 6: Validation / Debug
+        "CRITICAL"      // Tab 7: Critical variables at-a-glance (v5.2.0)
     };
 
     // Graph tab selection (used within individual dashboard tabs)
@@ -139,6 +142,28 @@ public partial class HeatupValidationVisual : MonoBehaviour
 
     // Refresh throttle
     private float _lastRefreshTime;
+
+    // v0.3.0.0 Phase A (CS-0032): Cached header strings — avoid per-frame string allocations
+    private string _cachedModeStr;
+    private string _cachedPhaseStr;
+    private string _cachedSimTimeStr;
+    private string _cachedWallTimeStr;
+    private string _cachedAccelStr;
+    private Color _cachedModeColor;
+    private Color _cachedAccelColor;
+    // Cached comparison values for change detection
+    private float _cachedSimTime = -1f;
+    private float _cachedWallTime = -1f;
+    private int _cachedSpeedIndex = -1;
+    private int _cachedPlantMode = -1;
+    private string _cachedPhaseDesc;
+
+    // v0.3.0.0 Phase A (CS-0032): Frame time diagnostic — lightweight probe
+    private float _frameTimeAccum;
+    private int _frameTimeCount;
+    private float _frameTimeMax;
+    private float _lastFrameTimeDiag;
+    private const float FRAME_DIAG_INTERVAL = 5f;  // Report every 5 seconds
 
     // Cached screen dimensions for layout
     private float _sw, _sh;
@@ -224,6 +249,30 @@ public partial class HeatupValidationVisual : MonoBehaviour
 
     void Update()
     {
+        // ============================================================
+        // v0.3.0.0 Phase A (CS-0032): Frame time diagnostic probe.
+        // Logs average and max frame time every 5 seconds to Unity console.
+        // Measurement only — no behavioral change.
+        // ============================================================
+        {
+            float frameDelta = Time.unscaledDeltaTime * 1000f;  // ms
+            _frameTimeAccum += frameDelta;
+            _frameTimeCount++;
+            if (frameDelta > _frameTimeMax) _frameTimeMax = frameDelta;
+
+            float now = Time.realtimeSinceStartup;
+            if (now - _lastFrameTimeDiag >= FRAME_DIAG_INTERVAL && _frameTimeCount > 0)
+            {
+                float avg = _frameTimeAccum / _frameTimeCount;
+                Debug.Log($"[PERF] Frame time: avg={avg:F1}ms, max={_frameTimeMax:F1}ms, " +
+                    $"FPS={1000f / avg:F0}, frames={_frameTimeCount} ({FRAME_DIAG_INTERVAL:F0}s window)");
+                _frameTimeAccum = 0f;
+                _frameTimeCount = 0;
+                _frameTimeMax = 0f;
+                _lastFrameTimeDiag = now;
+            }
+        }
+
         var kb = Keyboard.current;
         if (kb == null) return;
 
@@ -250,6 +299,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
                 if (kb.digit5Key.wasPressedThisFrame) _dashboardTab = 4;  // Ctrl+5 = RCP
                 if (kb.digit6Key.wasPressedThisFrame) _dashboardTab = 5;  // Ctrl+6 = LOG
                 if (kb.digit7Key.wasPressedThisFrame) _dashboardTab = 6;  // Ctrl+7 = VALID
+                if (kb.digit8Key.wasPressedThisFrame) _dashboardTab = 7;  // Ctrl+8 = CRITICAL (v5.2.0)
             }
         }
 
@@ -291,11 +341,12 @@ public partial class HeatupValidationVisual : MonoBehaviour
     {
         if (!dashboardVisible || engine == null) return;
 
-        // v2.0.5: Actual implementation of OnGUI refresh throttle.
-        // Was documented in v0.9.6 but never coded. Only redraws at refreshRate Hz.
-        // Throttle on Layout events (which precede Repaint) — ensures we always
-        // honor Repaint when Unity issues it, but skip redundant Layout passes.
-        // Uses Time.unscaledTime so throttle works regardless of Time.timeScale.
+        // v0.3.0.0 Phase A (CS-0032): Layout-only throttle.
+        // Throttle Layout events at refreshRate Hz to reduce per-frame computation
+        // (string formatting, data reads, GUILayout calculations).
+        // Repaint is NEVER skipped — it must always draw to avoid blue-screen flicker.
+        // The header caching (DrawHeaderBar) ensures Repaint is cheap even at full
+        // frame rate: cached strings are reused, no allocations on stable values.
         if (Event.current.type == EventType.Layout)
         {
             float interval = 1f / refreshRate;
@@ -347,6 +398,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
             case 4: DrawRCPElectricalTab(contentArea);    break;
             case 5: DrawEventLogTab(contentArea);         break;
             case 6: DrawValidationTab(contentArea);       break;
+            case 7: DrawCriticalTab(contentArea);         break;  // v5.2.0
         }
     }
 
@@ -364,31 +416,62 @@ public partial class HeatupValidationVisual : MonoBehaviour
         float h = area.height - pad * 2f;
         float cellH = h;
 
-        // MODE indicator (colored)
-        Color modeColor = engine.GetModeColor();
-        string modeStr = engine.GetModeString().Replace("\n", " ");
-        DrawHeaderCell(ref x, y, 140f, cellH, modeStr, modeColor);
+        // ============================================================
+        // v0.3.0.0 Phase A (CS-0032): Update-on-change header caching.
+        // Header strings only reformat when underlying values change
+        // beyond display precision. Eliminates ~5 string allocations
+        // per OnGUI cycle for stable values.
+        // ============================================================
 
-        // Phase description
-        string phase = string.IsNullOrEmpty(engine.heatupPhaseDesc) ? "INITIALIZING" : engine.heatupPhaseDesc;
-        DrawHeaderCell(ref x, y, 260f, cellH, phase, _cNormalGreen);
+        // MODE indicator — changes with plant mode transitions
+        int currentPlantMode = engine.plantMode;
+        if (currentPlantMode != _cachedPlantMode)
+        {
+            _cachedPlantMode = currentPlantMode;
+            _cachedModeColor = engine.GetModeColor();
+            _cachedModeStr = engine.GetModeString().Replace("\n", " ");
+        }
+        DrawHeaderCell(ref x, y, 140f, cellH, _cachedModeStr ?? "---", _cachedModeColor);
 
-        // Sim time
-        string simStr = $"SIM: {FormatHours(engine.simTime)}";
-        DrawHeaderCell(ref x, y, 140f, cellH, simStr, _cTextPrimary);
+        // Phase description — changes with heatup phase transitions
+        string currentPhaseDesc = engine.heatupPhaseDesc;
+        if (currentPhaseDesc != _cachedPhaseDesc)
+        {
+            _cachedPhaseDesc = currentPhaseDesc;
+            _cachedPhaseStr = string.IsNullOrEmpty(currentPhaseDesc) ? "INITIALIZING" : currentPhaseDesc;
+        }
+        DrawHeaderCell(ref x, y, 260f, cellH, _cachedPhaseStr ?? "INITIALIZING", _cNormalGreen);
 
-        // Wall time
-        string wallStr = $"WALL: {FormatHours(engine.wallClockTime)}";
-        DrawHeaderCell(ref x, y, 140f, cellH, wallStr, _cTextPrimary);
+        // Sim time — changes every physics step, but display only needs ~1s resolution
+        float simTimeTrunc = Mathf.Floor(engine.simTime * 3600f);  // Truncate to 1 sim-second
+        if (simTimeTrunc != _cachedSimTime)
+        {
+            _cachedSimTime = simTimeTrunc;
+            _cachedSimTimeStr = $"SIM: {FormatHours(engine.simTime)}";
+        }
+        DrawHeaderCell(ref x, y, 140f, cellH, _cachedSimTimeStr ?? "SIM: 0:00:00", _cTextPrimary);
 
-        // Time acceleration
-        string speedLabel = TimeAcceleration.SpeedLabelsShort[engine.currentSpeedIndex];
-        string accelStr = $"SPEED: {speedLabel}";
-        Color accelColor = engine.isAccelerated ? _cWarningAmber : _cTextPrimary;
-        DrawHeaderCell(ref x, y, 100f, cellH, accelStr, accelColor);
+        // Wall time — changes every real second
+        float wallTimeTrunc = Mathf.Floor(engine.wallClockTime * 3600f);
+        if (wallTimeTrunc != _cachedWallTime)
+        {
+            _cachedWallTime = wallTimeTrunc;
+            _cachedWallTimeStr = $"WALL: {FormatHours(engine.wallClockTime)}";
+        }
+        DrawHeaderCell(ref x, y, 140f, cellH, _cachedWallTimeStr ?? "WALL: 0:00:00", _cTextPrimary);
+
+        // Time acceleration — changes only on hotkey press
+        if (engine.currentSpeedIndex != _cachedSpeedIndex)
+        {
+            _cachedSpeedIndex = engine.currentSpeedIndex;
+            string speedLabel = TimeAcceleration.SpeedLabelsShort[engine.currentSpeedIndex];
+            _cachedAccelStr = $"SPEED: {speedLabel}";
+            _cachedAccelColor = engine.isAccelerated ? _cWarningAmber : _cTextPrimary;
+        }
+        DrawHeaderCell(ref x, y, 100f, cellH, _cachedAccelStr ?? "SPEED: 1x", _cachedAccelColor);
 
         // v5.0.0: Active tab indicator in header (right-aligned)
-        string tabHint = $"[Ctrl+1-7] {_dashboardTabLabels[_dashboardTab]}";
+        string tabHint = $"[Ctrl+1-8] {_dashboardTabLabels[_dashboardTab]}";
         float hintW = 180f;
         Rect hintRect = new Rect(area.width - hintW - pad, area.y + pad, hintW, cellH);
         var prev = GUI.contentColor;
@@ -452,6 +535,12 @@ public partial class HeatupValidationVisual : MonoBehaviour
     /// Implemented in HeatupValidationVisual.TabValidation.cs
     /// </summary>
     partial void DrawValidationTab(Rect area);
+
+    /// <summary>
+    /// Tab 8 — Critical: At-a-glance overview of RCS, PZR, CVCS, VCT, SG.
+    /// v5.2.0: Implemented in HeatupValidationVisual.TabCritical.cs
+    /// </summary>
+    partial void DrawCriticalTab(Rect area);
 
     // ========================================================================
     // PARTIAL METHOD DECLARATIONS — Rendering components (existing partials)

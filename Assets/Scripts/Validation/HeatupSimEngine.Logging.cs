@@ -205,6 +205,9 @@ public partial class HeatupSimEngine
         
         /// <summary>Status message</summary>
         public string StatusMessage;
+        
+        /// <summary>v5.0.3: Mass source path used for this update (CANONICAL_SOLID or CANONICAL_TWO_PHASE)</summary>
+        public string AuditMassSource;
     }
     
     // Inventory audit state - persists between timesteps
@@ -284,25 +287,38 @@ public partial class HeatupSimEngine
         // ================================================================
         
         // Water density at current conditions
-        float rcsWaterDensity = WaterProperties.WaterDensity(T_rcs, pressure);  // lbm/ft³
-        float pzrWaterDensity = WaterProperties.WaterDensity(T_pzr, pressure);
-        float pzrSteamDensity = WaterProperties.SteamDensity(T_pzr, pressure);  // lbm/ft³
+        // v5.0.3: rcsWaterDensity, pzrWaterDensity, pzrSteamDensity removed —
+        // no longer needed after eliminating V×ρ recalculation in both branches.
+        // RCS/PZR masses now read directly from canonical physicsState fields.
         float vctWaterDensity = WaterProperties.WaterDensity(100f, 14.7f);  // VCT at ~100°F, atmospheric
         float brsWaterDensity = WaterProperties.WaterDensity(100f, 14.7f);  // BRS at ~100°F, atmospheric
         
-        // RCS mass — v2.0.10: State-based recalculation (fixes conservation error)
-        // Previously used flow-integrated rcsWaterMass field, which is stale during
-        // solid PZR ops (UpdateRCSInventory guarded off). Now recalculates from
-        // geometric volume × density at current T,P — matches real plant RVLIS approach.
-        float rcsLoopVolume_ft3 = PlantConstants.RCS_WATER_VOLUME - PlantConstants.PZR_TOTAL_VOLUME;
-        float rcsWaterDensity_audit = WaterProperties.WaterDensity(T_rcs, pressure);
-        inventoryAudit.RCS_Mass_lbm = rcsLoopVolume_ft3 * rcsWaterDensity_audit;
-        
-        // PZR water mass
-        inventoryAudit.PZR_Water_Mass_lbm = pzrWaterVolume * pzrWaterDensity;
-        
-        // PZR steam mass
-        inventoryAudit.PZR_Steam_Mass_lbm = pzrSteamVolume * pzrSteamDensity;
+        // v5.0.3: Regime-aware canonical mass source selection.
+        // During solid ops, PZRWaterMassSolid and TotalPrimaryMassSolid are canonical
+        // (maintained by SolidPlantPressure via surge transfer and CVCS boundary flow).
+        // After bubble formation, physicsState.PZRWaterMass/PZRSteamMass are canonical
+        // (maintained by CoupledThermo solver) and RCSWaterMass is canonical
+        // (maintained by CVCS boundary flow pre-application in all three regimes).
+        // The audit is a pure consumer of canonical state — no V×ρ recalculation.
+        if (solidPressurizer && !bubbleFormed)
+        {
+            // Solid ops: canonical fields maintained by SolidPlantPressure
+            inventoryAudit.PZR_Water_Mass_lbm = physicsState.PZRWaterMassSolid;
+            inventoryAudit.RCS_Mass_lbm = physicsState.TotalPrimaryMassSolid
+                                        - physicsState.PZRWaterMassSolid;
+            inventoryAudit.PZR_Steam_Mass_lbm = 0f;  // Solid = no steam
+            inventoryAudit.AuditMassSource = "CANONICAL_SOLID";
+        }
+        else
+        {
+            // Two-phase: canonical fields maintained by CoupledThermo solver
+            // v5.0.3: Replaces defective V×ρ recalculation that used fixed geometric
+            // volume constants, ignoring cumulative CVCS boundary flow effects.
+            inventoryAudit.RCS_Mass_lbm = physicsState.RCSWaterMass;
+            inventoryAudit.PZR_Water_Mass_lbm = physicsState.PZRWaterMass;
+            inventoryAudit.PZR_Steam_Mass_lbm = physicsState.PZRSteamMass;
+            inventoryAudit.AuditMassSource = "CANONICAL_TWO_PHASE";
+        }
         
         // VCT mass (convert gal to ft³, then multiply by density)
         float vctVolume_ft3 = vctState.Volume_gal / 7.48052f;
@@ -349,10 +365,11 @@ public partial class HeatupSimEngine
                 inventoryAudit.Cumulative_SurgeOut_gal += (-surgeFlow) * dt_min;
             
             // Makeup (from BRS distillate or external)
-            if (vctState.AutoMakeupActive || vctState.MakeupFromBRS)
+            if (vctState.MakeupFlow_gpm > 0f)
             {
-                float makeupRate = vctState.MakeupFromBRS ? brsState.ReturnFlow_gpm : 0f;
-                inventoryAudit.Cumulative_Makeup_gal += makeupRate * dt_min;
+                // External makeup only; BRS-sourced makeup is internal to tracked plant mass.
+                float makeupRateExternal = vctState.MakeupFromBRS ? 0f : vctState.MakeupFlow_gpm;
+                inventoryAudit.Cumulative_Makeup_gal += makeupRateExternal * dt_min;
             }
             
             // CBO losses
@@ -366,13 +383,9 @@ public partial class HeatupSimEngine
         
         if (!isInitialization)
         {
-            // Expected mass = initial + makeup - losses
-            // (Charging/letdown are internal transfers, not gains/losses)
-            float netExternalFlow_gal = inventoryAudit.Cumulative_Makeup_gal - inventoryAudit.Cumulative_CBOLoss_gal;
-            float netExternalFlow_ft3 = netExternalFlow_gal / 7.48052f;
-            float netExternalMass_lbm = netExternalFlow_ft3 * vctWaterDensity;  // Approximate
-            
-            inventoryAudit.Expected_Total_Mass_lbm = inventoryAudit.Initial_Total_Mass_lbm + netExternalMass_lbm;
+            // Expected mass = initial + true external boundary crossings.
+            // Reuse canonical engine accumulator so interval and step-level checks agree.
+            inventoryAudit.Expected_Total_Mass_lbm = inventoryAudit.Initial_Total_Mass_lbm + externalNetMass_lbm;
             
             // Conservation error
             inventoryAudit.Conservation_Error_lbm = Math.Abs(inventoryAudit.Total_Mass_lbm - inventoryAudit.Expected_Total_Mass_lbm);
@@ -425,6 +438,145 @@ public partial class HeatupSimEngine
     public InventoryAuditState GetInventoryAudit()
     {
         return inventoryAudit;
+    }
+    
+    // ========================================================================
+    // v5.3.0 Stage 6: PRIMARY MASS LEDGER DIAGNOSTICS
+    // ========================================================================
+    //
+    // The Primary Mass Ledger provides a second, independent mass conservation
+    // check that operates at the primary system level (RCS + PZR only).
+    // Unlike the full InventoryAudit (which tracks VCT, BRS, etc.), this
+    // checks the TotalPrimaryMass_lb canonical ledger against the sum of
+    // component masses (RCS water + PZR water + PZR steam).
+    //
+    // If the system is conserving mass correctly:
+    //   M_ledger == M_components (within numerical tolerance)
+    //   M_expected == M_ledger (both track identical boundary flows)
+    //
+    // Drift indicates a bug in the conservation logic somewhere.
+    //
+    // ========================================================================
+    
+    /// <summary>
+    /// v5.3.0 Stage 6: Update Primary Mass Ledger diagnostics.
+    /// Computes drift between canonical ledger and component sum,
+    /// sets alarm thresholds, and syncs display fields.
+    /// Called from main simulation loop.
+    /// </summary>
+    void UpdatePrimaryMassLedgerDiagnostics()
+    {
+        // Skip during solid ops — ledger and components are managed differently
+        // and drift calculation is not meaningful until bubble formation.
+        if (solidPressurizer && !bubbleFormed)
+        {
+            // During solid ops, just sync the ledger value for display
+            primaryMassLedger_lb = physicsState.TotalPrimaryMass_lb;
+            primaryMassComponents_lb = physicsState.TotalPrimaryMassSolid;  // Solid canonical
+            primaryMassDrift_lb = 0f;
+            primaryMassDrift_pct = 0f;
+            primaryMassExpected_lb = physicsState.InitialPrimaryMass_lb
+                                    + physicsState.CumulativeCVCSIn_lb
+                                    - physicsState.CumulativeCVCSOut_lb
+                                    - physicsState.CumulativeReliefMass_lb;
+            primaryMassBoundaryError_lb = Mathf.Abs(primaryMassLedger_lb - primaryMassExpected_lb);
+            primaryMassConservationOK = true;
+            primaryMassAlarm = false;
+            primaryMassStatus = "SOLID_OPS";
+            return;
+        }
+        
+        // ==============================================================
+        // Two-phase operations: Full diagnostics
+        // ==============================================================
+        
+        // 1. Ledger value (canonical, updated only by boundary flows)
+        primaryMassLedger_lb = physicsState.TotalPrimaryMass_lb;
+        
+        // 2. Component sum (what the solver computes)
+        // RCS mass is now computed as remainder (Stage 3), so this should
+        // exactly equal the ledger by construction.
+        primaryMassComponents_lb = physicsState.RCSWaterMass
+                                  + physicsState.PZRWaterMass
+                                  + physicsState.PZRSteamMass;
+        
+        // 3. Drift = Ledger - Components
+        // Should be ~0 if Stage 3 conservation-by-construction is working.
+        // Positive drift = ledger says more mass than components show
+        // Negative drift = ledger says less mass than components show
+        primaryMassDrift_lb = primaryMassLedger_lb - primaryMassComponents_lb;
+        
+        // 4. Drift as percentage of total
+        if (primaryMassComponents_lb > 1000f)  // Sanity check
+        {
+            primaryMassDrift_pct = Mathf.Abs(primaryMassDrift_lb) / primaryMassComponents_lb * 100f;
+        }
+        else
+        {
+            primaryMassDrift_pct = 0f;
+        }
+        
+        // 5. Expected mass from boundary flow integration
+        // M_expected = M_initial + sum(CVCS_in) - sum(CVCS_out) - sum(Relief)
+        // This is an independent check that both ledger and cumulative
+        // trackers are in agreement.
+        primaryMassExpected_lb = physicsState.InitialPrimaryMass_lb
+                                + physicsState.CumulativeCVCSIn_lb
+                                - physicsState.CumulativeCVCSOut_lb
+                                - physicsState.CumulativeReliefMass_lb;
+        
+        // 6. Boundary error = |Ledger - Expected|
+        // Should be ~0 if CVCS tracking is consistent with ledger updates.
+        primaryMassBoundaryError_lb = Mathf.Abs(primaryMassLedger_lb - primaryMassExpected_lb);
+        
+        // 7. Alarm thresholds
+        // Warning: >0.1% drift (indicates minor accumulation error)
+        // Alarm: >1.0% drift (indicates significant conservation bug)
+        const float WARNING_THRESHOLD_PCT = 0.1f;
+        const float ALARM_THRESHOLD_PCT = 1.0f;
+        
+        primaryMassConservationOK = (primaryMassDrift_pct <= WARNING_THRESHOLD_PCT);
+        primaryMassAlarm = (primaryMassDrift_pct > ALARM_THRESHOLD_PCT);
+        
+        // 8. Status string for display
+        if (primaryMassAlarm)
+        {
+            primaryMassStatus = $"ALARM: {primaryMassDrift_pct:F2}% ({primaryMassDrift_lb:F0} lb)";
+        }
+        else if (!primaryMassConservationOK)
+        {
+            primaryMassStatus = $"WARN: {primaryMassDrift_pct:F3}% ({primaryMassDrift_lb:F1} lb)";
+        }
+        else
+        {
+            primaryMassStatus = "OK";
+        }
+        
+        // 9. Log alarm edge — one-time event on threshold crossing
+        // Uses edge detection state variables from main HeatupSimEngine.cs partial
+        if (primaryMassAlarm && !_previousMassAlarmState)
+        {
+            LogEvent(EventSeverity.ALARM,
+                $"PRIMARY MASS CONSERVATION ALARM: drift={primaryMassDrift_lb:F1}lb ({primaryMassDrift_pct:F2}%)");
+            LogEvent(EventSeverity.INFO,
+                $"  Ledger={primaryMassLedger_lb:F0}lb | Components={primaryMassComponents_lb:F0}lb | Expected={primaryMassExpected_lb:F0}lb");
+            Debug.LogWarning($"[MASS ALARM] Conservation drift {primaryMassDrift_pct:F2}% exceeds 1.0% threshold!");
+        }
+        else if (!primaryMassConservationOK && _previousMassConservationOK)
+        {
+            // Transition from OK to WARNING
+            LogEvent(EventSeverity.ALERT,
+                $"PRIMARY MASS DRIFT WARNING: {primaryMassDrift_lb:F1}lb ({primaryMassDrift_pct:F2}%)");
+        }
+        else if (primaryMassConservationOK && !_previousMassConservationOK && !_previousMassAlarmState)
+        {
+            // Recovery from WARNING to OK
+            LogEvent(EventSeverity.INFO,
+                $"PRIMARY MASS DRIFT CLEARED: now {primaryMassDrift_pct:F3}%");
+        }
+        
+        _previousMassConservationOK = primaryMassConservationOK;
+        _previousMassAlarmState = primaryMassAlarm;
     }
     
     /// <summary>
@@ -499,6 +651,192 @@ public partial class HeatupSimEngine
         eventLog.Add(new EventLogEntry(simTime, severity, message));
         if (eventLog.Count > MAX_EVENT_LOG)
             eventLog.RemoveAt(0);
+    }
+    
+    // =========================================================================
+    // v5.4.0 Stage 0: MASS CHECKPOINT DIAGNOSTIC LOGGING
+    // These methods provide detailed mass state snapshots at key points.
+    // Controlled by enableMassDiagnostics flag and diagSampleIntervalFrames.
+    // =========================================================================
+    
+    /// <summary>
+    /// v5.4.0 Stage 0: Log detailed mass state at a checkpoint.
+    /// Only emits when enableMassDiagnostics is true.
+    /// </summary>
+    /// <param name="checkpointName">Identifier for this checkpoint (e.g., "RCP_START", "BUBBLE_FORM")</param>
+    void LogMassCheckpoint(string checkpointName)
+    {
+        if (!enableMassDiagnostics) return;
+        
+        float componentSum = physicsState.RCSWaterMass + physicsState.PZRWaterMass + physicsState.PZRSteamMass;
+        float ledgerDelta = physicsState.TotalPrimaryMass_lb - componentSum;
+        float driftPct = (componentSum > 1000f) ? (ledgerDelta / componentSum * 100f) : 0f;
+        
+        Debug.Log($"[MASS_CHKPT] {checkpointName} @ T+{simTime:F4}hr | " +
+                  $"Ledger={physicsState.TotalPrimaryMass_lb:F1}lb | " +
+                  $"Components={componentSum:F1}lb | " +
+                  $"Delta={ledgerDelta:F2}lb ({driftPct:F4}%) | " +
+                  $"RCS={physicsState.RCSWaterMass:F1} PZR_w={physicsState.PZRWaterMass:F1} PZR_s={physicsState.PZRSteamMass:F1}");
+    }
+    
+    /// <summary>
+    /// v5.4.0 Stage 0: Log extended mass state including surge flow tracking.
+    /// Only emits when enableMassDiagnostics is true.
+    /// </summary>
+    /// <param name="checkpointName">Identifier for this checkpoint</param>
+    /// <param name="regime">Current physics regime (1=isolated, 2=blended, 3=coupled)</param>
+    void LogMassCheckpointExtended(string checkpointName, int regime)
+    {
+        if (!enableMassDiagnostics) return;
+        
+        float componentSum = physicsState.RCSWaterMass + physicsState.PZRWaterMass + physicsState.PZRSteamMass;
+        float ledgerDelta = physicsState.TotalPrimaryMass_lb - componentSum;
+        float driftPct = (componentSum > 1000f) ? (ledgerDelta / componentSum * 100f) : 0f;
+        
+        // Calculate expected from boundary integration
+        float expectedMass = physicsState.InitialPrimaryMass_lb
+                           + physicsState.CumulativeCVCSIn_lb
+                           - physicsState.CumulativeCVCSOut_lb
+                           - physicsState.CumulativeReliefMass_lb;
+        float boundaryError = physicsState.TotalPrimaryMass_lb - expectedMass;
+        
+        Debug.Log($"[MASS_EXT] {checkpointName} @ T+{simTime:F4}hr Regime={regime} | " +
+                  $"Ledger={physicsState.TotalPrimaryMass_lb:F1}lb | Components={componentSum:F1}lb | " +
+                  $"Drift={ledgerDelta:F2}lb ({driftPct:F4}%)");
+        Debug.Log($"[MASS_EXT]   RCS={physicsState.RCSWaterMass:F1} PZR_w={physicsState.PZRWaterMass:F1} " +
+                  $"PZR_s={physicsState.PZRSteamMass:F1} | PZR_lvl={pzrLevel:F1}%");
+        Debug.Log($"[MASS_EXT]   Expected={expectedMass:F1}lb | BoundaryErr={boundaryError:F2}lb | " +
+                  $"CVCS_in={physicsState.CumulativeCVCSIn_lb:F1} CVCS_out={physicsState.CumulativeCVCSOut_lb:F1} " +
+                  $"Relief={physicsState.CumulativeReliefMass_lb:F1}");
+        Debug.Log($"[MASS_EXT]   Surge: Rate={physicsState.SurgeFlowRate_lbps:F3}lb/s " +
+                  $"CumIn={physicsState.CumulativeSurgeIn_lb:F1} CumOut={physicsState.CumulativeSurgeOut_lb:F1} " +
+                  $"Net={physicsState.NetCumulativeSurge_lb:F1}lb");
+    }
+    
+    /// <summary>
+    /// v5.4.0 Stage 0: Log RCP transition event with surrounding mass state.
+    /// Called when RCP count changes. Logs 10 frames before and after transition.
+    /// </summary>
+    /// <param name="oldCount">RCP count before change</param>
+    /// <param name="newCount">RCP count after change</param>
+    /// <param name="isPreTransition">True if this is logged before the physics step</param>
+    void LogRCPTransition(int oldCount, int newCount, bool isPreTransition)
+    {
+        if (!enableMassDiagnostics) return;
+        
+        string phase = isPreTransition ? "PRE" : "POST";
+        
+        float componentSum = physicsState.RCSWaterMass + physicsState.PZRWaterMass + physicsState.PZRSteamMass;
+        float ledgerDelta = physicsState.TotalPrimaryMass_lb - componentSum;
+        
+        Debug.Log($"[RCP_TRANS] {phase} {oldCount}->{newCount} @ T+{simTime:F4}hr | " +
+                  $"Ledger={physicsState.TotalPrimaryMass_lb:F1}lb | Components={componentSum:F1}lb | " +
+                  $"Delta={ledgerDelta:F2}lb | PZR_lvl={pzrLevel:F2}% | P={pressure:F1}psia");
+    }
+    
+    /// <summary>
+    /// v5.4.0 Stage 4: INTENSIVE RCP transition logging for spike diagnosis.
+    /// Captures detailed state BEFORE and AFTER each RCP count change.
+    /// This includes all variables that could contribute to level spikes:
+    ///   - PZR water/steam volumes and masses
+    ///   - RCS mass and density
+    ///   - Temperature and pressure
+    ///   - Total mass ledger and component sum
+    ///   - Regime and coupling factor
+    /// </summary>
+    /// <param name="phase">"PRE" or "POST" indicating timing relative to RCP change</param>
+    /// <param name="oldCount">RCP count before change</param>
+    /// <param name="newCount">RCP count after change</param>
+    void LogRCPTransitionIntensive(string phase, int oldCount, int newCount)
+    {
+        // Compute derived values for diagnostic output
+        float componentSum = physicsState.RCSWaterMass + physicsState.PZRWaterMass + physicsState.PZRSteamMass;
+        float ledgerDelta = physicsState.TotalPrimaryMass_lb - componentSum;
+        float rho_rcs = WaterProperties.WaterDensity(T_rcs, pressure);
+        float tSat = WaterProperties.SaturationTemperature(pressure);
+        float rho_pzr_water = WaterProperties.WaterDensity(tSat, pressure);
+        float rho_pzr_steam = WaterProperties.SaturatedSteamDensity(pressure);
+        
+        // Determine current regime
+        float alpha = rcpContribution.TotalFlowFraction;
+        int regime = (rcpCount == 0 || alpha < 0.001f) ? 1 :
+                     (!rcpContribution.AllFullyRunning) ? 2 : 3;
+        
+        // Log header
+        Debug.Log($"[RCP_SPIKE_DIAG] ========== {phase} RCP TRANSITION {oldCount}->{newCount} @ T+{simTime:F4}hr ==========");
+        
+        // Line 1: Level and volumes (PRIMARY DIAGNOSTIC for spike)
+        Debug.Log($"[RCP_SPIKE_DIAG] {phase} | LEVEL: PZR_lvl={pzrLevel:F3}% | " +
+                  $"PZR_wVol={pzrWaterVolume:F3}ft3 PZR_sVol={pzrSteamVolume:F3}ft3 PZR_total={PlantConstants.PZR_TOTAL_VOLUME:F1}ft3");
+        
+        // Line 2: Masses
+        Debug.Log($"[RCP_SPIKE_DIAG] {phase} | MASS: Total_ledger={physicsState.TotalPrimaryMass_lb:F1}lb | " +
+                  $"RCS={physicsState.RCSWaterMass:F1}lb PZR_w={physicsState.PZRWaterMass:F1}lb PZR_s={physicsState.PZRSteamMass:F1}lb | " +
+                  $"Sum={componentSum:F1}lb Delta={ledgerDelta:F2}lb");
+        
+        // Line 3: Densities (key for V×ρ calculations)
+        Debug.Log($"[RCP_SPIKE_DIAG] {phase} | DENSITY: rho_RCS={rho_rcs:F2}lb/ft3 | " +
+                  $"rho_PZR_water={rho_pzr_water:F2}lb/ft3 rho_PZR_steam={rho_pzr_steam:F4}lb/ft3");
+        
+        // Line 4: Thermodynamic state
+        Debug.Log($"[RCP_SPIKE_DIAG] {phase} | THERMO: P={pressure:F1}psia T_rcs={T_rcs:F1}F T_pzr={T_pzr:F1}F T_sat={tSat:F1}F | " +
+                  $"Subcool={subcooling:F1}F");
+        
+        // Line 5: Regime and coupling
+        Debug.Log($"[RCP_SPIKE_DIAG] {phase} | REGIME: {regime} alpha={alpha:F4} | " +
+                  $"RCPs_running={rcpCount} effHeat={effectiveRCPHeat:F2}MW | " +
+                  $"AllFullyRunning={rcpContribution.AllFullyRunning}");
+        
+        // Line 6: PZR physics state (from physicsState struct)
+        float implied_pzr_vol = (physicsState.PZRWaterMass > 0f && rho_pzr_water > 0.1f) 
+                                 ? (physicsState.PZRWaterMass / rho_pzr_water) : 0f;
+        Debug.Log($"[RCP_SPIKE_DIAG] {phase} | PZR_CHECK: mass-implied_vol={implied_pzr_vol:F3}ft3 vs actual_vol={pzrWaterVolume:F3}ft3 | " +
+                  $"delta={(implied_pzr_vol - pzrWaterVolume):F4}ft3");
+        
+        // Line 7: Surge flow and CVCS state
+        Debug.Log($"[RCP_SPIKE_DIAG] {phase} | FLOWS: surge={surgeFlow:F2}gpm | " +
+                  $"chg={chargingFlow:F1}gpm ld={letdownFlow:F1}gpm net={(chargingFlow - letdownFlow):F1}gpm");
+    }
+    
+    /// <summary>
+    /// v5.4.0 Stage 0: Log periodic mass diagnostic sample.
+    /// Called every diagSampleIntervalFrames when diagnostics enabled.
+    /// Returns true if a sample was logged this frame.
+    /// </summary>
+    bool TryLogPeriodicMassDiagnostic(int regime)
+    {
+        if (!enableMassDiagnostics) return false;
+        
+        _diagFrameCounter++;
+        if (_diagFrameCounter < diagSampleIntervalFrames) return false;
+        
+        _diagFrameCounter = 0;
+        LogMassCheckpointExtended("PERIODIC", regime);
+        return true;
+    }
+    
+    /// <summary>
+    /// v5.4.0 Stage 0: Update surge flow tracking in physicsState.
+    /// Called each timestep to accumulate surge flow statistics.
+    /// This is diagnostic only — does not modify physics behavior.
+    /// </summary>
+    /// <param name="surgeFlow_gpm">Current surge flow in gpm (positive = into PZR)</param>
+    /// <param name="dt_hr">Timestep in hours</param>
+    void UpdateSurgeFlowTracking(float surgeFlow_gpm, float dt_hr)
+    {
+        // Convert gpm to lb/s for instantaneous rate
+        float dt_sec = dt_hr * 3600f;
+        float rho = WaterProperties.WaterDensity(T_pzr, pressure);
+        float surgeFlowRate_lbps = surgeFlow_gpm * PlantConstants.GPM_TO_FT3_SEC * rho;
+        
+        physicsState.SurgeFlowRate_lbps = surgeFlowRate_lbps;
+        
+        // Accumulate cumulative flows
+        float massThisStep = surgeFlowRate_lbps * dt_sec;
+        if (massThisStep > 0f)
+            physicsState.CumulativeSurgeIn_lb += massThisStep;
+        else
+            physicsState.CumulativeSurgeOut_lb += (-massThisStep);
     }
 
     // ========================================================================
@@ -696,7 +1034,10 @@ public partial class HeatupSimEngine
         if (solidPressurizer)
         {
             sb.AppendLine($"  Solid P Setpoint: {solidPlantPressureSetpoint,10:F1} psia");
-            sb.AppendLine($"  Solid P Error:    {solidPlantPressureError,10:F1} psi");
+            sb.AppendLine($"  Solid P Error:    {pressure - solidPlantPressureSetpoint,10:F1} psi");
+            sb.AppendLine($"  Solid P Filtered: {solidPlantState.PressureFiltered,10:F1} psia (controller input)");
+            sb.AppendLine($"  Control Mode:     {solidPlantState.ControlMode ?? "N/A",10}");
+            sb.AppendLine($"  NetCmd/NetEff:    {solidPlantState.LetdownAdjustCmd,+7:F2} / {solidPlantState.LetdownAdjustEff:F2} gpm");
             sb.AppendLine($"  Solid P In Band:  {(solidPlantPressureInBand ? "YES" : "NO"),10}");
         }
         sb.AppendLine($"  Bubble Phase:     {bubblePhase,10}");
@@ -778,7 +1119,7 @@ public partial class HeatupSimEngine
         float currentHeatLoss = HeatTransfer.InsulationHeatLoss_MW(T_rcs);
         sb.AppendLine($"    Heat Losses:      {currentHeatLoss,10:F2} MW (temp dependent)");
         sb.AppendLine($"    SG Secondary Loss: {sgHeatTransfer_MW,10:F2} MW");  // v0.8.0 — Heat sink to SG secondary
-        sb.AppendLine($"    Net Heat Input:   {Mathf.Max(0, rcpHeat + pzrHeaterPower - currentHeatLoss - sgHeatTransfer_MW),10:F2} MW");
+        sb.AppendLine($"    Net Plant Heat:   {netPlantHeat_MW,10:F2} MW");
         sb.AppendLine();
         sb.AppendLine("  ELECTRICAL:");
         sb.AppendLine($"    RCP Power:        {rcpCount * 6f,10:F1} MW");
@@ -803,8 +1144,20 @@ public partial class HeatupSimEngine
         sb.AppendLine($"    SG Max Superheat:  {sgMaxSuperheat_F,10:F1} °F");
         sb.AppendLine($"    Boiling Intensity: {sgBoilingIntensity,10:F3} (0=subcooled, 1=full boil)");
         sb.AppendLine($"    N₂ Blanket:       {(sgNitrogenIsolated ? "ISOLATED" : "BLANKETED"),10}");
+        sb.AppendLine($"    SG Boundary Mode: {sgBoundaryMode,10}");
+        sb.AppendLine($"    Pressure Source:  {sgPressureSourceBranch,10}");
+        sb.AppendLine($"    SteamInventory:   {sgSteamInventory_lb,10:F1} lb");
         sb.AppendLine($"    Boiling Active:   {(sgBoilingActive ? "YES" : "NO"),10}");
         sb.AppendLine($"    Circulation Frac: {sgCirculationFraction,10:F3} [DEPRECATED]");
+        // v5.0.0 Stage 4: SG Draining & Level
+        string drainStatus = sgDrainingActive ? $"DRAINING {sgDrainingRate_gpm:F0} gpm/SG" :
+                             sgDrainingComplete ? "COMPLETE" : "PRE-DRAIN";
+        sb.AppendLine($"    Draining Status:  {drainStatus,10}");
+        sb.AppendLine($"    Mass Drained:     {sgTotalMassDrained_lb,10:F0} lb");
+        sb.AppendLine($"    Secondary Mass:   {sgSecondaryMass_lb,10:F0} lb (of {PlantConstants.SG_SECONDARY_WATER_PER_SG_LB * PlantConstants.SG_COUNT:F0} initial)");
+        sb.AppendLine($"    Wide Range Level: {sgWideRangeLevel_pct,10:F1} %");
+        sb.AppendLine($"    Narrow Range Lvl: {sgNarrowRangeLevel_pct,10:F1} %");
+        sb.AppendLine($"    Steam Produced:   {sgMultiNodeState.TotalSteamProduced_lb,10:F0} lb (cumulative boiloff)");
         sb.AppendLine($"    Node Temps:       {SGMultiNodeThermal.GetDiagnosticString(sgMultiNodeState, T_rcs)}");
         sb.AppendLine();
         sb.AppendLine("  MASS INVENTORY:");
@@ -812,6 +1165,20 @@ public partial class HeatupSimEngine
         float pzrWaterDensity = WaterProperties.WaterDensity(T_pzr, pressure);
         sb.AppendLine($"    PZR Water Mass:   {pzrWaterVolume * pzrWaterDensity,10:F0} lb");
         sb.AppendLine();
+        
+        // v5.0.2: Solid-ops mass conservation forensics
+        if (solidPressurizer && !bubbleFormed)
+        {
+            sb.AppendLine("  v5.0.2 MASS CONSERVATION (Solid Ops):");
+            sb.AppendLine($"    TotalPrimaryMass: {physicsState.TotalPrimaryMassSolid,10:F0} lb (boundary-only)");
+            sb.AppendLine($"    PZR Mass (cons.): {physicsState.PZRWaterMassSolid,10:F0} lb (surge-conserved)");
+            sb.AppendLine($"    Loops (derived):  {physicsState.TotalPrimaryMassSolid - physicsState.PZRWaterMassSolid,10:F0} lb (Total - PZR)");
+            sb.AppendLine($"    PZR Density:      {solidPlantState.PzrDensity,10:F2} lbm/ft\u00b3");
+            sb.AppendLine($"    PZR Vol Implied:  {solidPlantState.PzrVolumeImplied,10:F1} ft\u00b3");
+            sb.AppendLine($"    PZR Mass Rate:    {solidPlantState.PzrMassFlowRate,10:F1} lbm/hr");
+            sb.AppendLine($"    Surge Transfer:   {solidPlantState.SurgeMassTransfer_lb,10:F3} lb (this step)");
+            sb.AppendLine();
+        }
         sb.AppendLine("  RVLIS (Reactor Vessel Level Indication System):");
         sb.AppendLine($"    Dynamic Range:    {rvlisDynamic,10:F1} % {(rvlisDynamicValid ? "(VALID - RCPs ON)" : "(INVALID - RCPs OFF)")}");
         sb.AppendLine($"    Full Range:       {rvlisFull,10:F1} % {(rvlisFullValid ? "(VALID - RCPs OFF)" : "(INVALID - RCPs ON)")}");
@@ -826,7 +1193,14 @@ public partial class HeatupSimEngine
         sb.AppendLine($"    Subcooling >=30F: {(subcooling >= 30f ? "PASS" : "FAIL")}");
         sb.AppendLine($"    RCS Rate <=50F/hr:{(Mathf.Abs(rcsHeatRate) <= MAX_RATE ? "PASS" : "FAIL")}");
         sb.AppendLine($"    VCT Level Normal: {(VCTPhysics.IsLevelNormal(vctState) ? "PASS" : "FAIL")}");
-        sb.AppendLine($"    Mass Conservation:{(massConservationError < 10f ? "PASS" : "FAIL")}");
+        // v5.4.1 Audit Fix: Use system-wide mass-based conservation check (Fix B)
+        // instead of VCT gallon cross-check which is subject to numerical drift.
+        // massError_lbm reads from corrected canonical physicsState fields.
+        sb.AppendLine($"    Mass Conservation:{(massError_lbm <= PlantConstants.STAGE_E_CONSERVATION_LBM_LIMIT ? "PASS" : "FAIL")} ({massError_lbm:F0} lbm)");
+        bool intervalMassPass = inventoryAudit.Conservation_Error_lbm <= PlantConstants.STAGE_E_CONSERVATION_LBM_LIMIT
+                             && inventoryAudit.Conservation_Error_pct <= PlantConstants.STAGE_E_INTERVAL_CONSERVATION_PCT_LIMIT;
+        sb.AppendLine($"    Interval Conservation:{(intervalMassPass ? "PASS" : "FAIL")} ({inventoryAudit.Conservation_Error_lbm:F1} lbm, {inventoryAudit.Conservation_Error_pct:F3}%)");
+        sb.AppendLine($"    RTCC Telemetry:   {(rtccTelemetryPresent ? "PRESENT" : "MISSING")} (count={rtccTransitionCount}, failures={rtccAssertionFailureCount})");
         sb.AppendLine();
         
         // v0.9.6: Enhanced validation section for PZR level and BRS fixes
@@ -844,7 +1218,15 @@ public partial class HeatupSimEngine
         float pressure_psig_v44 = pressure - PlantConstants.PSIG_TO_PSIA;
         sb.AppendLine("  v4.4.0 PRESSURE/LEVEL CONTROL VALIDATION:");
         sb.AppendLine($"    PZR Level within \u00b110%:  {(pzrLevelError_v44 <= 10f ? "PASS" : "FAIL")} (level={pzrLevel:F1}%, SP={pzrLevelSetpoint_v44:F1}%, err={pzrLevelError_v44:F1}%)");
-        sb.AppendLine($"    P Rate <200 psi/hr:   {(Math.Abs(pressureRate) < 200f ? "PASS" : "FAIL")} ({pressureRate:F1} psi/hr)");
+        if (solidPlantState.ControlMode == "HEATER_PRESSURIZE")
+        {
+            float dpSP = Math.Abs(pressure - solidPlantState.PressureSetpoint);
+            sb.AppendLine($"    P Rate (HTR):         HTR_PRESS ({pressureRate:F1} psi/hr, dist_SP={dpSP:F1} psi)");
+        }
+        else
+        {
+            sb.AppendLine($"    P Rate <200 psi/hr:   {(Math.Abs(pressureRate) < 200f ? "PASS" : "FAIL")} ({pressureRate:F1} psi/hr)");
+        }
         sb.AppendLine($"    Heater Mode at PID:   {(currentHeaterMode == HeaterMode.AUTOMATIC_PID || pressure < PlantConstants.HEATER_MODE_TRANSITION_PRESSURE_PSIA ? "PASS" : "FAIL")} (mode={currentHeaterMode})");
         sb.AppendLine($"    Spray if P>2275 psia: {(pressure <= 2275f || sprayActive ? "PASS" : "FAIL")} (P={pressure:F0}, spray={sprayActive})");
         sb.AppendLine();
@@ -858,6 +1240,7 @@ public partial class HeatupSimEngine
         sb.AppendLine($"    BRS Mass:           {inventoryAudit.BRS_Mass_lbm,10:F0} lbm");
         sb.AppendLine($"    ------------------------------------");
         sb.AppendLine($"    TOTAL MASS:         {inventoryAudit.Total_Mass_lbm,10:F0} lbm");
+        sb.AppendLine($"    Mass Source:        {inventoryAudit.AuditMassSource}");  // v5.0.3
         sb.AppendLine($"    Initial Mass:       {inventoryAudit.Initial_Total_Mass_lbm,10:F0} lbm");
         sb.AppendLine($"    Expected Mass:      {inventoryAudit.Expected_Total_Mass_lbm,10:F0} lbm");
         sb.AppendLine();
@@ -876,6 +1259,20 @@ public partial class HeatupSimEngine
         sb.AppendLine($"      Error (percent):  {inventoryAudit.Conservation_Error_pct,10:F3} %");
         sb.AppendLine($"      Status:           {inventoryAudit.StatusMessage}");
         sb.AppendLine($"      Alarm:            {(inventoryAudit.Conservation_Alarm ? "YES - INVESTIGATE" : "NO")}");
+        sb.AppendLine($"      Plant External In:{plantExternalIn_gal,10:F1} gal");
+        sb.AppendLine($"      Plant External Out:{plantExternalOut_gal,9:F1} gal");
+        sb.AppendLine($"      Plant External Net:{plantExternalNet_gal,9:F1} gal");
+        sb.AppendLine();
+        sb.AppendLine("    RTCC LAST TRANSITION:");
+        sb.AppendLine($"      Name:             {rtccLastTransition}");
+        sb.AppendLine($"      Authority:        {rtccLastAuthorityFrom} -> {rtccLastAuthorityTo}");
+        sb.AppendLine($"      Pre Mass:         {rtccLastPreMass_lbm,10:F1} lbm");
+        sb.AppendLine($"      Reconstructed:    {rtccLastReconstructedMass_lbm,10:F1} lbm");
+        sb.AppendLine($"      Raw Delta:        {rtccLastRawDelta_lbm,10:F3} lbm");
+        sb.AppendLine($"      Post Mass:        {rtccLastPostMass_lbm,10:F1} lbm");
+        sb.AppendLine($"      Assert Delta:     {rtccLastAssertDelta_lbm,10:F3} lbm");
+        sb.AppendLine($"      Epsilon:          {PlantConstants.RTCC_EPSILON_MASS_LBM,10:F1} lbm");
+        sb.AppendLine($"      Result:           {(rtccLastAssertPass ? "PASS" : "FAIL")}");
         sb.AppendLine();
         sb.AppendLine(new string('=', 70));
 
@@ -907,6 +1304,9 @@ public partial class HeatupSimEngine
         sb.AppendLine($"  Subcooling ≥30°F: {(subcooling >= 30f ? "PASS" : "FAIL")}");
         sb.AppendLine($"  Rate ≤50°F/hr: {(heatupRate <= MAX_RATE + 5f ? "PASS" : "FAIL")}");
         sb.AppendLine($"  Temp target: {(T_avg >= targetTemperature - 10f ? "PASS" : "FAIL")}");
+        sb.AppendLine($"  Mass conservation ≤{PlantConstants.STAGE_E_CONSERVATION_LBM_LIMIT:F0} lbm: {(massError_lbm <= PlantConstants.STAGE_E_CONSERVATION_LBM_LIMIT ? "PASS" : "FAIL")} ({massError_lbm:F1} lbm)");
+        sb.AppendLine($"  RTCC telemetry present: {(rtccTelemetryPresent ? "PASS" : "FAIL")}");
+        sb.AppendLine($"  RTCC assertion failures: {(rtccAssertionFailureCount == 0 ? "PASS" : "FAIL")} ({rtccAssertionFailureCount})");
         sb.AppendLine();
         
         // v4.4.0: PZR Pressure/Level Control Final Validation
@@ -929,6 +1329,9 @@ public partial class HeatupSimEngine
         sb.AppendLine($"  Expected Total Mass:  {inventoryAudit.Expected_Total_Mass_lbm:F0} lbm");
         sb.AppendLine($"  Conservation Error:   {inventoryAudit.Conservation_Error_lbm:F1} lbm ({inventoryAudit.Conservation_Error_pct:F3}%)");
         sb.AppendLine($"  Conservation Status:  {(inventoryAudit.Conservation_Alarm ? "ALARM" : "OK")}");
+        sb.AppendLine($"  Plant External In:    {plantExternalIn_gal:F1} gal");
+        sb.AppendLine($"  Plant External Out:   {plantExternalOut_gal:F1} gal");
+        sb.AppendLine($"  Plant External Net:   {plantExternalNet_gal:F1} gal");
         sb.AppendLine();
         sb.AppendLine("  Cumulative Flows:");
         sb.AppendLine($"    Total Charging:     {inventoryAudit.Cumulative_Charging_gal:F0} gal");
@@ -946,6 +1349,35 @@ public partial class HeatupSimEngine
         sb.AppendLine($"    PZR (steam):        {inventoryAudit.PZR_Steam_Mass_lbm:F0} lbm");
         sb.AppendLine($"    VCT:                {inventoryAudit.VCT_Mass_lbm:F0} lbm");
         sb.AppendLine($"    BRS:                {inventoryAudit.BRS_Mass_lbm:F0} lbm");
+        sb.AppendLine();
+        
+        // v5.0.0 Stage 4: SG Secondary Side Summary
+        float sgInitialMass = PlantConstants.SG_SECONDARY_WATER_PER_SG_LB * PlantConstants.SG_COUNT;
+        sb.AppendLine("SG SECONDARY SIDE SUMMARY (v5.0.0):");
+        sb.AppendLine($"  Initial Mass:         {sgInitialMass:F0} lb (wet layup, 4 SGs)");
+        sb.AppendLine($"  Final Mass:           {sgSecondaryMass_lb:F0} lb");
+        sb.AppendLine($"  Mass Drained:         {sgTotalMassDrained_lb:F0} lb");
+        sb.AppendLine($"  Steam Produced:       {sgMultiNodeState.TotalSteamProduced_lb:F0} lb");
+        sb.AppendLine($"  Draining Status:      {(sgDrainingComplete ? "COMPLETE" : sgDrainingActive ? "IN PROGRESS" : "PRE-DRAIN")}");
+        sb.AppendLine($"  Wide Range Level:     {sgWideRangeLevel_pct:F1}%");
+        sb.AppendLine($"  Narrow Range Level:   {sgNarrowRangeLevel_pct:F1}%");
+        sb.AppendLine($"  SG Regime:            {sgMultiNodeState.CurrentRegime}");
+        sb.AppendLine($"  Secondary Pressure:   {sgSecondaryPressure_psia:F1} psia");
+        sb.AppendLine($"  SG Boundary Mode:     {sgBoundaryMode}");
+        sb.AppendLine($"  Pressure Source:      {sgPressureSourceBranch}");
+        sb.AppendLine($"  Steam Inventory:      {sgSteamInventory_lb:F1} lb");
+        sb.AppendLine($"  Net Plant Heat:       {netPlantHeat_MW:F2} MW");
+        sb.AppendLine();
+        sb.AppendLine("RTCC SUMMARY (IP-0016):");
+        sb.AppendLine($"  Telemetry Present:    {(rtccTelemetryPresent ? "YES" : "NO")}");
+        sb.AppendLine($"  Transition Count:     {rtccTransitionCount}");
+        sb.AppendLine($"  Assertion Failures:   {rtccAssertionFailureCount}");
+        sb.AppendLine($"  Last Transition:      {rtccLastTransition}");
+        sb.AppendLine($"  Last Authority Path:  {rtccLastAuthorityFrom} -> {rtccLastAuthorityTo}");
+        sb.AppendLine($"  Last Raw Delta:       {rtccLastRawDelta_lbm:F3} lbm");
+        sb.AppendLine($"  Last Assert Delta:    {rtccLastAssertDelta_lbm:F3} lbm");
+        sb.AppendLine($"  Max Raw |Delta|:      {rtccMaxRawDeltaAbs_lbm:F3} lbm");
+        sb.AppendLine($"  Epsilon:              {PlantConstants.RTCC_EPSILON_MASS_LBM:F1} lbm");
         sb.AppendLine();
         
         File.WriteAllText(file, sb.ToString());

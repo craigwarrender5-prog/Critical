@@ -1,0 +1,184 @@
+# Heatup Master Issue Registry — Consolidated for Claude
+
+**Scope:** Heatup validation log review from 0.00 hr through last run (16.50 hr snapshot provided by Craig)
+**Purpose:** One authoritative list of issues found across all batches, including SG pressurization blocker.
+
+---
+
+## A) Primary System / Pressurizer / Mass-Coupling Issues
+
+### ISSUE-LOG-001 — Solid-regime pressure decoupled from mass change
+
+**Severity:** High
+**Symptom:** RCS pressure pinned (~365 psia) while CVCS net remains non-zero (often negative) in “solid pressurizer” regime.
+**Evidence example:** 5.00 hr shows 365.0 psia flat while heating continues. 
+**Impact:** Invalid wet-layover solid behavior; masks true compressibility/thermal expansion dynamics.
+**Fix direction:** Ensure solid-regime pressure responds to mass + thermal expansion (ledger authority + compressibility coupling).
+
+---
+
+### ISSUE-LOG-002 — Early pressurization response mismatched with controller actuation
+
+**Severity:** Medium
+**Symptom:** Large pressure changes vs apparently limited effective flow/actuation early in run.
+**Impact:** Suggests scaling/sign/actuator clamp mismatch.
+
+---
+
+### ISSUE-LOG-003 — Pressurizer “100% level, zero steam” model may be clamping dynamics
+
+**Severity:** Medium
+**Symptom:** Extended periods with PZR at 100% with no steam volume while heaters run.
+**Impact:** Can hide expansion/volume bookkeeping errors; affects transition realism.
+
+---
+
+### ISSUE-LOG-004 — Surge flow trend rises while pressure remains flat
+
+**Severity:** Medium
+**Symptom:** Surge increases across solid-hold period even while pressure is pinned.
+**Impact:** Indicates compensating mechanism (controller/volume bookkeeping) rather than physical response.
+
+---
+
+## B) Bubble Formation / Two-Phase State Machine Issues (Primary)
+
+### ISSUE-LOG-007 — Bubble detection threshold aligns with saturation (validation item)
+
+**Severity:** Low-positive
+**Symptom:** Bubble detection occurs near Tsat crossing (good), but must remain robust across modes.
+
+---
+
+### ISSUE-LOG-008 — Post-bubble pressure escalation magnitude questionable
+
+**Severity:** Medium-High
+**Symptom:** Rapid pressure rise after bubble onset despite strongly negative net CVCS at times.
+**Impact:** Suggests two-phase energy balance / compressible volume error.
+
+---
+
+### ISSUE-LOG-009 — Bubble phase labeling inconsistent with observed thermodynamics
+
+**Severity:** Medium
+**Symptom:** Phase reported as “DRAIN” while pressure and steam behavior indicate pressurization/boiling transition behavior.
+**Impact:** Misleading telemetry; can hide wrong control branch.
+
+---
+
+### ISSUE-LOG-011 — Bubble flag/state timing inconsistent with saturation + pressure rise
+
+**Severity:** High
+**Symptom:** Conditions show Tsat behavior and rapid pressurization while “Bubble Formed = NO” persists for some intervals.
+**Impact:** Wrong state gating → wrong control logic path.
+
+---
+
+### ISSUE-LOG-012 — Very high pressure ramp while RCS heat rate near zero
+
+**Severity:** Medium-High
+**Symptom:** Pressure climbs strongly while RCS temperature barely moves in certain window.
+**Impact:** Points to energy accounting / compressibility / state coupling defect.
+
+---
+
+### ISSUE-LOG-013 — Nonlinear / inconsistent sensitivity of pressure to CVCS sign changes
+
+**Severity:** Medium
+**Symptom:** CVCS net flips sign, pressure response doesn’t scale plausibly.
+**Impact:** Mass-pressure coupling is still weak/overridden in two-phase.
+
+---
+
+## C) RCP / Thermal Inertia / Regime Transition Issues
+
+### ISSUE-LOG-014 — RCS heat-rate escalation after RCP start may be numerically aggressive
+
+**Severity:** Medium
+**Symptom:** RCS heatup rate jumps dramatically as RCP heat comes online.
+**Evidence example:** 14.25 hr shows high RCS heat rate with RCP heat ~18.9 MW. 
+**Impact:** Could indicate missing thermal mass, wrong Cp, or applying pump heat to too little inventory.
+
+---
+
+## D) Steam Generator Secondary — Blockers & Missing Operational State
+
+### ISSUE-SG-001 — SG “ISOLATED” mode still behaves like open inventory pressure boundary
+
+**Severity:** Critical (hard blocker)
+**Symptom:** Secondary boils hard at low pressure (few psig) with no meaningful pressurization, preventing progress toward ~550°F secondary operation.
+**Impact:** SG becomes an infinite sink; plant cannot reach operating region; results dominated by low-pressure boiling.
+
+---
+
+### ISSUE-SG-002 — Steam generation does not accumulate compressible volume/mass (no internal pressure build)
+
+**Severity:** Critical
+**Symptom:** Boiling occurs but produced vapor effectively “doesn’t stay” to build pressure (acts like vented).
+**Impact:** Locks Tsat low; permanent boiling; no path to pressurized secondary.
+
+---
+
+### ISSUE-SG-003 — SG modeled as unrealistically strong heat sink during heatup
+
+**Severity:** Critical systemic
+**Symptom:** SG secondary heat removal dominates global heat balance; can drive negative RCS heatup rate even with large primary heat inputs.
+**Impact:** Breaks the entire heatup narrative.
+
+---
+
+### ISSUE-SG-004 — Missing SG pressurization/hold state in startup procedure
+
+**Severity:** High
+**Symptom:** Procedure jumps into low-pressure boiling/vent-like behavior instead of sealed warmup/pressurization.
+**Needed state:** `SG_SECONDARY_PRESSURIZE_HOLD` (sealed, pressure rises, Tsat rises, boiling delayed/controlled).
+
+---
+
+### ISSUE-SG-005 — N₂ blanket treated as pressure clamp, not compressible cushion
+
+**Severity:** High
+**Symptom:** “blanket” holds pressure near constant rather than compressing with heating.
+**Fix direction:** Treat as trapped gas volume (PV=nRT) coupled to liquid expansion / steam generation.
+
+---
+
+### ISSUE-SG-006 — Secondary temperature cannot progress toward high-pressure saturation region
+
+**Severity:** High
+**Symptom:** Model stuck near low Tsat (~225°F-scale), hence constant boiling and no route to 550°F.
+
+---
+
+## E) Secondary Coupling / Realism (Lower priority until SG blocker fixed)
+
+### ISSUE-LOG-005 / ISSUE-LOG-010 / ISSUE-LOG-015 — Secondary remains largely inert or wrongly bounded
+
+**Severity:** Medium (but downstream critical)
+**Symptom:** Secondary conditions don’t evolve realistically during primary heatup / RCP operation (either too inert, or clamped).
+**Note:** Many of these symptoms may resolve once SG sealing/pressurization state is implemented correctly.
+
+---
+
+# Priority Order (What Claude should do first)
+
+1. **ISSUE-SG-001 / SG-002 / SG-005** — Make secondary truly sealable + compressible space model + accumulate steam/gas pressure
+2. **ISSUE-SG-004** — Add explicit SG pressurization/hold state in startup logic
+3. **ISSUE-LOG-001** — Re-enable correct mass–pressure coupling in solid primary regime
+4. **ISSUE-LOG-011 / 009 / 008 / 012 / 013** — Fix bubble/two-phase state-machine + energy balance coupling
+5. **ISSUE-LOG-014** — Validate RCP heat scaling vs thermal inertia
+6. Re-check “secondary inertness” issues after SG model is corrected
+
+---
+
+# Deliverable expectation for Claude
+
+* Create/update **Issue Registry entries** with these IDs
+* For each, add:
+
+  * suspected file(s)/module(s)
+  * exact acceptance test (one-liner)
+  * expected telemetry changes in logs
+* Only then draft implementation plan(s)
+
+**End of document**

@@ -115,6 +115,69 @@ namespace Critical.Physics
         
         #endregion
         
+        #region Initial RCS Pressurization Phase — Per NRC HRTD 19.2.1 (v5.0.0 Stage 6)
+        
+        // =================================================================
+        // Before solid plant pressure control begins (320–400 psig with
+        // heaters), the RCS must first be pressurized from fill/vent
+        // conditions (~100 psig) using the CVCS charging pumps.
+        //
+        // The CCPs take suction from the VCT (supplied by RWST/BRS
+        // distillate borated water) and pump into the water-solid RCS.
+        // Letdown is minimized during pressurization. The net positive
+        // mass addition to the incompressible system raises pressure.
+        // PZR heaters remain OFF until the 320–400 psig band is reached.
+        //
+        // Source: NRC HRTD ML11223A342 Section 19.2.1
+        // =================================================================
+        
+        /// <summary>
+        /// Initial RCS pressure after fill and vent in psig.
+        /// Source: NRC HRTD 19.2.1 — RCS filled and vented, slight positive
+        /// pressure from fill pump / head tank before CVCS pressurization.
+        /// </summary>
+        public const float PRESSURIZE_INITIAL_PRESSURE_PSIG = 100f;
+        
+        /// <summary>
+        /// Initial RCS pressure after fill and vent in psia.
+        /// = PRESSURIZE_INITIAL_PRESSURE_PSIG + PSIG_TO_PSIA = 114.7 psia
+        /// </summary>
+        public const float PRESSURIZE_INITIAL_PRESSURE_PSIA = 114.7f;
+        
+        /// <summary>
+        /// Pressure at which pressurization phase is considered complete
+        /// and heaters may be energized (psig). Uses lower bound of the
+        /// 320–400 psig solid plant control band.
+        /// Source: NRC HRTD 19.2.1 — heaters not energized until pressure
+        /// is stable in the operating band.
+        /// </summary>
+        public const float PRESSURIZE_COMPLETE_PRESSURE_PSIG = 320f;
+        
+        /// <summary>
+        /// Pressure at which pressurization phase is considered complete (psia).
+        /// = PRESSURIZE_COMPLETE_PRESSURE_PSIG + PSIG_TO_PSIA = 334.7 psia
+        /// </summary>
+        public const float PRESSURIZE_COMPLETE_PRESSURE_PSIA = 334.7f;
+        
+        /// <summary>
+        /// Minimum time pressure must remain above PRESSURIZE_COMPLETE
+        /// before declaring phase complete (hours). Prevents premature
+        /// transition while PI controller is still oscillating.
+        /// Source: Engineering judgment — allow controller to stabilize.
+        /// </summary>
+        public const float PRESSURIZE_STABILITY_TIME_HR = 5f / 60f;  // 5 minutes
+        
+        /// <summary>
+        /// Reduced base letdown flow during pressurization phase (gpm).
+        /// Letdown is minimized to allow charging to dominate and raise
+        /// pressure. The PI controller may reduce this further toward
+        /// the 20 gpm minimum.
+        /// Source: NRC HRTD 19.2.1 — letdown minimized during pressurization.
+        /// </summary>
+        public const float PRESSURIZE_BASE_LETDOWN_GPM = 40f;
+        
+        #endregion
+        
         #region Reactor Coolant Pumps (RCPs)
         
         /// <summary>Number of RCPs</summary>

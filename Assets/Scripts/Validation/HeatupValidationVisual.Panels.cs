@@ -16,7 +16,7 @@
 //   HeatupSimEngine — plantMode, heatupPhaseDesc, simTime, wallClockTime,
 //     bubblePhase, bubblePhaseStartTime, rcpContribution, rcpRunning,
 //     rcpCount, effectiveRCPHeat, rvlisDynamic/Full/Upper + validity,
-//     vctState, brsState, totalSystemInventory_gal, systemInventoryError_gal,
+//     vctState, brsState, totalSystemMass_lbm, massError_lbm,
 //     massConservationError, T_avg, T_rcs, T_pzr, pressure, pzrLevel,
 //     solidPressurizer, bubbleFormed, currentHeaterMode, timeToBubble
 //
@@ -48,7 +48,7 @@ public partial class HeatupValidationVisual
     const float RCP_PANEL_H        = 180f;
     const float BUBBLE_PANEL_H     = 200f;
     const float RVLIS_PANEL_H      = 130f;
-    const float INVENTORY_PANEL_H  = 180f;
+    const float INVENTORY_PANEL_H  = 200f;  // v5.4.1: +20px for PZR STEAM row
     const float HEATER_PANEL_H     = 100f;
     const float HZP_PANEL_H        = 220f;  // v1.1.0: HZP stabilization panel
     const float SG_RHR_PANEL_H     = 200f;  // v4.3.0: SG pressure + RHR thermal balance
@@ -407,42 +407,49 @@ public partial class HeatupValidationVisual
     void DrawInventoryPanel(float x, ref float y, float w)
     {
         DrawSectionHeader(new Rect(x - 4f, y, w + 8f, GAUGE_GROUP_HEADER_H),
-            "SYSTEM INVENTORY");
+            "SYSTEM INVENTORY (MASS)");
         y += GAUGE_GROUP_HEADER_H + 2f;
 
-        // RCS inventory (water mass in lb, converted to gal for display)
-        float rcsGal = engine.rcsWaterMass / 46f * PlantConstants.FT3_TO_GAL;
-        DrawStatusRow(ref y, x, w, "RCS", $"{rcsGal:F0} gal ({engine.rcsWaterMass:F0} lb)");
+        // v5.4.1 Fix B: Mass-based inventory display
+        // RCS inventory
+        DrawStatusRow(ref y, x, w, "RCS", $"{engine.rcsWaterMass:F0} lbm");
 
-        // PZR inventory
-        float pzrGal = engine.pzrWaterVolume * PlantConstants.FT3_TO_GAL;
-        DrawStatusRow(ref y, x, w, "PZR WATER", $"{pzrGal:F0} gal ({engine.pzrLevel:F1}%)");
+        // PZR inventory (water + steam)
+        float pzrWaterDensity = WaterProperties.WaterDensity(engine.T_pzr, engine.pressure);
+        float pzrSteamDensity = WaterProperties.SaturatedSteamDensity(engine.pressure);
+        float pzrWaterMass = engine.pzrWaterVolume * pzrWaterDensity;
+        float pzrSteamMass = engine.pzrSteamVolume * pzrSteamDensity;
+        DrawStatusRow(ref y, x, w, "PZR WATER", $"{pzrWaterMass:F0} lbm ({engine.pzrLevel:F1}%)");
+        DrawStatusRow(ref y, x, w, "PZR STEAM", $"{pzrSteamMass:F1} lbm");
 
         // VCT inventory
-        DrawStatusRow(ref y, x, w, "VCT", $"{engine.vctState.Volume_gal:F0} gal ({engine.vctState.Level_percent:F1}%)");
+        float rhoVCT = WaterProperties.WaterDensity(100f, 14.7f);
+        float vctMass = (engine.vctState.Volume_gal / PlantConstants.FT3_TO_GAL) * rhoVCT;
+        DrawStatusRow(ref y, x, w, "VCT", $"{vctMass:F0} lbm ({engine.vctState.Level_percent:F1}%)");
 
         // BRS inventory
-        float brsTotal = engine.brsState.HoldupVolume_gal + engine.brsState.DistillateAvailable_gal
+        float brsGal = engine.brsState.HoldupVolume_gal + engine.brsState.DistillateAvailable_gal
                          + engine.brsState.ConcentrateAvailable_gal;
-        DrawStatusRow(ref y, x, w, "BRS TOTAL", $"{brsTotal:F0} gal");
+        float brsMass = (brsGal / PlantConstants.FT3_TO_GAL) * rhoVCT;
+        DrawStatusRow(ref y, x, w, "BRS TOTAL", $"{brsMass:F0} lbm");
 
         y += 4f;
 
-        // Total system inventory
+        // Total system mass
         DrawStatusRow(ref y, x, w, "SYSTEM TOTAL",
-            $"{engine.totalSystemInventory_gal:F0} gal", _cTextPrimary);
+            $"{engine.totalSystemMass_lbm:F0} lbm", _cTextPrimary);
 
-        // Initial inventory (reference)
+        // Initial mass (reference)
         DrawStatusRow(ref y, x, w, "INITIAL",
-            $"{engine.initialSystemInventory_gal:F0} gal", _cTextSecondary);
+            $"{engine.initialSystemMass_lbm:F0} lbm", _cTextSecondary);
 
-        // Conservation error
-        Color errC = Mathf.Abs(engine.systemInventoryError_gal) < 50f ? _cNormalGreen :
-                     Mathf.Abs(engine.systemInventoryError_gal) < 200f ? _cWarningAmber : _cAlarmRed;
-        DrawStatusRow(ref y, x, w, "INV ERROR",
-            $"{engine.systemInventoryError_gal:F1} gal", errC);
+        // Conservation error (mass-based thresholds: 100 lbm good, 500 lbm warn)
+        Color errC = engine.massError_lbm < 100f ? _cNormalGreen :
+                     engine.massError_lbm < 500f ? _cWarningAmber : _cAlarmRed;
+        DrawStatusRow(ref y, x, w, "MASS ERROR",
+            $"{engine.massError_lbm:F1} lbm", errC);
 
-        // CVCS mass conservation (VCT-level tracking)
+        // CVCS mass conservation (VCT-level tracking, retained)
         Color vctErrC = engine.massConservationError < 10f ? _cNormalGreen :
                         engine.massConservationError < 50f ? _cWarningAmber : _cAlarmRed;
         DrawStatusRow(ref y, x, w, "VCT CONS ERR",

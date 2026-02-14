@@ -170,8 +170,6 @@ public partial class HeatupSimEngine
 
     void UpdateRCSInventory(float dt, bool bubbleDrainActive)
     {
-        float dt_sec = dt * 3600f;
-
         // v4.4.0: If CVCS mass drain was already applied BEFORE the
         // CoupledThermo solver (Regime 2/3), skip the adjustment here
         // to prevent double-counting. The flag is set in StepSimulation()
@@ -199,19 +197,9 @@ public partial class HeatupSimEngine
         // This covers: STABILIZE, PRESSURIZE, and post-bubble-complete.
         if (!solidPressurizer && !bubblePreDrainPhase)
         {
-            float netCVCS_gpm = chargingFlow - letdownFlow;
             float rho_rcs = WaterProperties.WaterDensity(T_rcs, pressure);
-            float massChange_lb = netCVCS_gpm * dt_sec * PlantConstants.GPM_TO_FT3_SEC * rho_rcs;
-            physicsState.RCSWaterMass += massChange_lb;
+            ApplyPrimaryBoundaryFlowToRcs(dt, rho_rcs);
             rcsWaterMass = physicsState.RCSWaterMass;
-
-            // v0.1.0.0 Phase B: Increment boundary accumulators (CS-0003)
-            physicsState.CumulativeCVCSIn_lb += Mathf.Max(0f, massChange_lb);
-            physicsState.CumulativeCVCSOut_lb += Mathf.Max(0f, -massChange_lb);
-
-            // Feed RCS inventory change to VCT mass conservation tracking
-            float rcsChange_gal = (massChange_lb / rho_rcs) * PlantConstants.FT3_TO_GAL;
-            VCTPhysics.AccumulateRCSChange(ref vctState, rcsChange_gal);
         }
     }
 
@@ -271,6 +259,15 @@ public partial class HeatupSimEngine
             brsState.ReturnFlow_gpm = 0f;
         }
 
+        // True plant boundary crossings for system-wide conservation:
+        //  - External IN  : makeup not sourced from BRS (RMS/RWST)
+        //  - External OUT : CBO bleedoff when RCPs are running
+        float externalInStep_gal = vctState.MakeupFromBRS ? 0f : (vctState.MakeupFlow_gpm * dt_min);
+        float externalOutStep_gal = (rcpCount > 0 ? PlantConstants.CBO_LOSS_GPM : 0f) * dt_min;
+        plantExternalIn_gal += externalInStep_gal;
+        plantExternalOut_gal += externalOutStep_gal;
+        plantExternalNet_gal = plantExternalIn_gal - plantExternalOut_gal;
+
         // ==============================================================
         // v5.4.1 Fix B: Canonical MASS-based inventory conservation check.
         // Mass is the conserved quantity; volume varies with T/P.
@@ -293,16 +290,19 @@ public partial class HeatupSimEngine
 
             totalSystemMass_lbm = rcsMass + pzrWaterMassNow + pzrSteamMassNow + vctMass + brsMass;
 
-            // External boundary crossings (converted to mass)
-            // Net external flow = RWST additions + BRS in - BRS returned - CBO losses
-            float externalNetGal = vctState.CumulativeExternalIn_gal
-                - vctState.CumulativeExternalOut_gal
-                + brsState.CumulativeIn_gal
-                - brsState.CumulativeReturned_gal;
+            // External boundary crossings (converted to mass) — plant-wide,
+            // excludes internal transfers such as VCT↔BRS and seal leakoff.
+            float externalNetGal = plantExternalNet_gal;
             externalNetMass_lbm = (externalNetGal / PlantConstants.FT3_TO_GAL) * rhoVCT;
 
             massError_lbm = Mathf.Abs(
                 totalSystemMass_lbm - initialSystemMass_lbm - externalNetMass_lbm);
+
+            if (float.IsNaN(massError_lbm) || float.IsInfinity(massError_lbm))
+            {
+                throw new System.InvalidOperationException(
+                    $"Mass conservation produced non-finite value: {massError_lbm}");
+            }
         }
 
         rcsBoronConcentration = vctState.BoronConcentration_ppm;

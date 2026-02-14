@@ -1,0 +1,17 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(findstr:*)",
+      "Bash(ls \"C:\\\\Users\\\\craig\\\\Projects\\\\Critical\\\\Updates\\\\Changelogs\"\" 2>/dev/null || echo \"Directory listing failed, trying alternate path\"; ls \"C:/Users/craig/Projects/Critical/Updates/Changelogs/\" 2>/dev/null || echo \"Both paths failed \")",
+      "Bash(ls \"C:\\\\Users\\\\craig\\\\Projects\\\\Critical\\\\Updates\"\" 2>/dev/null || dir /b \"C:UserscraigProjectsCriticalUpdates\"\")",
+      "Bash(git add:*)",
+      "Bash(git commit:*)",
+      "Bash(git tag:*)",
+      "Bash(find:*)",
+      "Bash(dotnet build:*)",
+      "Bash(dotnet run:*)",
+      "Bash(del \"C:\\\\Users\\\\craig\\\\Projects\\\\Critical\\\\PhaseA_Validation.cs\")",
+      "Bash(del \"C:\\\\Users\\\\craig\\\\Projects\\\\Critical\\\\PhaseA_Validation.csproj\")"
+    ]
+  }
+}

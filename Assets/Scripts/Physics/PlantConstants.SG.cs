@@ -717,5 +717,291 @@ namespace Critical.Physics
         public const float SG_BOILING_SUPERHEAT_RANGE_F = 20f;
 
         #endregion
+
+        // =====================================================================
+        // v5.0.0 THREE-REGIME MODEL CONSTANTS
+        // =====================================================================
+        //
+        // Constants for the open-system boiling model (Stage 2).
+        //
+        // Sources:
+        //   - Incropera & DeWitt, 7th ed., Ch. 10 — Boiling and Condensation
+        //   - Rohsenow correlation for nucleate pool boiling
+        //   - NRC HRTD ML11223A342 Section 19.0 — heatup ~9 hours
+        //   - SG_HEATUP_BREAKTHROUGH_HANDOFF.md — energy balance analysis
+        // =====================================================================
+
+        #region Three-Regime Model (v5.0.0)
+
+        /// <summary>
+        /// Base nucleate boiling HTC at low secondary pressure in BTU/(hr·ft²·°F).
+        /// At atmospheric pressure, nucleate boiling on tube exteriors produces
+        /// h ≈ 2,000–5,000. This is the overall U-value including primary-side
+        /// resistance in series (h_primary ≈ 1000 with RCPs).
+        ///
+        /// In the boiling regime, the secondary-side HTC is very high (2,000+),
+        /// so the overall U is limited by the primary side:
+        ///   1/U = 1/h_primary + 1/h_secondary ≈ 1/1000 + 1/3000 = 1/750
+        ///   U ≈ 750 BTU/(hr·ft²·°F)
+        ///
+        /// However, the effective U is reduced by bundle geometry effects and
+        /// the fact that not all tube surface area is equally effective during
+        /// boiling onset. Using 500 as the overall U at low pressure.
+        ///
+        /// Source: Incropera & DeWitt Ch. 10, Rohsenow correlation;
+        ///         series resistance with h_primary = 1000 (Dittus-Boelter)
+        /// </summary>
+        public const float SG_BOILING_HTC_LOW_P = 500f;
+
+        /// <summary>
+        /// Nucleate boiling HTC at steam dump pressure in BTU/(hr·ft²·°F).
+        /// At higher pressures, boiling HTC increases (more vigorous nucleation,
+        /// smaller bubbles, thinner thermal boundary layer). At 1092 psig:
+        ///   h_secondary ≈ 5,000–10,000
+        ///   U ≈ 1/(1/1000 + 1/7000) ≈ 875
+        ///
+        /// Using 700 to account for bundle effects and partial coverage.
+        ///
+        /// Source: Incropera & DeWitt Ch. 10 — pressure dependence of
+        ///         nucleate boiling (Rohsenow Csf correction)
+        /// </summary>
+        public const float SG_BOILING_HTC_HIGH_P = 700f;
+
+        /// <summary>
+        /// Reference pressure for high-pressure boiling HTC in psia.
+        /// Corresponds to steam dump setpoint (1092 psig + 14.7 = 1106.7 psia).
+        /// Used for linear interpolation of boiling HTC between low and high P.
+        /// </summary>
+        public const float SG_BOILING_HTC_HIGH_P_REF_PSIA = 1107f;
+
+        // [REMOVED v5.1.0] SG_MAX_PRESSURE_RATE_PSI_HR (200 psi/hr artificial rate clamp)
+        // Replaced by direct saturation tracking: P_secondary = P_sat(T_hottest_boiling_node)
+        // Physical damping provided by steam line condensation energy sink (Stage 3).
+        // See IMPLEMENTATION_PLAN_v5.1.0.md for rationale.
+
+        /// <summary>
+        /// Minimum secondary pressure in psia during open-system boiling.
+        /// Once N₂ is isolated and steam forms, pressure cannot drop below
+        /// atmospheric (14.7 psia). The initial N₂ blanket pressure (17 psia)
+        /// is the practical floor.
+        ///
+        /// Source: Thermodynamic constraint — open to atmosphere via MSIVs
+        /// </summary>
+        public const float SG_MIN_STEAMING_PRESSURE_PSIA = 17f;
+
+        #endregion
+
+        #region Wall Superheat Model (v5.1.0 Stage 4)
+
+        // =====================================================================
+        // Wall superheat boiling driver.
+        //
+        // In reality, nucleate boiling is driven by the tube WALL superheat:
+        //   ΔT_boiling = T_wall - T_sat
+        // NOT by the primary bulk temperature:
+        //   ΔT_wrong = T_rcs - T_sat
+        //
+        // The tube wall sits between the primary coolant and the boiling
+        // secondary. Its temperature is always T_sat < T_wall < T_rcs,
+        // meaning the true boiling driving force is smaller than (T_rcs - T_sat).
+        //
+        // T_wall is computed algebraically (not a state variable):
+        //   T_wall = T_rcs - Q_node_prev / (h_primary × A_node)
+        //
+        // Using previous-timestep Q avoids implicit coupling and eliminates
+        // the need for an iterative solver.
+        //
+        // Sources:
+        //   - Incropera & DeWitt Ch. 8 — Internal forced convection
+        //   - Dittus-Boelter correlation: Nu = 0.023 Re^0.8 Pr^0.4
+        //   - Westinghouse FSAR — RCS flow conditions
+        //   - Implementation Plan v5.1.0 Stage 4
+        // =====================================================================
+
+        /// <summary>
+        /// Primary-side forced convection HTC in BTU/(hr·ft²·°F).
+        ///
+        /// With 4 RCPs running, primary coolant flows at ~17 ft/s through
+        /// the SG tubes (ID = 0.664 in). At these conditions:
+        ///   Re ≈ 300,000–500,000 (turbulent)
+        ///   Pr ≈ 1.0–2.5 (water at 300–550°F)
+        ///
+        /// Dittus-Boelter: Nu = 0.023 × Re^0.8 × Pr^0.4
+        ///   Nu ≈ 600–1200
+        ///   h = Nu × k / D = 900 × 0.35 / 0.0553 ≈ 5,700 BTU/(hr·ft²·°F)
+        ///
+        /// However, the effective h_primary for the wall temperature
+        /// calculation uses the INNER tube surface area, and the overall
+        /// model uses OUTER tube surface area for Q computation. The area
+        /// ratio (OD/ID = 0.0625/0.05533 = 1.13) effectively reduces the
+        /// apparent h_primary when referenced to outer area.
+        ///
+        /// Using 1500 BTU/(hr·ft²·°F) referenced to outer tube area.
+        /// This is conservative (lower h_primary → larger T_wall drop →
+        /// more damping), which is appropriate given that:
+        ///   - Tube fouling reduces h below clean-tube Dittus-Boelter
+        ///   - Inlet effects and tube-to-tube flow maldistribution
+        ///   - U-bend region has different flow characteristics
+        ///
+        /// Note: This constant is the h_primary referenced to the OUTER
+        /// tube surface area (same basis as SG_HT_AREA_PER_SG_FT2).
+        ///
+        /// Source: Dittus-Boelter correlation, Westinghouse FSAR flow data,
+        ///         Incropera & DeWitt Ch. 8
+        /// </summary>
+        public const float SG_PRIMARY_FORCED_CONVECTION_HTC = 1500f;
+
+        #endregion
+
+        #region Steam Inventory Model (v5.4.0 Stage 6)
+
+        // =====================================================================
+        // Steam inventory tracking for isolated SG scenarios.
+        //
+        // In normal open-system heatup with MSIVs open, steam exits as fast as
+        // it's produced and pressure tracks P_sat(T_hottest). However, when
+        // the SG is isolated (MSIVs closed), steam accumulates in the steam
+        // space and pressure rises based on inventory rather than saturation.
+        //
+        // The ideal gas approximation is used for inventory-based pressure:
+        //   P = (m_steam × R × T) / V_steam
+        // where R is the specific gas constant for steam (85.78 ft·lbf/(lb·°R)
+        // = 0.1102 psia·ft³/(lb·°R)).
+        //
+        // Sources:
+        //   - Westinghouse FSAR — SG secondary volume
+        //   - Steam tables — ideal gas approximation for low-density steam
+        //   - Implementation Plan v5.4.0 Stage 6
+        // =====================================================================
+
+        /// <summary>
+        /// Total SG secondary side volume per SG in ft³ (water + steam space).
+        ///
+        /// At wet layup (100% full), the secondary contains 415,000 lb of
+        /// water at ~100°F. At this temperature, ρ_water ≈ 62.0 lb/ft³.
+        ///   V_total ≈ 415,000 / 62.0 ≈ 6,694 ft³ per SG
+        ///
+        /// Using 6,700 ft³ per SG (rounded). This is the total secondary
+        /// volume from the tubesheet to the steam dome.
+        ///
+        /// Source: Derived from wet layup mass and cold water density,
+        ///         Westinghouse FSAR — SG secondary geometry
+        /// </summary>
+        public const float SG_SECONDARY_TOTAL_VOLUME_PER_SG_FT3 = 6700f;
+
+        /// <summary>
+        /// Specific gas constant for steam in psia·ft³/(lb·°R).
+        ///
+        /// R_steam = R_universal / M_water = 1545.35 / 18.015 = 85.78 ft·lbf/(lb·°R)
+        /// Converting to psia·ft³/(lb·°R): 85.78 / 144 = 0.5957 psia·ft³/(lb·°R)
+        ///
+        /// Wait, let's recalculate:
+        /// R_universal = 10.7316 psia·ft³/(lbmol·°R)
+        /// M_water = 18.015 lb/lbmol
+        /// R_steam = 10.7316 / 18.015 = 0.5957 psia·ft³/(lb·°R)
+        ///
+        /// Source: Steam tables, thermodynamic properties of water
+        /// </summary>
+        public const float SG_STEAM_GAS_CONSTANT_PSIA_FT3_PER_LB_R = 0.5957f;
+
+        /// <summary>
+        /// Specific gas constant for nitrogen in psia·ft³/(lb·°R).
+        /// R_n2 = R_universal / M_n2 = 10.7316 / 28.0134 = 0.3831.
+        /// Used for minimal compressible SG gas cushion behavior.
+        /// </summary>
+        public const float SG_N2_GAS_CONSTANT_PSIA_FT3_PER_LB_R = 0.3831f;
+
+        /// <summary>
+        /// Minimum total gas cushion volume per SG in ft³.
+        /// This represents the startup steam dome/headspace that remains
+        /// compressible during wet layup and early heatup.
+        /// </summary>
+        public const float SG_MIN_GAS_CUSHION_VOLUME_PER_SG_FT3 = 250f;
+
+        #endregion
+
+        #region Steam Line Warming Model (v5.1.0 Stage 3)
+
+        // =====================================================================
+        // Lumped steam line thermal mass model for physical pressure damping.
+        //
+        // During early boiling, cold steam line piping condenses steam and
+        // absorbs latent heat. This removes energy from the boiling system,
+        // causing the hottest secondary node temperature (and thus saturation
+        // pressure) to rise more slowly than pure saturation tracking would
+        // predict. As the steam lines warm toward saturation temperature,
+        // condensation rate drops and pressure tracks saturation more closely.
+        //
+        // This provides the realistic early-boiling pressure lag that the
+        // removed 200 psi/hr rate clamp was approximating, but through a
+        // physically justified mechanism.
+        //
+        // CRITICAL: The steam line model acts as an energy sink ONLY.
+        // Pressure is always determined by P_sat(T_hottest). The steam line
+        // model affects pressure INDIRECTLY by removing energy from the
+        // boiling system, which slows node temperature rise.
+        //
+        // Sources:
+        //   - Westinghouse FSAR — Main steam line piping specifications
+        //   - NRC HRTD ML11223A294 Section 11.0 — Steam line layout
+        //   - ASME B31.1 — Carbon steel pipe properties
+        // =====================================================================
+
+        /// <summary>
+        /// Total steam line metal mass across all 4 lines in lb.
+        ///
+        /// Each main steam line: ~30" ID schedule 80 carbon steel, ~100 ft
+        /// from SG nozzle to turbine building (including vertical runs, turns,
+        /// MSIVs, and associated piping).
+        ///
+        /// Per line: ~30" Sch 80 → wall thickness ~0.625", OD ~31.25"
+        ///   Metal cross-section ≈ π/4 × (31.25² - 30²) = ~60 in²
+        ///   Volume per foot: 60 in² × 12 in/ft = 720 in³/ft = 0.417 ft³/ft
+        ///   Carbon steel density: 490 lb/ft³
+        ///   Mass per foot: ~204 lb/ft
+        ///   100 ft per line: ~20,400 lb pipe
+        ///   MSIV + check valves: ~10,000 lb per line
+        ///   Total per line: ~30,000 lb
+        ///   4 lines: ~120,000 lb
+        ///
+        /// Source: Westinghouse FSAR piping specifications, ASME B31.1
+        /// </summary>
+        public const float SG_STEAM_LINE_METAL_MASS_LB = 120000f;
+
+        /// <summary>
+        /// Specific heat of carbon steel steam line piping in BTU/(lb·°F).
+        /// A106 Grade B carbon steel at 200–500°F range.
+        ///
+        /// Source: ASME material properties, Incropera & DeWitt Appendix A
+        /// </summary>
+        public const float SG_STEAM_LINE_CP = 0.12f;
+
+        /// <summary>
+        /// Overall heat transfer coefficient × area (UA) for steam-to-metal
+        /// condensation on cold steam line interior surfaces in BTU/(hr·°F).
+        ///
+        /// During early boiling, steam flows from the SG steam space into
+        /// cold steam lines. Film condensation on the cold metal interior
+        /// provides very high local HTCs (h_condensation ≈ 1000–5000
+        /// BTU/(hr·ft²·°F) for film condensation on steel).
+        ///
+        /// Interior surface area per line: π × 2.5ft × 100ft ≈ 785 ft²
+        /// 4 lines: ~3,140 ft²
+        /// Effective condensation HTC (film, early-boiling low pressure):
+        ///   h ≈ 500–1000 BTU/(hr·ft²·°F) (reduced for low steam velocity
+        ///   and non-uniform coverage during early startup)
+        ///
+        /// UA = h × A ≈ 700 × 3140 ≈ 2,200,000 BTU/(hr·°F)
+        ///
+        /// Tuned to produce ~100–150 psi/hr effective early pressure rise
+        /// rate (matching the approximate behavior the rate clamp was
+        /// targeting, but through physical energy accounting).
+        ///
+        /// Source: Incropera & DeWitt Ch. 10 — Film condensation on
+        ///         vertical and horizontal surfaces, Nusselt analysis
+        /// </summary>
+        public const float SG_STEAM_LINE_UA = 2200000f;
+
+        #endregion
     }
 }

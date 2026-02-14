@@ -166,6 +166,14 @@ namespace Critical.Physics
         /// Source: NRC HRTD 19.2.2 — maintain pressure in 320-400 psig band.
         /// </summary>
         public const float BUBBLE_DRAIN_MIN_PRESSURE_PSIA = 334.7f;  // 320 psig
+
+        /// <summary>
+        /// Maximum pressure rate of change (psi/hr) for DRAIN→STABILIZE transition advisory.
+        /// If pressure rate exceeds this at drain exit, a warning is logged but transition
+        /// proceeds (advisory, not blocking — prevents infinite DRAIN).
+        /// v0.3.0.0 Phase D (Fix 3.3, CS-0027/CS-0028): Continuity guard.
+        /// </summary>
+        public const float MAX_DRAIN_EXIT_PRESSURE_RATE = 50f;  // psi/hr
         
         // =====================================================================
         // ALTERNATE PROCEDURE: Nitrogen Bubble Startup (NRC HRTD 19.2.1)

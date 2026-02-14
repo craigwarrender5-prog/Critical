@@ -508,8 +508,27 @@ namespace Critical.Physics
             // ----- HX Heat Removal Calculation -----
             CalculateHXHeatRemoval(ref state, T_rcs_F);
 
-            // ----- Pump Heat Input -----
-            state.PumpHeatInput_MW = PlantConstants.RHR_PUMP_HEAT_MW_EACH * state.PumpsOnline;
+            // ============================================================
+            // v0.3.0.0 (CS-0033 Fix A): FLOW-COUPLED PUMP HEAT
+            // Pump mechanical energy transfers to RCS coolant ONLY when a
+            // valid hydraulic coupling exists: suction valves open AND
+            // actual flow > 0 gpm. When uncoupled (no flow or valves
+            // closed), pump energy is dissipated as bearing/casing heat
+            // to containment ambient — not modeled as RCS heat input.
+            //
+            // This corrects the unconditional injection of 1 MW pump heat
+            // that was previously applied whenever Mode != Standby
+            // regardless of hydraulic state.
+            // ============================================================
+            bool hydraulicCoupled = state.SuctionValvesOpen && state.FlowRate_gpm > 0f;
+            if (hydraulicCoupled)
+            {
+                state.PumpHeatInput_MW = PlantConstants.RHR_PUMP_HEAT_MW_EACH * state.PumpsOnline;
+            }
+            else
+            {
+                state.PumpHeatInput_MW = 0f;
+            }
 
             // ----- Net Effect -----
             // Positive = net heating (pump adds more than HX removes)
@@ -558,7 +577,9 @@ namespace Critical.Physics
             state.HeatRemoval_MW *= flowFraction;
             state.HeatRemoval_BTUhr *= flowFraction;
 
-            // Pump heat also scales with flow fraction (pumps throttling down)
+            // v0.3.0.0 (CS-0033): Pump heat scales with flow fraction — flow-coupled.
+            // As suction valves close, flow decreases and pump energy transfer
+            // to coolant decreases proportionally. At zero flow, pump heat = 0.
             state.PumpHeatInput_MW = PlantConstants.RHR_PUMP_HEAT_MW_TOTAL * flowFraction;
 
             // Net effect
@@ -834,12 +855,41 @@ namespace Critical.Physics
                 valid = false;
             }
 
-            // Test 8: Pump heat should match constants
+            // Test 8: Pump heat should match constants when hydraulically coupled
             state = Initialize(100f);
             Update(ref state, 100f, 350f, 0, 1f / 360f);
             if (Math.Abs(state.PumpHeatInput_MW - PlantConstants.RHR_PUMP_HEAT_MW_TOTAL) > 0.01f)
             {
                 Debug.LogWarning($"[RHR Validation] Test 8 FAIL: Pump heat={state.PumpHeatInput_MW:F3} MW (expected {PlantConstants.RHR_PUMP_HEAT_MW_TOTAL:F1})");
+                valid = false;
+            }
+
+            // Test 9: v0.3.0.0 (CS-0033) — Pump heat = 0 when hydraulically uncoupled
+            // Pumps online but suction valves closed → no RCS heat transfer
+            state = Initialize(100f);
+            state.SuctionValvesOpen = false;
+            result = Update(ref state, 100f, 200f, 0, 1f / 360f);
+            if (state.PumpHeatInput_MW > 0.001f)
+            {
+                Debug.LogWarning($"[RHR Validation] Test 9 FAIL: Pump heat={state.PumpHeatInput_MW:F3} MW with valves CLOSED (expected 0)");
+                valid = false;
+            }
+
+            // Test 10: v0.3.0.0 (CS-0033) — Pump heat = 0 when flow = 0
+            // Suction valves open but flow somehow zero → no heat transfer
+            state = Initialize(100f);
+            state.FlowRate_gpm = 0f;
+            Update(ref state, 100f, 200f, 0, 1f / 360f);
+            // Note: UpdateActive recalculates FlowRate_gpm from PumpsOnline, so
+            // flow will be restored. This test verifies that if PumpsOnline=0
+            // (which would give FlowRate=0), pump heat is zero.
+            state = Initialize(100f);
+            state.PumpsOnline = 0;
+            state.PumpsRunning = false;
+            Update(ref state, 100f, 200f, 0, 1f / 360f);
+            if (state.PumpHeatInput_MW > 0.001f)
+            {
+                Debug.LogWarning($"[RHR Validation] Test 10 FAIL: Pump heat={state.PumpHeatInput_MW:F3} MW with 0 pumps online (expected 0)");
                 valid = false;
             }
 

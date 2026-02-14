@@ -43,13 +43,25 @@ namespace Critical.Physics
         
         // Pressurizer thermal state
         public float HeaterEffectivePower;  // kW (after thermal lag)
-        public float PzrWaterMass;          // lb
+        public float PzrWaterMass;          // lb (conserved — updated only by surge transfer)
         public float PzrWallTemp;           // °F
+        
+        // v5.0.2: Mass conservation diagnostics
+        public float PzrDensity;            // lbm/ft³ — current PZR water density
+        public float PzrVolumeImplied;      // ft³ — PzrWaterMass / PzrDensity (display only)
+        public float PzrMassFlowRate;       // lbm/hr — net mass flow rate (surge, for logging)
+        public float SurgeMassTransfer_lb;  // lbm — mass transferred PZR→RCS this step (for engine)
         
         // CVCS controller state
         public float ControllerIntegral;    // Integral error accumulator (gpm·sec)
         public float LetdownFlow;           // Current letdown flow (gpm)
         public float ChargingFlow;          // Current charging flow (gpm)
+
+        // CVCS actuator dynamics state
+        public float LetdownAdjustCmd;      // gpm — raw PI controller output (before lag/slew)
+        public float LetdownAdjustEff;      // gpm — effective adjustment (after lag + slew)
+        public bool SlewClampActive;        // True when slew-rate limiter is active this tick
+        public float PressureFiltered;      // psia — low-pass filtered P for controller input
         
         // Relief valve state
         public float ReliefFlow;            // RHR relief valve flow (gpm), 0 if closed
@@ -69,9 +81,26 @@ namespace Critical.Physics
         public float T_sat;                 // Current saturation temperature at pressure
         
         // Display helpers
-        public float PressureSetpoint;      // psia (CVCS target)
-        public float PressureError;         // psi (actual - setpoint)
+        public float PressureSetpoint;      // psia (CVCS target — final setpoint)
+        public float PressureSetpointRamped;// psia (= PressureSetpoint; kept for backward compat)
+        public float PressureError;         // psi (actual - ramped setpoint)
         public bool InControlBand;          // True if within 320-400 psig
+
+        // v5.4.1: Two-phase pressurization control state
+        public string ControlMode;          // HEATER_PRESSURIZE / HOLD_SOLID
+        public float HoldEntryTimer_sec;    // seconds P has been within hold-entry band (0 if outside)
+        public float PressurizationElapsed_sec; // total seconds since init (diagnostic)
+
+        // v5.4.2.0 Phase A: CVCS transport delay state
+        public float[] TransportDelayBuffer;    // Ring buffer of past LetdownAdjustEff values
+        public int DelayBufferHead;             // Read/write index (oldest slot — read-before-write)
+        public int DelayBufferLength;           // Active slots = ceil(delay / dt)
+        public float DelayedLetdownAdjust;      // The delayed adjustment applied this step (diagnostic)
+        public bool TransportDelayActive;       // True once buffer is fully primed
+        public bool AntiWindupActive;           // True when integral accumulation is inhibited
+
+        // v5.4.2.0 Phase A: CS-0023 diagnostic
+        public bool SurgePressureConsistent;    // True when surge and pressure trends are consistent
     }
     
     /// <summary>
@@ -110,6 +139,106 @@ namespace Critical.Physics
         
         /// <summary>Minimum letdown flow - cannot go below this (gpm)</summary>
         const float MIN_LETDOWN_GPM = 20f;
+
+        // ── CVCS Actuator Dynamics ──────────────────────────────────
+        // Real valves/pumps cannot change flow instantly. These constants
+        // model the physical lag and slew-rate limits of the CVCS trim
+        // actuators, preventing stepwise volume injections that produce
+        // jagged pressure traces in the stiff water-solid system.
+
+        /// <summary>
+        /// First-order lag time constant for CVCS letdown adjustment (seconds).
+        /// Models valve/pump inertia. Raw PI command is filtered through:
+        ///   eff += (cmd - eff) * (dt / tau)
+        /// Tunable: larger tau = smoother but slower response.
+        /// </summary>
+        const float CVCS_ACTUATOR_TAU_SEC = 10f;
+
+        /// <summary>
+        /// Maximum slew rate for effective letdown adjustment (gpm/sec).
+        /// Caps the per-tick change in effective CVCS trim after the lag filter.
+        /// Prevents pathological step changes even when the lag would allow them.
+        /// 1.0 gpm/s → max 60 gpm change over 1 minute (generous but bounded).
+        /// </summary>
+        const float CVCS_MAX_SLEW_GPM_PER_SEC = 1.0f;
+
+        /// <summary>
+        /// First-order filter time constant for pressure measurement fed to
+        /// the PI controller (seconds). Models sensor response time and
+        /// provides additional noise rejection. Only affects the controller
+        /// input; displayed pressure remains unfiltered.
+        /// Tunable: 0 = no filter, 2–5s = light filtering.
+        /// </summary>
+        const float CVCS_PRESSURE_FILTER_TAU_SEC = 3f;
+
+        // ── CVCS Transport Delay ──────────────────────────────────
+        // In a real PWR, CVCS flow changes require transit through ~200 ft
+        // of piping, the letdown heat exchanger, demineralizers, and the
+        // volume control tank before the resulting volume change is realized
+        // at the RCS boundary. This delay prevents the PI controller from
+        // instantly cancelling thermal expansion in the same computation step.
+        // Source: NRC HRTD 4.1 — CVCS piping transit times.
+
+        /// <summary>
+        /// Transport delay from PI controller output to RCS volume effect (seconds).
+        /// Models piping transit, heat exchanger lag, and valve positioning time.
+        /// At 60s with dt=10s, the delay buffer holds 6 steps.
+        /// Tunable: 30–120s is physically realistic for PWR CVCS.
+        /// </summary>
+        const float CVCS_TRANSPORT_DELAY_SEC = 60f;
+
+        /// <summary>
+        /// Maximum number of delay buffer slots. Sized for worst-case:
+        /// max delay (120s) / min timestep (5s) = 24 slots.
+        /// Must be >= ceil(CVCS_TRANSPORT_DELAY_SEC / dt_sec) at runtime.
+        /// </summary>
+        const int DELAY_BUFFER_MAX_SLOTS = 24;
+
+        /// <summary>
+        /// Anti-windup threshold (gpm). When the difference between the current
+        /// PI output (LetdownAdjustEff) and the delayed value being applied
+        /// exceeds this threshold, the integral is frozen. This prevents
+        /// windup during the dead-time window when the controller's output
+        /// has not yet reached the process.
+        /// </summary>
+        const float ANTIWINDUP_DEADTIME_THRESHOLD_GPM = 0.5f;
+
+        // ── Two-Phase Pressurization Control ─────────────────────
+        // During cold-start, pressure rises via heater-driven thermal
+        // expansion (HEATER_PRESSURIZE). Once near setpoint, the controller
+        // transitions to fine PI hold (HOLD_SOLID). This separation ensures
+        // CVCS cannot become the primary pressurization actuator.
+
+        /// <summary>
+        /// Maximum net CVCS trim (gpm) allowed during HEATER_PRESSURIZE.
+        /// Limits the PI controller's effective authority so that pressure
+        /// rise is dominated by thermal expansion, not volume injection.
+        /// Positive = net letdown reduction (adds volume, raises P).
+        /// ±1.0 gpm keeps CVCS near balanced during heatup.
+        /// </summary>
+        const float HEATER_PRESS_MAX_NET_TRIM_GPM = 1.0f;
+
+        /// <summary>
+        /// Band around final setpoint (psia) to qualify for HOLD_SOLID entry.
+        /// |P_actual - P_setpoint| must stay within this band for the
+        /// hold-entry dwell period before transitioning.
+        /// </summary>
+        const float HOLD_ENTRY_BAND_PSI = 5f;
+
+        /// <summary>
+        /// Dwell time (seconds) that pressure must remain within
+        /// HOLD_ENTRY_BAND_PSI of setpoint before entering HOLD_SOLID.
+        /// Prevents chatter at the boundary. 30s = reasonable for a
+        /// slowly-changing solid plant system.
+        /// </summary>
+        const float HOLD_ENTRY_DWELL_SEC = 30f;
+
+        /// <summary>
+        /// If pressure drops more than this below setpoint while in
+        /// HOLD_SOLID, revert to HEATER_PRESSURIZE (optional safety net).
+        /// Set generously to avoid nuisance re-entries.
+        /// </summary>
+        const float HOLD_EXIT_DROP_PSI = 15f;
         
         /// <summary>Maximum letdown flow via RHR crossconnect (gpm)</summary>
         const float MAX_LETDOWN_GPM = 120f;
@@ -165,6 +294,12 @@ namespace Critical.Physics
             state.LetdownFlow = baseLetdown_gpm;
             state.ChargingFlow = baseCharging_gpm;
             state.ControllerIntegral = 0f;
+
+            // Actuator dynamics: start with zero adjustment, filter seeded to actual P
+            state.LetdownAdjustCmd = 0f;
+            state.LetdownAdjustEff = 0f;
+            state.SlewClampActive = false;
+            state.PressureFiltered = pressure_psia;
             
             // Relief valve closed
             state.ReliefFlow = 0f;
@@ -177,6 +312,12 @@ namespace Critical.Physics
             state.ExcessVolumeRemoved = 0f;
             state.SurgeFlow = 0f;
             state.SurgeLineHeat_MW = 0f;
+            state.SurgeMassTransfer_lb = 0f;
+            
+            // v5.0.2: Initialize mass diagnostics
+            state.PzrDensity = rho;
+            state.PzrVolumeImplied = PlantConstants.PZR_TOTAL_VOLUME;
+            state.PzrMassFlowRate = 0f;
             
             // Bubble not yet formed
             state.BubbleFormed = false;
@@ -185,10 +326,39 @@ namespace Critical.Physics
             
             // Control band
             state.PressureSetpoint = PlantConstants.SOLID_PLANT_P_SETPOINT_PSIA;
-            state.PressureError = pressure_psia - state.PressureSetpoint;
             state.InControlBand = (pressure_psia >= PlantConstants.SOLID_PLANT_P_LOW_PSIA &&
                                    pressure_psia <= PlantConstants.SOLID_PLANT_P_HIGH_PSIA);
-            
+
+            // v5.4.1: Two-phase pressurization control.
+            // If below setpoint band, start in HEATER_PRESSURIZE (physics-led).
+            // If already near setpoint, start in HOLD_SOLID (PI hold).
+            state.HoldEntryTimer_sec = 0f;
+            state.PressurizationElapsed_sec = 0f;
+            state.PressureSetpointRamped = state.PressureSetpoint;  // Always target final SP
+
+            if (Math.Abs(pressure_psia - state.PressureSetpoint) > HOLD_ENTRY_BAND_PSI)
+            {
+                state.ControlMode = "HEATER_PRESSURIZE";
+            }
+            else
+            {
+                // Already near setpoint — go straight to hold
+                state.ControlMode = "HOLD_SOLID";
+            }
+
+            state.PressureError = pressure_psia - state.PressureSetpoint;
+
+            // v5.4.2.0 Phase A: CVCS transport delay buffer — initialized to zero (balanced CVCS).
+            // During priming (first N steps), buffer outputs zeros → LetdownFlow = baseLetdown + 0.
+            // This is physically correct: no PI adjustment has completed transit yet.
+            state.TransportDelayBuffer = new float[DELAY_BUFFER_MAX_SLOTS];
+            state.DelayBufferHead = 0;
+            state.DelayBufferLength = 0;  // Computed on first Update() from dt
+            state.DelayedLetdownAdjust = 0f;
+            state.TransportDelayActive = false;
+            state.AntiWindupActive = false;
+            state.SurgePressureConsistent = true;
+
             return state;
         }
         
@@ -230,7 +400,13 @@ namespace Critical.Physics
             float prevT_pzr = state.T_pzr;
             float prevT_rcs = state.T_rcs;
             float prevPressure = state.Pressure;
-            
+
+            // v5.4.2.0 FF-05 Fix #1: Capture PZR density BEFORE temperature update.
+            // Surge mass transfer uses the density at which water actually leaves
+            // the PZR, not the post-heating density. During rapid pressurization
+            // (dP/dt > 100 psi/hr), post-step density error can exceed 10 lbm/step.
+            float rho_pzr_preStep = WaterProperties.WaterDensity(state.T_pzr, state.Pressure);
+
             // ================================================================
             // 1. PZR WATER TEMPERATURE UPDATE
             //    Heaters warm PZR water. Heat conducts to RCS via surge line.
@@ -266,16 +442,17 @@ namespace Critical.Physics
             // PZR temperature change
             float rho_pzr = WaterProperties.WaterDensity(state.T_pzr, state.Pressure);
             float Cp_pzr = WaterProperties.WaterSpecificHeat(state.T_pzr, state.Pressure);
-            float pzrWaterMass = PlantConstants.PZR_TOTAL_VOLUME * rho_pzr;
+            // v5.0.2: Use conserved mass for thermal capacity (not V × ρ recalculation)
+            float pzrWaterMassForCp = state.PzrWaterMass;
             float pzrWallCapacity = ThermalMass.PressurizerWallHeatCapacity();
-            float pzrEffectiveCapacity = pzrWaterMass * Cp_pzr + pzrWallCapacity;
+            float pzrEffectiveCapacity = pzrWaterMassForCp * Cp_pzr + pzrWallCapacity;
             
             if (pzrEffectiveCapacity > 0f)
                 state.T_pzr += netPzrHeat_BTU_sec * dt_sec / pzrEffectiveCapacity;
             
             state.PzrWallTemp = state.T_pzr;
-            state.PzrWaterMass = PlantConstants.PZR_TOTAL_VOLUME * 
-                WaterProperties.WaterDensity(state.T_pzr, state.Pressure);
+            // v5.0.2: PZR mass is conserved — NOT recalculated from V × ρ(T,P).
+            // Mass update deferred to Section 7 after dV_pzr_ft3 is computed.
             
             // ================================================================
             // 2. RCS TEMPERATURE UPDATE
@@ -313,32 +490,207 @@ namespace Critical.Physics
             float dV_thermal_ft3 = dV_pzr_ft3 + dV_rcs_ft3;
             
             // ================================================================
-            // 4. CVCS PRESSURE CONTROLLER
-            //    PI controller adjusts letdown flow to maintain pressure setpoint.
-            //    When pressure rises, increase letdown to bleed off volume.
-            //    When pressure drops, decrease letdown to retain volume.
+            // 4. CVCS PRESSURE CONTROLLER — Two-Phase Pressurization
+            //
+            //    Phase A: HEATER_PRESSURIZE (physics-led)
+            //      Heaters drive PZR temperature up → thermal expansion →
+            //      pressure rises. CVCS trim authority is capped to a tiny
+            //      envelope so it cannot become the primary pressurization
+            //      actuator. Pressure rise rate emerges from plant physics.
+            //
+            //    Phase B: HOLD_SOLID (PI fine control)
+            //      Once within ±5 psi of setpoint for 30s, normal PI hold
+            //      with actuator dynamics (lag/slew/filter) takes over.
+            //      CVCS makes small corrections to maintain setpoint.
             // ================================================================
-            
-            float pressureError_psi = state.Pressure - state.PressureSetpoint;
-            
-            // Proportional term: immediate response to pressure error
+
+            state.PressurizationElapsed_sec += dt_sec;
+
+            // ── Mode transition logic ────────────────────────────────
+            float distToSetpoint = state.Pressure - state.PressureSetpoint;
+
+            if (state.ControlMode == "HEATER_PRESSURIZE")
+            {
+                // Check for transition to HOLD_SOLID:
+                // P must be within ±HOLD_ENTRY_BAND_PSI for HOLD_ENTRY_DWELL_SEC.
+                if (Math.Abs(distToSetpoint) <= HOLD_ENTRY_BAND_PSI)
+                {
+                    state.HoldEntryTimer_sec += dt_sec;
+                    if (state.HoldEntryTimer_sec >= HOLD_ENTRY_DWELL_SEC)
+                    {
+                        state.ControlMode = "HOLD_SOLID";
+                        // Reset integral for clean hold entry — avoid windup
+                        // accumulated during low-authority pressurization.
+                        state.ControllerIntegral = 0f;
+                    }
+                }
+                else
+                {
+                    // Outside band — reset dwell timer
+                    state.HoldEntryTimer_sec = 0f;
+                }
+            }
+            else if (state.ControlMode == "HOLD_SOLID")
+            {
+                // Optional: revert to HEATER_PRESSURIZE if P drops significantly
+                if (distToSetpoint < -HOLD_EXIT_DROP_PSI)
+                {
+                    state.ControlMode = "HEATER_PRESSURIZE";
+                    state.HoldEntryTimer_sec = 0f;
+                    state.ControllerIntegral = 0f;
+                }
+            }
+
+            // ── Pressure filter for controller input ─────────────────
+            // Low-pass filter rejects tick-to-tick noise from the stiff
+            // dP = dV/(V·κ) equation. Only the controller sees filtered P;
+            // displayed/logged pressure remains the true physics value.
+            if (CVCS_PRESSURE_FILTER_TAU_SEC > 0f && dt_sec > 0f)
+            {
+                float alpha = Math.Min(dt_sec / CVCS_PRESSURE_FILTER_TAU_SEC, 1f);
+                state.PressureFiltered += (state.Pressure - state.PressureFiltered) * alpha;
+            }
+            else
+            {
+                state.PressureFiltered = state.Pressure;
+            }
+
+            // ── PI Controller (runs in both modes) ───────────────────
+            float pressureError_psi = state.PressureFiltered - state.PressureSetpoint;
+
+            // Proportional term
             float pTerm = KP_PRESSURE * pressureError_psi;
-            
-            // Integral term: accumulated error drives steady-state correction
-            state.ControllerIntegral += pressureError_psi * dt_sec;
+
+            // v5.4.2.0 Phase A: Anti-windup — inhibit integral accumulation when:
+            //   (a) Actuator is saturated (HEATER_PRESSURIZE clamp active, or
+            //       slew limiter was active last step)
+            //   (b) Dead-time gap: current PI output differs significantly from
+            //       the delayed value being applied to the process. This prevents
+            //       windup during the transport delay window when the controller's
+            //       output has not yet reached the RCS boundary.
+            //
+            // Saturation check uses previous step's LetdownAdjustEff and the
+            // provisional raw command (pTerm + previous iTerm) to determine
+            // whether the HEATER_PRESSURIZE clamp would be active.
+            float provisionalCmd = pTerm + KI_PRESSURE * state.ControllerIntegral;
+            float deadTimeGap = Math.Abs(state.LetdownAdjustEff - state.DelayedLetdownAdjust);
+            bool actuatorClamped = state.SlewClampActive ||
+                (state.ControlMode == "HEATER_PRESSURIZE" &&
+                 Math.Abs(provisionalCmd) > HEATER_PRESS_MAX_NET_TRIM_GPM);
+            bool deadTimeInhibit = deadTimeGap > ANTIWINDUP_DEADTIME_THRESHOLD_GPM;
+
+            state.AntiWindupActive = actuatorClamped || deadTimeInhibit;
+
+            // Integral term (accumulated error drives steady-state correction)
+            if (!state.AntiWindupActive)
+            {
+                state.ControllerIntegral += pressureError_psi * dt_sec;
+            }
+            // else: integral frozen — do not accumulate during saturation or dead time
+
             float integralLimit = INTEGRAL_LIMIT_GPM / KI_PRESSURE;
-            state.ControllerIntegral = Math.Max(-integralLimit, Math.Min(state.ControllerIntegral, integralLimit));
+            state.ControllerIntegral = Math.Max(-integralLimit,
+                Math.Min(state.ControllerIntegral, integralLimit));
             float iTerm = KI_PRESSURE * state.ControllerIntegral;
-            
-            // Controller output: adjustment to letdown flow (positive = more letdown)
-            float letdownAdjustment = pTerm + iTerm;
-            letdownAdjustment = Math.Max(-MAX_LETDOWN_ADJUSTMENT_GPM, 
-                                Math.Min(letdownAdjustment, MAX_LETDOWN_ADJUSTMENT_GPM));
-            
-            // Apply to letdown flow
-            state.LetdownFlow = baseLetdown_gpm + letdownAdjustment;
+
+            // Raw commanded adjustment (positive = more letdown = lower pressure)
+            float letdownAdjustCmd = pTerm + iTerm;
+            letdownAdjustCmd = Math.Max(-MAX_LETDOWN_ADJUSTMENT_GPM,
+                                Math.Min(letdownAdjustCmd, MAX_LETDOWN_ADJUSTMENT_GPM));
+            state.LetdownAdjustCmd = letdownAdjustCmd;
+
+            // ── CVCS Authority Limiting (HEATER_PRESSURIZE only) ─────
+            // During heater-led pressurization, clamp the PI command to a
+            // tiny envelope so CVCS stays near balanced. This ensures
+            // pressure rise is driven by thermal expansion, not volume trim.
+            if (state.ControlMode == "HEATER_PRESSURIZE")
+            {
+                letdownAdjustCmd = Math.Max(-HEATER_PRESS_MAX_NET_TRIM_GPM,
+                    Math.Min(letdownAdjustCmd, HEATER_PRESS_MAX_NET_TRIM_GPM));
+            }
+
+            // ── CVCS Actuator Dynamics ──────────────────────────────
+            // A) First-order lag: models valve/pump inertia
+            float effAdj = state.LetdownAdjustEff;
+            if (CVCS_ACTUATOR_TAU_SEC > 0f && dt_sec > 0f)
+            {
+                float alphaA = Math.Min(dt_sec / CVCS_ACTUATOR_TAU_SEC, 1f);
+                effAdj += (letdownAdjustCmd - effAdj) * alphaA;
+            }
+            else
+            {
+                effAdj = letdownAdjustCmd;
+            }
+
+            // B) Slew-rate limiter: caps per-tick change
+            float maxDelta = CVCS_MAX_SLEW_GPM_PER_SEC * dt_sec;
+            float delta = effAdj - state.LetdownAdjustEff;
+            if (Math.Abs(delta) > maxDelta)
+            {
+                effAdj = state.LetdownAdjustEff + Math.Sign(delta) * maxDelta;
+                state.SlewClampActive = true;
+            }
+            else
+            {
+                state.SlewClampActive = false;
+            }
+            state.LetdownAdjustEff = effAdj;
+
+            // ── CVCS Transport Delay (v5.4.2.0 Phase A) ──────────────
+            // The PI controller output (LetdownAdjustEff) enters a ring buffer.
+            // The pressure equation uses the value from N steps ago, where
+            // N = ceil(CVCS_TRANSPORT_DELAY_SEC / dt_sec). This models the
+            // physical transit time of CVCS flow changes through piping,
+            // heat exchangers, and valves before reaching the RCS boundary.
+            //
+            // RING BUFFER CONVENTION: Read-before-write at head pointer.
+            //   Head = the oldest slot (next to be overwritten).
+            //   Sequence: READ oldest from [Head], WRITE current to [Head], ADVANCE Head.
+            //   This yields exactly DelayBufferLength steps of delay.
+            //   During priming (first N steps), the buffer outputs 0.0 (initialized value),
+            //   which means LetdownFlow = baseLetdown + 0 = balanced CVCS.
+            //   This is physically correct: no CVCS adjustment has had time to transit.
+            //
+            // Proof (N=6): Step 0 writes val_0 at slot 0. Step 6 reads val_0 from slot 0
+            // before overwriting it with val_6. Delay = 6 steps = 60 sec.
+
+            // Compute active buffer length on first call (or if dt changes)
+            if (state.DelayBufferLength == 0 && dt_sec > 0f)
+            {
+                state.DelayBufferLength = Math.Max(1,
+                    (int)Math.Ceiling(CVCS_TRANSPORT_DELAY_SEC / dt_sec));
+                state.DelayBufferLength = Math.Min(state.DelayBufferLength,
+                    DELAY_BUFFER_MAX_SLOTS);
+            }
+
+            // Ring buffer: read-before-write at head pointer
+            if (state.TransportDelayBuffer != null && state.DelayBufferLength > 0)
+            {
+                // 1. READ the oldest value (N steps ago) — about to be overwritten
+                state.DelayedLetdownAdjust = state.TransportDelayBuffer[state.DelayBufferHead];
+
+                // 2. WRITE current LetdownAdjustEff into the same slot (overwrites oldest)
+                state.TransportDelayBuffer[state.DelayBufferHead] = state.LetdownAdjustEff;
+
+                // 3. ADVANCE head pointer to the next oldest slot
+                state.DelayBufferHead = (state.DelayBufferHead + 1) % state.DelayBufferLength;
+
+                // Buffer is fully primed once we've written DelayBufferLength entries
+                if (!state.TransportDelayActive && state.PressurizationElapsed_sec >= CVCS_TRANSPORT_DELAY_SEC)
+                {
+                    state.TransportDelayActive = true;
+                }
+            }
+            else
+            {
+                // Fallback: no delay (should not occur in normal operation)
+                state.DelayedLetdownAdjust = state.LetdownAdjustEff;
+            }
+
+            // Apply DELAYED adjustment to letdown flow (not the immediate PI output)
+            state.LetdownFlow = baseLetdown_gpm + state.DelayedLetdownAdjust;
             state.LetdownFlow = Math.Max(MIN_LETDOWN_GPM, Math.Min(state.LetdownFlow, MAX_LETDOWN_GPM));
-            
+
             // Charging stays at base (CVCS controls pressure via letdown in solid plant)
             state.ChargingFlow = baseCharging_gpm;
             
@@ -407,6 +759,35 @@ namespace Critical.Physics
             //   flow_gpm = dV_pzr (ft³) × FT3_TO_GAL / dt_hr / 60
             // Positive = PZR expanding, water flowing out to RCS
             state.SurgeFlow = (dt_hr > 1e-8f) ? (dV_pzr_ft3 * PlantConstants.FT3_TO_GAL / dt_hr / 60f) : 0f;
+
+            // v5.4.2.0 Phase A: Surge-pressure consistency diagnostic (CS-0023)
+            // During HEATER_PRESSURIZE, surge flow and pressure rate should have
+            // consistent signs (both positive = expanding + pressurizing).
+            // During HOLD_SOLID, CVCS opposition makes brief inconsistency normal.
+            bool surgePositive = state.SurgeFlow > 0.01f;
+            bool pressureRising = state.PressureRate > 0.1f;
+            bool bothZero = Math.Abs(state.SurgeFlow) < 0.01f && Math.Abs(state.PressureRate) < 0.1f;
+            state.SurgePressureConsistent = bothZero || (surgePositive == pressureRising)
+                || state.ControlMode == "HOLD_SOLID";  // During hold, CVCS opposition is expected
+
+            // ── v5.0.2: PZR MASS CONSERVATION ────────────────────────────
+            // Mass changes only via surge transfer (internal PZR→RCS).
+            // Thermal expansion displaces water OUT of PZR through surge line.
+            // surgeMass derived from same dV_pzr_ft3 used for SurgeFlow (single source).
+            // Positive dV_pzr = expansion = mass LEAVING PZR.
+            // v5.4.2.0 FF-05 Fix #1: Use pre-step density for surge mass transfer.
+            // Water leaves PZR at the density it had BEFORE this step's heating.
+            float surgeMass_lb = dV_pzr_ft3 * rho_pzr_preStep;
+            state.PzrWaterMass -= surgeMass_lb;
+            state.SurgeMassTransfer_lb = surgeMass_lb;
+
+            // Diagnostics — post-step density for display only
+            float rho_pzr_post = WaterProperties.WaterDensity(state.T_pzr, state.Pressure);
+            state.PzrDensity = rho_pzr_post;
+            state.PzrVolumeImplied = (rho_pzr_post > 0.1f)
+                ? state.PzrWaterMass / rho_pzr_post
+                : PlantConstants.PZR_TOTAL_VOLUME;
+            state.PzrMassFlowRate = (dt_hr > 1e-8f) ? (-surgeMass_lb / dt_hr) : 0f;
             
             // Track cumulative excess volume removed (in gallons for operator display)
             if (dV_cvcs_ft3 > 0f)
@@ -417,7 +798,8 @@ namespace Critical.Physics
             // ================================================================
             
             state.T_sat = WaterProperties.SaturationTemperature(state.Pressure);
-            state.PressureError = state.Pressure - state.PressureSetpoint;
+            // v5.4.1 Audit Fix: Error is vs ramped setpoint (what the controller actually uses)
+            state.PressureError = state.Pressure - state.PressureSetpointRamped;
             state.InControlBand = (state.Pressure >= PlantConstants.SOLID_PLANT_P_LOW_PSIA &&
                                    state.Pressure <= PlantConstants.SOLID_PLANT_P_HIGH_PSIA);
             
@@ -547,13 +929,18 @@ namespace Critical.Physics
             if (noRelief != 0f) valid = false;
             
             // Test 6: CVCS should increase letdown when pressure is high
+            // v5.4.2.0: With transport delay, the PI output takes N steps to reach
+            // LetdownFlow. Run enough steps for the delay to propagate (>6 at 10s/step).
             var stateHigh = Initialize(PlantConstants.SOLID_PLANT_P_HIGH_PSIA, 100f, 100f);
-            Update(ref stateHigh, 1800f, 75f, 75f, 1100000f, 1f/360f);
+            for (int i = 0; i < 10; i++)
+                Update(ref stateHigh, 1800f, 75f, 75f, 1100000f, 1f/360f);
             if (stateHigh.LetdownFlow <= 75f) valid = false; // Should be above base
-            
+
             // Test 7: CVCS should decrease letdown when pressure is low
+            // v5.4.2.0: Same transport delay consideration as Test 6.
             var stateLow = Initialize(PlantConstants.SOLID_PLANT_P_LOW_PSIA, 100f, 100f);
-            Update(ref stateLow, 1800f, 75f, 75f, 1100000f, 1f/360f);
+            for (int i = 0; i < 10; i++)
+                Update(ref stateLow, 1800f, 75f, 75f, 1100000f, 1f/360f);
             if (stateLow.LetdownFlow >= 75f) valid = false; // Should be below base
             
             // Test 8: Bubble formation at T_sat
@@ -572,6 +959,25 @@ namespace Critical.Physics
             // Test 10: Surge line heat should be non-zero when T_pzr > T_rcs
             // After a few steps, PZR will be warmer than RCS
             if (stateSurge.SurgeLineHeat_MW <= 0f) valid = false;
+            
+            // Test 11: v5.0.2 — Mass conservation during solid ops heating
+            // After 100 heating steps with balanced CVCS, PZR mass should decrease
+            // only by cumulative surge transfer (small, physically correct displacement),
+            // NOT by thousands of lbm from V×ρ density-driven overwrite.
+            var stateMass = Initialize(365f, 100f, 100f);
+            float initialPzrMass = stateMass.PzrWaterMass;
+            float totalSurgeTransfer = 0f;
+            for (int i = 0; i < 100; i++)
+            {
+                Update(ref stateMass, 1800f, 75f, 75f, 1100000f, 1f/360f);
+                totalSurgeTransfer += stateMass.SurgeMassTransfer_lb;
+            }
+            // Mass change must match cumulative surge transfer within float tolerance
+            float massDelta = initialPzrMass - stateMass.PzrWaterMass;
+            float massError = Math.Abs(massDelta - totalSurgeTransfer);
+            if (massError > 1f) valid = false;  // Within 1 lbm numerical tolerance
+            // Mass change should be small (order 10s of lbm, not thousands)
+            if (massDelta > 500f) valid = false;
             
             return valid;
         }

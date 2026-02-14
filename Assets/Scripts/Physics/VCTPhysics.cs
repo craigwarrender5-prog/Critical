@@ -239,6 +239,10 @@ namespace Critical.Physics
             state.CumulativeIn_gal += flowIn_gpm * dt_min;
             state.CumulativeOut_gal += flowOut_gpm * dt_min;
             
+            // IP-0016: Canonical RCS boundary accumulation is owned by HeatupSimEngine
+            // where the same flow values are applied to the primary mass ledger.
+            // Do not mutate CumulativeRCSChange_gal here to avoid double counting.
+            
             // External flows cross the CVCS closed-loop boundary:
             //   In:  seal return (RCP seal leakage returned) + makeup (RMS/RWST)
             //   Out: divert (to BRS holdup tanks) + CBO (controlled bleedoff)
@@ -359,6 +363,28 @@ namespace Critical.Physics
             
             // Conservation: vctChange + rcsChange - externalNet ≈ 0
             float error = Mathf.Abs(vctChange + rcsChange - externalNet);
+            
+            // v5.4.0 Stage 5: Diagnostic logging when error exceeds 100 gal
+            // This helps identify which term is drifting and causing conservation failure.
+            if (error > 100f)
+            {
+                Debug.Log($"[VCT_CONS_DIAG] ERROR={error:F2}gal | " +
+                          $"vctChange={vctChange:F2}gal | rcsChange={rcsChange:F2}gal | " +
+                          $"externalNet={externalNet:F2}gal");
+                Debug.Log($"[VCT_CONS_DIAG] VCT: Vol={state.Volume_gal:F2}gal Init={state.InitialVolume_gal:F2}gal | " +
+                          $"CumIn={state.CumulativeIn_gal:F2}gal CumOut={state.CumulativeOut_gal:F2}gal");
+                Debug.Log($"[VCT_CONS_DIAG] External: In={state.CumulativeExternalIn_gal:F2}gal " +
+                          $"Out={state.CumulativeExternalOut_gal:F2}gal | " +
+                          $"Makeup={state.MakeupFlow_gpm:F2}gpm Divert={state.DivertFlow_gpm:F2}gpm");
+                Debug.Log($"[VCT_CONS_DIAG] Equation: |{vctChange:F2} + {rcsChange:F2} - {externalNet:F2}| = {error:F2}");
+                
+                // Additional diagnostic: check if rcsChange is near zero (likely during solid ops)
+                if (Mathf.Abs(rcsChange) < 10f && Mathf.Abs(vctChange) > 100f)
+                {
+                    Debug.LogWarning($"[VCT_CONS_DIAG] SUSPECT: rcsChange≈0 but vctChange={vctChange:F2}. " +
+                                     $"Possibly in solid ops where RCS change not accumulated.");
+                }
+            }
             
             return error;
         }

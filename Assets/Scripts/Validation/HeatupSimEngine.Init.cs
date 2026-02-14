@@ -48,8 +48,17 @@ public partial class HeatupSimEngine
     /// </summary>
     void InitializeSimulation()
     {
+        // ============================================================
+        // v0.3.0.0 Phase A (CS-0032): Frame rate cap — 30 FPS target.
+        // Prevents main thread from burning 100% CPU on render/physics,
+        // ensures OS message pump and input events are serviced.
+        // ============================================================
+        Application.targetFrameRate = 30;
+        QualitySettings.vSyncCount = 0;  // Disable VSync so targetFrameRate takes effect
+
         // v0.1.0.0: Reset canonical ledger flags for new simulation run
         firstStepLedgerBaselined = false;
+        regime3CVCSPreApplied = false;
         CoupledThermo.ResetSessionFlags();
 
         // v0.1.0.0 Phase C: Reset diagnostic display to pre-run state
@@ -58,6 +67,26 @@ public partial class HeatupSimEngine
         primaryMassAlarm = false;
         _previousMassAlarmState = false;
         _previousMassConservationOK = true;
+
+        // IP-0016 RTCC/session-scoped telemetry reset
+        rtccTransitionCount = 0;
+        rtccAssertionFailureCount = 0;
+        rtccMaxRawDeltaAbs_lbm = 0f;
+        rtccLastPreMass_lbm = 0f;
+        rtccLastReconstructedMass_lbm = 0f;
+        rtccLastRawDelta_lbm = 0f;
+        rtccLastPostMass_lbm = 0f;
+        rtccLastAssertDelta_lbm = 0f;
+        rtccLastTransition = "NONE";
+        rtccLastAuthorityFrom = "UNSET";
+        rtccLastAuthorityTo = "UNSET";
+        rtccLastAssertPass = true;
+        rtccTelemetryPresent = false;
+
+        // IP-0016 plant-wide external boundary accumulators
+        plantExternalIn_gal = 0f;
+        plantExternalOut_gal = 0f;
+        plantExternalNet_gal = 0f;
 
         simTime = 0f;
         T_avg = startTemperature;
@@ -93,6 +122,10 @@ public partial class HeatupSimEngine
         sgThermoclineHeight = PlantConstants.SG_TUBE_TOTAL_HEIGHT_FT;
         sgActiveAreaFraction = PlantConstants.SG_UBEND_AREA_FRACTION;
         sgBoilingActive = false;
+        sgBoundaryMode = "OPEN";
+        sgPressureSourceBranch = "floor";
+        sgSteamInventory_lb = 0f;
+        netPlantHeat_MW = 0f;
         
         // v3.0.0: Initialize RHR system
         // Cold shutdown: RHR running in heatup mode (HX bypassed, pumps on)
@@ -141,6 +174,9 @@ public partial class HeatupSimEngine
         solidPressurizer = true;
         bubbleFormed = false;
         bubbleFormationTime = 999f;  // Not yet formed
+        bubblePhase = BubbleFormationPhase.NONE;
+        bubblePhaseStartTime = 0f;
+        bubbleDrainStartLevel = 0f;
         bubblePreDrainPhase = false;
 
         // v0.2.0: Initialize CCP, heater mode, and aux spray state
@@ -235,6 +271,9 @@ public partial class HeatupSimEngine
         solidPressurizer = false;
         bubbleFormed = true;
         bubbleFormationTime = 0f;  // Already formed at start
+        bubblePhase = BubbleFormationPhase.NONE;
+        bubblePhaseStartTime = 0f;
+        bubbleDrainStartLevel = 0f;
         bubblePreDrainPhase = false;
         pressure = startPressure;
 

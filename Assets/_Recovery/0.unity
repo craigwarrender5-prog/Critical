@@ -94040,9 +94040,10 @@ MonoBehaviour:
   rvlisUpperValid: 0
   rcsBoronConcentration: 0
   massConservationError: 0
-  totalSystemInventory_gal: 0
-  initialSystemInventory_gal: 0
-  systemInventoryError_gal: 0
+  initialSystemMass_lbm: 0
+  totalSystemMass_lbm: 0
+  externalNetMass_lbm: 0
+  massError_lbm: 0
   steamDumpHeat_MW: 0
   steamPressure_psig: 0
   steamDumpActive: 0

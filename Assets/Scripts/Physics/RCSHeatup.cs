@@ -197,13 +197,13 @@ namespace Critical.Physics
                 float M_out = state.RCSWaterMass + state.PZRWaterMass + state.PZRSteamMass;
                 float massDelta = M_out - totalPrimaryMass_lb;
                 float absDelta = massDelta < 0f ? -massDelta : massDelta;
-                if (absDelta > 100f)
+                if (absDelta > PlantConstants.RUNTIME_LEDGER_ERROR_LBM)
                 {
                     UnityEngine.Debug.LogError(
                         $"CoupledThermo conservation ERROR: |M_out - M_ledger| = {absDelta:F2} lb " +
                         $"(M_out={M_out:F1}, Ledger={totalPrimaryMass_lb:F1})");
                 }
-                else if (absDelta > 10f)
+                else if (absDelta > PlantConstants.RUNTIME_LEDGER_WARN_LBM)
                 {
                     UnityEngine.Debug.LogWarning(
                         $"CoupledThermo conservation WARNING: |M_out - M_ledger| = {absDelta:F2} lb " +
@@ -267,11 +267,13 @@ namespace Critical.Physics
             public float Pressure;      // New pressure (psia)
             public float SurgeFlow;     // Thermal expansion surge flow (gpm)
             public float ConductionHeat_MW; // Heat conducted through surge line (MW)
+            public float PZRConductionLoss_MW; // v0.3.2.0: PZR surge line heat loss (MW)
+            public float PZRInsulationLoss_MW; // v0.3.2.0: PZR insulation heat loss (MW)
         }
         
         /// <summary>
         /// Calculate isolated heating when bubble exists but RCPs are not running.
-        /// 
+        ///
         /// During Phase 1 post-bubble, the PZR is heated by heaters and loses
         /// heat to the RCS through the surge line via stratified natural convection.
         /// RCS also loses heat through insulation.
@@ -280,12 +282,22 @@ namespace Critical.Physics
         ///   Previous version applied heater energy to PZR but did not subtract
         ///   surge line heat loss from PZR side. Energy was created (PZR gained
         ///   full heater input AND RCS gained surge line heat simultaneously).
-        ///   
+        ///
         ///   Corrected PZR energy balance:
         ///     dT_pzr = (Q_heaters - Q_surge_out - Q_pzr_insulation) / C_pzr
-        ///   
+        ///
         ///   Corrected RCS energy balance:
         ///     dT_rcs = (Q_surge_in - Q_rcs_insulation) / C_rcs
+        ///
+        /// v0.3.2.0 CS-0043 FIX — TWO-PHASE BYPASS:
+        ///   When twoPhaseActive = true (steam bubble exists, DRAIN/STABILIZE/PRESSURIZE),
+        ///   the subcooled sensible-heat model (dT = Q/mCp) is BYPASSED for PZR.
+        ///   Heater energy goes entirely to latent heat (steam generation) in
+        ///   UpdateDrainPhase — NOT to sensible temperature rise here.
+        ///   T_pzr is locked to T_sat(P). Pressure and surge flow unchanged.
+        ///   PZR conduction and insulation losses are still computed and reported
+        ///   so UpdateDrainPhase can subtract them from heater power.
+        ///   RCS temperature update (surge line conduction) still runs normally.
         /// </summary>
         public static IsolatedHeatingResult IsolatedHeatingStep(
             float T_pzr,
@@ -295,69 +307,101 @@ namespace Critical.Physics
             float pzrWaterVolume,
             float pzrHeatCapacity,
             float rcsHeatCapacity,
-            float dt_hr)
+            float dt_hr,
+            bool twoPhaseActive = false)
         {
             var result = new IsolatedHeatingResult();
-            
+
             // ================================================================
             // SURGE LINE HEAT TRANSFER (needed by both PZR and RCS balance)
             // Uses stratified natural convection model (v1.0.3.0)
             // ================================================================
-            
+
             float conductionHeat_MW = HeatTransfer.SurgeLineHeatTransfer_MW(T_pzr, T_rcs, pressure);
             result.ConductionHeat_MW = conductionHeat_MW;
+
+            // v0.3.2.0: Always compute PZR losses (needed by UpdateDrainPhase)
+            float pzrInsulLoss_MW = HeatTransfer.InsulationHeatLoss_MW(T_pzr) * PZR_INSULATION_FRACTION;
+            result.PZRConductionLoss_MW = conductionHeat_MW;
+            result.PZRInsulationLoss_MW = pzrInsulLoss_MW;
+
             float conductionHeat_BTU = conductionHeat_MW * MW_TO_BTU_HR * dt_hr;
-            
+
+            // ================================================================
+            // v0.3.2.0 CS-0043 FIX: TWO-PHASE PZR BYPASS
+            // When two-phase is active, heater energy goes to latent heat
+            // (steam generation) in UpdateDrainPhase, NOT to sensible dT here.
+            // PZR water is at saturation — temperature locked to T_sat(P).
+            // Pressure is stable (no subcooled thermal expansion).
+            // ================================================================
+            if (twoPhaseActive)
+            {
+                // PZR locked to saturation — no sensible heat, no expansion
+                result.T_pzr = WaterProperties.SaturationTemperature(pressure);
+                result.Pressure = pressure;
+                result.SurgeFlow = 0f;
+
+                // RCS still receives surge line conduction heat and loses insulation heat
+                float rcsFromConduction = (rcsHeatCapacity > 0f) ? conductionHeat_BTU / rcsHeatCapacity : 0f;
+                float heatLoss_MW = HeatTransfer.InsulationHeatLoss_MW(T_rcs);
+                float heatLoss_BTU = heatLoss_MW * MW_TO_BTU_HR * dt_hr;
+                float rcsFromLoss = (rcsHeatCapacity > 0f) ? heatLoss_BTU / rcsHeatCapacity : 0f;
+                result.T_rcs = T_rcs + rcsFromConduction - rcsFromLoss;
+
+                return result;
+            }
+
+            // ================================================================
+            // SUBCOOLED PATH (original logic, unchanged)
+            // ================================================================
+
             // ================================================================
             // PZR TEMPERATURE UPDATE
             // Q_net_pzr = Q_heaters - Q_surge_out - Q_pzr_insulation
             // ================================================================
-            
+
             float pzrHeatInput_BTU = heaterPower_MW * MW_TO_BTU_HR * dt_hr;
-            
-            // PZR insulation loss (small fraction of total system loss)
-            float pzrInsulLoss_MW = HeatTransfer.InsulationHeatLoss_MW(T_pzr) * PZR_INSULATION_FRACTION;
             float pzrInsulLoss_BTU = pzrInsulLoss_MW * MW_TO_BTU_HR * dt_hr;
-            
+
             // Net PZR heat = heaters - surge line out - insulation
             float pzrNetHeat_BTU = pzrHeatInput_BTU - conductionHeat_BTU - pzrInsulLoss_BTU;
-            
+
             float pzrDeltaT = (pzrHeatCapacity > 0f) ? pzrNetHeat_BTU / pzrHeatCapacity : 0f;
             result.T_pzr = T_pzr + pzrDeltaT;
-            
+
             // Cap at saturation - PZR water cannot superheat
             float T_sat = WaterProperties.SaturationTemperature(pressure);
             result.T_pzr = Math.Min(result.T_pzr, T_sat);
-            
+
             // ================================================================
             // RCS TEMPERATURE UPDATE
             // Q_net_rcs = Q_surge_in - Q_rcs_insulation
             // ================================================================
-            
-            float rcsFromConduction = (rcsHeatCapacity > 0f) ? conductionHeat_BTU / rcsHeatCapacity : 0f;
-            
-            float heatLoss_MW = HeatTransfer.InsulationHeatLoss_MW(T_rcs);
-            float heatLoss_BTU = heatLoss_MW * MW_TO_BTU_HR * dt_hr;
-            float rcsFromLoss = (rcsHeatCapacity > 0f) ? heatLoss_BTU / rcsHeatCapacity : 0f;
-            
-            result.T_rcs = T_rcs + rcsFromConduction - rcsFromLoss;
-            
+
+            float rcsFromConduction2 = (rcsHeatCapacity > 0f) ? conductionHeat_BTU / rcsHeatCapacity : 0f;
+
+            float heatLoss_MW2 = HeatTransfer.InsulationHeatLoss_MW(T_rcs);
+            float heatLoss_BTU2 = heatLoss_MW2 * MW_TO_BTU_HR * dt_hr;
+            float rcsFromLoss2 = (rcsHeatCapacity > 0f) ? heatLoss_BTU2 / rcsHeatCapacity : 0f;
+
+            result.T_rcs = T_rcs + rcsFromConduction2 - rcsFromLoss2;
+
             // ================================================================
             // PRESSURE UPDATE from PZR thermal expansion
             // ================================================================
-            
+
             float dP = ThermalExpansion.PressureChangeFromTemp(pzrDeltaT, result.T_pzr, pressure);
             const float DAMPING_FACTOR = 0.5f;
             result.Pressure = pressure + dP * DAMPING_FACTOR;
-            
+
             // ================================================================
             // SURGE FLOW from PZR thermal expansion
             // ================================================================
-            
+
             float pzrExpCoeff = ThermalExpansion.ExpansionCoefficient(result.T_pzr, result.Pressure);
             float dV_ft3 = pzrWaterVolume * pzrExpCoeff * pzrDeltaT;
             result.SurgeFlow = (dt_hr > 1e-8f) ? (dV_ft3 * 7.48f / dt_hr / 60f) : 0f;
-            
+
             return result;
         }
         

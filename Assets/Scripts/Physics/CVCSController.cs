@@ -1055,6 +1055,127 @@ namespace Critical.Physics
         
         #endregion
         
+        #region Post-Bubble Heatup Control — NRC HRTD 10.2/10.3 Philosophy
+        
+        /// <summary>
+        /// Update CVCS controller for post-bubble heatup phase using NRC HRTD
+        /// 10.2/10.3 control philosophy: constant letdown, variable charging.
+        ///
+        /// Per NRC HRTD 10.3: "Letdown flow is set at a constant 75 gpm.
+        /// Charging flow is varied by the PI level controller to maintain
+        /// the programmed pressurizer level setpoint."
+        ///
+        /// This differs from the general Update() method which allows letdown
+        /// to vary with orifice lineup and pressure. During post-bubble heatup,
+        /// the control philosophy is deliberately simpler:
+        ///   - Letdown: FIXED at 75 gpm (via RHR crossconnect below 350°F,
+        ///     or via operator-adjusted orifice lineup above 350°F)
+        ///   - Charging: VARIABLE via PI controller (20-130 gpm)
+        ///   - Level setpoint: from unified level program
+        ///   - Seal injection: added to charging demand
+        ///
+        /// The ~30,000 gallons of excess inventory from thermal expansion
+        /// during heatup (100→557°F) is removed via the VCT divert system
+        /// (LCV-112A → BRS holdup tanks). The PI controller keeps level
+        /// on-program by reducing charging below letdown, allowing the net
+        /// negative CVCS flow to drain excess inventory through the VCT.
+        ///
+        /// Source: NRC HRTD Section 10.3 — Pressurizer Level Control
+        ///         NRC HRTD Section 4.1 — CVCS Operations
+        /// </summary>
+        /// <param name="state">Controller state (modified in place)</param>
+        /// <param name="currentLevel">Current PZR level (%)</param>
+        /// <param name="T_avg">Average RCS temperature (°F)</param>
+        /// <param name="pressure_psia">RCS pressure (psia)</param>
+        /// <param name="rcpCount">Number of RCPs running</param>
+        /// <param name="dt_hr">Timestep in hours</param>
+        public static void UpdatePostBubbleHeatup(
+            ref CVCSControllerState state,
+            float currentLevel,
+            float T_avg,
+            float pressure_psia,
+            int rcpCount,
+            float dt_hr)
+        {
+            if (!state.IsActive) return;
+            
+            // ================================================================
+            // LEVEL SETPOINT FROM UNIFIED PROGRAM
+            // Heatup: 25% at 200°F → 60% at 557°F
+            // At-power: 25% at 557°F → 61.5% at 584.7°F
+            // ================================================================
+            state.LevelSetpoint = PlantConstants.GetPZRLevelSetpointUnified(T_avg);
+            
+            // ================================================================
+            // SEAL INJECTION DEMAND
+            // ================================================================
+            state.SealInjection = rcpCount * PlantConstants.SEAL_INJECTION_PER_PUMP_GPM;
+            
+            // ================================================================
+            // LOW-LEVEL INTERLOCK CHECK (with hysteresis)
+            // ================================================================
+            if (currentLevel < PlantConstants.PZR_LOW_LEVEL_ISOLATION)
+            {
+                state.LetdownIsolated = true;
+            }
+            else if (currentLevel > PlantConstants.PZR_LOW_LEVEL_ISOLATION + 5f)
+            {
+                state.LetdownIsolated = false;
+            }
+            
+            // ================================================================
+            // LETDOWN FLOW — FIXED at 75 gpm
+            // Per NRC HRTD 10.3: Constant letdown during heatup.
+            // Below 350°F: RHR crossconnect provides 75 gpm.
+            // Above 350°F: Operator adjusts orifice lineup to maintain ~75 gpm
+            // at the current pressure (not modeled in detail — held at 75 gpm).
+            // ================================================================
+            if (state.LetdownIsolated)
+            {
+                state.LetdownFlow = 0f;
+            }
+            else
+            {
+                state.LetdownFlow = PlantConstants.HEATUP_FIXED_LETDOWN_GPM;
+            }
+            
+            // ================================================================
+            // PI CHARGING CONTROLLER
+            // Variable charging to maintain programmed level setpoint.
+            // This is the sole active control mechanism for level.
+            // ================================================================
+            state.LevelError = currentLevel - state.LevelSetpoint;
+            
+            // Proportional: negative error (level low) → increase charging
+            float pCorrection = PlantConstants.CVCS_LEVEL_KP * (-state.LevelError);
+            
+            // Integral: accumulated error drives steady-state correction
+            float dt_sec = dt_hr * 3600f;
+            state.IntegralError += (-state.LevelError) * dt_sec;
+            
+            // Anti-windup
+            float integralLimit = PlantConstants.CVCS_LEVEL_INTEGRAL_LIMIT / PlantConstants.CVCS_LEVEL_KI;
+            state.IntegralError = Math.Max(-integralLimit, Math.Min(state.IntegralError, integralLimit));
+            
+            float iCorrection = PlantConstants.CVCS_LEVEL_KI * state.IntegralError;
+            
+            // Base charging = fixed letdown + seal injection (maintains balance)
+            float baseCharging = state.LetdownFlow + state.SealInjection;
+            
+            // Apply PI corrections
+            state.ChargingFlow = baseCharging + pCorrection + iCorrection;
+            
+            // Clamp to post-bubble heatup limits
+            // Minimum: must provide seal injection OR HEATUP_MIN, whichever is higher
+            // Maximum: CCP capacity limit during heatup
+            float minCharging = Math.Max(state.SealInjection, PlantConstants.HEATUP_MIN_CHARGING_GPM);
+            state.ChargingFlow = Math.Max(minCharging, Math.Min(state.ChargingFlow, PlantConstants.HEATUP_MAX_CHARGING_GPM));
+            
+            state.LastLevelError = state.LevelError;
+        }
+        
+        #endregion
+        
         #region Utility
         
         /// <summary>
