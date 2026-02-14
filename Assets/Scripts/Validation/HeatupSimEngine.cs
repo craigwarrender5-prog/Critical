@@ -72,6 +72,14 @@ using Critical.Physics;
 /// </summary>
 public partial class HeatupSimEngine : MonoBehaviour
 {
+    enum SGStartupBoundaryStateMode
+    {
+        OpenPreheat,
+        Pressurize,
+        Hold,
+        IsolatedHeatup
+    }
+
     // ========================================================================
     // INSPECTOR SETTINGS
     // ========================================================================
@@ -506,6 +514,17 @@ public partial class HeatupSimEngine : MonoBehaviour
     const float PZR_HEATER_POWER_MW = PlantConstants.HEATER_POWER_TOTAL / 1000f;  // 1800 kW = 1.8 MW
     const float DP0003_DETERMINISTIC_TIMESTEP_HR = 1f / 360f;  // 10-second deterministic physics step
     const float DP0003_INTERVAL_LOG_HR = 0.25f;                // 15-minute deterministic log period
+    const int SG_STARTUP_MIN_PRESSURIZE_INTERVALS = 2;
+    const int SG_STARTUP_MIN_HOLD_INTERVALS = 2;
+    const float SG_HOLD_PRESSURE_BAND_PCT = 3f;
+    const float SG_PRESSURIZE_MIN_GAIN_PCT = 2f;
+    const float SG_HOLD_MAX_CUM_LEAKAGE_PCT = 0.2f;
+
+    SGStartupBoundaryStateMode sgStartupStateMode = SGStartupBoundaryStateMode.OpenPreheat;
+    int sgStartupStateIntervalCount = 0;
+    float sgStartupIntervalAccumulator_hr = 0f;
+    float sgHoldCumulativeLeakage_pct = 0f;
+    float sgHoldBaselineSecondaryMass_lb = 0f;
 
     // v0.9.5: Shutdown flag for immediate termination without blocking
     private volatile bool _shutdownRequested = false;
@@ -1126,7 +1145,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             sgMaxSuperheat_F = sgMultiNodeState.MaxSuperheat_F;
             sgNitrogenIsolated = sgResult_r1.NitrogenIsolated;
             sgBoilingIntensity = sgResult_r1.BoilingIntensity;
-            UpdateSGBoundaryDiagnostics(sgResult_r1);
+            UpdateSGBoundaryDiagnostics(sgResult_r1, dt);
             // v5.4.2: SG draining/level display sync (forensic fix — 7 fields)
             sgDrainingActive       = sgMultiNodeState.DrainingActive;
             sgDrainingComplete     = sgMultiNodeState.DrainingComplete;
@@ -1413,7 +1432,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             sgMaxSuperheat_F = sgMultiNodeState.MaxSuperheat_F;
             sgNitrogenIsolated = sgResult_r2.NitrogenIsolated;
             sgBoilingIntensity = sgResult_r2.BoilingIntensity;
-            UpdateSGBoundaryDiagnostics(sgResult_r2);
+            UpdateSGBoundaryDiagnostics(sgResult_r2, dt);
             // v5.4.2: SG draining/level display sync (forensic fix — 7 fields)
             sgDrainingActive       = sgMultiNodeState.DrainingActive;
             sgDrainingComplete     = sgMultiNodeState.DrainingComplete;
@@ -1558,7 +1577,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             sgMaxSuperheat_F = sgMultiNodeState.MaxSuperheat_F;
             sgNitrogenIsolated = sgResult_r3.NitrogenIsolated;
             sgBoilingIntensity = sgResult_r3.BoilingIntensity;
-            UpdateSGBoundaryDiagnostics(sgResult_r3);
+            UpdateSGBoundaryDiagnostics(sgResult_r3, dt);
             // v5.4.2: SG draining/level display sync (forensic fix — 7 fields)
             sgDrainingActive       = sgMultiNodeState.DrainingActive;
             sgDrainingComplete     = sgMultiNodeState.DrainingComplete;
@@ -1745,6 +1764,21 @@ public partial class HeatupSimEngine : MonoBehaviour
         {
             stageE_PercentMismatch = 0f;
         }
+    }
+
+    void ResetSGBoundaryStartupState()
+    {
+        sgStartupStateMode = SGStartupBoundaryStateMode.OpenPreheat;
+        sgStartupStateIntervalCount = 0;
+        sgStartupBoundaryStateTicks = 0;
+        sgStartupBoundaryStateTime_hr = 0f;
+        sgStartupIntervalAccumulator_hr = 0f;
+        sgStartupBoundaryState = GetSGBoundaryStateLabel(sgStartupStateMode);
+        sgHoldTargetPressure_psia = 0f;
+        sgHoldPressureDeviation_pct = 0f;
+        sgHoldNetLeakage_pct = 0f;
+        sgHoldBaselineSecondaryMass_lb = 0f;
+        sgHoldCumulativeLeakage_pct = 0f;
     }
 
     void ComputePrimaryBoundaryMassFlows(
@@ -1981,19 +2015,133 @@ public partial class HeatupSimEngine : MonoBehaviour
 
     bool ShouldIsolateSGBoundary()
     {
-        if (T_rcs < PlantConstants.SG_NITROGEN_ISOLATION_TEMP_F)
+        if (sgStartupStateMode == SGStartupBoundaryStateMode.OpenPreheat)
             return false;
 
-        // Isolate through startup pressurization, then reopen once SG reaches
-        // steam-dump control regime.
+        // Re-open secondary boundary after SG reaches steam-dump control.
         return sgMultiNodeState.CurrentRegime != SGThermalRegime.SteamDump;
     }
 
-    void UpdateSGBoundaryDiagnostics(SGMultiNodeResult sgResult)
+    void UpdateSGBoundaryDiagnostics(SGMultiNodeResult sgResult, float dt_hr)
     {
         sgBoundaryMode = sgResult.SteamIsolated ? "ISOLATED" : "OPEN";
         sgPressureSourceBranch = GetPressureSourceBranchLabel(sgResult.PressureSourceMode);
         sgSteamInventory_lb = sgResult.SteamInventory_lb;
+
+        AdvanceSGBoundaryStartupState(sgResult, dt_hr);
+    }
+
+    void AdvanceSGBoundaryStartupState(SGMultiNodeResult sgResult, float dt_hr)
+    {
+        sgStartupBoundaryStateTicks++;
+        sgStartupBoundaryStateTime_hr += dt_hr;
+        sgStartupIntervalAccumulator_hr += dt_hr;
+
+        bool intervalBoundary = false;
+        if (sgStartupIntervalAccumulator_hr >= DP0003_INTERVAL_LOG_HR)
+        {
+            sgStartupIntervalAccumulator_hr -= DP0003_INTERVAL_LOG_HR;
+            sgStartupStateIntervalCount++;
+            intervalBoundary = true;
+        }
+
+        if (sgStartupStateMode == SGStartupBoundaryStateMode.Hold)
+        {
+            float target = Mathf.Max(1f, sgHoldTargetPressure_psia);
+            sgHoldPressureDeviation_pct = 100f * (sgSecondaryPressure_psia - target) / target;
+
+            float baselineMass = Mathf.Max(1f, sgHoldBaselineSecondaryMass_lb);
+            float leakPctStep = Mathf.Abs(sgMultiNodeState.SteamOutflow_lbhr) * dt_hr * 100f / baselineMass;
+            sgHoldCumulativeLeakage_pct += leakPctStep;
+            sgHoldNetLeakage_pct = sgHoldCumulativeLeakage_pct;
+        }
+
+        switch (sgStartupStateMode)
+        {
+            case SGStartupBoundaryStateMode.OpenPreheat:
+                if (T_rcs >= PlantConstants.SG_NITROGEN_ISOLATION_TEMP_F)
+                {
+                    TransitionSGBoundaryState(
+                        SGStartupBoundaryStateMode.Pressurize,
+                        "SG startup boundary transition: OPEN_PREHEAT -> PRESSURIZE");
+                }
+                break;
+
+            case SGStartupBoundaryStateMode.Pressurize:
+                if (intervalBoundary)
+                {
+                    float pressureGainPct = 100f * (sgSecondaryPressure_psia - PlantConstants.SG_INITIAL_PRESSURE_PSIA)
+                                           / PlantConstants.SG_INITIAL_PRESSURE_PSIA;
+
+                    if (sgStartupStateIntervalCount >= SG_STARTUP_MIN_PRESSURIZE_INTERVALS &&
+                        pressureGainPct >= SG_PRESSURIZE_MIN_GAIN_PCT)
+                    {
+                        TransitionSGBoundaryState(
+                            SGStartupBoundaryStateMode.Hold,
+                            "SG startup boundary transition: PRESSURIZE -> HOLD");
+                    }
+                }
+                break;
+
+            case SGStartupBoundaryStateMode.Hold:
+                if (intervalBoundary &&
+                    sgStartupStateIntervalCount >= SG_STARTUP_MIN_HOLD_INTERVALS &&
+                    Mathf.Abs(sgHoldPressureDeviation_pct) <= SG_HOLD_PRESSURE_BAND_PCT &&
+                    sgHoldCumulativeLeakage_pct <= SG_HOLD_MAX_CUM_LEAKAGE_PCT)
+                {
+                    TransitionSGBoundaryState(
+                        SGStartupBoundaryStateMode.IsolatedHeatup,
+                        "SG startup boundary transition: HOLD -> ISOLATED_HEATUP");
+                }
+                break;
+        }
+    }
+
+    void TransitionSGBoundaryState(SGStartupBoundaryStateMode nextState, string logMessage)
+    {
+        if (sgStartupStateMode == nextState)
+            return;
+
+        sgStartupStateMode = nextState;
+        sgStartupStateIntervalCount = 0;
+        sgStartupBoundaryStateTicks = 0;
+        sgStartupBoundaryStateTime_hr = 0f;
+        sgStartupIntervalAccumulator_hr = 0f;
+        sgStartupBoundaryState = GetSGBoundaryStateLabel(nextState);
+
+        if (nextState == SGStartupBoundaryStateMode.Hold)
+        {
+            sgHoldTargetPressure_psia = sgSecondaryPressure_psia;
+            sgHoldPressureDeviation_pct = 0f;
+            sgHoldCumulativeLeakage_pct = 0f;
+            sgHoldNetLeakage_pct = 0f;
+            sgHoldBaselineSecondaryMass_lb = Mathf.Max(1f, sgSecondaryMass_lb);
+        }
+        else if (nextState != SGStartupBoundaryStateMode.IsolatedHeatup)
+        {
+            sgHoldTargetPressure_psia = 0f;
+            sgHoldPressureDeviation_pct = 0f;
+            sgHoldNetLeakage_pct = 0f;
+            sgHoldBaselineSecondaryMass_lb = 0f;
+            sgHoldCumulativeLeakage_pct = 0f;
+        }
+
+        LogEvent(EventSeverity.INFO, logMessage);
+    }
+
+    static string GetSGBoundaryStateLabel(SGStartupBoundaryStateMode state)
+    {
+        switch (state)
+        {
+            case SGStartupBoundaryStateMode.Pressurize:
+                return "PRESSURIZE";
+            case SGStartupBoundaryStateMode.Hold:
+                return "HOLD";
+            case SGStartupBoundaryStateMode.IsolatedHeatup:
+                return "ISOLATED_HEATUP";
+            default:
+                return "OPEN_PREHEAT";
+        }
     }
 
     static string GetPressureSourceBranchLabel(SGPressureSourceMode mode)

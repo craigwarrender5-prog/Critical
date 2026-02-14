@@ -140,12 +140,7 @@ public partial class HeatupSimEngine
         sgBoundaryMode = "OPEN";
         sgPressureSourceBranch = "floor";
         sgSteamInventory_lb = 0f;
-        sgStartupBoundaryState = "OPEN_PREHEAT";
-        sgStartupBoundaryStateTicks = 0;
-        sgStartupBoundaryStateTime_hr = 0f;
-        sgHoldTargetPressure_psia = 0f;
-        sgHoldPressureDeviation_pct = 0f;
-        sgHoldNetLeakage_pct = 0f;
+        ResetSGBoundaryStartupState();
         dp0003BaselineSignature =
             $"T0={startTemperature:F1}F;P0={startPressure:F1}psia;PZR0={startPZRLevel:F1}%;dt={DP0003_DETERMINISTIC_TIMESTEP_HR:F6}hr;log={DP0003_INTERVAL_LOG_HR:F2}hr";
         netPlantHeat_MW = 0f;
