@@ -1165,6 +1165,13 @@ public partial class HeatupSimEngine
         sb.AppendLine($"    Hold Target P:    {sgHoldTargetPressure_psia,10:F2} psia");
         sb.AppendLine($"    Hold Dev:         {sgHoldPressureDeviation_pct,10:F3} %");
         sb.AppendLine($"    Hold Leak:        {sgHoldNetLeakage_pct,10:F3} %");
+        sb.AppendLine($"    PressWindow:      {(sgPressurizationWindowActive ? "ACTIVE" : "INACTIVE"),10}");
+        sb.AppendLine($"    PressWindow T0:   {sgPressurizationWindowStartTime_hr,10:F3} hr");
+        sb.AppendLine($"    Press Rise:       {sgPressurizationWindowNetPressureRise_psia,10:F2} psia");
+        sb.AppendLine($"    Tsat Rise:        {sgPressurizationWindowTsatDelta_F,10:F2} F");
+        sb.AppendLine($"    P Rise Streak:    {sgPressurizationConsecutivePressureRiseIntervals,10}");
+        sb.AppendLine($"    Tsat Rise Streak: {sgPressurizationConsecutiveTsatRiseIntervals,10}");
+        sb.AppendLine($"    PreBoil |T-Tsat|: {sgPreBoilTempApproachToTsat_F,10:F2} F");
         sb.AppendLine($"    Boiling Active:   {(sgBoilingActive ? "YES" : "NO"),10}");
         sb.AppendLine($"    Circulation Frac: {sgCirculationFraction,10:F3} [DEPRECATED]");
         // v5.0.0 Stage 4: SG Draining & Level
@@ -1405,6 +1412,13 @@ public partial class HeatupSimEngine
         sb.AppendLine($"  Hold Target Pressure: {sgHoldTargetPressure_psia:F2} psia");
         sb.AppendLine($"  Hold Pressure Dev:    {sgHoldPressureDeviation_pct:F3} %");
         sb.AppendLine($"  Hold Net Leakage:     {sgHoldNetLeakage_pct:F3} %");
+        sb.AppendLine($"  PressWindow Active:   {(sgPressurizationWindowActive ? "YES" : "NO")}");
+        sb.AppendLine($"  PressWindow Start:    {sgPressurizationWindowStartTime_hr:F3} hr");
+        sb.AppendLine($"  PressWindow Rise:     {sgPressurizationWindowNetPressureRise_psia:F2} psia");
+        sb.AppendLine($"  PressWindow Tsat Δ:   {sgPressurizationWindowTsatDelta_F:F2} F");
+        sb.AppendLine($"  P Rise Streak:        {sgPressurizationConsecutivePressureRiseIntervals}");
+        sb.AppendLine($"  Tsat Rise Streak:     {sgPressurizationConsecutiveTsatRiseIntervals}");
+        sb.AppendLine($"  PreBoil |T-Tsat|:     {sgPreBoilTempApproachToTsat_F:F2} F");
         sb.AppendLine($"  Net Plant Heat:       {netPlantHeat_MW:F2} MW");
         sb.AppendLine("  IP-0018 Energy Artifact:");
         sb.AppendLine($"    TotalPrimaryEnergy_MJ:   {stageE_TotalPrimaryEnergy_MJ:F3}");

@@ -166,6 +166,13 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public float sgHoldTargetPressure_psia;
     [HideInInspector] public float sgHoldPressureDeviation_pct;
     [HideInInspector] public float sgHoldNetLeakage_pct;
+    [HideInInspector] public bool sgPressurizationWindowActive;
+    [HideInInspector] public float sgPressurizationWindowStartTime_hr;
+    [HideInInspector] public float sgPressurizationWindowNetPressureRise_psia;
+    [HideInInspector] public float sgPressurizationWindowTsatDelta_F;
+    [HideInInspector] public int sgPressurizationConsecutivePressureRiseIntervals;
+    [HideInInspector] public int sgPressurizationConsecutiveTsatRiseIntervals;
+    [HideInInspector] public float sgPreBoilTempApproachToTsat_F;
 
     // IP-0018 Stage E telemetry fields (DP-0003 deterministic profile)
     [HideInInspector] public string dp0003ValidationProfile = "IP-0018 deterministic startup profile";
@@ -525,6 +532,12 @@ public partial class HeatupSimEngine : MonoBehaviour
     float sgStartupIntervalAccumulator_hr = 0f;
     float sgHoldCumulativeLeakage_pct = 0f;
     float sgHoldBaselineSecondaryMass_lb = 0f;
+    bool sgPressurizationWindowStarted = false;
+    bool sgBoilingTransitionObserved = false;
+    float sgPressurizationWindowStartPressure_psia = 0f;
+    float sgPressurizationWindowStartTsat_F = 0f;
+    float sgPressurizationLastPressure_psia = 0f;
+    float sgPressurizationLastTsat_F = 0f;
 
     // v0.9.5: Shutdown flag for immediate termination without blocking
     private volatile bool _shutdownRequested = false;
@@ -1779,6 +1792,19 @@ public partial class HeatupSimEngine : MonoBehaviour
         sgHoldNetLeakage_pct = 0f;
         sgHoldBaselineSecondaryMass_lb = 0f;
         sgHoldCumulativeLeakage_pct = 0f;
+        sgPressurizationWindowActive = false;
+        sgPressurizationWindowStartTime_hr = 0f;
+        sgPressurizationWindowNetPressureRise_psia = 0f;
+        sgPressurizationWindowTsatDelta_F = 0f;
+        sgPressurizationConsecutivePressureRiseIntervals = 0;
+        sgPressurizationConsecutiveTsatRiseIntervals = 0;
+        sgPreBoilTempApproachToTsat_F = 0f;
+        sgPressurizationWindowStarted = false;
+        sgBoilingTransitionObserved = false;
+        sgPressurizationWindowStartPressure_psia = 0f;
+        sgPressurizationWindowStartTsat_F = 0f;
+        sgPressurizationLastPressure_psia = 0f;
+        sgPressurizationLastTsat_F = 0f;
     }
 
     void ComputePrimaryBoundaryMassFlows(
@@ -2043,6 +2069,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             sgStartupIntervalAccumulator_hr -= DP0003_INTERVAL_LOG_HR;
             sgStartupStateIntervalCount++;
             intervalBoundary = true;
+            UpdatePressurizationProgressTelemetry();
         }
 
         if (sgStartupStateMode == SGStartupBoundaryStateMode.Hold)
@@ -2127,6 +2154,57 @@ public partial class HeatupSimEngine : MonoBehaviour
         }
 
         LogEvent(EventSeverity.INFO, logMessage);
+    }
+
+    void UpdatePressurizationProgressTelemetry()
+    {
+        const float pressureStartOffset_psia = 1.0f;
+        float currentPressure = sgSecondaryPressure_psia;
+        float currentTsat = sgSaturationTemp_F;
+
+        if (!sgPressurizationWindowStarted &&
+            currentPressure >= PlantConstants.SG_INITIAL_PRESSURE_PSIA + pressureStartOffset_psia)
+        {
+            sgPressurizationWindowStarted = true;
+            sgPressurizationWindowActive = true;
+            sgPressurizationWindowStartTime_hr = simTime;
+            sgPressurizationWindowStartPressure_psia = currentPressure;
+            sgPressurizationWindowStartTsat_F = currentTsat;
+            sgPressurizationLastPressure_psia = currentPressure;
+            sgPressurizationLastTsat_F = currentTsat;
+            sgPressurizationConsecutivePressureRiseIntervals = 1;
+            sgPressurizationConsecutiveTsatRiseIntervals = 1;
+            sgPressurizationWindowNetPressureRise_psia = 0f;
+            sgPressurizationWindowTsatDelta_F = 0f;
+            sgPreBoilTempApproachToTsat_F = Mathf.Abs(sgTopNodeTemp - sgSaturationTemp_F);
+        }
+
+        if (!sgPressurizationWindowStarted || sgBoilingTransitionObserved)
+            return;
+
+        if (sgBoilingActive)
+        {
+            sgBoilingTransitionObserved = true;
+            sgPressurizationWindowActive = false;
+            sgPreBoilTempApproachToTsat_F = Mathf.Abs(sgTopNodeTemp - sgSaturationTemp_F);
+            return;
+        }
+
+        if (currentPressure > sgPressurizationLastPressure_psia)
+            sgPressurizationConsecutivePressureRiseIntervals++;
+        else
+            sgPressurizationConsecutivePressureRiseIntervals = 0;
+
+        if (currentTsat > sgPressurizationLastTsat_F)
+            sgPressurizationConsecutiveTsatRiseIntervals++;
+        else
+            sgPressurizationConsecutiveTsatRiseIntervals = 0;
+
+        sgPressurizationWindowNetPressureRise_psia = currentPressure - sgPressurizationWindowStartPressure_psia;
+        sgPressurizationWindowTsatDelta_F = currentTsat - sgPressurizationWindowStartTsat_F;
+        sgPreBoilTempApproachToTsat_F = Mathf.Abs(sgTopNodeTemp - sgSaturationTemp_F);
+        sgPressurizationLastPressure_psia = currentPressure;
+        sgPressurizationLastTsat_F = currentTsat;
     }
 
     static string GetSGBoundaryStateLabel(SGStartupBoundaryStateMode state)
