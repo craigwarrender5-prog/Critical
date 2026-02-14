@@ -80,6 +80,16 @@ public partial class HeatupSimEngine : MonoBehaviour
         IsolatedHeatup
     }
 
+    struct DynamicIntervalSample
+    {
+        public float PrimaryHeatInput_MW;
+        public float Pressure_psia;
+        public float TopTemp_F;
+        public float Tsat_F;
+        public bool ActiveHeating;
+        public bool IsHoldState;
+    }
+
     // ========================================================================
     // INSPECTOR SETTINGS
     // ========================================================================
@@ -182,6 +192,21 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public float stageE_TotalSGEnergyRemoved_MJ;
     [HideInInspector] public float stageE_PercentMismatch;
     [HideInInspector] public int stageE_EnergySampleCount;
+    [HideInInspector] public int stageE_DynamicActiveHeatingIntervalCount;
+    [HideInInspector] public int stageE_DynamicPrimaryRiseCheckCount;
+    [HideInInspector] public int stageE_DynamicPrimaryRisePassCount;
+    [HideInInspector] public int stageE_DynamicPrimaryRiseFailCount;
+    [HideInInspector] public int stageE_DynamicTempDelta3WindowCount;
+    [HideInInspector] public float stageE_DynamicTempDelta3Last_F;
+    [HideInInspector] public float stageE_DynamicTempDelta3Min_F;
+    [HideInInspector] public float stageE_DynamicTempDelta3Max_F;
+    [HideInInspector] public int stageE_DynamicTempDelta3Above5Count;
+    [HideInInspector] public int stageE_DynamicTempDelta3Below2Count;
+    [HideInInspector] public int stageE_DynamicPressureFlatline3Count;
+    [HideInInspector] public int stageE_DynamicHardClampViolationCount;
+    [HideInInspector] public int stageE_DynamicHardClampStreak;
+    [HideInInspector] public float stageE_DynamicLastPressureDelta_psia;
+    [HideInInspector] public float stageE_DynamicLastTopToTsatDelta_F;
 
     // v5.0.0 Stage 4: SG draining & level state
     [HideInInspector] public bool  sgDrainingActive;            // True if SG is actively draining
@@ -538,6 +563,11 @@ public partial class HeatupSimEngine : MonoBehaviour
     float sgPressurizationWindowStartTsat_F = 0f;
     float sgPressurizationLastPressure_psia = 0f;
     float sgPressurizationLastTsat_F = 0f;
+    readonly Queue<DynamicIntervalSample> stageEDynamicSamples =
+        new Queue<DynamicIntervalSample>(3);
+    bool stageEDynamicPrevIntervalValid = false;
+    float stageEDynamicPrevPrimaryHeatInput_MW = 0f;
+    float stageEDynamicPrevPressure_psia = 0f;
 
     // v0.9.5: Shutdown flag for immediate termination without blocking
     private volatile bool _shutdownRequested = false;
@@ -1805,6 +1835,25 @@ public partial class HeatupSimEngine : MonoBehaviour
         sgPressurizationWindowStartTsat_F = 0f;
         sgPressurizationLastPressure_psia = 0f;
         sgPressurizationLastTsat_F = 0f;
+        stageE_DynamicActiveHeatingIntervalCount = 0;
+        stageE_DynamicPrimaryRiseCheckCount = 0;
+        stageE_DynamicPrimaryRisePassCount = 0;
+        stageE_DynamicPrimaryRiseFailCount = 0;
+        stageE_DynamicTempDelta3WindowCount = 0;
+        stageE_DynamicTempDelta3Last_F = 0f;
+        stageE_DynamicTempDelta3Min_F = 0f;
+        stageE_DynamicTempDelta3Max_F = 0f;
+        stageE_DynamicTempDelta3Above5Count = 0;
+        stageE_DynamicTempDelta3Below2Count = 0;
+        stageE_DynamicPressureFlatline3Count = 0;
+        stageE_DynamicHardClampViolationCount = 0;
+        stageE_DynamicHardClampStreak = 0;
+        stageE_DynamicLastPressureDelta_psia = 0f;
+        stageE_DynamicLastTopToTsatDelta_F = 0f;
+        stageEDynamicPrevIntervalValid = false;
+        stageEDynamicPrevPrimaryHeatInput_MW = 0f;
+        stageEDynamicPrevPressure_psia = 0f;
+        stageEDynamicSamples.Clear();
     }
 
     void ComputePrimaryBoundaryMassFlows(
@@ -2070,6 +2119,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             sgStartupStateIntervalCount++;
             intervalBoundary = true;
             UpdatePressurizationProgressTelemetry();
+            UpdateDynamicSecondaryResponseTelemetry();
         }
 
         if (sgStartupStateMode == SGStartupBoundaryStateMode.Hold)
@@ -2205,6 +2255,106 @@ public partial class HeatupSimEngine : MonoBehaviour
         sgPreBoilTempApproachToTsat_F = Mathf.Abs(sgTopNodeTemp - sgSaturationTemp_F);
         sgPressurizationLastPressure_psia = currentPressure;
         sgPressurizationLastTsat_F = currentTsat;
+    }
+
+    void UpdateDynamicSecondaryResponseTelemetry()
+    {
+        const float activeHeatThreshold_MW = 1.0f;
+        const float pressureFlatlineBand_psia = 0.1f;
+        const float primaryIncreaseThresholdFraction = 0.02f;
+        const float hardClampTargetDelta_F = 50f;
+        const float hardClampTolerance_F = 0.5f;
+
+        DynamicIntervalSample sample = new DynamicIntervalSample
+        {
+            PrimaryHeatInput_MW = stageE_PrimaryHeatInput_MW,
+            Pressure_psia = sgSecondaryPressure_psia,
+            TopTemp_F = sgTopNodeTemp,
+            Tsat_F = sgSaturationTemp_F,
+            ActiveHeating = stageE_PrimaryHeatInput_MW > activeHeatThreshold_MW,
+            IsHoldState = sgStartupStateMode == SGStartupBoundaryStateMode.Hold
+        };
+
+        stageE_DynamicLastTopToTsatDelta_F = sample.Tsat_F - sample.TopTemp_F;
+
+        if (sample.ActiveHeating)
+            stageE_DynamicActiveHeatingIntervalCount++;
+
+        if (stageEDynamicPrevIntervalValid &&
+            sample.ActiveHeating &&
+            stageEDynamicPrevPrimaryHeatInput_MW > activeHeatThreshold_MW)
+        {
+            float primaryRiseFraction =
+                (sample.PrimaryHeatInput_MW - stageEDynamicPrevPrimaryHeatInput_MW)
+                / Mathf.Max(0.001f, stageEDynamicPrevPrimaryHeatInput_MW);
+
+            if (primaryRiseFraction >= primaryIncreaseThresholdFraction)
+            {
+                stageE_DynamicPrimaryRiseCheckCount++;
+                stageE_DynamicLastPressureDelta_psia = sample.Pressure_psia - stageEDynamicPrevPressure_psia;
+                if (stageE_DynamicLastPressureDelta_psia > 0f)
+                    stageE_DynamicPrimaryRisePassCount++;
+                else
+                    stageE_DynamicPrimaryRiseFailCount++;
+            }
+        }
+
+        stageEDynamicPrevIntervalValid = true;
+        stageEDynamicPrevPrimaryHeatInput_MW = sample.PrimaryHeatInput_MW;
+        stageEDynamicPrevPressure_psia = sample.Pressure_psia;
+
+        if (stageEDynamicSamples.Count >= 3)
+            stageEDynamicSamples.Dequeue();
+        stageEDynamicSamples.Enqueue(sample);
+
+        if (stageEDynamicSamples.Count == 3)
+        {
+            DynamicIntervalSample[] window = stageEDynamicSamples.ToArray();
+            bool allActiveHeating = window[0].ActiveHeating
+                && window[1].ActiveHeating
+                && window[2].ActiveHeating;
+
+            if (allActiveHeating)
+            {
+                float tempDelta3_F = window[2].TopTemp_F - window[0].TopTemp_F;
+                stageE_DynamicTempDelta3Last_F = tempDelta3_F;
+                if (stageE_DynamicTempDelta3WindowCount == 0)
+                {
+                    stageE_DynamicTempDelta3Min_F = tempDelta3_F;
+                    stageE_DynamicTempDelta3Max_F = tempDelta3_F;
+                }
+                else
+                {
+                    stageE_DynamicTempDelta3Min_F = Mathf.Min(stageE_DynamicTempDelta3Min_F, tempDelta3_F);
+                    stageE_DynamicTempDelta3Max_F = Mathf.Max(stageE_DynamicTempDelta3Max_F, tempDelta3_F);
+                }
+
+                stageE_DynamicTempDelta3WindowCount++;
+                if (tempDelta3_F > 5f)
+                    stageE_DynamicTempDelta3Above5Count++;
+                if (tempDelta3_F < 2f)
+                    stageE_DynamicTempDelta3Below2Count++;
+
+                float pressureDelta3_psia = window[2].Pressure_psia - window[0].Pressure_psia;
+                if (Mathf.Abs(pressureDelta3_psia) <= pressureFlatlineBand_psia)
+                    stageE_DynamicPressureFlatline3Count++;
+            }
+        }
+
+        if (sample.ActiveHeating && !sample.IsHoldState)
+        {
+            bool nearHardClamp =
+                Mathf.Abs(stageE_DynamicLastTopToTsatDelta_F - hardClampTargetDelta_F) <= hardClampTolerance_F;
+            stageE_DynamicHardClampStreak = nearHardClamp
+                ? stageE_DynamicHardClampStreak + 1
+                : 0;
+            if (stageE_DynamicHardClampStreak >= 3)
+                stageE_DynamicHardClampViolationCount++;
+        }
+        else
+        {
+            stageE_DynamicHardClampStreak = 0;
+        }
     }
 
     static string GetSGBoundaryStateLabel(SGStartupBoundaryStateMode state)
