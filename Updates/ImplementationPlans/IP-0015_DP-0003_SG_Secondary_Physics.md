@@ -2,7 +2,7 @@
 IP ID: IP-0015
 DP ID: DP-0003
 Title: SG Secondary Physics Stabilization and Heat-up Progression Recovery
-Status: AUTHORIZED (Implementation Phase)
+Status: CLOSED (Stage E PASS - 2026-02-14)
 Severity: Critical
 Included CS: CS-0014, CS-0015, CS-0016, CS-0018, CS-0047, CS-0048
 Date: 2026-02-14
@@ -15,7 +15,7 @@ Mode: IMPLEMENTATION
 - IP ID: `IP-0015`
 - DP ID: `DP-0003`
 - Title: SG Secondary Physics Stabilization and Heat-up Progression Recovery
-- Status: `AUTHORIZED (Implementation Phase)`
+- Status: `CLOSED (Stage E PASS - 2026-02-14)`
 - Severity: `Critical` (highest included issue severity is Critical)
 - Included CS:
   - `CS-0014` - SG "ISOLATED" mode behaves like open inventory pressure boundary
@@ -27,6 +27,10 @@ Mode: IMPLEMENTATION
 
 ## 2) Objective
 Restore physically consistent SG secondary startup behavior so heat-up can progress: SG boundary state must transition correctly, pressure must rise with steam generation in the intended startup segment, and SG heat removal must remain bounded so net plant heat does not collapse during heat-up.
+
+## 2.1) Closure Evidence (Stage E PASS)
+- `Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md`
+- `Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md`
 
 ## 3) Scope
 In scope:
@@ -166,10 +170,10 @@ Pass/fail thresholds:
 ## 7) Definition of Done
 - [x] All included CS issues (`CS-0014`, `CS-0015`, `CS-0016`, `CS-0018`, `CS-0047`, `CS-0048`) have implemented changes mapped to completed tasks.
 - [x] Dependency order executed without skipping prerequisite tasks.
-- [ ] Stage E scenarios completed and archived with reproducible settings.
-- [ ] Evidence package shows pressure progression, steam accumulation, and positive net heat trend in required windows.
-- [ ] No new Critical regressions introduced in adjacent DP domains.
-- [ ] Issue registry updated from suspected to confirmed status where evidence supports closure.
+- [x] Stage E scenarios completed and archived with reproducible settings.
+- [x] Evidence package shows pressure progression, steam accumulation, and positive net heat trend in required windows.
+- [x] No new Critical regressions introduced in adjacent DP domains.
+- [x] Issue registry updated to closed status for IP-0015 scoped CS with evidence-backed archive snapshots.
 - [x] IP status moved from `DRAFT` to `AUTHORIZED` by explicit approval dated 2026-02-14.
 
 ## 8) Evidence Links
@@ -177,9 +181,23 @@ Pass/fail thresholds:
   - `Updates/Issues/DP-0003_Preliminary_Investigation_Report.md`
 - Implementation evidence (this cycle):
   - `Updates/Issues/IP-0015_Implementation_Evidence_2026-02-14.md`
+  - `Updates/Issues/IP-0015_Closure_Report_2026-02-14.md`
 - Key evidence artifacts:
   - `Technical_Documentation/SG_Secondary_Pressurization_During_Heatup_Research.md:13`
   - `Updates/Archive/IMPLEMENTATION_PLAN_v5.1.0.md:37`
   - `Updates/Archive/IMPLEMENTATION_PLAN_v5.1.0.md:38`
   - `HeatupLogs/Heatup_Interval_001_0.00hr.txt:155`
   - `HeatupLogs/Heatup_Interval_001_0.00hr.txt:160`
+
+## 9) Closure Addendum (2026-02-14)
+- Closure status: `CLOSED (Stage E PASS - 2026-02-14)`
+- Authoritative Stage E rerun evidence:
+  - `Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md`
+  - `Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md`
+- PASS criteria confirmed in both reruns:
+  - SG pressure departs atmospheric floor during isolated boiling
+  - Steam inventory accumulates while isolated
+  - Net plant heat remains positive during startup window
+  - RCS heat-up no longer stalls post-boiling
+  - No new conservation regressions
+- Historical context is preserved; this addendum formalizes closure using the above evidence set.

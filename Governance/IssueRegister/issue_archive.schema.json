@@ -1,0 +1,196 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Governance/IssueRegister/issue_archive.schema.json",
+  "title": "Critical Closed Issue Archive",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "generated_at",
+    "source",
+    "archived_issue_count",
+    "issues"
+  ],
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "string"
+    },
+    "archived_issue_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/archiveIssue"
+      }
+    }
+  },
+  "$defs": {
+    "domainEnum": {
+      "type": "string",
+      "enum": [
+        "Primary Thermodynamics",
+        "Pressurizer & Two-Phase Physics",
+        "Steam Generator Secondary Physics",
+        "CVCS / Inventory Control",
+        "Mass & Energy Conservation",
+        "Plant Protection & Limits",
+        "Validation & Diagnostics",
+        "Operator Interface & Scenarios",
+        "Performance & Runtime",
+        "Project Governance",
+        "UNASSIGNED"
+      ]
+    },
+    "severityEnum": {
+      "type": "string",
+      "enum": [
+        "CRITICAL",
+        "HIGH",
+        "MEDIUM",
+        "LOW"
+      ]
+    },
+    "resolutionTypeEnum": {
+      "type": "string",
+      "enum": [
+        "FIXED",
+        "WONT_FIX",
+        "DUPLICATE",
+        "INVALID",
+        "CANT_REPRO",
+        "DEFERRED_TO_NEW_ID"
+      ]
+    },
+    "archiveIssue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "domain",
+        "severity",
+        "status",
+        "created_at",
+        "closed_at",
+        "resolution_type",
+        "fix_refs",
+        "validation_refs"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^CS-[0-9]{4}$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "domain": {
+          "$ref": "#/$defs/domainEnum"
+        },
+        "severity": {
+          "$ref": "#/$defs/severityEnum"
+        },
+        "status": {
+          "type": "string",
+          "const": "CLOSED"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "closed_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "resolution_type": {
+          "$ref": "#/$defs/resolutionTypeEnum"
+        },
+        "fix_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "validation_refs": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "one_line_rca": {
+          "type": "string",
+          "maxLength": 200
+        },
+        "superseded_by": {
+          "type": "string",
+          "pattern": "^CS-[0-9]{4}$"
+        },
+        "supersedes": {
+          "type": "string",
+          "pattern": "^CS-[0-9]{4}$"
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "resolution_type": {
+                "const": "FIXED"
+              }
+            },
+            "required": [
+              "resolution_type"
+            ]
+          },
+          "then": {
+            "required": [
+              "one_line_rca"
+            ]
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "resolution_type": {
+                "const": "DEFERRED_TO_NEW_ID"
+              }
+            },
+            "required": [
+              "resolution_type"
+            ]
+          },
+          "then": {
+            "anyOf": [
+              {
+                "required": [
+                  "superseded_by"
+                ]
+              },
+              {
+                "required": [
+                  "supersedes"
+                ]
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}

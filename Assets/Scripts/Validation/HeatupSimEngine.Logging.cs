@@ -1274,6 +1274,19 @@ public partial class HeatupSimEngine
         sb.AppendLine($"      Epsilon:          {PlantConstants.RTCC_EPSILON_MASS_LBM,10:F1} lbm");
         sb.AppendLine($"      Result:           {(rtccLastAssertPass ? "PASS" : "FAIL")}");
         sb.AppendLine();
+        sb.AppendLine("    PBOC LAST EVENT:");
+        sb.AppendLine($"      Tick / Time:      {pbocLastEvent.TickIndex,6} / {pbocLastEvent.SimTime_hr,7:F4} hr");
+        sb.AppendLine($"      Regime:           {pbocLastEvent.RegimeLabel}");
+        sb.AppendLine($"      dm_RCS:           {pbocLastEvent.dm_RCS_lbm,10:F2} lbm");
+        sb.AppendLine($"      dm_PZRw:          {pbocLastEvent.dm_PZRw_lbm,10:F2} lbm");
+        sb.AppendLine($"      dm_PZRs:          {pbocLastEvent.dm_PZRs_lbm,10:F2} lbm");
+        sb.AppendLine($"      dm_VCT:           {pbocLastEvent.dm_VCT_lbm,10:F2} lbm");
+        sb.AppendLine($"      dm_BRS:           {pbocLastEvent.dm_BRS_lbm,10:F2} lbm");
+        sb.AppendLine($"      dm_external:      {pbocLastEvent.dm_external_lbm,10:F2} lbm");
+        sb.AppendLine($"      External In/Out:  {pbocLastEvent.ExternalIn_gal,6:F2} / {pbocLastEvent.ExternalOut_gal,6:F2} gal");
+        sb.AppendLine($"      Mass In/Out:      {pbocLastEvent.MassIn_lbm,8:F2} / {pbocLastEvent.MassOut_lbm,8:F2} lbm");
+        sb.AppendLine($"      Pairing Assert:   {(pbocLastEvent.PairingCheckPass ? "PASS" : "FAIL")} (failures={pbocPairingAssertionFailures})");
+        sb.AppendLine();
         sb.AppendLine(new string('=', 70));
 
         File.WriteAllText(file, sb.ToString());
@@ -1307,6 +1320,8 @@ public partial class HeatupSimEngine
         sb.AppendLine($"  Mass conservation ≤{PlantConstants.STAGE_E_CONSERVATION_LBM_LIMIT:F0} lbm: {(massError_lbm <= PlantConstants.STAGE_E_CONSERVATION_LBM_LIMIT ? "PASS" : "FAIL")} ({massError_lbm:F1} lbm)");
         sb.AppendLine($"  RTCC telemetry present: {(rtccTelemetryPresent ? "PASS" : "FAIL")}");
         sb.AppendLine($"  RTCC assertion failures: {(rtccAssertionFailureCount == 0 ? "PASS" : "FAIL")} ({rtccAssertionFailureCount})");
+        sb.AppendLine($"  PBOC events recorded: {(pbocEventCount > 0 ? "PASS" : "FAIL")} ({pbocEventCount})");
+        sb.AppendLine($"  PBOC pairing assertion failures: {(pbocPairingAssertionFailures == 0 ? "PASS" : "FAIL")} ({pbocPairingAssertionFailures})");
         sb.AppendLine();
         
         // v4.4.0: PZR Pressure/Level Control Final Validation

@@ -59,6 +59,14 @@ public partial class HeatupSimEngine
         // v0.1.0.0: Reset canonical ledger flags for new simulation run
         firstStepLedgerBaselined = false;
         regime3CVCSPreApplied = false;
+        pbocTickIndex = 0;
+        pbocEventActiveThisTick = false;
+        pbocCurrentEvent = default;
+        pbocLastEvent = default;
+        pbocLastEvent.RegimeLabel = "NONE";
+        pbocLastEvent.PairingCheckPass = true;
+        pbocEventCount = 0;
+        pbocPairingAssertionFailures = 0;
         CoupledThermo.ResetSessionFlags();
 
         // v0.1.0.0 Phase C: Reset diagnostic display to pre-run state

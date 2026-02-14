@@ -2,7 +2,7 @@
 IP ID: IP-0016
 DP ID: DP-0005
 Title: Mass & Energy Conservation Domain Closure Plan
-Status: IN_PROGRESS (Stage E FAIL - 2026-02-14)
+Status: CLOSED (Stage E PASS - 2026-02-14)
 Severity: Critical
 Objective: Close DP-0005 in full
 Included CS: CS-0051, CS-0050, CS-0052, CS-0001, CS-0002, CS-0003, CS-0005, CS-0008, CS-0004, CS-0013
@@ -16,7 +16,7 @@ Mode: IMPLEMENTATION/VALIDATION
 ## 1) Header / Frontmatter
 - IP ID: `IP-0016`
 - Domain: `DP-0005`
-- Status: `IN_PROGRESS (Stage E FAIL - 2026-02-14)`
+- Status: `CLOSED (Stage E PASS - 2026-02-14)`
 - Severity: `CRITICAL`
 - Objective: Close DP-0005 in full
 - Included CS:
@@ -87,6 +87,47 @@ RTCC conformance is a hard gate for Stage E conservation pass:
 - No regime-boundary discontinuity beyond tolerance is allowed.
 - Stage E pass decision is blocked if RTCC telemetry is absent.
 
+## Primary Boundary Ownership Contract (PBOC)
+### 1.1 Invariant (tick-level)
+For every tick:
+`(RCS + PZRw + PZRs + VCT + BRS)_t - (RCS + PZRw + PZRs + VCT + BRS)_0 = ExternalNetMass_t`
+within configured Stage E tolerance.
+
+### 1.2 Single Authority Rule
+Primary-boundary flow effects are computed once per tick in one canonical event.
+The event payload is required to include:
+- `dm_RCS_lbm`
+- `dm_PZRw_lbm`
+- `dm_PZRs_lbm`
+- `dm_VCT_lbm`
+- `dm_BRS_lbm`
+- `dm_external_lbm` (plus supporting gallons and conversion density source)
+- metadata: regime, tick index/time, and contributing subflows (letdown, charging-to-primary, seal injection, seal return, divert, makeup, CBO loss)
+
+No other path may apply primary-boundary mass effects to conserved buckets outside the PBOC application step.
+
+### 1.3 Application Order
+Per tick, the boundary-flow order is fixed:
+1. Compute PBOC event (single source flow capture and signed deltas)
+2. Apply event to component masses (single apply)
+3. Apply event to ledger/accumulators (single apply from same event values)
+4. Snapshot audit totals (`massError_lbm` and interval audit)
+
+Forbidden patterns:
+- apply then overwrite
+- overwrite then audit
+
+### 1.4 Mapping Table (boundary term to bucket ownership/sign)
+| Boundary Term | Definition | RCS | PZRw | PZRs | VCT | BRS | External | Notes |
+|---|---|---:|---:|---:|---:|---:|---:|---|
+| Charging to primary | `max(0, chargingFlow - sealInjection)` | `+` | `0` | `0` | `-` | `0` | `0` | Internal transfer VCT -> RCS |
+| Letdown from primary | `max(0, letdownFlow)` | `-` | `0` | `0` | `+` | `0` | `0` | Internal transfer RCS -> VCT |
+| Seal injection | `rcpCount * SEAL_INJECTION_PER_PUMP_GPM` | included in charging split | `0` | `0` | included in charging split | `0` | `0` | Internal to CVCS/primary path |
+| Seal return (leakoff return) | `rcpCount * SEAL_LEAKOFF_PER_PUMP_GPM` | `-` (primary outflow term) | `0` | `0` | `+` | `0` | `0` | Internal transfer to VCT |
+| Divert to BRS | `vctState.DivertFlow_gpm` | `0` | `0` | `0` | `-` | `+` | `0` | Internal transfer VCT -> BRS |
+| Makeup (external) | `vctState.MakeupFlow_gpm` when not BRS-sourced | `0` | `0` | `0` | `+` | `0` | `+` | True plant external IN |
+| CBO loss | `PlantConstants.CBO_LOSS_GPM` when RCPs running | `0` | `0` | `0` | `-` | `0` | `-` | True plant external OUT |
+
 ## 5) Work Breakdown By CS (Full DP-0005 Coverage)
 | CS | Summary | Root Cause | Correction Class | Affected Modules | Validation Requirement | Interaction With Other CS |
 |---|---|---|---|---|---|---|
@@ -140,11 +181,13 @@ RTCC conformance is a hard gate for Stage E conservation pass:
 
 ## 8) Definition of Done
 - [x] RTCC approved in this IP before implementation.
-- [x] CS-0051 transition discontinuity resolved within tolerance.
-- [ ] CS-0050 plant-wide conservation divergence resolved.
+- [x] CS-0051 transition discontinuity resolved and closed.
+- [x] CS-0050 plant-wide conservation divergence resolved and closed.
+- [x] CS-0052 post-RTCC long-run divergence resolved and closed.
 - [x] Non-regression checks complete for CS-0001/0002/0003/0005/0008/0004/0013.
 - [x] Stage E failure handling completed (new CS logged: CS-0052).
-- [ ] Stage E conservation passes with archived evidence.
+- [x] Stage E conservation passes with archived evidence.
+- [x] Registry updated for CS-0050/CS-0051/CS-0052 closure entries.
 - [ ] All DP-0005 CS formally closed in registry.
 
 ## 9) Latest Execution Outcome (2026-02-14)
@@ -160,3 +203,52 @@ RTCC conformance is a hard gate for Stage E conservation pass:
   - Interval gate: `FAIL` (first fail at `8.50 hr`: `3668.7 lbm`, `0.397%`)
   - Step-level divergence gate: `FAIL` (`max mass error = 57911.69 lbm`)
 - Execution note: Stage E failed due to `CS-0052`; RTCC passed; next action is `CS-0052` investigation.
+
+## 10) Latest Execution Outcome (2026-02-14 14:10:59 Rerun)
+- Stage E rerun executed via `Critical.Validation.StageERunner.RunStageE` (batch).
+- Evidence package archived:
+  - `Updates/Issues/IP-0016_StageE_Validation_2026-02-14_141059.md`
+  - `Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_141055.md`
+  - `HeatupLogs/Heatup_Report_20260214_141059.txt`
+  - `HeatupLogs/Heatup_Interval_034_8.25hr.txt`
+  - `HeatupLogs/Heatup_Interval_035_8.50hr.txt`
+  - `HeatupLogs/Heatup_Interval_036_8.75hr.txt`
+  - `HeatupLogs/Unity_StageE_IP0016_final.log`
+- Gate summary:
+  - Stage E overall: `PASS`
+  - Conservation gate: `PASS` (`14.6 lbm`, `0.002%`)
+  - Interval gate at prior onset window:
+    - `8.25 hr`: `PASS` (`1.9 lbm`, `0.000%`)
+    - `8.50 hr`: `PASS` (`92.3 lbm`, `0.010%`)
+    - `8.75 hr`: `PASS` (`92.4 lbm`, `0.010%`)
+  - RTCC gate: `PASS` (`transition count=1`, `assertion failures=0`, `last assert delta=0.000 lbm`)
+  - PBOC gate: `PASS` (`events=6480`, `pairing assertion failures=0`)
+- Execution note:
+  - `CS-0050`, `CS-0051`, and `CS-0052` are closed under IP-0016 using PASS evidence set `2026-02-14 14:10:59`.
+
+## 11) Closure Summary (2026-02-14)
+- IP status: `CLOSED`
+- Final conservation error: `14.6 lbm (0.002%)`
+- Max mass error observed in PASS rerun evidence: `92.50 lbm`
+- Prior onset interval (`8.50 hr`) metric: `92.3 lbm (0.010%)` -> `PASS`
+- RTCC counters:
+  - Transition count: `1`
+  - Assertion failures: `0`
+  - Last assert delta: `0.000 lbm`
+- PBOC counters:
+  - Events recorded: `6480`
+  - Pairing assertion failures: `0`
+- Scope note:
+  - `Temp target: FAIL` remains in `HeatupLogs/Heatup_Report_20260214_141059.txt` and is explicitly out-of-scope for DP-0005/IP-0016 closure.
+
+## 12) Governance Follow-Up
+- DP-0005 is not fully closed at the registry level because one legacy CS remains non-closed.
+- Remaining DP-0005 CS have been moved to `Updates/ImplementationPlans/IP-0017_DP-0005_Remaining_Closure.md`:
+  - `CS-0001`, `CS-0002`, `CS-0003`, `CS-0004`, `CS-0005`, `CS-0008`, `CS-0013`
+- IP-0017 execution evidence:
+  - `Updates/Issues/IP-0017_StageE_NonRegression_2026-02-14_164742.md`
+  - `Updates/Issues/IP-0017_RunA_RunB_SameProcess_2026-02-14_164742.md` (prior non-strict A/B parity)
+  - `Updates/Issues/IP-0017_RunA_RunB_SameProcess_STRICT_2026-02-14_171456.md` (strict same-process closure evidence)
+  - `Updates/Issues/IP-0017_SameProcess_Execution_20260214_171456.md`
+  - Closed under IP-0017: `CS-0001`, `CS-0002`, `CS-0003`, `CS-0004`, `CS-0005`, `CS-0008`, `CS-0013`
+- `CS-0050`, `CS-0051`, and `CS-0052` remain closed under IP-0016 and are not reopened by this follow-up routing.

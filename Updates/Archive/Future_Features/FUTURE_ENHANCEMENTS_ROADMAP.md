@@ -17,6 +17,14 @@ Every work item is assigned to a **specific version release**. Versions v5.0.0 t
 
 **Governing Rule:** No Phase 1+ work may begin until Phase 0 exit criteria are met.
 
+### SG Validation Closure Update (2026-02-14)
+- IP-0015 (`DP-0003` SG secondary physics stabilization) is formally closed with Stage E PASS evidence.
+- Evidence:
+  - `Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md`
+  - `Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md`
+- Closure scope completed:
+  - `CS-0014`, `CS-0015`, `CS-0016`, `CS-0018`, `CS-0047`, `CS-0048`
+
 ---
 
 ## 🚨 v5.4.0 — Primary Mass & Pressurizer Stabilization Release (PARTIALLY COMPLETE)

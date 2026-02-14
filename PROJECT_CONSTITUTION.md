@@ -40,9 +40,13 @@ If any conflict exists between convenience and governance, governance prevails.
 
 The following artifacts are mandatory and authoritative at these repository-relative paths:
 
-1. **Master Issue Register (single source of truth for issues)**
+1. **Issue Governance Register (single source of truth for issues)**
 
-   * Location: `Updates/ISSUE_REGISTRY.md`
+   * Active issues location: `Governance/IssueRegister/issue_register.json`
+   * Closed issues location: `Governance/IssueRegister/issue_archive.json`
+   * Search index location: `Governance/IssueRegister/issue_index.json`
+   * Schemas: `Governance/IssueRegister/issue_register.schema.json`, `Governance/IssueRegister/issue_archive.schema.json`
+   * Legacy markdown issue lists are non-authoritative and MUST be marked deprecated.
 
 2. **Domain Plans (DP)**
 
@@ -80,7 +84,7 @@ The required lifecycle SHALL be:
 
 1. Observation
 2. Investigation and root-cause analysis (standalone report OR embedded DP issue entry)
-3. Register issue in `Updates/ISSUE_REGISTRY.md`
+3. Register issue in `Governance/IssueRegister/issue_register.json` and update `Governance/IssueRegister/issue_index.json`
 4. Assign issue to a Domain Plan (`DP-XXXX`)
 5. Authorize DP for execution
 6. Create and execute an Implementation Plan (`IP-XXXX`) for that DP
@@ -135,44 +139,28 @@ State skipping is not allowed.
 
 ---
 
-## Article VI - Master Issue Register Governance
+## Article VI - Issue Governance (JSON Register System)
 
-### Section 1 - Authority
+### Section 1 - Authority and Single Source of Truth
 
-`Updates/ISSUE_REGISTRY.md` is the single authoritative issue list.
-No issue may exist outside this register.
+The issue system is split by lifecycle state:
 
-### Section 2 - Issue Identifier and Severity
+* Active (non-closed) issues: `Governance/IssueRegister/issue_register.json`
+* Closed issue snapshots: `Governance/IssueRegister/issue_archive.json`
+* Cross-set search index: `Governance/IssueRegister/issue_index.json`
 
-* Issue ID format: `CS-XXXX`
-* Severity values are restricted to:
+Markdown issue lists are non-authoritative reference artifacts only and MUST NOT be used as the master record.
 
-  * `Critical`
-  * `High`
-  * `Medium`
-  * `Low`
+### Section 2 - Deterministic Identifiers
 
-### Section 3 - Required Issue Fields
+* Issue IDs MUST follow `CS-####`.
+* Domain Plan IDs MUST follow `DP-###` (existing legacy `DP-####` IDs are accepted for compatibility).
+* Implementation Plan IDs MUST follow `IP-####`.
+* IDs are immutable and MUST NOT be reused.
 
-Each issue record SHALL include:
+### Section 3 - Hardcoded Domain Constraint (No Inference)
 
-* Issue ID
-* Title
-* Severity
-* Status
-* Investigation Evidence Location (standalone report path OR DP entry reference)
-* **Domain (Canonical)**
-* **Subdomain (Freeform detail tag)**
-* Assigned DP ID
-* Assigned IP ID (blank until IP is created)
-* Detected in Version (if known)
-* Validation Outcome
-* Deferral/Supersession Reason (if applicable)
-* Blocking Dependency (if applicable)
-
-### Section 4 - Canonical Domain Types (CONTROLLED VOCABULARY)
-
-The ONLY permitted values for `ISSUE_REGISTRY.Domain` and DP/IP domain titles are:
+The only valid domain values are:
 
 1. Primary Thermodynamics
 2. Pressurizer & Two-Phase Physics
@@ -184,53 +172,119 @@ The ONLY permitted values for `ISSUE_REGISTRY.Domain` and DP/IP domain titles ar
 8. Operator Interface & Scenarios
 9. Performance & Runtime
 10. Project Governance
+11. UNASSIGNED
 
-**Agent restriction (non-negotiable):**
+Domain assignment MUST use this exact controlled list. Agents MUST NOT infer or invent new domains.
+`UNASSIGNED` MAY be used only when assignment is genuinely unresolved and MUST be resolved during triage.
 
-* Agents MUST NOT invent, rename, split, merge, infer, or extend Domain Types.
-* Any domain not in the list above is invalid.
+### Section 4 - Required Active Issue Fields
 
-### Section 5 - Subdomain Rule
+Each active issue entry in `issue_register.json` MUST include:
 
-* `ISSUE_REGISTRY.Subdomain` MAY be any descriptive text and SHOULD preserve prior detailed classification.
-* Recommended format: `<Canonical Domain> — <Area>`.
+* `id`
+* `title`
+* `domain`
+* `severity`
+* `status` (must not be `CLOSED`)
+* `created_at`
+* `updated_at`
+* `stage_detected` (null allowed when unknown)
+* `assigned_dp` (string or null)
+* `assigned_ip` (string or null)
 
-### Section 6 - Issue-to-Domain Assignment Rule (NO GUESSING)
+Allowed active `severity` values:
 
-* Every CS issue MUST be assigned to exactly one canonical Domain and therefore exactly one DP.
-* Agents MUST choose from the fixed Domain list only.
-* If an issue cannot be mapped with high confidence using existing issue text/evidence, the agent MUST:
+* `CRITICAL`
+* `HIGH`
+* `MEDIUM`
+* `LOW`
 
-  1. Leave Domain blank,
-  2. Leave Assigned DP blank,
-  3. Flag the issue in a report as requiring user assignment.
-     Agents MUST NOT guess.
+Allowed active `status` values:
 
-### Section 7 - Issue Status Model
+* `OPEN`
+* `INVESTIGATING`
+* `BLOCKED`
+* `DEFERRED`
+* `READY_FOR_FIX`
 
-Allowed Issue statuses:
+Optional active fields are permitted, including:
 
-* `Registered`
-* `Assigned`
-* `In Progress`
-* `Closed`
-* `Deferred`
-* `Superseded`
+* `observations`
+* `evidence`
+* `hypotheses`
+* `root_cause`
+* `resolution_candidate`
+* `links`
+* `tags`
 
-Allowed transitions:
+### Section 5 - Required Closure Snapshot Fields
 
-* `Registered -> Assigned`
-* `Assigned -> In Progress`
-* `In Progress -> Closed`
-* `Registered -> Deferred` (exception, Article IX)
-* `Assigned -> Deferred` (exception, Article IX)
-* `In Progress -> Deferred` (exception, Article IX)
-* `Registered -> Superseded` (exception, Article IX)
-* `Assigned -> Superseded` (exception, Article IX)
-* `In Progress -> Superseded` (exception, Article IX)
+Each closed issue snapshot in `issue_archive.json` MUST include:
 
-No other transitions are allowed.
+* `id`
+* `title`
+* `domain`
+* `severity`
+* `status` = `CLOSED`
+* `created_at`
+* `closed_at`
+* `resolution_type`
+* `fix_refs`
+* `validation_refs`
 
+Allowed `resolution_type` values:
+
+* `FIXED`
+* `WONT_FIX`
+* `DUPLICATE`
+* `INVALID`
+* `CANT_REPRO`
+* `DEFERRED_TO_NEW_ID`
+
+If `resolution_type = FIXED`, `one_line_rca` is mandatory.
+
+### Section 6 - Closure Minimization Requirement
+
+When an issue transitions to `CLOSED`:
+
+1. Remove the full issue object from `issue_register.json`.
+2. Add a minimized closure snapshot to `issue_archive.json`.
+3. Update `issue_index.json` to reflect closed state, `closed_at`, and `resolution_type`.
+
+`issue_register.json` MUST NOT contain `CLOSED` issues.
+
+### Section 7 - Operational Workflow Rules
+
+Create:
+
+* Add a full issue object to `issue_register.json`.
+* Update `issue_index.json`.
+* Set `status = OPEN` unless explicitly justified otherwise.
+
+Update:
+
+* Modify only `issue_register.json` for active issues.
+* `updated_at` MUST change on each update.
+* Evidence and observations SHOULD be append-only unless correcting factual errors.
+
+Close:
+
+* Follow Section 6 move/minimize procedure.
+* Include closure references in archive (`fix_refs`, `validation_refs`).
+
+Deferral to new issue:
+
+* Close original with `resolution_type = DEFERRED_TO_NEW_ID` and `superseded_by`.
+* New issue MUST include `supersedes` referencing the original.
+
+### Section 8 - Schema Validation Requirement
+
+Every change to issue JSON artifacts MUST validate against Draft 2020-12 schemas:
+
+* `Governance/IssueRegister/issue_register.schema.json`
+* `Governance/IssueRegister/issue_archive.schema.json`
+
+Invalid JSON or schema violations are constitutional non-compliance.
 ---
 
 ## Article VII - Domain Plans (DP)
@@ -242,7 +296,7 @@ DPs organize scope and execution readiness; they are not release artifacts.
 
 ### Section 2 - DP Construction Rule (HARD)
 
-* A DP MUST correspond to exactly one Canonical Domain Type (Article VI Section 4).
+* A DP MUST correspond to exactly one Canonical Domain Type (Article VI Section 3).
 * For each Canonical Domain Type, there SHOULD be exactly one Open DP at a time.
 * Creating additional DPs within the same Domain is allowed ONLY for deferral/blocking reasons and MUST be justified.
 
@@ -396,7 +450,7 @@ Validation outcomes are:
 * `Fail - New Issue`
 * `Fail - Regression`
 
-Failure outcomes SHALL be registered in the Master Issue Register before closure.
+Failure outcomes SHALL be registered in the JSON issue governance system (`issue_register.json` / `issue_archive.json` / `issue_index.json`) before closure.
 
 ---
 
@@ -421,7 +475,7 @@ Partial amendments are not permitted.
 Upon constitution upgrade:
 
 1. All existing DP files MUST be regenerated to include the required sections above.
-2. Severity and ordering MUST be sourced from ISSUE_REGISTRY.md.
+2. Severity and ordering MUST be sourced from `Governance/IssueRegister/issue_index.json` (authoritative), not markdown lists.
 3. No Implementation Plans may be created until ALL DPs are compliant.
 4. Standalone per-CS investigation files are optional; DP issue entries MAY carry investigation records.
 
@@ -436,3 +490,4 @@ Validation precedes release.
 Changelog precedes version assignment.
 
 All project work SHALL proceed under this Constitution.
+

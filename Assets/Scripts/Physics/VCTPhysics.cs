@@ -335,19 +335,25 @@ namespace Critical.Physics
         #region Verification
         
         /// <summary>
-        /// Verify mass conservation across the CVCS loop.
-        /// Compares cumulative VCT change + cumulative RCS change against external flows.
+        /// Verify mass conservation across tracked CVCS/auxiliary buckets using
+        /// the same plant-boundary external definition as Stage E inventory audit.
+        /// Compares cumulative VCT change + cumulative RCS change against
+        /// (plant external in - plant external out).
         /// Returns error in gallons (should be near zero if mass is conserved).
         /// </summary>
-        public static float VerifyMassConservation(VCTState state, float rcsInventoryChange_gal)
+        public static float VerifyMassConservation(
+            VCTState state,
+            float rcsInventoryChange_gal,
+            float plantExternalIn_gal,
+            float plantExternalOut_gal)
         {
             // ================================================================
             // CROSS-SYSTEM MASS CONSERVATION CHECK
             // ================================================================
             // The CVCS forms a closed loop: VCT ↔ RCS via letdown/charging.
-            // External flows cross the loop boundary:
-            //   In:  seal return + makeup (RMS/RWST)
-            //   Out: divert (to BRS holdup tanks) + CBO
+            // Plant-wide external flows (aligned with inventory audit):
+            //   In:  makeup not sourced from BRS (RMS/RWST)
+            //   Out: CBO bleedoff to outside tracked plant
             //
             // Conservation law:
             //   ΔV_vct + ΔV_rcs = Σ(external_in) - Σ(external_out)
@@ -359,7 +365,7 @@ namespace Critical.Physics
             
             float vctChange = state.Volume_gal - state.InitialVolume_gal;
             float rcsChange = state.CumulativeRCSChange_gal;
-            float externalNet = state.CumulativeExternalIn_gal - state.CumulativeExternalOut_gal;
+            float externalNet = plantExternalIn_gal - plantExternalOut_gal;
             
             // Conservation: vctChange + rcsChange - externalNet ≈ 0
             float error = Mathf.Abs(vctChange + rcsChange - externalNet);
@@ -373,8 +379,8 @@ namespace Critical.Physics
                           $"externalNet={externalNet:F2}gal");
                 Debug.Log($"[VCT_CONS_DIAG] VCT: Vol={state.Volume_gal:F2}gal Init={state.InitialVolume_gal:F2}gal | " +
                           $"CumIn={state.CumulativeIn_gal:F2}gal CumOut={state.CumulativeOut_gal:F2}gal");
-                Debug.Log($"[VCT_CONS_DIAG] External: In={state.CumulativeExternalIn_gal:F2}gal " +
-                          $"Out={state.CumulativeExternalOut_gal:F2}gal | " +
+                Debug.Log($"[VCT_CONS_DIAG] External(PlantBoundary): In={plantExternalIn_gal:F2}gal " +
+                          $"Out={plantExternalOut_gal:F2}gal | " +
                           $"Makeup={state.MakeupFlow_gpm:F2}gpm Divert={state.DivertFlow_gpm:F2}gpm");
                 Debug.Log($"[VCT_CONS_DIAG] Equation: |{vctChange:F2} + {rcsChange:F2} - {externalNet:F2}| = {error:F2}");
                 
@@ -387,6 +393,19 @@ namespace Critical.Physics
             }
             
             return error;
+        }
+
+        /// <summary>
+        /// Backward-compatible overload. Uses legacy loop-scoped external accumulators.
+        /// Prefer the plant-boundary overload for Stage E alignment.
+        /// </summary>
+        public static float VerifyMassConservation(VCTState state, float rcsInventoryChange_gal)
+        {
+            return VerifyMassConservation(
+                state,
+                rcsInventoryChange_gal,
+                state.CumulativeExternalIn_gal,
+                state.CumulativeExternalOut_gal);
         }
         
         public static float GetTurnoverTime(VCTState state)

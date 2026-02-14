@@ -1,0 +1,195 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Governance/IssueRegister/issue_register.schema.json",
+  "title": "Critical Active Issue Register",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "generated_at",
+    "source",
+    "active_issue_count",
+    "issues"
+  ],
+  "properties": {
+    "version": {
+      "type": "string"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "type": "string"
+    },
+    "active_issue_count": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "issues": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/activeIssue"
+      }
+    }
+  },
+  "$defs": {
+    "domainEnum": {
+      "type": "string",
+      "enum": [
+        "Primary Thermodynamics",
+        "Pressurizer & Two-Phase Physics",
+        "Steam Generator Secondary Physics",
+        "CVCS / Inventory Control",
+        "Mass & Energy Conservation",
+        "Plant Protection & Limits",
+        "Validation & Diagnostics",
+        "Operator Interface & Scenarios",
+        "Performance & Runtime",
+        "Project Governance",
+        "UNASSIGNED"
+      ]
+    },
+    "severityEnum": {
+      "type": "string",
+      "enum": [
+        "CRITICAL",
+        "HIGH",
+        "MEDIUM",
+        "LOW"
+      ]
+    },
+    "activeStatusEnum": {
+      "type": "string",
+      "enum": [
+        "OPEN",
+        "INVESTIGATING",
+        "BLOCKED",
+        "DEFERRED",
+        "READY_FOR_FIX"
+      ]
+    },
+    "evidenceItem": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "ref",
+        "notes"
+      ],
+      "properties": {
+        "ref": {
+          "type": "string",
+          "minLength": 1
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "activeIssue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "id",
+        "title",
+        "domain",
+        "severity",
+        "status",
+        "created_at",
+        "updated_at",
+        "stage_detected",
+        "assigned_dp",
+        "assigned_ip"
+      ],
+      "properties": {
+        "id": {
+          "type": "string",
+          "pattern": "^CS-[0-9]{4}$"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1
+        },
+        "domain": {
+          "$ref": "#/$defs/domainEnum"
+        },
+        "severity": {
+          "$ref": "#/$defs/severityEnum"
+        },
+        "status": {
+          "$ref": "#/$defs/activeStatusEnum"
+        },
+        "created_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "updated_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "stage_detected": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "assigned_dp": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^DP-[0-9]{3,4}$"
+        },
+        "assigned_ip": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^IP-[0-9]{4}$"
+        },
+        "observations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evidence": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/evidenceItem"
+          }
+        },
+        "hypotheses": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "root_cause": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "resolution_candidate": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "links": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tags": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

@@ -229,6 +229,48 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public bool  primaryMassAlarm;               // True if drift exceeds alarm threshold
     [HideInInspector] public string primaryMassStatus = "NOT_CHECKED";  // v0.1.0.0 Phase C: Default until first diagnostic run
 
+    // IP-0016: Primary Boundary Ownership Contract (PBOC) telemetry.
+    public struct PrimaryBoundaryFlowEvent
+    {
+        public int TickIndex;
+        public float SimTime_hr;
+        public float Dt_hr;
+        public int RegimeId;
+        public string RegimeLabel;
+
+        public float LetdownFlow_gpm;
+        public float ChargingFlow_gpm;
+        public float SealInjection_gpm;
+        public float SealReturn_gpm;
+        public float ChargingToPrimary_gpm;
+        public float PrimaryOutflow_gpm;
+        public float MakeupExternal_gpm;
+        public float Divert_gpm;
+        public float CboLoss_gpm;
+
+        public float RhoRcs_lbm_ft3;
+        public float RhoAux_lbm_ft3;
+        public float MassIn_lbm;
+        public float MassOut_lbm;
+
+        public float dm_RCS_lbm;
+        public float dm_PZRw_lbm;
+        public float dm_PZRs_lbm;
+        public float dm_VCT_lbm;
+        public float dm_BRS_lbm;
+        public float dm_external_lbm;
+
+        public float ExternalIn_gal;
+        public float ExternalOut_gal;
+        public bool AppliedToComponents;
+        public bool AppliedToLedger;
+        public bool PairingCheckPass;
+    }
+
+    [HideInInspector] public PrimaryBoundaryFlowEvent pbocLastEvent;
+    [HideInInspector] public int pbocEventCount;
+    [HideInInspector] public int pbocPairingAssertionFailures;
+
     #endregion
 
     #region v1.1.0 HZP Systems — Steam Dump, HZP Stabilization, Heater PID
@@ -451,11 +493,13 @@ public partial class HeatupSimEngine : MonoBehaviour
     // v0.9.5: Shutdown flag for immediate termination without blocking
     private volatile bool _shutdownRequested = false;
 
-    // v4.4.0: Flag to prevent double-counting CVCS mass drain in Regime 3.
-    // When true, UpdateRCSInventory() skips its mass adjustment because
-    // the CVCS net flow was already applied BEFORE the CoupledThermo solver.
-    // Per NRC HRTD 4.1: CVCS flows and thermodynamic state are part of the
-    // same physical system — they must be coupled, not sequential.
+    // IP-0016 PBOC: tick-scoped boundary-flow event state.
+    private int pbocTickIndex = 0;
+    private PrimaryBoundaryFlowEvent pbocCurrentEvent;
+    private bool pbocEventActiveThisTick = false;
+
+    // Flag retained as UpdateRCSInventory guard so no secondary boundary
+    // mutation path can apply outside PBOC.
     private bool regime3CVCSPreApplied = false;
 
     // v5.3.0 Stage 6: Mass alarm edge detection state
@@ -814,6 +858,10 @@ public partial class HeatupSimEngine : MonoBehaviour
 
     void StepSimulation(float dt)
     {
+        pbocTickIndex++;
+        pbocEventActiveThisTick = false;
+        regime3CVCSPreApplied = false;
+
         // ================================================================
         // 1. RCP STARTUP SEQUENCE — Delegated to RCPSequencer module
         //    v0.4.0 Issue #3: Tracks per-pump start times for staged ramp-up.
@@ -1102,7 +1150,7 @@ public partial class HeatupSimEngine : MonoBehaviour
 
                 // RCS INVENTORY UPDATE — CVCS net flow during solid ops
                 float rho_rcs = WaterProperties.WaterDensity(T_rcs, pressure);
-                ApplyPrimaryBoundaryFlowToRcs(dt, rho_rcs);
+                ApplyPrimaryBoundaryFlowPBOC(dt, rho_rcs, 0, "SOLID");
                 rcsWaterMass = physicsState.RCSWaterMass;
 
                 // v5.4.1 Audit Fix Stage 1: Update SOLID canonical fields every tick.
@@ -1181,23 +1229,13 @@ public partial class HeatupSimEngine : MonoBehaviour
                 }
 
                 // ============================================================
-                // v0.3.0.0 Phase B (Fix 3.1): CVCS BOUNDARY FLOW — Ledger mutation
-                // INV-2: Boundary flows enter through ledger mutation.
-                // This is the SOLE site where CVCS mutates TotalPrimaryMass_lb
-                // in Regime 1. The post-physics UpdateRCSInventory() is guarded
-                // by regime3CVCSPreApplied and will early-return.
-                //
-                // Note: During DRAIN, UpdateDrainPhase also moves mass between
-                // PZR and RCS components — but those are INTERNAL redistributions
-                // that do not cross the primary system boundary. The ledger does
-                // not change from internal transfers.
+                // IP-0016 PBOC: Primary boundary flow single-owner application.
+                // Compute once and apply to both component authority (RCS) and
+                // ledger/accumulators using the same signed event values.
                 // ============================================================
                 {
                     float rho_rcs_r1 = WaterProperties.WaterDensity(T_rcs, pressure);
-                    ApplyPrimaryBoundaryFlowToLedger(dt, rho_rcs_r1);
-
-                    // Set flag so UpdateRCSInventory() doesn't double-count
-                    regime3CVCSPreApplied = true;
+                    ApplyPrimaryBoundaryFlowPBOC(dt, rho_rcs_r1, 1, "R1_TWO_PHASE_ISOLATED");
                 }
 
                 // Debug heat balance periodically
@@ -1248,13 +1286,10 @@ public partial class HeatupSimEngine : MonoBehaviour
             physicsState.Temperature = T_rcs;
             physicsState.Pressure = pressure;
             
-            // v0.9.6 FIX: Sync PZR state from engine to physicsState BEFORE calling solver
-            // This ensures CoupledThermo starts from the correct current PZR state
+            // IP-0016 PBOC/CS-0050: Sync PZR volumes for solver continuity
+            // without re-deriving canonical masses from V×ρ here.
             physicsState.PZRWaterVolume = pzrWaterVolume;
             physicsState.PZRSteamVolume = pzrSteamVolume;
-            float tSatForMass = WaterProperties.SaturationTemperature(pressure);
-            physicsState.PZRWaterMass = pzrWaterVolume * WaterProperties.WaterDensity(tSatForMass, pressure);
-            physicsState.PZRSteamMass = pzrSteamVolume * WaterProperties.SaturatedSteamDensity(pressure);
 
             // v1.3.0: Update multi-node SG model BEFORE RCS physics step
             ApplySGBoundaryAuthority();
@@ -1276,22 +1311,12 @@ public partial class HeatupSimEngine : MonoBehaviour
             }
 
             // ============================================================
-            // v4.4.0: CVCS MASS DRAIN — Apply BEFORE CoupledThermo solver
-            // Same fix as Regime 3 (see detailed comment there).
-            // In Regime 2, the coupled path result is blended by α, so the
-            // CVCS drain's effect on the solver is naturally weighted.
-            //
-            // v0.1.0.0 Phase D: CVCS BOUNDARY OWNERSHIP (CS-0004)
-            //   This block is the SOLE site where CVCS mutates TotalPrimaryMass_lb
-            //   in Regime 2. The post-physics UpdateRCSInventory() is guarded by
-            //   regime3CVCSPreApplied and will early-return. No other code path
-            //   may mutate the ledger for CVCS flows in this regime.
+            // IP-0016 PBOC: Apply boundary event before coupled solve.
+            // Same event values drive component and ledger updates.
             // ============================================================
             {
                 float rho_rcs_r2 = WaterProperties.WaterDensity(T_rcs, pressure);
-                ApplyPrimaryBoundaryFlowToLedger(dt, rho_rcs_r2);
-
-                regime3CVCSPreApplied = true;
+                ApplyPrimaryBoundaryFlowPBOC(dt, rho_rcs_r2, 2, "R2_BLEND");
             }
 
             // ============================================================
@@ -1431,12 +1456,10 @@ public partial class HeatupSimEngine : MonoBehaviour
             physicsState.Temperature = T_rcs;
             physicsState.Pressure = pressure;
             
-            // v0.9.6: Sync PZR state from engine to physicsState for solver consistency
+            // IP-0016 PBOC/CS-0050: Sync PZR volumes for solver continuity
+            // without re-deriving canonical masses from V×ρ here.
             physicsState.PZRWaterVolume = pzrWaterVolume;
             physicsState.PZRSteamVolume = pzrSteamVolume;
-            float tSatForMass3 = WaterProperties.SaturationTemperature(pressure);
-            physicsState.PZRWaterMass = pzrWaterVolume * WaterProperties.WaterDensity(tSatForMass3, pressure);
-            physicsState.PZRSteamMass = pzrSteamVolume * WaterProperties.SaturatedSteamDensity(pressure);
 
             // v1.3.0: Update multi-node SG model BEFORE RCS physics step
             ApplySGBoundaryAuthority();
@@ -1458,30 +1481,12 @@ public partial class HeatupSimEngine : MonoBehaviour
             }
 
             // ============================================================
-            // v4.4.0: CVCS MASS DRAIN — Apply BEFORE CoupledThermo solver
-            // Per NRC HRTD 4.1: CVCS flows and thermodynamic state are part
-            // of the same physical system. The solver must see the correct
-            // total RCS mass (after CVCS net drain) to compute accurate PZR
-            // level and pressure. Uses previous-timestep flow values (class
-            // fields persist between steps), which is physically reasonable:
-            // real controllers have ~1-3 second sensor/signal delay.
-            //
-            // Root cause fix: Without this, the solver always sees FULL mass
-            // (before CVCS drain), then the drain is applied AFTER — but the
-            // solver already set PZR level based on too-much mass.
-            //
-            // v0.1.0.0 Phase D: CVCS BOUNDARY OWNERSHIP (CS-0004)
-            //   This block is the SOLE site where CVCS mutates TotalPrimaryMass_lb
-            //   in Regime 3. The post-physics UpdateRCSInventory() is guarded by
-            //   regime3CVCSPreApplied and will early-return. No other code path
-            //   may mutate the ledger for CVCS flows in this regime.
+            // IP-0016 PBOC: Apply boundary event before coupled solve.
+            // Same event values drive component and ledger updates.
             // ============================================================
             {
                 float rho_rcs_r3 = WaterProperties.WaterDensity(T_rcs, pressure);
-                ApplyPrimaryBoundaryFlowToLedger(dt, rho_rcs_r3);
-
-                // Set flag so UpdateRCSInventory() doesn't double-count
-                regime3CVCSPreApplied = true;
+                ApplyPrimaryBoundaryFlowPBOC(dt, rho_rcs_r3, 3, "R3_COUPLED");
             }
 
             // ============================================================
@@ -1706,47 +1711,180 @@ public partial class HeatupSimEngine : MonoBehaviour
     void ComputePrimaryBoundaryMassFlows(
         float dt_hr,
         float rho_rcs,
+        out float sealInjection_gpm,
+        out float sealReturn_gpm,
+        out float chargingToPrimary_gpm,
+        out float primaryOutflow_gpm,
         out float massIn_lb,
         out float massOut_lb,
         out float netMass_lb)
     {
         float dt_sec = dt_hr * 3600f;
-        float chargingToPrimary_gpm = Mathf.Max(0f, chargingFlow - GetSealInjectionFlowGpm());
-        float primaryOutflow_gpm = Mathf.Max(0f, letdownFlow) + GetSealLeakoffFlowGpm();
-        float massPerGpmStep = dt_sec * PlantConstants.GPM_TO_FT3_SEC * rho_rcs;
+        sealInjection_gpm = GetSealInjectionFlowGpm();
+        sealReturn_gpm = GetSealLeakoffFlowGpm();
+        // IP-0016 PBOC: Charging flow is treated as primary inflow authority.
+        // Seal return is handled as a primary outflow counterpart term.
+        chargingToPrimary_gpm = Mathf.Max(0f, chargingFlow);
+        primaryOutflow_gpm = Mathf.Max(0f, letdownFlow) + sealReturn_gpm;
+        // IP-0016 conservation closure: use auxiliary-side reference density for
+        // CVCS volumetric transfer so primary transfer mass basis matches VCT/BRS
+        // mass accounting in the plant-wide conservation equation.
+        float rhoTransfer = WaterProperties.WaterDensity(100f, 14.7f);
+        float massPerGpmStep = dt_sec * PlantConstants.GPM_TO_FT3_SEC * rhoTransfer;
 
         massIn_lb = chargingToPrimary_gpm * massPerGpmStep;
         massOut_lb = primaryOutflow_gpm * massPerGpmStep;
         netMass_lb = massIn_lb - massOut_lb;
     }
 
-    void ApplyPrimaryBoundaryFlowToRcs(float dt_hr, float rho_rcs)
+    PrimaryBoundaryFlowEvent ComputePrimaryBoundaryFlowEvent(
+        float dt_hr,
+        float rho_rcs,
+        int regimeId,
+        string regimeLabel)
     {
-        ComputePrimaryBoundaryMassFlows(dt_hr, rho_rcs, out float massIn_lb, out float massOut_lb, out float netMass_lb);
+        ComputePrimaryBoundaryMassFlows(
+            dt_hr,
+            rho_rcs,
+            out float sealInjection_gpm,
+            out float sealReturn_gpm,
+            out float chargingToPrimary_gpm,
+            out float primaryOutflow_gpm,
+            out float massIn_lb,
+            out float massOut_lb,
+            out float netMass_lb);
 
-        physicsState.RCSWaterMass += netMass_lb;
-        physicsState.CumulativeCVCSIn_lb += massIn_lb;
-        physicsState.CumulativeCVCSOut_lb += massOut_lb;
-
-        if (rho_rcs > 0.1f)
+        PrimaryBoundaryFlowEvent evt = new PrimaryBoundaryFlowEvent
         {
-            float rcsChange_gal = (netMass_lb / rho_rcs) * PlantConstants.FT3_TO_GAL;
-            VCTPhysics.AccumulateRCSChange(ref vctState, rcsChange_gal);
-        }
+            TickIndex = pbocTickIndex,
+            SimTime_hr = simTime,
+            Dt_hr = dt_hr,
+            RegimeId = regimeId,
+            RegimeLabel = regimeLabel,
+            LetdownFlow_gpm = Mathf.Max(0f, letdownFlow),
+            ChargingFlow_gpm = Mathf.Max(0f, chargingFlow),
+            SealInjection_gpm = sealInjection_gpm,
+            SealReturn_gpm = sealReturn_gpm,
+            ChargingToPrimary_gpm = chargingToPrimary_gpm,
+            PrimaryOutflow_gpm = primaryOutflow_gpm,
+            RhoRcs_lbm_ft3 = rho_rcs,
+            RhoAux_lbm_ft3 = WaterProperties.WaterDensity(100f, 14.7f),
+            MassIn_lbm = massIn_lb,
+            MassOut_lbm = massOut_lb,
+            dm_RCS_lbm = netMass_lb,
+            dm_PZRw_lbm = 0f,
+            dm_PZRs_lbm = 0f,
+            dm_VCT_lbm = 0f,
+            dm_BRS_lbm = 0f,
+            dm_external_lbm = 0f,
+            ExternalIn_gal = 0f,
+            ExternalOut_gal = 0f,
+            AppliedToComponents = false,
+            AppliedToLedger = false,
+            PairingCheckPass = true
+        };
+
+        return evt;
     }
 
-    void ApplyPrimaryBoundaryFlowToLedger(float dt_hr, float rho_rcs)
+    void ApplyPrimaryBoundaryFlowPBOC(float dt_hr, float rho_rcs, int regimeId, string regimeLabel)
     {
-        ComputePrimaryBoundaryMassFlows(dt_hr, rho_rcs, out float massIn_lb, out float massOut_lb, out float netMass_lb);
+        PrimaryBoundaryFlowEvent evt = ComputePrimaryBoundaryFlowEvent(dt_hr, rho_rcs, regimeId, regimeLabel);
 
-        physicsState.TotalPrimaryMass_lb += netMass_lb;
-        physicsState.CumulativeCVCSIn_lb += massIn_lb;
-        physicsState.CumulativeCVCSOut_lb += massOut_lb;
+        float componentMassBefore = physicsState.RCSWaterMass + physicsState.PZRWaterMass + physicsState.PZRSteamMass;
+        float ledgerBefore = physicsState.TotalPrimaryMass_lb;
 
-        if (rho_rcs > 0.1f)
+        // PBOC single-apply to primary component masses.
+        physicsState.RCSWaterMass += evt.dm_RCS_lbm;
+        physicsState.PZRWaterMass += evt.dm_PZRw_lbm;
+        physicsState.PZRSteamMass += evt.dm_PZRs_lbm;
+        evt.AppliedToComponents = true;
+
+        // PBOC single-apply to canonical ledger and flow accumulators.
+        float ledgerDelta = evt.dm_RCS_lbm + evt.dm_PZRw_lbm + evt.dm_PZRs_lbm;
+        physicsState.TotalPrimaryMass_lb += ledgerDelta;
+        physicsState.CumulativeCVCSIn_lb += evt.MassIn_lbm;
+        physicsState.CumulativeCVCSOut_lb += evt.MassOut_lbm;
+        evt.AppliedToLedger = true;
+
+        if (evt.RhoAux_lbm_ft3 > 0.1f)
         {
-            float rcsChange_gal = (netMass_lb / rho_rcs) * PlantConstants.FT3_TO_GAL;
+            float rcsChange_gal = (evt.dm_RCS_lbm / evt.RhoAux_lbm_ft3) * PlantConstants.FT3_TO_GAL;
             VCTPhysics.AccumulateRCSChange(ref vctState, rcsChange_gal);
+        }
+
+        float componentMassAfter = physicsState.RCSWaterMass + physicsState.PZRWaterMass + physicsState.PZRSteamMass;
+        float ledgerAfter = physicsState.TotalPrimaryMass_lb;
+        float componentDelta = componentMassAfter - componentMassBefore;
+        float ledgerDeltaApplied = ledgerAfter - ledgerBefore;
+        if (Mathf.Abs(componentDelta - ledgerDeltaApplied) > 0.5f)
+        {
+            throw new InvalidOperationException(
+                $"PBOC primary apply mismatch at tick {evt.TickIndex}: " +
+                $"componentDelta={componentDelta:F4} lbm, ledgerDelta={ledgerDeltaApplied:F4} lbm");
+        }
+
+        pbocCurrentEvent = evt;
+        pbocEventActiveThisTick = true;
+        regime3CVCSPreApplied = true;
+    }
+
+    void FinalizePrimaryBoundaryFlowEventAux(
+        float dmVCT_lbm,
+        float dmBRS_lbm,
+        float dmExternal_lbm,
+        float externalIn_gal,
+        float externalOut_gal,
+        float makeupExternal_gpm,
+        float divert_gpm,
+        float cboLoss_gpm)
+    {
+        if (!pbocEventActiveThisTick)
+            return;
+
+        PrimaryBoundaryFlowEvent evt = pbocCurrentEvent;
+        evt.dm_VCT_lbm = dmVCT_lbm;
+        evt.dm_BRS_lbm = dmBRS_lbm;
+        evt.dm_external_lbm = dmExternal_lbm;
+        evt.ExternalIn_gal = externalIn_gal;
+        evt.ExternalOut_gal = externalOut_gal;
+        evt.MakeupExternal_gpm = makeupExternal_gpm;
+        evt.Divert_gpm = divert_gpm;
+        evt.CboLoss_gpm = cboLoss_gpm;
+
+        float pairedBucketMagnitude = Mathf.Abs(evt.dm_VCT_lbm) + Mathf.Abs(evt.dm_BRS_lbm) + Mathf.Abs(evt.dm_external_lbm);
+        bool flowReconfiguredThisTick =
+            Mathf.Abs(evt.LetdownFlow_gpm - Mathf.Max(0f, letdownFlow)) > 1f ||
+            Mathf.Abs(evt.ChargingFlow_gpm - Mathf.Max(0f, chargingFlow)) > 1f;
+        if (!flowReconfiguredThisTick &&
+            Mathf.Abs(evt.dm_RCS_lbm) > 0.5f &&
+            pairedBucketMagnitude < 0.1f)
+        {
+            pbocPairingAssertionFailures++;
+            evt.PairingCheckPass = false;
+            LogEvent(
+                EventSeverity.ALARM,
+                $"PBOC pairing check fail at tick {evt.TickIndex}: " +
+                $"dm_RCS={evt.dm_RCS_lbm:F3}lbm, paired={pairedBucketMagnitude:F3}lbm");
+            Debug.LogWarning(
+                $"[PBOC] Pairing check fail tick={evt.TickIndex} dm_RCS={evt.dm_RCS_lbm:F3}lbm " +
+                $"paired={pairedBucketMagnitude:F3}lbm");
+        }
+        else
+        {
+            evt.PairingCheckPass = true;
+        }
+        pbocCurrentEvent = evt;
+        pbocLastEvent = evt;
+        pbocEventCount++;
+
+        if (simTime < 0.02f || (simTime % 0.25f < evt.Dt_hr) || Mathf.Abs(evt.dm_RCS_lbm) > 25f)
+        {
+            Debug.Log($"[PBOC] tick={evt.TickIndex} t={evt.SimTime_hr:F4}hr regime={evt.RegimeLabel} " +
+                      $"dm_RCS={evt.dm_RCS_lbm:+0.00;-0.00;0.00}lbm dm_VCT={evt.dm_VCT_lbm:+0.00;-0.00;0.00}lbm " +
+                      $"dm_BRS={evt.dm_BRS_lbm:+0.00;-0.00;0.00}lbm dm_ext={evt.dm_external_lbm:+0.00;-0.00;0.00}lbm " +
+                      $"flows[chg2RCS={evt.ChargingToPrimary_gpm:F2}, letdown={evt.LetdownFlow_gpm:F2}, " +
+                      $"sealRet={evt.SealReturn_gpm:F2}, mkExt={evt.MakeupExternal_gpm:F2}, div={evt.Divert_gpm:F2}, cbo={evt.CboLoss_gpm:F2}]");
         }
     }
 

@@ -170,37 +170,19 @@ public partial class HeatupSimEngine
 
     void UpdateRCSInventory(float dt, bool bubbleDrainActive)
     {
-        // v4.4.0: If CVCS mass drain was already applied BEFORE the
-        // CoupledThermo solver (Regime 2/3), skip the adjustment here
-        // to prevent double-counting. The flag is set in StepSimulation()
-        // when the pre-solver drain is applied.
-        if (regime3CVCSPreApplied)
+        // IP-0016 PBOC: This method must never apply boundary mass directly.
+        // Boundary event ownership is centralized in StepSimulation() via
+        // ApplyPrimaryBoundaryFlowPBOC(), then this method performs only
+        // sync/guard behavior.
+        if (!regime3CVCSPreApplied)
         {
-            regime3CVCSPreApplied = false;  // Reset for next timestep
-            rcsWaterMass = physicsState.RCSWaterMass;  // Sync display variable
-            return;
+            throw new System.InvalidOperationException(
+                $"PBOC contract violated: UpdateRCSInventory reached without pre-applied " +
+                $"boundary event at T+{simTime:F4}hr (solid={solidPressurizer}, preDrain={bubblePreDrainPhase}, drain={bubbleDrainActive})");
         }
 
-        // v5.4.1 Stage 2: During DRAIN phase, UpdateDrainPhase() already
-        // applied dm_cvcs to both PZRWaterMass and RCSWaterMass using
-        // mass-conserving transfer semantics. Skip here to prevent
-        // double-counting the CVCS drain mass transfer.
-        if (bubbleDrainActive)
-        {
-            rcsWaterMass = physicsState.RCSWaterMass;  // Sync display variable
-            return;
-        }
-
-        // v1.3.1.0 FIX: Correct guard for RCS mass update.
-        // NOT in solid-plant-style ops (which handles its own inventory)
-        // AND NOT in pre-drain bubble phases (which use solid-plant tracking).
-        // This covers: STABILIZE, PRESSURIZE, and post-bubble-complete.
-        if (!solidPressurizer && !bubblePreDrainPhase)
-        {
-            float rho_rcs = WaterProperties.WaterDensity(T_rcs, pressure);
-            ApplyPrimaryBoundaryFlowToRcs(dt, rho_rcs);
-            rcsWaterMass = physicsState.RCSWaterMass;
-        }
+        regime3CVCSPreApplied = false;  // reset for next tick
+        rcsWaterMass = physicsState.RCSWaterMass;
     }
 
     // ========================================================================
@@ -212,6 +194,11 @@ public partial class HeatupSimEngine
     {
         float dt_sec = dt * 3600f;
         float dt_min = dt_sec / 60f;
+        float rhoAux = WaterProperties.WaterDensity(100f, 14.7f);
+        float vctMassBefore_lbm = (vctState.Volume_gal / PlantConstants.FT3_TO_GAL) * rhoAux;
+        float brsTotalGalBefore = brsState.HoldupVolume_gal + brsState.DistillateAvailable_gal
+            + brsState.ConcentrateAvailable_gal;
+        float brsMassBefore_lbm = (brsTotalGalBefore / PlantConstants.FT3_TO_GAL) * rhoAux;
 
         // v0.2.0: During DRAIN, VCT sees actual flows (letdown returns to VCT)
         float vctLetdownFlow = letdownFlow;
@@ -264,9 +251,26 @@ public partial class HeatupSimEngine
         //  - External OUT : CBO bleedoff when RCPs are running
         float externalInStep_gal = vctState.MakeupFromBRS ? 0f : (vctState.MakeupFlow_gpm * dt_min);
         float externalOutStep_gal = (rcpCount > 0 ? PlantConstants.CBO_LOSS_GPM : 0f) * dt_min;
+        float externalNetStep_gal = externalInStep_gal - externalOutStep_gal;
         plantExternalIn_gal += externalInStep_gal;
         plantExternalOut_gal += externalOutStep_gal;
         plantExternalNet_gal = plantExternalIn_gal - plantExternalOut_gal;
+
+        float vctMassAfter_lbm = (vctState.Volume_gal / PlantConstants.FT3_TO_GAL) * rhoAux;
+        float brsTotalGalAfter = brsState.HoldupVolume_gal + brsState.DistillateAvailable_gal
+            + brsState.ConcentrateAvailable_gal;
+        float brsMassAfter_lbm = (brsTotalGalAfter / PlantConstants.FT3_TO_GAL) * rhoAux;
+        float externalNetStep_lbm = (externalNetStep_gal / PlantConstants.FT3_TO_GAL) * rhoAux;
+
+        FinalizePrimaryBoundaryFlowEventAux(
+            dmVCT_lbm: vctMassAfter_lbm - vctMassBefore_lbm,
+            dmBRS_lbm: brsMassAfter_lbm - brsMassBefore_lbm,
+            dmExternal_lbm: externalNetStep_lbm,
+            externalIn_gal: externalInStep_gal,
+            externalOut_gal: externalOutStep_gal,
+            makeupExternal_gpm: vctState.MakeupFromBRS ? 0f : vctState.MakeupFlow_gpm,
+            divert_gpm: vctState.DivertFlow_gpm,
+            cboLoss_gpm: (rcpCount > 0 ? PlantConstants.CBO_LOSS_GPM : 0f));
 
         // ==============================================================
         // v5.4.1 Fix B: Canonical MASS-based inventory conservation check.
@@ -278,7 +282,7 @@ public partial class HeatupSimEngine
         {
             // v5.4.1 Fix B: Use tracked mass values (not recomputed from V×ρ)
             // for RCS and PZR. Recomputing from volume would mask CVCS transfers.
-            float rhoVCT = WaterProperties.WaterDensity(100f, 14.7f);
+            float rhoVCT = rhoAux;
 
             float rcsMass = physicsState.RCSWaterMass;  // Tracked, includes CVCS changes
             float pzrWaterMassNow = physicsState.PZRWaterMass;
@@ -308,7 +312,11 @@ public partial class HeatupSimEngine
         rcsBoronConcentration = vctState.BoronConcentration_ppm;
 
         // Original CVCS-loop mass conservation cross-check (retained)
-        massConservationError = VCTPhysics.VerifyMassConservation(vctState, vctState.CumulativeRCSChange_gal);
+        massConservationError = VCTPhysics.VerifyMassConservation(
+            vctState,
+            vctState.CumulativeRCSChange_gal,
+            plantExternalIn_gal,
+            plantExternalOut_gal);
 
         // VCT annunciators
         vctLevelLow = vctState.LowLevelAlarm;
