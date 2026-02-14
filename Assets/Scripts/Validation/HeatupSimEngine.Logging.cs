@@ -1132,6 +1132,11 @@ public partial class HeatupSimEngine
         sb.AppendLine($"      TotalSGEnergyRemoved_MJ: {stageE_TotalSGEnergyRemoved_MJ,10:F3}");
         sb.AppendLine($"      PercentMismatch:         {stageE_PercentMismatch,10:F3} %");
         sb.AppendLine($"      Sample Count:            {stageE_EnergySampleCount,10}");
+        sb.AppendLine($"      Window Active:           {(stageE_EnergyWindowActive ? "YES" : "NO"),10}");
+        sb.AppendLine($"      Last SG Heat:            {stageE_LastSGHeatRemoval_MW,10:F3} MW");
+        sb.AppendLine($"      Neg Heat Violations:     {stageE_EnergyNegativeViolationCount,10}");
+        sb.AppendLine($"      >5% Violations:          {stageE_EnergyOverPrimaryViolationCount,10}");
+        sb.AppendLine($"      Max OverPrimary:         {stageE_EnergyMaxOverPrimaryPct,10:F3} %");
         sb.AppendLine();
         sb.AppendLine("  ELECTRICAL:");
         sb.AppendLine($"    RCP Power:        {rcpCount * 6f,10:F1} MW");
@@ -1450,6 +1455,11 @@ public partial class HeatupSimEngine
         sb.AppendLine($"    TotalPrimaryEnergy_MJ:   {stageE_TotalPrimaryEnergy_MJ:F3}");
         sb.AppendLine($"    TotalSGEnergyRemoved_MJ: {stageE_TotalSGEnergyRemoved_MJ:F3}");
         sb.AppendLine($"    PercentMismatch:         {stageE_PercentMismatch:F3} %");
+        sb.AppendLine($"    Window Active:           {(stageE_EnergyWindowActive ? "YES" : "NO")}");
+        sb.AppendLine($"    Last SG Heat Removal:    {stageE_LastSGHeatRemoval_MW:F3} MW");
+        sb.AppendLine($"    Negative Violations:     {stageE_EnergyNegativeViolationCount}");
+        sb.AppendLine($"    OverPrimary Violations:  {stageE_EnergyOverPrimaryViolationCount}");
+        sb.AppendLine($"    Max OverPrimary Percent: {stageE_EnergyMaxOverPrimaryPct:F3} %");
         sb.AppendLine();
         sb.AppendLine("RTCC SUMMARY (IP-0016):");
         sb.AppendLine($"  Telemetry Present:    {(rtccTelemetryPresent ? "YES" : "NO")}");

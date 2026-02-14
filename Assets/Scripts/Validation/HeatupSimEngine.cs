@@ -207,6 +207,11 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public int stageE_DynamicHardClampStreak;
     [HideInInspector] public float stageE_DynamicLastPressureDelta_psia;
     [HideInInspector] public float stageE_DynamicLastTopToTsatDelta_F;
+    [HideInInspector] public bool stageE_EnergyWindowActive;
+    [HideInInspector] public float stageE_LastSGHeatRemoval_MW;
+    [HideInInspector] public int stageE_EnergyNegativeViolationCount;
+    [HideInInspector] public int stageE_EnergyOverPrimaryViolationCount;
+    [HideInInspector] public float stageE_EnergyMaxOverPrimaryPct;
 
     // v5.0.0 Stage 4: SG draining & level state
     [HideInInspector] public bool  sgDrainingActive;            // True if SG is actively draining
@@ -1791,12 +1796,40 @@ public partial class HeatupSimEngine : MonoBehaviour
 
     void UpdateIP0018EnergyTelemetry(float dt_hr)
     {
-        stageE_PrimaryHeatInput_MW = rcpHeat + pzrHeaterPower;
+        const float overPrimaryThresholdPct = 5f;
+        stageE_LastSGHeatRemoval_MW = sgHeatTransfer_MW;
+        stageE_PrimaryHeatInput_MW = Mathf.Max(0f, sgHeatTransfer_MW);
+        stageE_EnergyWindowActive = sgStartupStateMode != SGStartupBoundaryStateMode.OpenPreheat;
 
-        float dt_s = dt_hr * 3600f;
-        stageE_TotalPrimaryEnergy_MJ += stageE_PrimaryHeatInput_MW * dt_s;
-        stageE_TotalSGEnergyRemoved_MJ += sgHeatTransfer_MW * dt_s;
-        stageE_EnergySampleCount++;
+        if (stageE_EnergyWindowActive)
+        {
+            if (stageE_LastSGHeatRemoval_MW < 0f)
+                stageE_EnergyNegativeViolationCount++;
+
+            float overPrimaryPct = 0f;
+            if (stageE_PrimaryHeatInput_MW > 0.001f)
+            {
+                overPrimaryPct = 100f * (stageE_LastSGHeatRemoval_MW - stageE_PrimaryHeatInput_MW)
+                    / stageE_PrimaryHeatInput_MW;
+            }
+            else if (stageE_LastSGHeatRemoval_MW > 0.001f)
+            {
+                overPrimaryPct = float.PositiveInfinity;
+            }
+
+            if (!float.IsInfinity(overPrimaryPct) && !float.IsNaN(overPrimaryPct))
+                stageE_EnergyMaxOverPrimaryPct = Mathf.Max(stageE_EnergyMaxOverPrimaryPct, overPrimaryPct);
+            else
+                stageE_EnergyMaxOverPrimaryPct = float.PositiveInfinity;
+
+            if (overPrimaryPct > overPrimaryThresholdPct)
+                stageE_EnergyOverPrimaryViolationCount++;
+
+            float dt_s = dt_hr * 3600f;
+            stageE_TotalPrimaryEnergy_MJ += stageE_PrimaryHeatInput_MW * dt_s;
+            stageE_TotalSGEnergyRemoved_MJ += Mathf.Max(0f, stageE_LastSGHeatRemoval_MW) * dt_s;
+            stageE_EnergySampleCount++;
+        }
 
         if (stageE_TotalPrimaryEnergy_MJ > 0.001f)
         {
@@ -1850,6 +1883,11 @@ public partial class HeatupSimEngine : MonoBehaviour
         stageE_DynamicHardClampStreak = 0;
         stageE_DynamicLastPressureDelta_psia = 0f;
         stageE_DynamicLastTopToTsatDelta_F = 0f;
+        stageE_EnergyWindowActive = false;
+        stageE_LastSGHeatRemoval_MW = 0f;
+        stageE_EnergyNegativeViolationCount = 0;
+        stageE_EnergyOverPrimaryViolationCount = 0;
+        stageE_EnergyMaxOverPrimaryPct = 0f;
         stageEDynamicPrevIntervalValid = false;
         stageEDynamicPrevPrimaryHeatInput_MW = 0f;
         stageEDynamicPrevPressure_psia = 0f;
