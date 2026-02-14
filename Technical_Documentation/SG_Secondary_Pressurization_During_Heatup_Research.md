@@ -1,5 +1,8 @@
 # SG Secondary Pressurization During Heatup — Research & Findings Summary
 
+> **STATUS:** Companion document to `SG_THERMAL_MODEL_RESEARCH_v3.0.0.md`.
+> Focuses specifically on the pressure-boiling feedback mechanism during heatup.
+
 **Compiled:** 2026-02-12  
 **Purpose:** Consolidated NRC/Westinghouse findings on SG secondary pressure evolution during PWR cold startup heatup, to support diagnosis and fix of the boiling-onset pressure tracking failure in SGMultiNodeThermal.cs  
 **Sources:** NRC HRTD Sections 2.3, 8.0, 17.0, 19.0; SG_THERMAL_MODEL_RESEARCH_v3.0.0; SG_HEATUP_BREAKTHROUGH_HANDOFF; existing Technical_Documentation

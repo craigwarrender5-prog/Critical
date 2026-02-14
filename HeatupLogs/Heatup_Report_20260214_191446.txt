@@ -1,6 +1,6 @@
 HEATUP VALIDATION REPORT
 ========================
-Time: 14/02/2026 5:15:03 p.m.
+Time: 14/02/2026 7:14:46 p.m.
 Simulation Duration: 18.00 hours (18:00:00)
 Wall-Clock Duration: 00:00:00
 Effective Speed: 1.0x average
@@ -69,7 +69,43 @@ SG SECONDARY SIDE SUMMARY (v5.0.0):
   SG Boundary Mode:     ISOLATED
   Pressure Source:      inventory-derived
   Steam Inventory:      271.9 lb
+  Startup State:        ISOLATED_HEATUP
+  State Ticks:          1021
+  State Time:           2.836 hr
+  Hold Target Pressure: 17.50 psia
+  Hold Pressure Dev:    0.932 %
+  Hold Net Leakage:     0.000 %
+  PressWindow Active:   NO
+  PressWindow Start:    15.912 hr
+  PressWindow Rise:     8.69 psia
+  PressWindow Tsat Δ:   19.84 F
+  P Rise Streak:        1
+  Tsat Rise Streak:     1
+  PreBoil |T-Tsat|:     0.08 F
+  Dynamic Active Intv:  22
+  Dynamic P Rise Chk:   15
+  Dynamic P Rise PASS:  15
+  Dynamic P Rise FAIL:  0
+  Dynamic Last dP:      25.069 psia
+  Dynamic dT3 Windows:  20
+  Dynamic dT3 Last:     21.33 F
+  Dynamic dT3 Min:      5.00 F
+  Dynamic dT3 Max:      39.89 F
+  Dynamic dT3 >5F:      19
+  Dynamic dT3 <2F:      0
+  Dynamic Flatline3:    0
+  Dynamic Clamp Hits:   0
+  Dynamic Top-Tsat:     3.35 F
   Net Plant Heat:       14.30 MW
+  IP-0018 Energy Artifact:
+    TotalPrimaryEnergy_MJ:   102745.000
+    TotalSGEnergyRemoved_MJ: 102745.000
+    PercentMismatch:         0.000 %
+    Window Active:           YES
+    Last SG Heat Removal:    7.489 MW
+    Negative Violations:     0
+    OverPrimary Violations:  0
+    Max OverPrimary Percent: 0.000 %
 
 RTCC SUMMARY (IP-0016):
   Telemetry Present:    YES

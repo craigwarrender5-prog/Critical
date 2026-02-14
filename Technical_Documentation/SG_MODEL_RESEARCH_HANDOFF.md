@@ -1,5 +1,9 @@
 # SG Multi-Node Thermal Model - Research & Implementation Handoff
 
+> **⚠️ STATUS:** This document may be superseded by `SG_THERMAL_MODEL_RESEARCH_v3.0.0.md`.
+> Review that document for current thermal stratification physics and implementation guidance.
+> This file retained for historical reference.
+
 ## Date: 2025-02-10
 ## Context: Continuation document for new conversation session
 

@@ -1,52 +1,50 @@
 # CRITICAL: Master the Atom — Structural Map
 
-**Version:** 1.0.0  
-**Date:** 2026-02-08  
+**Version:** 1.0.1
+**Date:** 2026-02-14
 
 ---
 
 ## 1. Project Directory Structure
 
-```
+```text
 Critical/
-├── Assets/
-│   ├── Scripts/
-│   │   ├── Physics/          ← Core physics modules (GOLD standard)
-│   │   ├── Reactor/          ← Reactor simulation engines
-│   │   ├── Validation/       ← Heatup validation engines
-│   │   ├── UI/               ← Operator interface components
-│   │   └── Tests/            ← Unit and integration tests
-│   ├── Scenes/               ← Unity scene files
-│   ├── Resources/            ← Runtime-loaded assets
-│   └── Documentation/        ← Unity-accessible docs
-│
-├── Documentation/            ← Design documents, phase plans
-│   ├── GOLD_STANDARD_TEMPLATE.md
-│   ├── Critical_Phase1_Physics_Engine.docx
-│   ├── Critical_Phase2_Reactor_Core.docx
-│   ├── Critical_Phase3_Pressurizer.docx
-│   ├── Critical_Phase4_CVCS_RCPs.docx
-│   ├── Critical_Phase5_Steam_Generators.docx
-│   ├── Critical_Phase6_Turbine_Generator.docx
-│   ├── ReactorOperatorGUI_Design_v1_0_0_0.docx
-│   ├── Unity_Implementation_Manual_v1_0_0_0.docx
-│   └── PROJECT_OVERVIEW.md (this is companion file)
-│
-├── Updates and Changelog/
-│   ├── Changelogs/
-│   │   ├── CHANGELOG v0.1.0.md
-│   │   ├── CHANGELOG v0.2.0.md
-│   │   ├── ...
-│   │   └── CHANGELOG_v1.0.0.md
-│   └── IMPLEMENTATION_PLAN_*.md  ← Versioned implementation plans
-│
-├── HeatupLogs/              ← Simulation data output (CSV files)
-├── Manuals/                 ← External reference PDFs
-└── ProjectSettings/         ← Unity configuration
+|-- Assets/
+|   |-- Scripts/
+|   |   |-- Physics/      <- Core physics modules (GOLD and support)
+|   |   |-- Reactor/      <- Reactor simulation engines
+|   |   |-- Validation/   <- Heatup validation and telemetry visualizations
+|   |   |-- UI/           <- Operator interface components
+|   |   `-- Tests/        <- Unit and integration tests
+|   |-- Scenes/
+|   |-- Resources/
+|   `-- Documentation/
+|
+|-- Governance/           <- Canonical governance root
+|   |-- DomainPlans/
+|   |-- ImplementationPlans/
+|   |-- ImplementationReports/
+|   |-- IssueRegister/
+|   |-- Issues/
+|   `-- Changelogs/
+|
+|-- Documentation/        <- Design docs and historical implementation docs
+|   |-- Implementation/
+|   |-- Updates/
+|   |-- PROJECT_OVERVIEW.md
+|   |-- PROJECT_TREE.md
+|   `-- STRUCTURAL_MAP.md
+|
+|-- TechnicalDocumentation/   <- GOLD standards and lifecycle contracts
+|-- Technical_Documentation/  <- NRC and engineering reference library
+|-- HeatupLogs/
+|-- Manuals/
+|-- Updates/              <- Legacy archive and forensics (deprecated authority)
+|-- ProjectSettings/
+`-- UserSettings/
 ```
 
 ---
-
 ## 2. Code Architecture Overview
 
 ### 2.1 Architectural Layers
@@ -874,3 +872,4 @@ HeatupValidationVisual.Styles.cs — Colors, fonts, GUIStyle definitions
 ---
 
 **End of Structural Map**
+

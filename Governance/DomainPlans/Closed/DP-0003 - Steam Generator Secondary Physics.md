@@ -1,8 +1,8 @@
 ---
 Identifier: DP-0003
 Domain (Canonical): Steam Generator Secondary Physics
-Status: Open - IP-0015 closure complete; follow-on SG backlog remains
-Linked Issues: CS-0014, CS-0015, CS-0016, CS-0017, CS-0018, CS-0019, CS-0009, CS-0020, CS-0047, CS-0048
+Status: Closed - IP-0018 closure complete
+Linked Issues: CS-0014, CS-0015, CS-0016, CS-0017, CS-0018, CS-0019, CS-0009, CS-0020, CS-0054, CS-0047, CS-0048
 Last Reviewed: 2026-02-14
 Authorization Status: NOT AUTHORIZED
 Mode: SPEC/DRAFT
@@ -12,15 +12,15 @@ Mode: SPEC/DRAFT
 
 ## A) Domain Summary
 - Canonical Domain: Steam Generator Secondary Physics
-- DP Status: Open
-- Total CS Count in Domain: 10
+- DP Status: Closed
+- Total CS Count in Domain: 11
 
-## B) Severity Distribution
+## B) Outstanding Severity Distribution
 | Severity | Count |
 |---|---:|
-| Critical | 5 |
-| High | 3 |
-| Medium | 2 |
+| Critical | 0 |
+| High | 0 |
+| Medium | 0 |
 | Low | 0 |
 
 ## C) Ordered Issue Backlog
@@ -31,16 +31,17 @@ Mode: SPEC/DRAFT
 | CS-0014 | SG "ISOLATED" mode behaves like open inventory pressure boundary | Critical | CLOSED | - | Closed under IP-0015 (Stage E PASS 2026-02-14). Evidence: `Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md`, `Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md`. |
 | CS-0015 | Steam generation does not accumulate compressible volume/mass (no internal pressure build) | Critical | CLOSED | - | Closed under IP-0015 (Stage E PASS 2026-02-14). Evidence: `Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md`, `Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md`. |
 | CS-0016 | SG modeled as unrealistically strong heat sink during heatup | Critical | CLOSED | - | Closed under IP-0015 (Stage E PASS 2026-02-14). Evidence: `Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md`, `Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md`. |
-| CS-0017 | Missing SG pressurization/hold state in startup procedure | High | Assigned | Depends on: CS-0014 (sealed boundary), CS-0015 (steam accumulation), CS-0018 (N2 blanket). | Not Tested |
+| CS-0017 | Missing SG pressurization/hold state in startup procedure | High | CLOSED | Depends on: CS-0014 (sealed boundary), CS-0015 (steam accumulation), CS-0018 (N2 blanket). | Closed under IP-0018 (Stage E PASS 2026-02-14). Evidence: `Updates/Issues/IP-0018_StageE_Validation_2026-02-14_191442.md`. |
 | CS-0018 | N2 blanket treated as pressure clamp, not compressible cushion | High | CLOSED | - | Closed under IP-0015 (Stage E PASS 2026-02-14). Evidence: `Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md`, `Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md`. |
-| CS-0019 | Secondary temperature cannot progress toward high-pressure saturation region | High | Assigned | Blocked by: CS-0014, CS-0015, CS-0018. Related: CS-0016. | Not Tested |
-| CS-0009 | No SG secondary energy balance validation | Medium | Assigned | - | Not Tested |
-| CS-0020 | Secondary remains largely inert or wrongly bounded during primary heatup | Medium | Assigned | Blocked by: CS-0014, CS-0015, CS-0016, CS-0018, CS-0019. | Not Tested |
+| CS-0019 | Secondary temperature cannot progress toward high-pressure saturation region | High | CLOSED | Blocked by: CS-0014, CS-0015, CS-0018. Related: CS-0016. | Closed under IP-0018 (Stage E PASS 2026-02-14). Evidence: `Updates/Issues/IP-0018_StageE_Validation_2026-02-14_191442.md`. |
+| CS-0009 | No SG secondary energy balance validation | Medium | CLOSED | - | Closed under IP-0018 (Stage E PASS 2026-02-14). Evidence: `Updates/Issues/IP-0018_StageE_Validation_2026-02-14_191442.md`. |
+| CS-0020 | Secondary remains largely inert or wrongly bounded during primary heatup | Medium | CLOSED | Blocked by: CS-0014, CS-0015, CS-0016, CS-0018, CS-0019. | Closed under IP-0018 (Stage E PASS 2026-02-14). Evidence: `Updates/Issues/IP-0018_StageE_Validation_2026-02-14_191442.md`. |
+| CS-0054 | DP-0003 Stage E failure: SG secondary pressure flatline under active heat input | High | CLOSED | Introduced by IP-0018 Stage E failure on 2026-02-14. | Introduced by Stage E failure and resolved under IP-0018 (Stage E PASS 2026-02-14). Evidence: `Updates/Issues/CS-0054_Investigation_2026-02-14.md`, `Updates/Issues/IP-0018_StageE_Validation_2026-02-14_191442.md`. |
 
 ## D) Execution Readiness Indicator
-**READY FOR AUTHORIZATION**
+**CLOSED**
 
-No blocking Critical issues unresolved outside domain.
+No unresolved CS items remain in DP-0003 after IP-0015 and IP-0018 closeout.
 
 ## E) Notes / Investigation Links
 - Prior IP references:
@@ -67,4 +68,4 @@ No blocking Critical issues unresolved outside domain.
   - RCS heat-up no longer stalls post-boiling: `PASS`
   - No new conservation regressions: `PASS`
 - Outstanding validation tests for IP-0015 scoped CS are complete.
-- DP-0003 remains open for non-IP-0015 backlog items (`CS-0017`, `CS-0019`, `CS-0009`, `CS-0020`).
+- DP-0003 closeout completed under IP-0018 for remaining backlog items (`CS-0017`, `CS-0019`, `CS-0009`, `CS-0020`, `CS-0054`).

@@ -1,10 +1,16 @@
 HEATUP INTERVAL LOG
 ======================================================================
 Log Entry:        #38
-Timestamp:        14/02/2026 5:15:01 p.m.
+Timestamp:        14/02/2026 7:14:43 p.m.
 Sim Time:         9.25 hours (09:15:09)
 Wall-Clock Time:  00:00:00
 Effective Speed:  1x (1x RT)
+
+VALIDATION BASELINE (IP-0018 / DP-0003):
+  Profile:          IP-0018 deterministic startup profile
+  Baseline Sig:     T0=100.0F;P0=400.0psia;PZR0=25.0%;dt=0.002778hr;log=0.25hr
+  Deterministic dt: 0.002778 hr
+  Interval Log:     0.25 hr
 
 THERMAL STATE:
   T_avg:                127.82 °F
@@ -115,6 +121,17 @@ RCP (Reactor Coolant Pump) STATE:
     Heat Losses:            0.15 MW (temp dependent)
     SG Secondary Loss:       0.22 MW
     Net Plant Heat:         2.34 MW
+    IP-0018 Energy Artifact:
+      Primary Heat:           0.222 MW
+      TotalPrimaryEnergy_MJ:        0.000
+      TotalSGEnergyRemoved_MJ:      0.000
+      PercentMismatch:              0.000 %
+      Sample Count:                     0
+      Window Active:                   NO
+      Last SG Heat:                 0.222 MW
+      Neg Heat Violations:              0
+      >5% Violations:                   0
+      Max OverPrimary:              0.000 %
 
   ELECTRICAL:
     RCP Power:               0.0 MW
@@ -140,6 +157,31 @@ RCP (Reactor Coolant Pump) STATE:
     SG Boundary Mode:       OPEN
     Pressure Source:       floor
     SteamInventory:          0.0 lb
+    Startup State:    OPEN_PREHEAT
+    State Ticks:            3331
+    State Time:            9.253 hr
+    Hold Target P:          0.00 psia
+    Hold Dev:              0.000 %
+    Hold Leak:             0.000 %
+    PressWindow:        INACTIVE
+    PressWindow T0:        0.000 hr
+    Press Rise:             0.00 psia
+    Tsat Rise:              0.00 F
+    P Rise Streak:             0
+    Tsat Rise Streak:          0
+    PreBoil |T-Tsat|:       0.00 F
+    Dyn Active Intv:           0
+    Dyn P Rise Chk:            0
+    Dyn P Rise PASS:           0
+    Dyn P Rise FAIL:           0
+    Dyn Last dP:           0.000 psia
+    Dyn dT3 Last:           0.00 F
+    Dyn dT3 Min/Max:   0.00/0.00 F
+    Dyn dT3 >5F Cnt:           0
+    Dyn dT3 <2F Cnt:           0
+    Dyn Flat3 Cnt:             0
+    Dyn Clamp Cnt:             0
+    Dyn Top-Tsat:         112.72 F
     Boiling Active:           NO
     Circulation Frac:      0.000 [DEPRECATED]
     Draining Status:   PRE-DRAIN
