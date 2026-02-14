@@ -88,6 +88,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         public float Tsat_F;
         public bool ActiveHeating;
         public bool IsHoldState;
+        public bool IsIsolatedHeatupState;
     }
 
     // ========================================================================
@@ -2310,7 +2311,8 @@ public partial class HeatupSimEngine : MonoBehaviour
             TopTemp_F = sgTopNodeTemp,
             Tsat_F = sgSaturationTemp_F,
             ActiveHeating = stageE_PrimaryHeatInput_MW > activeHeatThreshold_MW,
-            IsHoldState = sgStartupStateMode == SGStartupBoundaryStateMode.Hold
+            IsHoldState = sgStartupStateMode == SGStartupBoundaryStateMode.Hold,
+            IsIsolatedHeatupState = sgStartupStateMode == SGStartupBoundaryStateMode.IsolatedHeatup
         };
 
         stageE_DynamicLastTopToTsatDelta_F = sample.Tsat_F - sample.TopTemp_F;
@@ -2374,7 +2376,10 @@ public partial class HeatupSimEngine : MonoBehaviour
                     stageE_DynamicTempDelta3Below2Count++;
 
                 float pressureDelta3_psia = window[2].Pressure_psia - window[0].Pressure_psia;
-                if (Mathf.Abs(pressureDelta3_psia) <= pressureFlatlineBand_psia)
+                bool pressureResponseWindow = window[0].IsIsolatedHeatupState
+                    && window[1].IsIsolatedHeatupState
+                    && window[2].IsIsolatedHeatupState;
+                if (pressureResponseWindow && Mathf.Abs(pressureDelta3_psia) <= pressureFlatlineBand_psia)
                     stageE_DynamicPressureFlatline3Count++;
             }
         }

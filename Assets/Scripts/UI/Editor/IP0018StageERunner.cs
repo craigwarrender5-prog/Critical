@@ -22,6 +22,7 @@ namespace Critical.Validation
 
         private sealed class IntervalSample
         {
+            public int IntervalIndex;
             public float TimeHr;
             public float PrimaryHeatInputMW;
             public float SGHeatRemovalMW;
@@ -41,6 +42,7 @@ namespace Critical.Validation
             public bool Pass;
             public readonly List<string> Failures = new List<string>();
             public readonly List<string> Observations = new List<string>();
+            public readonly List<string> DiagnosticRows = new List<string>();
             public string SuspectedRootCause = "Unknown";
         }
 
@@ -113,7 +115,7 @@ namespace Critical.Validation
                     if (engine.simTime >= nextIntervalHr)
                     {
                         saveInterval.Invoke(engine, null);
-                        samples.Add(CaptureSample(engine));
+                        samples.Add(CaptureSample(engine, samples.Count + 1));
                         nextIntervalHr += IntervalLogHr;
                     }
                 }
@@ -125,7 +127,7 @@ namespace Critical.Validation
 
                 CsResult cs0017 = EvaluateCs0017(samples);
                 CsResult cs0019 = EvaluateCs0019(samples);
-                CsResult cs0020 = EvaluateCs0020(engine);
+                CsResult cs0020 = EvaluateCs0020(engine, samples);
                 CsResult cs0009 = EvaluateCs0009(engine, reportPath);
 
                 var results = new List<CsResult> { cs0017, cs0019, cs0020, cs0009 };
@@ -154,10 +156,11 @@ namespace Critical.Validation
             }
         }
 
-        private static IntervalSample CaptureSample(HeatupSimEngine engine)
+        private static IntervalSample CaptureSample(HeatupSimEngine engine, int intervalIndex)
         {
             return new IntervalSample
             {
+                IntervalIndex = intervalIndex,
                 TimeHr = engine.simTime,
                 PrimaryHeatInputMW = engine.stageE_PrimaryHeatInput_MW,
                 SGHeatRemovalMW = engine.stageE_LastSGHeatRemoval_MW,
@@ -295,7 +298,7 @@ namespace Critical.Validation
             return result;
         }
 
-        private static CsResult EvaluateCs0020(HeatupSimEngine engine)
+        private static CsResult EvaluateCs0020(HeatupSimEngine engine, List<IntervalSample> samples)
         {
             var result = new CsResult
             {
@@ -304,6 +307,43 @@ namespace Critical.Validation
                 SuspectedRootCause = "HeatupSimEngine dynamic-response telemetry and SG coupling path"
             };
 
+            const float activeHeatThreshold_MW = 1.0f;
+            const float flatlineThreshold_psia = 0.1f;
+            int flatlineFromSamples = 0;
+            for (int i = 0; i <= samples.Count - 3; i++)
+            {
+                IntervalSample a = samples[i];
+                IntervalSample b = samples[i + 1];
+                IntervalSample c = samples[i + 2];
+                if (a.PrimaryHeatInputMW <= activeHeatThreshold_MW ||
+                    b.PrimaryHeatInputMW <= activeHeatThreshold_MW ||
+                    c.PrimaryHeatInputMW <= activeHeatThreshold_MW)
+                {
+                    continue;
+                }
+                bool isolatedWindow =
+                    string.Equals(a.StartupState, "ISOLATED_HEATUP", StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(b.StartupState, "ISOLATED_HEATUP", StringComparison.OrdinalIgnoreCase) &&
+                    string.Equals(c.StartupState, "ISOLATED_HEATUP", StringComparison.OrdinalIgnoreCase);
+                if (!isolatedWindow)
+                    continue;
+
+                float dp1 = b.PressurePsia - a.PressurePsia;
+                float dp2 = c.PressurePsia - b.PressurePsia;
+                float dpTotal = c.PressurePsia - a.PressurePsia;
+                if (Mathf.Abs(dpTotal) <= flatlineThreshold_psia)
+                {
+                    flatlineFromSamples++;
+                    result.DiagnosticRows.Add(
+                        $"window {a.IntervalIndex}..{c.IntervalIndex} | " +
+                        $"P=[{a.PressurePsia:F4},{b.PressurePsia:F4},{c.PressurePsia:F4}] psia | " +
+                        $"dP=[{dp1:+0.0000;-0.0000;0.0000},{dp2:+0.0000;-0.0000;0.0000}] total={dpTotal:+0.0000;-0.0000;0.0000} psia | " +
+                        $"Primary=[{a.PrimaryHeatInputMW:F3},{b.PrimaryHeatInputMW:F3},{c.PrimaryHeatInputMW:F3}] MW | " +
+                        $"State=[{a.StartupState},{b.StartupState},{c.StartupState}] | " +
+                        $"t=[{a.TimeHr:F3},{b.TimeHr:F3},{c.TimeHr:F3}] hr");
+                }
+            }
+
             result.Observations.Add($"Primary-rise checks: {engine.stageE_DynamicPrimaryRiseCheckCount}");
             result.Observations.Add($"Primary-rise pass/fail: {engine.stageE_DynamicPrimaryRisePassCount}/{engine.stageE_DynamicPrimaryRiseFailCount}");
             result.Observations.Add($"dT(3 intervals) windows: {engine.stageE_DynamicTempDelta3WindowCount}");
@@ -311,6 +351,7 @@ namespace Critical.Validation
             result.Observations.Add($"dT(3) >5F count: {engine.stageE_DynamicTempDelta3Above5Count}");
             result.Observations.Add($"dT(3) <2F count: {engine.stageE_DynamicTempDelta3Below2Count}");
             result.Observations.Add($"Pressure flatline(3) count: {engine.stageE_DynamicPressureFlatline3Count}");
+            result.Observations.Add($"Pressure flatline(3) from interval samples: {flatlineFromSamples}");
             result.Observations.Add($"Hard-clamp hits: {engine.stageE_DynamicHardClampViolationCount}");
 
             if (engine.stageE_DynamicPrimaryRiseCheckCount <= 0)
@@ -456,6 +497,8 @@ namespace Critical.Validation
                 sb.AppendLine($"- Suspected root cause area: {r.SuspectedRootCause}");
                 foreach (string observation in r.Observations)
                     sb.AppendLine($"- Observed: {observation}");
+                foreach (string row in r.DiagnosticRows)
+                    sb.AppendLine($"- Diagnostic: {row}");
 
                 if (r.Failures.Count == 0)
                 {
