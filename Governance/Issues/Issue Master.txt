@@ -181,4 +181,68 @@
   * expected telemetry changes in logs
 * Only then draft implementation plan(s)
 
+---
+
+## F) Conformance Audit High-Severity INVESTIGATE Entries (2026-02-15)
+
+### ISSUE-AUDIT-001 - INVESTIGATE RCP startup pressure permissive mismatch
+
+**Severity:** High  
+**Status:** INVESTIGATE  
+**Evidence:** Conformance audit finding `F-001` (`Technical_Documentation/Conformance_Audit_Report_2026-02-15.md`)  
+**Symptom:** Implementation allows RCP start at 320 psig while baseline docs cite >=400 psig.  
+**Suspected file(s)/module(s):** `Assets/Scripts/Physics/PlantConstants.Pressure.cs`, `Assets/Scripts/Physics/RCPSequencer.cs`, `Assets/Scripts/Validation/HeatupSimEngine.BubbleFormation.cs`  
+**Acceptance test (one-liner):** "With bubble formed, RCP target count remains 0 until pressure reaches 400 psig (not 320 psig)."  
+**Expected telemetry/log change:** RCP readiness should report low-pressure lockout until >=400 psig; no RCP start-command events below 400 psig.
+
+---
+
+### ISSUE-AUDIT-002 - INVESTIGATE RCP heat input baseline mismatch
+
+**Severity:** High  
+**Status:** INVESTIGATE  
+**Evidence:** Conformance audit finding `F-002` (`Technical_Documentation/Conformance_Audit_Report_2026-02-15.md`)  
+**Symptom:** Implementation constants use 21 MW total (5.25 MW/pump) while baseline reference cites ~24 MW total cold-water heat input.  
+**Suspected file(s)/module(s):** `Assets/Scripts/Physics/PlantConstants.Pressure.cs`, `Assets/Scripts/Physics/RCSHeatup.cs`, `Assets/Scripts/Validation/HeatupSimEngine.cs`  
+**Acceptance test (one-liner):** "At 4 fully running RCPs, effective primary heat input matches selected authoritative baseline and corresponding heatup-rate envelope."  
+**Expected telemetry/log change:** Effective RCP heat traces and heatup-rate curves converge to chosen reference envelope with reduced bias in time-to-temperature milestones.
+
+---
+
+### ISSUE-AUDIT-003 - INVESTIGATE SG startup boundary isolation behavior
+
+**Severity:** High  
+**Status:** INVESTIGATE  
+**Evidence:** Conformance audit finding `F-004` (`Technical_Documentation/Conformance_Audit_Report_2026-02-15.md`)  
+**Symptom:** SG boundary is forced isolated through startup states where reference documents describe MSIV-open steam-line warming behavior.  
+**Suspected file(s)/module(s):** `Assets/Scripts/Validation/HeatupSimEngine.cs`, `Assets/Scripts/Physics/SGMultiNodeThermal.cs`  
+**Acceptance test (one-liner):** "Startup run reproduces documented steam-line warming trend with physically plausible SG pressure rise before steam-dump regime."  
+**Expected telemetry/log change:** Boundary mode transitions should show OPEN behavior during warmup windows, non-zero steam outflow when applicable, and improved pressure-vs-temperature response continuity.
+
+---
+
+### ISSUE-AUDIT-004 - INVESTIGATE GOLD header noncompliance
+
+**Severity:** High  
+**Status:** INVESTIGATE  
+**Evidence:** Conformance audit finding `F-006` (`Technical_Documentation/Conformance_Audit_Report_2026-02-15.md`)  
+**Symptom:** Project-owned modules are missing required GOLD header fields (`Last Updated`, bounded `Changes`, MAJOR.MINOR format compliance).  
+**Suspected file(s)/module(s):** `Assets/Scripts/Physics/VCTPhysics.cs`, `Assets/Scripts/Physics/PlantConstants.Pressure.cs`, `Assets/Scripts/Validation/HeatupSimEngine.cs` (plus broad project scope)  
+**Acceptance test (one-liner):** "Header linter returns zero violations for required GOLD header fields across `Assets/Scripts`."  
+**Expected telemetry/log change:** Pre-commit/header-check output reports no missing header metadata and produces deterministic pass/fail summary.
+
+---
+
+### ISSUE-AUDIT-005 - INVESTIGATE missing changelog governance
+
+**Severity:** High  
+**Status:** INVESTIGATE  
+**Evidence:** Conformance audit finding `F-012` (`Technical_Documentation/Conformance_Audit_Report_2026-02-15.md`)  
+**Symptom:** No project-level `CHANGELOG.md`; intentional deviations and release-level behavior shifts are not traceable to one authoritative log.  
+**Suspected file(s)/module(s):** repository governance (`CHANGELOG.md` absent), all amended modules lacking bounded file-level change ledgers  
+**Acceptance test (one-liner):** "Repository contains `CHANGELOG.md` and every high-impact module amendment references changelog entry + finding ID where applicable."  
+**Expected telemetry/log change:** Release/governance checks emit changelog linkage for each audited high-impact module and fail when linkage is missing.
+
+---
+
 **End of document**
