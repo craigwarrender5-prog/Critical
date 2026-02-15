@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
+using Critical.Simulation.Modular;
 
 public partial class HeatupSimEngine
 {
@@ -84,6 +85,9 @@ public partial class HeatupSimEngine
     [HideInInspector] public float asyncLogLastFlushMs = 0f;
     [HideInInspector] public float asyncLogMaxDispatchMs = 0f;
     [HideInInspector] public bool workerThreadSteppingLastStepUsed = false;
+    [HideInInspector] public bool modularCoordinatorPathLastStepUsed = false;
+
+    private PlantSimulationCoordinator _plantSimulationCoordinator;
 
     public object RuntimeSyncRoot => _runtimeSync;
 
@@ -124,7 +128,7 @@ public partial class HeatupSimEngine
             lock (_runtimeSync)
             {
                 workerThreadSteppingLastStepUsed = false;
-                StepSimulation(dt);
+                ExecutePhysicsStepAuthorityPath(dt);
                 PublishTelemetrySnapshot();
             }
             return;
@@ -140,7 +144,7 @@ public partial class HeatupSimEngine
                 {
                     lock (_runtimeSync)
                     {
-                        StepSimulation(dt);
+                        ExecutePhysicsStepAuthorityPath(dt);
                         PublishTelemetrySnapshot();
                     }
                 }
@@ -160,6 +164,34 @@ public partial class HeatupSimEngine
         workerThreadSteppingLastStepUsed = true;
         if (workerException != null)
             throw workerException;
+    }
+
+    private void ExecutePhysicsStepAuthorityPath(float dt)
+    {
+        bool useCoordinator = enableModularCoordinatorPath || ModularFeatureFlags.EnableCoordinatorPath;
+        if (useCoordinator)
+        {
+            modularCoordinatorPathLastStepUsed = true;
+            EnsurePlantSimulationCoordinator();
+            _plantSimulationCoordinator.Step(dt);
+            return;
+        }
+
+        modularCoordinatorPathLastStepUsed = false;
+        StepSimulation(dt);
+    }
+
+    private void EnsurePlantSimulationCoordinator()
+    {
+        if (_plantSimulationCoordinator != null)
+            return;
+
+        _plantSimulationCoordinator = new PlantSimulationCoordinator(this);
+    }
+
+    internal void RunLegacySimulationStepForCoordinator(float dt)
+    {
+        StepSimulation(dt);
     }
 
     void WriteTextFileRuntime(string filePath, StringBuilder contentBuilder, bool preferAsync, string source)

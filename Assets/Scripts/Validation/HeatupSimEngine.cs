@@ -121,6 +121,9 @@ public partial class HeatupSimEngine : MonoBehaviour
     [Tooltip("Enable worker-thread stepping mode for deterministic validation experiments.")]
     public bool enableWorkerThreadStepping = false;
 
+    [Tooltip("IP-0025 Stage A: route per-step execution through PlantSimulationCoordinator + LegacySimulatorModule.")]
+    public bool enableModularCoordinatorPath = false;
+
     [Tooltip("Enable temporary deep diagnostics for PZR bubble two-phase closure investigations.")]
     public bool enablePzrBubbleDiagnostics = false;
 
@@ -908,6 +911,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         // Set flag FIRST so coroutine sees it immediately
         _shutdownRequested = true;
         isRunning = false;
+        _plantSimulationCoordinator?.Shutdown();
         // IP-0023: bounded best-effort flush avoids exit-time blocking spikes.
         FlushAsyncLogWriter(500);
         // Then stop coroutines
