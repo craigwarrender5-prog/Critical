@@ -1,10 +1,10 @@
 # CRITICAL SIMULATOR CONSTITUTION
 
-## Version 1.3.1.0
+## Version 1.4.0.0
 
 ### Binding Governance Framework
 
-**Effective Date: 2026-02-14**
+**Effective Date: 2026-02-15**
 
 ---
 
@@ -50,29 +50,36 @@ The following artifacts are mandatory and authoritative at these repository-rela
 
 2. **Domain Plans (DP)**
 
-   * Location: `Updates/Implementation_Plans/`
-   * Naming: `DP-XXXX - <Canonical Domain>.md`
+   * Active location: `Governance/DomainPlans/`
+   * Closed location: `Governance/DomainPlans/Closed/`
+   * Naming pattern (both active and closed): `DP-XXXX - <Canonical Domain>.md`
 
 3. **Implementation Plans (IP)**
 
-   * Location: `Updates/Implementation_Plans/`
-   * Naming: `IP-XXXX - <Canonical Domain>.md`
+   * Active location: `Governance/ImplementationPlans/`
+   * Closed location: `Governance/ImplementationPlans/Closed/`
+   * Naming pattern (both active and closed): `IP-XXXX*.md`
 
 4. **Changelogs**
 
-   * Location: `Updates/Changelogs/`
+   * Location: `Governance/Changelogs/`
    * Naming: `CHANGELOG_vMAJOR.MINOR.PATCH.REVISION.md`
 
-5. **Roadmap**
+5. **Roadmap and Governance Indexes**
 
-   * Location: `Updates/Future_Features/FUTURE_ENHANCEMENTS_ROADMAP.md`
+   * Roadmap location: `Governance/DP_EXECUTION_RECOMMENDATION.md`
+   * DP registry index location: `Governance/DP_REGISTRY_CONSISTENCY_REPORT.md`
+   * Issue lifecycle index location: `Governance/IssueRegister/issue_index.json`
 
 Optional standalone investigation records MAY be maintained at:
 
-* Location: `Updates/Issues/`
+* Location: `Governance/Issues/`
 * Naming: `IR-XXXX - <Topic>.md` or `CS-XXXX_Investigation_Report.md`
 
-Closed DP/IP records MAY be moved to `Updates/Implementation_Plans/Closed/` after closure.
+Closed DP records MUST be moved to `Governance/DomainPlans/Closed/`.
+Closed IP records MUST be moved to `Governance/ImplementationPlans/Closed/`.
+
+Any plan discovery logic (scripts, audits, or indexes) SHALL search both active and closed plan locations.
 
 No authoritative process record SHALL be maintained outside these locations.
 
@@ -105,7 +112,7 @@ Investigation is mandatory, but a standalone Investigation Report per CS item is
 
 Investigation content MAY be documented in either:
 
-1. A standalone investigation file in `Updates/Issues/`, OR
+1. A standalone investigation file in `Governance/Issues/`, OR
 2. The corresponding Domain Plan issue entry (backlog row/notes).
 
 Investigation content MUST exist before DP execution authorization for that issue.
@@ -156,7 +163,8 @@ Markdown issue lists are non-authoritative reference artifacts only and MUST NOT
 * Issue IDs MUST follow `CS-####`.
 * Domain Plan IDs MUST follow `DP-###` (existing legacy `DP-####` IDs are accepted for compatibility).
 * Implementation Plan IDs MUST follow `IP-####`.
-* IDs are immutable and MUST NOT be reused.
+* Issue IDs and IP IDs are immutable and MUST NOT be reused.
+* DP IDs are domain continuity identifiers and SHALL remain stable across active/closed rollover.
 
 ### Section 3 - Hardcoded Domain Constraint (No Inference)
 
@@ -297,7 +305,7 @@ DPs organize scope and execution readiness; they are not release artifacts.
 ### Section 2 - DP Construction Rule (HARD)
 
 * A DP MUST correspond to exactly one Canonical Domain Type (Article VI Section 3).
-* For each Canonical Domain Type, there SHOULD be exactly one Open DP at a time.
+* For each Canonical Domain Type, there SHALL be exactly one active Open DP template at a time.
 * Creating additional DPs within the same Domain is allowed ONLY for deferral/blocking reasons and MUST be justified.
 
 ### Section 3 - DP Status Model
@@ -307,11 +315,13 @@ Allowed DP statuses:
 * `Open`
 * `Executing`
 * `Complete`
+* `Closed`
 
 Allowed transitions:
 
 * `Open -> Executing`
 * `Executing -> Complete`
+* `Complete -> Closed`
 
 ### Section 4 - DP Execution Rule
 
@@ -410,7 +420,7 @@ Allowed transitions:
 
 ### Section 3 - Closure Rule
 
-IP closure is independent of release versioning.
+IP closure is independent of release versioning and SHALL follow the Formal Closure Procedure in Article XI.
 
 ---
 
@@ -435,7 +445,8 @@ Supersession MUST include explicit replacement references.
 
 Every deferred issue and new receiving DP MUST be reflected in:
 
-* `Updates/Future_Features/FUTURE_ENHANCEMENTS_ROADMAP.md`
+* `Governance/DP_EXECUTION_RECOMMENDATION.md`
+* `Governance/DP_REGISTRY_CONSISTENCY_REPORT.md`
 
 ---
 
@@ -454,7 +465,131 @@ Failure outcomes SHALL be registered in the JSON issue governance system (`issue
 
 ---
 
-## Article XI - Release and Versioning
+## Article XI - Formal Closure Procedure
+
+The following closure sequence is mandatory and SHALL be executed in order without reordering.
+
+### Section 1 - Pre-Closure Validation Gate
+
+Before any IP or DP is closed:
+
+1. A final validation run stamp MUST be recorded in the closing IP.
+2. Every blocking CS in closure scope MUST have final outcome `PASS`.
+3. `NOT_REACHED` or `CONDITIONAL` MAY be accepted only when:
+   - The outcome is explicitly classified as policy-defined non-blocking in the closure record, and
+   - The non-blocking rationale is written in the closeout report.
+4. If any blocking gate fails, closure SHALL stop and status SHALL remain non-closed.
+
+### Section 2 - IP Closure Actions
+
+When an IP is closed:
+
+1. The IP file MUST set `Status: CLOSED`.
+2. The IP file MUST include:
+   - `Closure Date: YYYY-MM-DD`
+   - `Final Run Stamp: <deterministic run stamp>`
+   - `Final Stage E Report: Governance/ImplementationReports/IP-XXXX_*.md`
+   - `Final Closeout Report: Governance/ImplementationReports/IP-XXXX_Closeout_Report.md`
+3. The file MUST be moved to `Governance/ImplementationPlans/Closed/`.
+4. A closed IP is immutable; only clerical corrections (typos, broken links, formatting defects) are allowed after closure.
+
+### Section 3 - DP Closure Actions
+
+When a DP is closed:
+
+1. The DP file MUST set `Status: Complete` or `Status: Closed`.
+2. The DP closeout reference MUST identify the closing IP and closure date.
+3. The file MUST be moved to `Governance/DomainPlans/Closed/`.
+
+### Section 4 - Domain Continuity Requirement
+
+Immediately after DP closure:
+
+1. A new OPEN DP template for the same canonical domain MUST be created in `Governance/DomainPlans/`.
+2. The active template MUST use the canonical naming pattern `DP-XXXX - <Canonical Domain>.md`.
+3. There SHALL be exactly one active OPEN DP template per canonical domain.
+4. Closure is incomplete until the successor OPEN template exists.
+
+### Section 5 - CS Finalization and Issue Register Migration
+
+For every CS in the closing scope:
+
+1. DP/IP backlog status SHALL be marked closed in the closure artifact.
+2. `Governance/IssueRegister/issue_register.json` MUST remove closed CS entries.
+3. `Governance/IssueRegister/issue_archive.json` MUST receive closure snapshots for those CS entries.
+4. `Governance/IssueRegister/issue_index.json` MUST reflect final lifecycle status and closure metadata.
+5. No orphan checks MUST pass:
+   - no CS assigned to a non-existent DP,
+   - no CS assigned to closed IP as active work,
+   - no closed CS remaining in active register.
+
+### Section 6 - Impact Assessment Rules
+
+An impact class MUST be selected for each closure package:
+
+* `Major`: architectural/governance breaking change or incompatible behavioral change.
+* `Minor`: new capability, expanded behavior, or materially broadened scope without break.
+* `Patch`: defect correction or closure package with no capability expansion.
+* `Revision`: documentation, reporting, metadata, or clerical-only change.
+
+If multiple impacts are present, the highest-impact class SHALL control version increment.
+
+### Section 7 - Version Determination Rules
+
+Versioning SHALL be derived from the latest existing changelog in `Governance/Changelogs/`:
+
+1. `Major` -> increment MAJOR; reset MINOR/PATCH/REVISION to `0`.
+2. `Minor` -> increment MINOR; reset PATCH/REVISION to `0`.
+3. `Patch` -> increment PATCH; reset REVISION to `0`.
+4. `Revision` -> increment REVISION only.
+
+The new changelog filename MUST be:
+`Governance/Changelogs/CHANGELOG_vMAJOR.MINOR.PATCH.REVISION.md`
+
+### Section 8 - Changelog Requirements
+
+Each closure changelog SHALL include:
+
+1. Scope summary (DP/IP IDs and CS coverage).
+2. Behavioral impact summary.
+3. Governance impact summary (register/archive/index actions).
+4. Validation evidence references (final run stamp and reports).
+5. Explicit version justification tied to Section 6 impact class.
+
+### Section 9 - Closeout Report Requirements
+
+Each closing IP MUST produce:
+
+`Governance/ImplementationReports/IP-XXXX_Closeout_Report.md`
+
+The closeout report SHALL include:
+
+1. Root-cause timeline.
+2. Action summary and remediation traceability.
+3. Final validation metrics and gate outcomes.
+4. Closure acceptance note stating closure is approved or rejected.
+
+### Section 10 - Roadmap and Index Updates
+
+After closure acceptance, the following MUST be updated:
+
+1. `Governance/DP_EXECUTION_RECOMMENDATION.md`
+2. `Governance/DP_REGISTRY_CONSISTENCY_REPORT.md`
+3. `Governance/IssueRegister/issue_index.json`
+
+### Section 11 - Integrity Verification (Mandatory)
+
+Closure SHALL be considered invalid if any check fails:
+
+1. JSON schema validation passes for `issue_register.json` and `issue_archive.json`.
+2. No orphaned CS references remain across DP/IP/register/index.
+3. Register/index/archive counts and statuses are consistent.
+4. No closed IP/DP remains in active plan folders.
+5. Versioning rules were applied exactly as defined in Section 7.
+
+---
+
+## Article XII - Release and Versioning
 
 Release versioning occurs when a changelog is created after implementation and validation work is complete.
 
@@ -463,14 +598,14 @@ Version format:
 
 ---
 
-## Article XII - Amendment Rule
+## Article XIII - Amendment Rule
 
 This Constitution may be changed only by full-document replacement with a new constitution version.
 Partial amendments are not permitted.
 
 ---
 
-## Migration Requirement (v1.3.1.0)
+## Migration Requirement (v1.4.0.0)
 
 Upon constitution upgrade:
 
@@ -478,6 +613,8 @@ Upon constitution upgrade:
 2. Severity and ordering MUST be sourced from `Governance/IssueRegister/issue_index.json` (authoritative), not markdown lists.
 3. No Implementation Plans may be created until ALL DPs are compliant.
 4. Standalone per-CS investigation files are optional; DP issue entries MAY carry investigation records.
+5. Closed IP/DP artifacts remaining in active folders MUST be moved to their `Closed/` folders.
+6. Missing canonical-domain OPEN DP templates MUST be created immediately to restore one-active-template continuity.
 
 ---
 

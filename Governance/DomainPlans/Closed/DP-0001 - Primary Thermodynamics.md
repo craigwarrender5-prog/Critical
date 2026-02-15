@@ -47,7 +47,7 @@ No unresolved DP-0001 issues remain after IP-0019 closeout.
 
 ## E) Notes / Investigation Links
 - Closing implementation plan:
-  - `Governance/ImplementationPlans/IP-0019 - DP-0001 - Primary Thermodynamics.md`
+  - `Governance/ImplementationPlans/Closed/IP-0019 - DP-0001 - Primary Thermodynamics.md`
 - Closing report:
   - `Governance/ImplementationReports/IP-0019_Closeout_Report.md`
 - Final validation evidence:

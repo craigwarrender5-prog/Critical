@@ -606,21 +606,26 @@
                                     "Validation / Diagnostic Display â€” Conservation Metric Integrity"
                                 ]
                    },
-                   {
-                       "id":  "CS-0042",
-                       "title":  "Professional interactive dashboard visualization upgrade (uGUI modernization)",
-                       "domain":  "Operator Interface \u0026 Scenarios",
-                       "severity":  "MEDIUM",
-                       "status":  "READY_FOR_FIX",
-                       "created_at":  "2026-02-13T00:00:00Z",
-                       "updated_at":  "2026-02-14T15:57:51Z",
-                       "stage_detected":  null,
-                       "assigned_dp":  "DP-0008",
-                       "assigned_ip":  "IP-0013",
-                       "observations":  [
-                                            "The current dashboard exposes correct telemetry but lacks professional-grade instrumentation, animated transitions, directional clarity, and interactive visualization. Heavy reliance on static numeric text increases cognitive load and slows debugging. Operators must mentally reconstruct flow directions, trend behavior, and alarm states from raw numbers rather than visual cues.",
-                                            "None â€” Pure UI/visualization enhancement. No physics equations, conservation logic, state computation, or regime logic changes. All data sourced exclusively from telemetry snapshot layer."
-                                        ],
+                    {
+                        "id":  "CS-0042",
+                        "title":  "Professional interactive dashboard visualization upgrade (uGUI modernization)",
+                        "domain":  "Operator Interface \u0026 Scenarios",
+                        "severity":  "HIGH",
+                        "status":  "READY_FOR_FIX",
+                        "created_at":  "2026-02-13T00:00:00Z",
+                        "updated_at":  "2026-02-15T08:58:22Z",
+                        "stage_detected":  null,
+                        "assigned_dp":  "DP-0008",
+                        "assigned_ip":  "IP-0013",
+                        "observations":  [
+                                             "Critical Tab Redesign – Functional Requirements: Applies only to the Critical tab and must not alter layout or behavior of other tabs. UI-only change. No physics model changes. No acceptance logic changes. Must consume the existing telemetry snapshot interface exclusively (no direct physics reads from UI).",
+                                             "Always-Visible Metrics (Non-Negotiable): RCS (Thermal State), RCS Temperature (Tavg), RCS Pressure, dT/dt (rate), dP/dt (rate), Pressurizer (Control Authority), PZR Temperature, PZR Pressure, PZR Level %, Heater status, Spray status, Inventory / CVCS (Inventory Truth), Charging flow (gpm), Letdown flow (gpm), Net flow (direction emphasized), VCT Level %, and inventory alarm state (if active). These values must be readable within 5 seconds without tab switching.",
+                                             "Layout Constraints: Maximum 4 large gauges. Sparkline trends allowed only as compact elements (no full graph panels). Alarm strip limited to top 4-6 active alarms. No SG detailed panels permanently visible (secondary belongs in its own tab). No scrolling at 1080p.",
+                                             "Interaction Rules: Expandable drawers allowed for deeper detail. Animated transitions permitted (150-250 ms). No per-frame allocations. Trend buffers must be fixed-size ring buffers. UI update frequency must be rate-limited to <=10 Hz.",
+                                             "Performance Safeguards: No measurable frame-time increase at 10x simulation speed. No LINQ or heap allocations in Update loops. UI must degrade gracefully if telemetry is unavailable.",
+                                             "Acceptance Criteria: Operator can determine plant thermal state, pressure control state, and inventory state within 5 seconds. All defined metrics visible simultaneously at 1080p. Other tabs remain unaffected. CS-0042 may only be closed once Critical tab redesign is implemented and verified under load.",
+                                             "Severity Re-evaluation: Elevated to HIGH due to operational impact because this tab is central to validation workflow."
+                                         ],
                        "evidence":  [
 
                                     ],

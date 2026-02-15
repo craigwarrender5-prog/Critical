@@ -11,7 +11,7 @@
 Evidence:
 - `Governance/Issues/IP-0019_StageA_RootCause_2026-02-14_221646.md`
 - `Governance/Issues/IP-0019_StageA_Run_20260214_221646.log`
-- `Governance/ImplementationPlans/IP-0019 - DP-0001 - Primary Thermodynamics.md`
+- `Governance/ImplementationPlans/Closed/IP-0019 - DP-0001 - Primary Thermodynamics.md`
 
 Root-cause confirmation disposition:
 - `CS-0021`: confirmed prior transport-delay root cause; current run behavior remains compliant.

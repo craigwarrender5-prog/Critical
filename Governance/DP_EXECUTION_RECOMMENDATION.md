@@ -10,6 +10,18 @@ Source of truth:
 - Closure evidence:
   - `Governance/ImplementationReports/IP-0019_StageE_ExtendedValidation_Report_2026-02-15.md`
   - `Governance/ImplementationReports/IP-0019_Closeout_Report.md`
+- Closed artifacts:
+  - `Governance/DomainPlans/Closed/DP-0001 - Primary Thermodynamics.md`
+  - `Governance/ImplementationPlans/Closed/IP-0019 - DP-0001 - Primary Thermodynamics.md`
+- Domain continuity templates created:
+  - `Governance/DomainPlans/DP-0001 - Primary Thermodynamics.md`
+  - `Governance/DomainPlans/DP-0005 - Mass & Energy Conservation.md`
+
+## Plan Discovery Scope
+- Active DPs: `Governance/DomainPlans/`
+- Closed DPs: `Governance/DomainPlans/Closed/`
+- Active IPs: `Governance/ImplementationPlans/`
+- Closed IPs: `Governance/ImplementationPlans/Closed/`
 
 ## Ranked Top 3 Next DP Candidates
 
