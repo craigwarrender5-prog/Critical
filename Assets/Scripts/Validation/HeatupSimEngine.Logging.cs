@@ -1374,10 +1374,12 @@ public partial class HeatupSimEngine
         // v4.4.0: PZR Pressure/Level Control Final Validation
         float finalLevelSP = PlantConstants.GetPZRLevelSetpointUnified(T_avg);
         float finalLevelErr = Math.Abs(pzrLevel - finalLevelSP);
-        bool finalPressureOK = (T_avg >= 550f) ? Math.Abs(pressure - 2250f) <= 50f : true;
+        float operatingPressurePsia =
+            PlantConstants.PZR_OPERATING_PRESSURE_PSIG + PlantConstants.PSIG_TO_PSIA;
+        bool finalPressureOK = (T_avg >= 550f) ? Math.Abs(pressure - operatingPressurePsia) <= 50f : true;
         sb.AppendLine("v4.4.0 PRESSURE/LEVEL CONTROL FINAL VALIDATION:");
         sb.AppendLine($"  PZR Level within +/-10%:  {(finalLevelErr <= 10f ? "PASS" : "FAIL")} (level={pzrLevel:F1}%, SP={finalLevelSP:F1}%)");
-        sb.AppendLine($"  Final P at target (+/-50): {(finalPressureOK ? "PASS" : "FAIL")} ({pressure:F0} psia, target 2250 +/- 50)");
+        sb.AppendLine($"  Final P at target (+/-50): {(finalPressureOK ? "PASS" : "FAIL")} ({pressure:F0} psia, target {operatingPressurePsia:F1} +/- 50)");
         sb.AppendLine($"  Heater Mode = PID:        {(currentHeaterMode == HeaterMode.AUTOMATIC_PID ? "PASS" : "N/A")} (mode={currentHeaterMode})");
         sb.AppendLine($"  Spray system functional:  {(sprayState.IsEnabled ? "PASS" : "N/A")} (enabled={sprayState.IsEnabled})");
         sb.AppendLine($"  Final spray flow:         {sprayFlow_GPM:F1} gpm");

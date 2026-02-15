@@ -33,10 +33,40 @@ namespace Critical.Physics
 {
     public static partial class PlantConstants
     {
+        #region PZR Baseline Authority (IP-0024 Stage A)
+
+        // Single authoritative PZR baseline profile.
+        // All duplicate families in other PlantConstants partials alias this set.
+
+        public const float PZR_BASELINE_TOTAL_VOLUME_FT3 = 1800f;
+        public const float PZR_BASELINE_HEATER_TOTAL_KW = 1794f;
+        public const float PZR_BASELINE_HEATER_PROP_KW = 414f;
+        public const float PZR_BASELINE_HEATER_BACKUP_KW = 1380f;
+        public const float PZR_BASELINE_SPRAY_MAX_GPM = 840f;
+
+        public const float PZR_BASELINE_PRESSURE_SETPOINT_PSIG = 2235f;
+        public const float PZR_BASELINE_PROP_HEATER_FULL_ON_PSIG = 2220f;
+        public const float PZR_BASELINE_PROP_HEATER_ZERO_PSIG = 2250f;
+        public const float PZR_BASELINE_BACKUP_HEATER_ON_PSIG = 2210f;
+        public const float PZR_BASELINE_BACKUP_HEATER_OFF_PSIG = 2217f;
+        public const float PZR_BASELINE_SPRAY_START_PSIG = 2260f;
+        public const float PZR_BASELINE_SPRAY_FULL_PSIG = 2310f;
+        public const float PZR_BASELINE_PORV_OPEN_PSIG = 2335f;
+
+        public const float PZR_BASELINE_LEVEL_NO_LOAD_PERCENT = 25f;
+        public const float PZR_BASELINE_LEVEL_FULL_POWER_PERCENT = 61.5f;
+        public const float PZR_BASELINE_LEVEL_TAVG_NO_LOAD_F = 557f;
+        public const float PZR_BASELINE_LEVEL_TAVG_FULL_POWER_F = 584.7f;
+        public const float PZR_BASELINE_LEVEL_PROGRAM_SLOPE =
+            (PZR_BASELINE_LEVEL_FULL_POWER_PERCENT - PZR_BASELINE_LEVEL_NO_LOAD_PERCENT) /
+            (PZR_BASELINE_LEVEL_TAVG_FULL_POWER_F - PZR_BASELINE_LEVEL_TAVG_NO_LOAD_F);
+
+        #endregion
+
         #region Pressurizer Geometry
         
         /// <summary>Total pressurizer volume in ft³</summary>
-        public const float PZR_TOTAL_VOLUME = 1800f;
+        public const float PZR_TOTAL_VOLUME = PZR_BASELINE_TOTAL_VOLUME_FT3;
         
         /// <summary>Normal water volume in ft³ (60% level)</summary>
         public const float PZR_WATER_VOLUME = 1080f;
@@ -54,27 +84,27 @@ namespace Critical.Physics
         public const float PZR_WALL_AREA = 600f;
         
         /// <summary>Total heater power in kW</summary>
-        public const float HEATER_POWER_TOTAL = 1800f;
+        public const float HEATER_POWER_TOTAL = PZR_BASELINE_HEATER_TOTAL_KW;
         
         /// <summary>
         /// Proportional heater power in kW.
         /// Source: NRC HRTD 6.1 — 2 banks × 150 kW = 300 kW standard proportional capacity
         /// Corrected per validation issue #2: was 500 kW, should match standard 2×150 kW banks
         /// </summary>
-        public const float HEATER_POWER_PROP = 300f;
+        public const float HEATER_POWER_PROP = PZR_BASELINE_HEATER_PROP_KW;
         
         /// <summary>
         /// Backup heater power in kW.
         /// Source: NRC HRTD 6.1 — corrected to HEATER_POWER_TOTAL - HEATER_POWER_PROP
         /// 1800 - 300 = 1500 kW (5 banks × 300 kW for larger 4-loop plant)
         /// </summary>
-        public const float HEATER_POWER_BACKUP = 1500f;
+        public const float HEATER_POWER_BACKUP = PZR_BASELINE_HEATER_BACKUP_KW;
         
         /// <summary>Heater thermal time constant in seconds</summary>
         public const float HEATER_TAU = 20f;
         
         /// <summary>Maximum spray flow rate in gpm</summary>
-        public const float SPRAY_FLOW_MAX = 900f;
+        public const float SPRAY_FLOW_MAX = PZR_BASELINE_SPRAY_MAX_GPM;
         
         /// <summary>Spray water temperature in °F (= Tcold)</summary>
         public const float SPRAY_TEMP = 558f;
@@ -234,42 +264,42 @@ namespace Critical.Physics
         /// 2225 psia (full ON) and 2275 psia (zero output).
         /// Note: Normal ops only — defined here for future Phase 3+ scope.
         /// </summary>
-        public const float P_PROP_HEATER_FULL_ON = 2225f;
+        public const float P_PROP_HEATER_FULL_ON = PZR_BASELINE_PROP_HEATER_FULL_ON_PSIG;
         
         /// <summary>
         /// Proportional heaters zero output pressure setpoint in psia.
         /// Source: NRC HRTD 10.2 — zero heater output at 2275 psia.
         /// Note: Normal ops only — defined here for future Phase 3+ scope.
         /// </summary>
-        public const float P_PROP_HEATER_ZERO = 2275f;
+        public const float P_PROP_HEATER_ZERO = PZR_BASELINE_PROP_HEATER_ZERO_PSIG;
         
         /// <summary>
         /// Backup heaters ON (bistable) pressure setpoint in psia.
         /// Source: NRC HRTD 10.2 — backup heaters energize at 2200 psia.
         /// Note: Normal ops only — defined here for future Phase 3+ scope.
         /// </summary>
-        public const float P_BACKUP_HEATER_ON = 2200f;
+        public const float P_BACKUP_HEATER_ON = PZR_BASELINE_BACKUP_HEATER_ON_PSIG;
         
         /// <summary>
         /// Backup heaters OFF (bistable) pressure setpoint in psia.
         /// Source: NRC HRTD 10.2 — backup heaters de-energize at 2225 psia.
         /// Note: Normal ops only — defined here for future Phase 3+ scope.
         /// </summary>
-        public const float P_BACKUP_HEATER_OFF = 2225f;
+        public const float P_BACKUP_HEATER_OFF = PZR_BASELINE_BACKUP_HEATER_OFF_PSIG;
         
         /// <summary>
         /// Spray valves start opening pressure setpoint in psig.
         /// Source: NRC HRTD 10.2 — spray valves begin opening at 2260 psig.
         /// Note: Normal ops only — defined here for future Phase 3+ scope.
         /// </summary>
-        public const float P_SPRAY_START_PSIG = 2260f;
+        public const float P_SPRAY_START_PSIG = PZR_BASELINE_SPRAY_START_PSIG;
         
         /// <summary>
         /// Spray valves fully open pressure setpoint in psig.
         /// Source: NRC HRTD 10.2 — spray valves fully open at 2310 psig.
         /// Note: Normal ops only — defined here for future Phase 3+ scope.
         /// </summary>
-        public const float P_SPRAY_FULL_PSIG = 2310f;
+        public const float P_SPRAY_FULL_PSIG = PZR_BASELINE_SPRAY_FULL_PSIG;
         
         /// <summary>
         /// Spray bypass flow in gpm.
@@ -285,7 +315,7 @@ namespace Critical.Physics
         /// During heatup, ΔP is lower than at-power; 600 gpm is representative.
         /// Source: Westinghouse 4-Loop FSAR, NRC HRTD 10.2
         /// </summary>
-        public const float SPRAY_FULL_OPEN_FLOW_GPM = 600f;
+        public const float SPRAY_FULL_OPEN_FLOW_GPM = PZR_BASELINE_SPRAY_MAX_GPM;
         
         /// <summary>
         /// v4.4.0: Spray valve position time constant in hours.

@@ -31,29 +31,29 @@ namespace Critical.Physics
     {
         #region Pressure Setpoints (psia and psig)
         
-        /// <summary>Normal operating pressure in psia</summary>
-        public const float P_NORMAL = 2250f;
+        /// <summary>Normal operating pressure in psia.</summary>
+        public const float P_NORMAL = PZR_BASELINE_PRESSURE_SETPOINT_PSIG + PSIG_TO_PSIA;
         
-        /// <summary>Normal operating pressure in psig</summary>
-        public const float P_NORMAL_PSIG = 2235f;
+        /// <summary>Normal operating pressure in psig.</summary>
+        public const float P_NORMAL_PSIG = PZR_BASELINE_PRESSURE_SETPOINT_PSIG;
         
-        /// <summary>Heaters full ON setpoint in psig</summary>
-        public const float P_HEATERS_ON = 2210f;
+        /// <summary>Proportional heaters full ON setpoint in psig.</summary>
+        public const float P_HEATERS_ON = PZR_BASELINE_PROP_HEATER_FULL_ON_PSIG;
         
-        /// <summary>Heaters OFF setpoint in psig</summary>
-        public const float P_HEATERS_OFF = 2235f;
+        /// <summary>Proportional heaters OFF setpoint in psig.</summary>
+        public const float P_HEATERS_OFF = PZR_BASELINE_PROP_HEATER_ZERO_PSIG;
         
-        /// <summary>Spray ON setpoint in psig</summary>
-        public const float P_SPRAY_ON = 2260f;
+        /// <summary>Spray ON setpoint in psig.</summary>
+        public const float P_SPRAY_ON = PZR_BASELINE_SPRAY_START_PSIG;
         
         /// <summary>
         /// Spray full flow setpoint in psig.
         /// Source: NRC HRTD 10.2 — "2310 psig (75 psig above setpoint) for spray valves to fully open"
         /// </summary>
-        public const float P_SPRAY_FULL = 2310f;
+        public const float P_SPRAY_FULL = PZR_BASELINE_SPRAY_FULL_PSIG;
         
-        /// <summary>PORV opening setpoint in psig</summary>
-        public const float P_PORV = 2335f;
+        /// <summary>PORV opening setpoint in psig.</summary>
+        public const float P_PORV = PZR_BASELINE_PORV_OPEN_PSIG;
         
         /// <summary>Safety valve opening setpoint in psig</summary>
         public const float P_SAFETY = 2485f;
@@ -93,7 +93,7 @@ namespace Critical.Physics
         /// Solid plant pressure control high limit in psig.
         /// Source: NRC HRTD 19.2.1 — RHR relief valve setpoint (must stay below)
         /// </summary>
-        public const float SOLID_PLANT_P_HIGH_PSIG = 450f;
+        public const float SOLID_PLANT_P_HIGH_PSIG = 400f;
         
         /// <summary>
         /// Solid plant pressure control low limit in psia.
@@ -105,7 +105,7 @@ namespace Critical.Physics
         /// Solid plant pressure control high limit in psia.
         /// = SOLID_PLANT_P_HIGH_PSIG + 14.7 = 464.7 psia
         /// </summary>
-        public const float SOLID_PLANT_P_HIGH_PSIA = 464.7f;
+        public const float SOLID_PLANT_P_HIGH_PSIA = SOLID_PLANT_P_HIGH_PSIG + PSIG_TO_PSIA;
         
         /// <summary>
         /// Solid plant pressure control setpoint in psia (midband).
@@ -213,13 +213,13 @@ namespace Critical.Physics
         /// to support running the RCPs"
         /// Required for adequate NPSH margin and seal injection
         /// </summary>
-        public const float MIN_RCP_PRESSURE_PSIG = 320f;
+        public const float MIN_RCP_PRESSURE_PSIG = 400f;
         
         /// <summary>
         /// Minimum pressure for RCP operation in psia.
         /// = MIN_RCP_PRESSURE_PSIG + 14.7 = 334.7 psia
         /// </summary>
-        public const float MIN_RCP_PRESSURE_PSIA = 334.7f;
+        public const float MIN_RCP_PRESSURE_PSIA = MIN_RCP_PRESSURE_PSIG + PSIG_TO_PSIA;
         
         #endregion
         
@@ -335,7 +335,7 @@ namespace Critical.Physics
         /// PZR operating pressure setpoint in psig.
         /// Source: NRC HRTD 10.2 — Normal operating pressure
         /// </summary>
-        public const float PZR_OPERATING_PRESSURE_PSIG = 2235f;
+        public const float PZR_OPERATING_PRESSURE_PSIG = PZR_BASELINE_PRESSURE_SETPOINT_PSIG;
 
         /// <summary>
         /// Heater PID proportional gain (fraction per psi error).
@@ -436,7 +436,7 @@ namespace Critical.Physics
         /// 
         /// Source: NRC HRTD 10.2 — Heater cutoff setpoint
         /// </summary>
-        public const float HEATER_PROP_CUTOFF_PSIG = 2250f;
+        public const float HEATER_PROP_CUTOFF_PSIG = PZR_BASELINE_PROP_HEATER_ZERO_PSIG;
 
         /// <summary>
         /// Pressure below which backup heaters energize (psig).
@@ -444,7 +444,7 @@ namespace Critical.Physics
         /// 
         /// Source: NRC HRTD 10.2 — Backup heater actuation
         /// </summary>
-        public const float HEATER_BACKUP_ON_PSIG = 2210f;
+        public const float HEATER_BACKUP_ON_PSIG = PZR_BASELINE_BACKUP_HEATER_ON_PSIG;
 
         /// <summary>
         /// Pressure above which backup heaters de-energize (psig).
@@ -452,7 +452,7 @@ namespace Critical.Physics
         /// 
         /// Source: NRC HRTD 10.2 — Backup heater reset
         /// </summary>
-        public const float HEATER_BACKUP_OFF_PSIG = 2225f;
+        public const float HEATER_BACKUP_OFF_PSIG = PZR_BASELINE_BACKUP_HEATER_OFF_PSIG;
 
         /// <summary>
         /// Pressure at which spray starts (psig).
@@ -460,7 +460,7 @@ namespace Critical.Physics
         /// 
         /// Source: NRC HRTD 10.2 — Spray actuation setpoint
         /// </summary>
-        public const float SPRAY_START_PSIG = 2260f;
+        public const float SPRAY_START_PSIG = PZR_BASELINE_SPRAY_START_PSIG;
 
         /// <summary>
         /// Pressure at which spray is at full flow (psig).
@@ -468,7 +468,7 @@ namespace Critical.Physics
         /// 
         /// Source: NRC HRTD 10.2 — "2310 psig for spray valves fully open"
         /// </summary>
-        public const float SPRAY_FULL_PSIG = 2310f;
+        public const float SPRAY_FULL_PSIG = PZR_BASELINE_SPRAY_FULL_PSIG;
 
         /// <summary>
         /// Proportional heater capacity in kW.
@@ -476,7 +476,7 @@ namespace Critical.Physics
         /// 
         /// Source: NRC HRTD 6.1 — ~500 kW proportional
         /// </summary>
-        public const float HEATER_PROPORTIONAL_CAPACITY_KW = 500f;
+        public const float HEATER_PROPORTIONAL_CAPACITY_KW = PZR_BASELINE_HEATER_PROP_KW;
 
         /// <summary>
         /// Backup heater capacity in kW.
@@ -484,7 +484,7 @@ namespace Critical.Physics
         /// 
         /// Source: NRC HRTD 6.1 — ~1300 kW backup (1800 - 500)
         /// </summary>
-        public const float HEATER_BACKUP_CAPACITY_KW = 1300f;
+        public const float HEATER_BACKUP_CAPACITY_KW = PZR_BASELINE_HEATER_BACKUP_KW;
 
         /// <summary>
         /// Total heater capacity in kW.
@@ -492,7 +492,7 @@ namespace Critical.Physics
         /// 
         /// Source: NRC HRTD 6.1
         /// </summary>
-        public const float HEATER_TOTAL_CAPACITY_KW = 1800f;
+        public const float HEATER_TOTAL_CAPACITY_KW = PZR_BASELINE_HEATER_TOTAL_KW;
 
         /// <summary>
         /// Minimum heater output during normal operations (fraction).

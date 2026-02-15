@@ -1,8 +1,8 @@
-{
+﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-15T17:43:27Z",
+    "generated_at":  "2026-02-15T19:22:54Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-    "active_issue_count":  60,
+    "active_issue_count":  25,
     "issues":  [
                    {
                        "id":  "CS-0006",
@@ -16,8 +16,8 @@
                        "assigned_dp":  "DP-0007",
                        "assigned_ip":  "IP-0001",
                        "observations":  [
-                                            "The most sensitive conservation diagnostic (ledger vs component sum, 0.1%/1.0% thresholds) is silent. All display fields it would populate (`primaryMassStatus`, `primaryMassAlarm`, `primaryMassDrift_lb`, etc.) remain at defaults. UI appears \"OK\" when it should not. Init.cs:184 has a comment referencing it as if it runs — actively misleading.",
-                                            "High — False confidence. The diagnostic\u0027s existence in the codebase implies the system is monitored. It is not. Solver-vs-ledger divergence is undetectable at runtime."
+                                            "The most sensitive conservation diagnostic (ledger vs component sum, 0.1%/1.0% thresholds) is silent. All display fields it would populate (`primaryMassStatus`, `primaryMassAlarm`, `primaryMassDrift_lb`, etc.) remain at defaults. UI appears \"OK\" when it should not. Init.cs:184 has a comment referencing it as if it runs â€” actively misleading.",
+                                            "High â€” False confidence. The diagnostic\u0027s existence in the codebase implies the system is monitored. It is not. Solver-vs-ledger divergence is undetectable at runtime."
                                         ],
                        "evidence":  [
 
@@ -25,12 +25,12 @@
                        "hypotheses":  [
 
                                       ],
-                       "root_cause":  "Confirmed — Method added in v5.3.0 Stage 6 (Logging.cs:470, 114 lines, fully implemented). Call site in `StepSimulation()` was never added. Full codebase grep confirms zero call sites.",
-                       "resolution_candidate":  "Resolved v0.1.0.0 — Call site added at end of `StepSimulation()` after `UpdateInventoryAudit(dt)`. Default status changed from `\"OK\"` to `\"NOT_CHECKED\"`. Init reset added for all diagnostic state fields. Diagnostic executes every physics timestep.",
+                       "root_cause":  "Confirmed â€” Method added in v5.3.0 Stage 6 (Logging.cs:470, 114 lines, fully implemented). Call site in `StepSimulation()` was never added. Full codebase grep confirms zero call sites.",
+                       "resolution_candidate":  "Resolved v0.1.0.0 â€” Call site added at end of `StepSimulation()` after `UpdateInventoryAudit(dt)`. Default status changed from `\"OK\"` to `\"NOT_CHECKED\"`. Init reset added for all diagnostic state fields. Diagnostic executes every physics timestep.",
                        "links":  [
                                      "Blocked by: CS-0001, CS-0003. Blocks: CS-0007.",
                                      "Blocked by: CS-0001, CS-0003. Blocks: CS-0007.",
-                                     "IP-0001 — Primary Mass Conservation — Phase C"
+                                     "IP-0001 â€” Primary Mass Conservation â€” Phase C"
                                  ],
                        "tags":  [
                                     "Diagnostic Enforcement"
@@ -49,7 +49,7 @@
                        "assigned_ip":  "IP-0001",
                        "observations":  [
                                             "Even after CS-0006 resurrects the diagnostic, operator/developer has no visual indicator of ledger drift. The three existing mass checks (massError_lbm, VCT flow imbalance, inventory conservation) don\u0027t detect solver-vs-ledger divergence. Engine fields exist but are unused by UI.",
-                                            "Medium — Conservation errors at the primary level are invisible unless the developer reads log output. No at-a-glance indicator in the validation tab."
+                                            "Medium â€” Conservation errors at the primary level are invisible unless the developer reads log output. No at-a-glance indicator in the validation tab."
                                         ],
                        "evidence":  [
 
@@ -57,15 +57,15 @@
                        "hypotheses":  [
 
                                       ],
-                       "root_cause":  "Confirmed — TabValidation.cs:158-242 has 12 PASS/FAIL checks; none reference `primaryMassDrift`. UI was not updated when the diagnostic method was added in v5.3.0.",
-                       "resolution_candidate":  "Resolved v0.1.0.0 — \"Primary Ledger Drift\" row added to TabValidation using `DrawCheckRowThreeState` (100 lb warn / 1000 lb error thresholds). Shows \"Not checked yet\" until first coupled step, then displays drift percentage.",
+                       "root_cause":  "Confirmed â€” TabValidation.cs:158-242 has 12 PASS/FAIL checks; none reference `primaryMassDrift`. UI was not updated when the diagnostic method was added in v5.3.0.",
+                       "resolution_candidate":  "Resolved v0.1.0.0 â€” \"Primary Ledger Drift\" row added to TabValidation using `DrawCheckRowThreeState` (100 lb warn / 1000 lb error thresholds). Shows \"Not checked yet\" until first coupled step, then displays drift percentage.",
                        "links":  [
                                      "Blocked by: CS-0006",
                                      "Blocked by: CS-0006",
-                                     "IP-0001 — Primary Mass Conservation — Phase C"
+                                     "IP-0001 â€” Primary Mass Conservation â€” Phase C"
                                  ],
                        "tags":  [
-                                    "Diagnostic Enforcement — Observability"
+                                    "Diagnostic Enforcement â€” Observability"
                                 ]
                    },
                    {
@@ -81,7 +81,7 @@
                        "assigned_ip":  "IP-0007",
                        "observations":  [
                                             "SG secondary pressure is computed and displayed but has no alarm. Real SG safety valves lift at ~1085 psia. During isolated boiling, SG pressure can rise without annunciation.",
-                                            "Low — Primarily an operational realism gap. No conservation impact. Becomes more relevant for abnormal scenarios and cooldown operations."
+                                            "Low â€” Primarily an operational realism gap. No conservation impact. Becomes more relevant for abnormal scenarios and cooldown operations."
                                         ],
                        "evidence":  [
 
@@ -89,14 +89,14 @@
                        "hypotheses":  [
 
                                       ],
-                       "root_cause":  "Confirmed — AlarmManager built for primary-side alarms. SG secondary alarms were not in scope.",
+                       "root_cause":  "Confirmed â€” AlarmManager built for primary-side alarms. SG secondary alarms were not in scope.",
                        "resolution_candidate":  "Not Tested",
                        "links":  [
                                      "Related: CS-0009",
-                                     "IP-0007 — SG Energy and Pressure Validation"
+                                     "IP-0007 â€” SG Energy and Pressure Validation"
                                  ],
                        "tags":  [
-                                    "Plant Protection — SG Boundary"
+                                    "Plant Protection â€” SG Boundary"
                                 ]
                    },
                    {
@@ -112,7 +112,7 @@
                        "assigned_ip":  "IP-0010",
                        "observations":  [
                                             "All 10 acceptance tests pass by checking calculation correctness. Each contains \"REQUIRES SIMULATION\" note. `RunAllTests()` returns 10/10 PASSED without running any simulation. The quality gate is satisfied vacuously.",
-                                            "High — False confidence. Tests validate Rules R1-R8 mathematically but don\u0027t verify the rules are enforced at runtime (they aren\u0027t — CS-0001). Test suite suggests conservation architecture is validated when it is not."
+                                            "High â€” False confidence. Tests validate Rules R1-R8 mathematically but don\u0027t verify the rules are enforced at runtime (they aren\u0027t â€” CS-0001). Test suite suggests conservation architecture is validated when it is not."
                                         ],
                        "evidence":  [
 
@@ -120,11 +120,11 @@
                        "hypotheses":  [
 
                                       ],
-                       "root_cause":  "Confirmed — Tests designed as architectural validation (correct formulas). Simulation validation deferred to manual observation. No end-to-end test harness exists.",
+                       "root_cause":  "Confirmed â€” Tests designed as architectural validation (correct formulas). Simulation validation deferred to manual observation. No end-to-end test harness exists.",
                        "resolution_candidate":  "Not Tested",
                        "links":  [
                                      "Related: CS-0001 (tests validate rules that aren\u0027t enforced)",
-                                     "IP-0010 — Test Infrastructure"
+                                     "IP-0010 â€” Test Infrastructure"
                                  ],
                        "tags":  [
                                     "Validation Infrastructure"
@@ -143,7 +143,7 @@
                        "assigned_ip":  "IP-0012",
                        "observations":  [
                                             "When alpha crosses regime boundaries (0 to blended to 1), no event is logged. Plant mode transitions are logged (Alarms.cs:85-89) but regime transitions are not. Debugging mass issues across regime boundaries requires inferring regime from RCP count.",
-                                            "Low — Pure observability gap. No conservation or physics impact. Regime transitions are deterministic from RCP state."
+                                            "Low â€” Pure observability gap. No conservation or physics impact. Regime transitions are deterministic from RCP state."
                                         ],
                        "evidence":  [
 
@@ -151,11 +151,11 @@
                        "hypotheses":  [
 
                                       ],
-                       "root_cause":  "Confirmed — Regime is an internal physics concept, not an operator-visible alarm. Logging was not prioritized.",
+                       "root_cause":  "Confirmed â€” Regime is an internal physics concept, not an operator-visible alarm. Logging was not prioritized.",
                        "resolution_candidate":  "Not Tested",
                        "links":  [
                                      "None",
-                                     "IP-0012 — Observability"
+                                     "IP-0012 â€” Observability"
                                  ],
                        "tags":  [
                                     "Observability"
@@ -174,7 +174,7 @@
                        "assigned_ip":  "IP-0003",
                        "observations":  [
                                             "Extended periods with PZR at 100% level with no steam volume while heaters run. Can hide expansion/volume bookkeeping errors and affects realism of the bubble formation transition.",
-                                            "Medium — If PZR is water-solid at 100%, thermal expansion must go somewhere. Clamping at 100% without steam volume may absorb expansion errors silently."
+                                            "Medium â€” If PZR is water-solid at 100%, thermal expansion must go somewhere. Clamping at 100% without steam volume may absorb expansion errors silently."
                                         ],
                        "evidence":  [
 
@@ -182,15 +182,15 @@
                        "hypotheses":  [
 
                                       ],
-                       "root_cause":  "Confirmed correct — PZR at 100% level with zero steam is physically correct for solid plant operations. The solid-regime pressurizer IS water-full by definition (per NRC HRTD 19.2). Thermal expansion of PZR water exits through the surge line, reflected in rising Surge Flow values (1.2→8.2 gpm across solid regime). The expansion is accommodated by CVCS PI-controlled letdown balance (v0.2.0.0 transport delay fix). No clamping error exists.",
-                       "resolution_candidate":  "Resolved v0.3.0.0 — Investigation confirms behavior is physically correct. Log evidence: Surge Flow rises monotonically (1.2→8.2 gpm) during solid ops, confirming thermal expansion exits through surge line. PZR level at 100% with zero steam is the correct initial condition for solid plant. No code change required.",
+                       "root_cause":  "Confirmed correct â€” PZR at 100% level with zero steam is physically correct for solid plant operations. The solid-regime pressurizer IS water-full by definition (per NRC HRTD 19.2). Thermal expansion of PZR water exits through the surge line, reflected in rising Surge Flow values (1.2â†’8.2 gpm across solid regime). The expansion is accommodated by CVCS PI-controlled letdown balance (v0.2.0.0 transport delay fix). No clamping error exists.",
+                       "resolution_candidate":  "Resolved v0.3.0.0 â€” Investigation confirms behavior is physically correct. Log evidence: Surge Flow rises monotonically (1.2â†’8.2 gpm) during solid ops, confirming thermal expansion exits through surge line. PZR level at 100% with zero steam is the correct initial condition for solid plant. No code change required.",
                        "links":  [
                                      "Related: CS-0028 (bubble flag timing).",
-                                     "Heatup Master Issue Registry — ISSUE-LOG-003",
-                                     "IP-0003 — Bubble Formation and Two-Phase — Phase B"
+                                     "Heatup Master Issue Registry â€” ISSUE-LOG-003",
+                                     "IP-0003 â€” Bubble Formation and Two-Phase â€” Phase B"
                                  ],
                        "tags":  [
-                                    "Primary Thermodynamics — PZR State Machine"
+                                    "Primary Thermodynamics â€” PZR State Machine"
                                 ],
                        "closure_reference":  "IP-0021",
                        "closure_evidence_path":  "Governance/Issues/IP-0021_StageD_DomainValidation_2026-02-15_141500.md",
@@ -209,7 +209,7 @@
                        "assigned_ip":  "IP-0003",
                        "observations":  [
                                             "Bubble detection occurs near Tsat crossing (positive), but robustness across modes and edge cases should be verified. This is primarily a validation/confidence item.",
-                                            "Low — Current behavior appears correct in nominal cases. Risk is in edge cases or mode transitions where threshold may not trigger reliably."
+                                            "Low â€” Current behavior appears correct in nominal cases. Risk is in edge cases or mode transitions where threshold may not trigger reliably."
                                         ],
                        "evidence":  [
 
@@ -217,15 +217,15 @@
                        "hypotheses":  [
 
                                       ],
-                       "root_cause":  "Confirmed correct — Bubble detection triggers at T_pzr = 435.43°F vs T_sat = 435.83°F (0.4°F subcooling margin) at 8.25 hr sim time. Detection occurs within 1°F of saturation, which is the correct threshold per SolidPlantPressure detection logic. The T_pzr → T_sat crossing is clean and produces immediate DETECTION phase transition with no pressure discontinuity (P remains 365.1 psia through detection).",
-                       "resolution_candidate":  "Resolved v0.3.0.0 — Investigation confirms detection threshold is correct. Log evidence: T_pzr = 435.43°F at detection vs T_sat = 435.83°F (0.4°F margin). Pressure continuous through detection (365.1 psia before and after). No code change required.",
+                       "root_cause":  "Confirmed correct â€” Bubble detection triggers at T_pzr = 435.43Â°F vs T_sat = 435.83Â°F (0.4Â°F subcooling margin) at 8.25 hr sim time. Detection occurs within 1Â°F of saturation, which is the correct threshold per SolidPlantPressure detection logic. The T_pzr â†’ T_sat crossing is clean and produces immediate DETECTION phase transition with no pressure discontinuity (P remains 365.1 psia through detection).",
+                       "resolution_candidate":  "Resolved v0.3.0.0 â€” Investigation confirms detection threshold is correct. Log evidence: T_pzr = 435.43Â°F at detection vs T_sat = 435.83Â°F (0.4Â°F margin). Pressure continuous through detection (365.1 psia before and after). No code change required.",
                        "links":  [
                                      "Related: CS-0028.",
-                                     "Heatup Master Issue Registry — ISSUE-LOG-007",
-                                     "IP-0003 — Bubble Formation and Two-Phase — Phase B"
+                                     "Heatup Master Issue Registry â€” ISSUE-LOG-007",
+                                     "IP-0003 â€” Bubble Formation and Two-Phase â€” Phase B"
                                  ],
                        "tags":  [
-                                    "Primary Thermodynamics — Bubble Detection"
+                                    "Primary Thermodynamics â€” Bubble Detection"
                                 ],
                        "closure_reference":  "IP-0021",
                        "closure_evidence_path":  "Governance/Issues/IP-0021_StageD_DomainValidation_2026-02-15_141500.md",
@@ -244,23 +244,23 @@
                        "assigned_ip":  "IP-0003",
                        "observations":  [
                                             "Rapid pressure rise after bubble onset despite strongly negative net CVCS at times. Pressure escalation magnitude appears inconsistent with the energy/mass inputs.",
-                                            "Medium-High — Suggests two-phase energy balance or compressible volume error. Pressure should respond to the balance of steam generation rate, condensation, and CVCS flows — not escalate against negative net flow."
+                                            "Medium-High â€” Suggests two-phase energy balance or compressible volume error. Pressure should respond to the balance of steam generation rate, condensation, and CVCS flows â€” not escalate against negative net flow."
                                         ],
                        "evidence":  [
 
                                     ],
                        "hypotheses":  [
-                                          "Suspected — Two-phase pressure coupling in CoupledThermo or PressurizerPhysics may overweight steam generation or underweight mass removal. Alternatively, energy input to PZR may be incorrectly high."
+                                          "Suspected â€” Two-phase pressure coupling in CoupledThermo or PressurizerPhysics may overweight steam generation or underweight mass removal. Alternatively, energy input to PZR may be incorrectly high."
                                       ],
                        "root_cause":  null,
                        "resolution_candidate":  "Not Tested",
                        "links":  [
                                      "Related: CS-0029, CS-0030.",
-                                     "Heatup Master Issue Registry — ISSUE-LOG-008",
-                                     "IP-0003 — Bubble Formation and Two-Phase"
+                                     "Heatup Master Issue Registry â€” ISSUE-LOG-008",
+                                     "IP-0003 â€” Bubble Formation and Two-Phase"
                                  ],
                        "tags":  [
-                                    "Primary Thermodynamics — Two-Phase Energy Balance"
+                                    "Primary Thermodynamics â€” Two-Phase Energy Balance"
                                 ],
                        "closure_reference":  "IP-0021",
                        "closure_evidence_path":  "Governance/Issues/IP-0021_StageD_DomainValidation_2026-02-15_141500.md",
@@ -279,23 +279,23 @@
                        "assigned_ip":  "IP-0003",
                        "observations":  [
                                             "Phase reported as \"DRAIN\" while pressure and steam behavior indicate pressurization/boiling transition behavior. Misleading telemetry that can hide wrong control branch execution.",
-                                            "Medium — Incorrect phase label means the control logic may be executing the wrong branch. DRAIN phase should show decreasing PZR water level and controlled letdown; if pressure is rising, the system is actually in PRESSURIZE or transition."
+                                            "Medium â€” Incorrect phase label means the control logic may be executing the wrong branch. DRAIN phase should show decreasing PZR water level and controlled letdown; if pressure is rising, the system is actually in PRESSURIZE or transition."
                                         ],
                        "evidence":  [
 
                                     ],
                        "hypotheses":  [
-                                          "Suspected — State machine transition conditions may not check pressure/steam behavior, only water level or timer-based triggers."
+                                          "Suspected â€” State machine transition conditions may not check pressure/steam behavior, only water level or timer-based triggers."
                                       ],
                        "root_cause":  null,
                        "resolution_candidate":  "Not Tested",
                        "links":  [
                                      "Related: CS-0028, CS-0024.",
-                                     "Heatup Master Issue Registry — ISSUE-LOG-009",
-                                     "IP-0003 — Bubble Formation and Two-Phase"
+                                     "Heatup Master Issue Registry â€” ISSUE-LOG-009",
+                                     "IP-0003 â€” Bubble Formation and Two-Phase"
                                  ],
                        "tags":  [
-                                    "Primary Thermodynamics — State Machine Logic"
+                                    "Primary Thermodynamics â€” State Machine Logic"
                                 ],
                        "closure_reference":  "IP-0021",
                        "closure_evidence_path":  "Governance/Issues/IP-0021_StageD_DomainValidation_2026-02-15_141500.md",
@@ -313,24 +313,24 @@
                        "assigned_dp":  "DP-0002",
                        "assigned_ip":  "IP-0003",
                        "observations":  [
-                                            "Conditions show Tsat behavior and rapid pressurization while \"Bubble Formed = NO\" persists for some intervals. Wrong state gating leads to wrong control logic path — the system may be executing solid-regime logic when it should be in two-phase.",
-                                            "High — State gating error means the wrong physics model branch runs. If bubble exists but flag says NO, the engine runs SolidPlantPressure instead of CoupledThermo/PressurizerPhysics, producing incorrect pressure and mass distribution."
+                                            "Conditions show Tsat behavior and rapid pressurization while \"Bubble Formed = NO\" persists for some intervals. Wrong state gating leads to wrong control logic path â€” the system may be executing solid-regime logic when it should be in two-phase.",
+                                            "High â€” State gating error means the wrong physics model branch runs. If bubble exists but flag says NO, the engine runs SolidPlantPressure instead of CoupledThermo/PressurizerPhysics, producing incorrect pressure and mass distribution."
                                         ],
                        "evidence":  [
 
                                     ],
                        "hypotheses":  [
-                                          "Suspected — Bubble detection may have a latency or hysteresis that delays flag transition while thermodynamic conditions have already crossed saturation. Alternatively, detection may check wrong state variable."
+                                          "Suspected â€” Bubble detection may have a latency or hysteresis that delays flag transition while thermodynamic conditions have already crossed saturation. Alternatively, detection may check wrong state variable."
                                       ],
                        "root_cause":  null,
                        "resolution_candidate":  "Not Tested",
                        "links":  [
                                      "Related: CS-0025, CS-0027, CS-0024.",
-                                     "Heatup Master Issue Registry — ISSUE-LOG-011",
-                                     "IP-0003 — Bubble Formation and Two-Phase"
+                                     "Heatup Master Issue Registry â€” ISSUE-LOG-011",
+                                     "IP-0003 â€” Bubble Formation and Two-Phase"
                                  ],
                        "tags":  [
-                                    "Primary Thermodynamics — State Machine Timing"
+                                    "Primary Thermodynamics â€” State Machine Timing"
                                 ],
                        "closure_reference":  "IP-0021",
                        "closure_evidence_path":  "Governance/Issues/IP-0021_StageD_DomainValidation_2026-02-15_141500.md",
@@ -348,24 +348,24 @@
                        "assigned_dp":  "DP-0002",
                        "assigned_ip":  "IP-0003",
                        "observations":  [
-                                            "Pressure climbs strongly while RCS temperature barely moves in certain window. Pressure and temperature should be coupled through saturation properties — pressure rising without temperature change suggests energy accounting or compressibility defect.",
-                                            "Medium-High — Points to energy accounting, compressibility, or state coupling defect. In two-phase equilibrium, pressure and temperature are locked together through Tsat(P). Decoupled behavior indicates a model error."
+                                            "Pressure climbs strongly while RCS temperature barely moves in certain window. Pressure and temperature should be coupled through saturation properties â€” pressure rising without temperature change suggests energy accounting or compressibility defect.",
+                                            "Medium-High â€” Points to energy accounting, compressibility, or state coupling defect. In two-phase equilibrium, pressure and temperature are locked together through Tsat(P). Decoupled behavior indicates a model error."
                                         ],
                        "evidence":  [
 
                                     ],
                        "hypotheses":  [
-                                          "Suspected — Pressure may be driven by PZR heater energy alone (steam compression) while RCS temperature response is suppressed by large thermal mass or SG heat removal. Alternatively, pressure model may have a decoupled pathway."
+                                          "Suspected â€” Pressure may be driven by PZR heater energy alone (steam compression) while RCS temperature response is suppressed by large thermal mass or SG heat removal. Alternatively, pressure model may have a decoupled pathway."
                                       ],
                        "root_cause":  null,
                        "resolution_candidate":  "Not Tested",
                        "links":  [
                                      "Related: CS-0026, CS-0030.",
-                                     "Heatup Master Issue Registry — ISSUE-LOG-012",
-                                     "IP-0003 — Bubble Formation and Two-Phase"
+                                     "Heatup Master Issue Registry â€” ISSUE-LOG-012",
+                                     "IP-0003 â€” Bubble Formation and Two-Phase"
                                  ],
                        "tags":  [
-                                    "Primary Thermodynamics — Two-Phase Energy Balance"
+                                    "Primary Thermodynamics â€” Two-Phase Energy Balance"
                                 ],
                        "closure_reference":  "IP-0021",
                        "closure_evidence_path":  "Governance/Issues/IP-0021_StageD_DomainValidation_2026-02-15_141500.md",
@@ -384,23 +384,23 @@
                        "assigned_ip":  "IP-0003",
                        "observations":  [
                                             "CVCS net flips sign, but pressure response doesn\u0027t scale plausibly. Adding mass should raise pressure (in two-phase: compresses steam bubble); removing mass should lower pressure. Response magnitude should be roughly proportional to mass change.",
-                                            "Medium — Mass-pressure coupling is still weak or overridden in two-phase regime. With canonical mass now active (v0.1.0.0), this coupling should be more explicit, but the symptom suggests the solver\u0027s pressure response to mass change is not scaled correctly."
+                                            "Medium â€” Mass-pressure coupling is still weak or overridden in two-phase regime. With canonical mass now active (v0.1.0.0), this coupling should be more explicit, but the symptom suggests the solver\u0027s pressure response to mass change is not scaled correctly."
                                         ],
                        "evidence":  [
 
                                     ],
                        "hypotheses":  [
-                                          "Suspected — CoupledThermo pressure iteration may not weight mass change correctly in the convergence loop. The solver may be dominated by thermal effects and insensitive to mass-driven pressure changes."
+                                          "Suspected â€” CoupledThermo pressure iteration may not weight mass change correctly in the convergence loop. The solver may be dominated by thermal effects and insensitive to mass-driven pressure changes."
                                       ],
                        "root_cause":  null,
                        "resolution_candidate":  "Not Tested",
                        "links":  [
                                      "Related: CS-0026, CS-0029.",
-                                     "Heatup Master Issue Registry — ISSUE-LOG-013",
-                                     "IP-0003 — Bubble Formation and Two-Phase"
+                                     "Heatup Master Issue Registry â€” ISSUE-LOG-013",
+                                     "IP-0003 â€” Bubble Formation and Two-Phase"
                                  ],
                        "tags":  [
-                                    "Primary Thermodynamics — Mass-Pressure Coupling"
+                                    "Primary Thermodynamics â€” Mass-Pressure Coupling"
                                 ],
                        "closure_reference":  "IP-0021",
                        "closure_evidence_path":  "Governance/Issues/IP-0021_StageD_DomainValidation_2026-02-15_141500.md",
@@ -418,8 +418,8 @@
                        "assigned_dp":  "DP-0009",
                        "assigned_ip":  "IP-0009",
                        "observations":  [
-                                            "Simulation continues updating (physics loop runs) but selecting/navigating UI becomes unresponsive (\"hang\" perception). Onset is delayed — not immediate. Trigger correlates with closing Unity Editor during or after a run. No obvious memory growth. **Blocks overnight validation runs and operator usability.**",
-                                            "None directly — physics continues executing. However, inability to interact with the running simulation prevents validation, parameter adjustment, and controlled shutdown. Effectively blocks all long-run acceptance testing (Phase E of any domain plan)."
+                                            "Simulation continues updating (physics loop runs) but selecting/navigating UI becomes unresponsive (\"hang\" perception). Onset is delayed â€” not immediate. Trigger correlates with closing Unity Editor during or after a run. No obvious memory growth. **Blocks overnight validation runs and operator usability.**",
+                                            "None directly â€” physics continues executing. However, inability to interact with the running simulation prevents validation, parameter adjustment, and controlled shutdown. Effectively blocks all long-run acceptance testing (Phase E of any domain plan)."
                                         ],
                        "evidence":  [
 
@@ -430,8 +430,8 @@
                        "root_cause":  null,
                        "resolution_candidate":  "Not Tested",
                        "links":  [
-                                     "Cross-cutting — affects all domain validation runs. Supersedes all non-runtime work in priority.",
-                                     "IP-0009 — Performance and Runtime Architecture"
+                                     "Cross-cutting â€” affects all domain validation runs. Supersedes all non-runtime work in priority.",
+                                     "IP-0009 â€” Performance and Runtime Architecture"
                                  ],
                        "tags":  [
                                     "Performance / Runtime Architecture"
@@ -452,8 +452,8 @@
                        "assigned_dp":  "DP-0004",
                        "assigned_ip":  "IP-0008",
                        "observations":  [
-                                            "Charging water enters the RCS at VCT temperature (~100°F) but is modeled as mass-only with no thermal mixing. At 75 gpm charging with a ΔT of ~300°F (RCS at ~400°F vs charging at ~100°F), this represents approximately 0.15 MW of cooling that is currently ignored. The omission contributes to a slight overestimation of RCS heatup rate during CVCS operations.",
-                                            "Low — Not critical for heatup accuracy (0.15 MW vs ~1.0 MW total heat input), but contributes to the cumulative energy balance gap. Becomes more significant at higher RCS temperatures where the charging ΔT is larger. A complete energy balance should include CVCS enthalpy transport."
+                                            "Charging water enters the RCS at VCT temperature (~100Â°F) but is modeled as mass-only with no thermal mixing. At 75 gpm charging with a Î”T of ~300Â°F (RCS at ~400Â°F vs charging at ~100Â°F), this represents approximately 0.15 MW of cooling that is currently ignored. The omission contributes to a slight overestimation of RCS heatup rate during CVCS operations.",
+                                            "Low â€” Not critical for heatup accuracy (0.15 MW vs ~1.0 MW total heat input), but contributes to the cumulative energy balance gap. Becomes more significant at higher RCS temperatures where the charging Î”T is larger. A complete energy balance should include CVCS enthalpy transport."
                                         ],
                        "evidence":  [
 
@@ -461,15 +461,15 @@
                        "hypotheses":  [
 
                                       ],
-                       "root_cause":  "Confirmed — CVCS flows are modeled as mass-only boundary flows (lbm in/out) per the canonical mass conservation architecture (v0.1.0.0). Enthalpy transport was not in scope for mass conservation. Charging temperature is available (VCT model tracks temperature), but the thermal contribution is not computed or applied to the RCS energy equation.",
+                       "root_cause":  "Confirmed â€” CVCS flows are modeled as mass-only boundary flows (lbm in/out) per the canonical mass conservation architecture (v0.1.0.0). Enthalpy transport was not in scope for mass conservation. Charging temperature is available (VCT model tracks temperature), but the thermal contribution is not computed or applied to the RCS energy equation.",
                        "resolution_candidate":  "Not Tested",
                        "links":  [
-                                     "Originated from: CS-0033 (Finding C). Related: CS-0034 (equilibrium ceiling — CVCS cooling would contribute to equilibrium).",
-                                     "CS-0033 Diagnostic Audit — Finding C",
-                                     "IP-0008 — CVCS Energy Balance and VCT Flow Accounting"
+                                     "Originated from: CS-0033 (Finding C). Related: CS-0034 (equilibrium ceiling â€” CVCS cooling would contribute to equilibrium).",
+                                     "CS-0033 Diagnostic Audit â€” Finding C",
+                                     "IP-0008 â€” CVCS Energy Balance and VCT Flow Accounting"
                                  ],
                        "tags":  [
-                                    "CVCS — Primary Energy Balance Boundary"
+                                    "CVCS â€” Primary Energy Balance Boundary"
                                 ],
                        "closure_reference":  "IP-0022",
                        "closure_evidence_path":  "Governance/Issues/IP-0022_StageD_DomainValidation_2026-02-15_145014.md",
@@ -477,7 +477,7 @@
                    },
                    {
                        "id":  "CS-0036",
-                       "title":  "DRAIN phase duration excessive — PZR requires ~4 hours to reach 25% level",
+                       "title":  "DRAIN phase duration excessive â€” PZR requires ~4 hours to reach 25% level",
                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
                        "severity":  "HIGH",
                        "status":  "CLOSED",
@@ -487,8 +487,8 @@
                        "assigned_dp":  "DP-0002",
                        "assigned_ip":  "IP-0003",
                        "observations":  [
-                                            "DRAIN phase from bubble detection (~100% PZR level) to target level (25%) takes approximately 4 simulated hours. This distorts the startup schedule: in a real plant, PZR drain to normal operating level takes on the order of 30–60 minutes at typical letdown/drain rates. The excessive duration also blocks validation runtime practicality — 4-hour DRAIN consumes significant wall-clock time at any simulation acceleration, making Phase E validation runs impractical.",
-                                            "High — If the net drain rate is significantly lower than modeled gpm would predict, this indicates either: (1) hidden inflow cancellation (charging/makeup opposing letdown during DRAIN), (2) unit conversion error (gpm vs gph, or seconds vs hours in flow integration), (3) valve coefficient or cap limiting effective drain flow below intended rate, (4) geometric-vs-mass mismatch in PZR level computation causing level to stall. Any of these would represent a mass flow or state computation error."
+                                            "DRAIN phase from bubble detection (~100% PZR level) to target level (25%) takes approximately 4 simulated hours. This distorts the startup schedule: in a real plant, PZR drain to normal operating level takes on the order of 30â€“60 minutes at typical letdown/drain rates. The excessive duration also blocks validation runtime practicality â€” 4-hour DRAIN consumes significant wall-clock time at any simulation acceleration, making Phase E validation runs impractical.",
+                                            "High â€” If the net drain rate is significantly lower than modeled gpm would predict, this indicates either: (1) hidden inflow cancellation (charging/makeup opposing letdown during DRAIN), (2) unit conversion error (gpm vs gph, or seconds vs hours in flow integration), (3) valve coefficient or cap limiting effective drain flow below intended rate, (4) geometric-vs-mass mismatch in PZR level computation causing level to stall. Any of these would represent a mass flow or state computation error."
                                         ],
                        "evidence":  [
 
@@ -499,11 +499,11 @@
                        "root_cause":  null,
                        "resolution_candidate":  "Not Tested",
                        "links":  [
-                                     "Related: CS-0026 (post-bubble pressure escalation), CS-0027 (bubble phase labeling). Related: CS-0035 (CVCS thermal mixing — CVCS flows during DRAIN).",
-                                     "IP-0003 — Bubble Formation and Two-Phase"
+                                     "Related: CS-0026 (post-bubble pressure escalation), CS-0027 (bubble phase labeling). Related: CS-0035 (CVCS thermal mixing â€” CVCS flows during DRAIN).",
+                                     "IP-0003 â€” Bubble Formation and Two-Phase"
                                  ],
                        "tags":  [
-                                    "Bubble Formation — Phase Controller / CVCS Flow Balance"
+                                    "Bubble Formation â€” Phase Controller / CVCS Flow Balance"
                                 ],
                        "closure_reference":  "IP-0021",
                        "closure_evidence_path":  "Governance/Issues/IP-0021_StageD_DomainValidation_2026-02-15_141500.md",
@@ -521,8 +521,8 @@
                        "assigned_dp":  "DP-0008",
                        "assigned_ip":  null,
                        "observations":  [
-                                            "Surge flow display currently shows magnitude only, without explicit direction indicator. During DRAIN and PRESSURIZE phases, ambiguity exists about whether flow is PZR→RCS or RCS→PZR. Net CVCS flow and derived PZR mass change rate are not displayed, making it difficult to diagnose mass balance during transient phases. Operators must infer flow direction from other parameters.",
-                                            "None — Pure observability enhancement. No physics equations, conservation logic, or state computation changes."
+                                            "Surge flow display currently shows magnitude only, without explicit direction indicator. During DRAIN and PRESSURIZE phases, ambiguity exists about whether flow is PZRâ†’RCS or RCSâ†’PZR. Net CVCS flow and derived PZR mass change rate are not displayed, making it difficult to diagnose mass balance during transient phases. Operators must infer flow direction from other parameters.",
+                                            "None â€” Pure observability enhancement. No physics equations, conservation logic, or state computation changes."
                                         ],
                        "evidence":  [
 
@@ -530,15 +530,15 @@
                        "hypotheses":  [
 
                                       ],
-                       "root_cause":  "Confirmed — UI displays surge flow magnitude without sign convention or directional indicator. No derived net mass change display exists.",
+                       "root_cause":  "Confirmed â€” UI displays surge flow magnitude without sign convention or directional indicator. No derived net mass change display exists.",
                        "resolution_candidate":  "Not Tested",
                        "links":  [
-                                     "Subsumed by: CS-0077 (HeatupValidationVisual unified dashboard redesign). Related: CS-0012 (regime transition logging). Related: CS-0036 (DRAIN duration — flow direction clarity aids diagnosis). Related: CS-0027 (bubble phase labeling).",
+                                     "Subsumed by: CS-0077 (HeatupValidationVisual unified dashboard redesign). Related: CS-0012 (regime transition logging). Related: CS-0036 (DRAIN duration â€” flow direction clarity aids diagnosis). Related: CS-0027 (bubble phase labeling).",
                                      "DP-0008 unified instrumentation redesign scope (CS-0077)",
                                      "IP-0020 closed as FAILED on 2026-02-15; CS reclassified to INVESTIGATING pending replacement planning."
                                  ],
                        "tags":  [
-                                    "Observability — Operator/Visual Enhancement"
+                                    "Observability â€” Operator/Visual Enhancement"
                                 ]
                    },
                    {
@@ -553,24 +553,24 @@
                        "assigned_dp":  "DP-0004",
                        "assigned_ip":  "IP-0008",
                        "observations":  [
-                                            "Dashboard shows VCT CONS ERR ~1,600–1,700 gal (failing) at 15.75 hr simulation time. VCT internal flows may be correct, but the verifier depends on the RCS-side `rcsInventoryChange_gal` term. If primary-side accounting drifts or is overwritten, VCT verification fails even with correct VCT flows. Creates cascading validation failures that mask the true root cause.",
-                                            "High — VCT conservation error growth indicates a boundary accounting mismatch between RCS and VCT subsystems. Either (1) VCT flow integration accumulates error over time, (2) the RCS-side inventory change term used in VCT verification drifts due to V*rho intermediate estimates, or (3) seal flow accounting (3 gpm/pump to VCT) creates a systematic offset. The error is monotonically growing, suggesting a rate error rather than a one-time offset."
+                                            "Dashboard shows VCT CONS ERR ~1,600â€“1,700 gal (failing) at 15.75 hr simulation time. VCT internal flows may be correct, but the verifier depends on the RCS-side `rcsInventoryChange_gal` term. If primary-side accounting drifts or is overwritten, VCT verification fails even with correct VCT flows. Creates cascading validation failures that mask the true root cause.",
+                                            "High â€” VCT conservation error growth indicates a boundary accounting mismatch between RCS and VCT subsystems. Either (1) VCT flow integration accumulates error over time, (2) the RCS-side inventory change term used in VCT verification drifts due to V*rho intermediate estimates, or (3) seal flow accounting (3 gpm/pump to VCT) creates a systematic offset. The error is monotonically growing, suggesting a rate error rather than a one-time offset."
                                         ],
                        "evidence":  [
 
                                     ],
                        "hypotheses":  [
-                                          "Suspected — Multiple hypotheses: (a) VCT verifier uses `rcsInventoryChange_gal` which is mass-derived volume — subject to thermal expansion artifacts (same class as CS-0041). (b) Seal return flow accounting may mismatch between RCS boundary and VCT boundary. (c) CVCS flow integration may have a timestep-dependent drift."
+                                          "Suspected â€” Multiple hypotheses: (a) VCT verifier uses `rcsInventoryChange_gal` which is mass-derived volume â€” subject to thermal expansion artifacts (same class as CS-0041). (b) Seal return flow accounting may mismatch between RCS boundary and VCT boundary. (c) CVCS flow integration may have a timestep-dependent drift."
                                       ],
                        "root_cause":  null,
                        "resolution_candidate":  "Not Tested",
                        "links":  [
-                                     "Related: CS-0035 (CVCS thermal mixing — enthalpy transport may affect VCT verification). Related: CS-0041 (inventory audit baseline type mismatch — may share root cause in mass-derived vs geometric volume comparison).",
-                                     "FUTURE_ENHANCEMENTS_ROADMAP.md — v5.4.0 Issue #5, Technical Debt",
-                                     "IP-0008 — CVCS Energy Balance and VCT Flow Accounting"
+                                     "Related: CS-0035 (CVCS thermal mixing â€” enthalpy transport may affect VCT verification). Related: CS-0041 (inventory audit baseline type mismatch â€” may share root cause in mass-derived vs geometric volume comparison).",
+                                     "FUTURE_ENHANCEMENTS_ROADMAP.md â€” v5.4.0 Issue #5, Technical Debt",
+                                     "IP-0008 â€” CVCS Energy Balance and VCT Flow Accounting"
                                  ],
                        "tags":  [
-                                    "CVCS — VCT Flow Boundary Accounting"
+                                    "CVCS â€” VCT Flow Boundary Accounting"
                                 ],
                        "closure_reference":  "IP-0022",
                        "closure_evidence_path":  "Governance/Issues/IP-0022_StageD_DomainValidation_2026-02-15_145014.md",
@@ -581,32 +581,36 @@
                        "title":  "RVLIS indicator stale during PZR drain",
                        "domain":  "Validation \u0026 Diagnostics",
                        "severity":  "HIGH",
-                       "status":  "READY_FOR_FIX",
+                       "status":  "CLOSED",
                        "created_at":  "2026-02-13T00:00:00Z",
-                       "updated_at":  "2026-02-14T15:57:51Z",
+                       "updated_at":  "2026-02-15T19:22:54Z",
                        "stage_detected":  null,
                        "assigned_dp":  "DP-0007",
                        "assigned_ip":  "IP-0003",
                        "observations":  [
                                             "`RCSWaterMass` is not updated during drain operations, causing the RVLIS (Reactor Vessel Level Indication System) indicator to read stale mass values (~88%). This creates a false indication of stable inventory when liquid is actively being displaced from the PZR into the RCS or removed via letdown. Operators see RVLIS holding steady while PZR level drops, which is misleading.",
-                                            "High — RVLIS is a safety-grade level indicator in actual plants. Stale readings during drain represent a fidelity gap in operator-facing instrumentation. The stale value also affects any downstream computation that reads `RCSWaterMass` during the DRAIN phase, potentially including conservation diagnostics."
+                                            "High â€” RVLIS is a safety-grade level indicator in actual plants. Stale readings during drain represent a fidelity gap in operator-facing instrumentation. The stale value also affects any downstream computation that reads `RCSWaterMass` during the DRAIN phase, potentially including conservation diagnostics."
                                         ],
                        "evidence":  [
 
                                     ],
                        "hypotheses":  [
-                                          "Suspected — During DRAIN phase, liquid mass moves from PZR (via steam displacement) and potentially via CVCS letdown. The `RCSWaterMass` field used for RVLIS may not be recomputed from the canonical mass ledger during the DRAIN phase, or the canonical ledger update may not propagate to RVLIS in the correct order."
+                                          "Suspected â€” During DRAIN phase, liquid mass moves from PZR (via steam displacement) and potentially via CVCS letdown. The `RCSWaterMass` field used for RVLIS may not be recomputed from the canonical mass ledger during the DRAIN phase, or the canonical ledger update may not propagate to RVLIS in the correct order."
                                       ],
                        "root_cause":  null,
                        "resolution_candidate":  "Not Tested",
                        "links":  [
-                                     "Related: CS-0036 (DRAIN phase duration excessive — same phase, different symptom). Related: CS-0026 through CS-0030 (bubble formation and two-phase domain).",
-                                     "FUTURE_ENHANCEMENTS_ROADMAP.md — v5.4.0 Issue #3, Technical Debt",
-                                     "IP-0003 — Bubble Formation and Two-Phase"
+                                     "Related: CS-0036 (DRAIN phase duration excessive â€” same phase, different symptom). Related: CS-0026 through CS-0030 (bubble formation and two-phase domain).",
+                                     "FUTURE_ENHANCEMENTS_ROADMAP.md â€” v5.4.0 Issue #3, Technical Debt",
+                                     "IP-0003 â€” Bubble Formation and Two-Phase"
                                  ],
                        "tags":  [
-                                    "Mass Conservation — Indicator Integrity"
-                                ]
+                                    "Mass Conservation â€” Indicator Integrity"
+                                ],
+                       "closure_reason":  "PASS",
+                       "closure_reference":  "IP-0024",
+                       "closure_evidence_path":  "Governance/Issues/IP-0024_StageH_DeterministicEvidence_2026-02-15_201932.md",
+                       "closure_runlog_path":  "HeatupLogs/Unity_IP0024_Closeout_20260215_201917.log"
                    },
                    {
                        "id":  "CS-0041",
@@ -620,8 +624,8 @@
                        "assigned_dp":  "DP-0007",
                        "assigned_ip":  "IP-0011",
                        "observations":  [
-                                            "Dashboard \"SYSTEM TOTAL\" and \"INV ERROR\" displays compare `initialSystemInventory_gal` (geometric volume at t=0) against `totalSystemInventory_gal` (mass-derived volume at runtime). As water heats from 100°F to 550°F, density decreases ~15%, producing a phantom \"inventory error\" of ~13,000+ gallons that is purely thermal expansion — not an actual conservation failure. This is a display metric defect, not a physics defect.",
-                                            "Medium — The mass conservation architecture (canonical ledger, `TotalPrimaryMass_lb`) is unaffected. However, the misleading display undermines operator confidence in conservation and produces false FAIL indications in the validation tab. The metric compares thermodynamically incompatible quantities (geometric baseline vs mass-derived runtime)."
+                                            "Dashboard \"SYSTEM TOTAL\" and \"INV ERROR\" displays compare `initialSystemInventory_gal` (geometric volume at t=0) against `totalSystemInventory_gal` (mass-derived volume at runtime). As water heats from 100Â°F to 550Â°F, density decreases ~15%, producing a phantom \"inventory error\" of ~13,000+ gallons that is purely thermal expansion â€” not an actual conservation failure. This is a display metric defect, not a physics defect.",
+                                            "Medium â€” The mass conservation architecture (canonical ledger, `TotalPrimaryMass_lb`) is unaffected. However, the misleading display undermines operator confidence in conservation and produces false FAIL indications in the validation tab. The metric compares thermodynamically incompatible quantities (geometric baseline vs mass-derived runtime)."
                                         ],
                        "evidence":  [
 
@@ -629,20 +633,20 @@
                        "hypotheses":  [
 
                                       ],
-                       "root_cause":  "Confirmed — `initialSystemInventory_gal` is set at t=0 from `PlantConstants.RCS_WATER_VOLUME` (geometric, temperature-independent). `totalSystemInventory_gal` is computed at runtime from `RCSWaterMass / ρ(T,P)` (mass-derived, temperature-dependent). The difference grows with temperature as density decreases. At 400°F: phantom error ≈ 13,474 gallons.",
+                       "root_cause":  "Confirmed â€” `initialSystemInventory_gal` is set at t=0 from `PlantConstants.RCS_WATER_VOLUME` (geometric, temperature-independent). `totalSystemInventory_gal` is computed at runtime from `RCSWaterMass / Ï(T,P)` (mass-derived, temperature-dependent). The difference grows with temperature as density decreases. At 400Â°F: phantom error â‰ˆ 13,474 gallons.",
                        "resolution_candidate":  "Not Tested",
                        "links":  [
-                                     "Related: CS-0007 (primary ledger drift UI — same observability domain). Related: CS-0039 (VCT conservation error — may share root cause in mass-derived vs geometric volume comparison).",
-                                     "FUTURE_ENHANCEMENTS_ROADMAP.md — v5.4.1 Part B, Technical Debt",
-                                     "IP-0011 — Validation and Diagnostic Display"
+                                     "Related: CS-0007 (primary ledger drift UI â€” same observability domain). Related: CS-0039 (VCT conservation error â€” may share root cause in mass-derived vs geometric volume comparison).",
+                                     "FUTURE_ENHANCEMENTS_ROADMAP.md â€” v5.4.1 Part B, Technical Debt",
+                                     "IP-0011 â€” Validation and Diagnostic Display"
                                  ],
                        "tags":  [
-                                    "Validation / Diagnostic Display — Conservation Metric Integrity"
+                                    "Validation / Diagnostic Display â€” Conservation Metric Integrity"
                                 ]
                    },
                    {
                        "id":  "CS-0043",
-                       "title":  "Pressurizer pressure boundary failure during bubble formation — runaway depressurization spiral",
+                       "title":  "Pressurizer pressure boundary failure during bubble formation â€” runaway depressurization spiral",
                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
                        "severity":  "CRITICAL",
                        "status":  "CLOSED",
@@ -653,7 +657,7 @@
                        "assigned_ip":  "IP-0003",
                        "observations":  [
                                             "Pressure collapses from ~368 psia to ~154 psia over ~2 hours during DRAIN phase despite 1.8 MW heaters at full power. Rate of depressurization accelerates: -78 psi/hr at DETECTION, -383 psi/hr during DRAIN. In a real PWR, heaters maintain saturation pressure during bubble formation; pressure should be stable or rising. The DRAIN phase cannot complete correctly under these conditions.",
-                                            "Critical — Dual energy application violates first law of thermodynamics. Heater power is consumed twice: (1) as sensible heat temperature rise in `IsolatedHeatingStep` (capped and discarded by T_sat clamp), and (2) as latent heat steam generation in `UpdateDrainPhase` via h_fg. The T_sat cap creates a ratchet effect where P_new = Psat(T_pzr) ≤ Psat(T_sat(P_old)) ≤ P_old, guaranteeing monotonic pressure decline every timestep."
+                                            "Critical â€” Dual energy application violates first law of thermodynamics. Heater power is consumed twice: (1) as sensible heat temperature rise in `IsolatedHeatingStep` (capped and discarded by T_sat clamp), and (2) as latent heat steam generation in `UpdateDrainPhase` via h_fg. The T_sat cap creates a ratchet effect where P_new = Psat(T_pzr) â‰¤ Psat(T_sat(P_old)) â‰¤ P_old, guaranteeing monotonic pressure decline every timestep."
                                         ],
                        "evidence":  [
                                         {
@@ -664,14 +668,14 @@
                        "hypotheses":  [
 
                                       ],
-                       "root_cause":  "Confirmed — Runaway depressurization feedback loop with four interacting mechanisms: (A) `IsolatedHeatingStep` applies heater energy as subcooled sensible heat dT = Q/(mCp), then caps T_pzr at T_sat(P_old); (B) Two-phase pressure override sets P_new = Psat(T_pzr) where T_pzr ≤ T_sat(P_old), so P_new ≤ P_old; (C) Next timestep: T_sat(P_new) \u003c T_sat(P_old), cap ratchets lower; (D) `UpdateDrainPhase` independently generates steam from the same heater power via h_fg — double-counting the energy. Fundamental error: in two-phase conditions, heater energy should go entirely to latent heat (phase change at constant temperature/pressure), not sensible heat (temperature rise). The `IsolatedHeatingStep` subcooled liquid model is incorrect for two-phase PZR operation.",
-                       "resolution_candidate":  "Stage E FAILED — Pressure boundary collapse confirmed in interval logs at 8.00–10.00 hr sim time",
+                       "root_cause":  "Confirmed â€” Runaway depressurization feedback loop with four interacting mechanisms: (A) `IsolatedHeatingStep` applies heater energy as subcooled sensible heat dT = Q/(mCp), then caps T_pzr at T_sat(P_old); (B) Two-phase pressure override sets P_new = Psat(T_pzr) where T_pzr â‰¤ T_sat(P_old), so P_new â‰¤ P_old; (C) Next timestep: T_sat(P_new) \u003c T_sat(P_old), cap ratchets lower; (D) `UpdateDrainPhase` independently generates steam from the same heater power via h_fg â€” double-counting the energy. Fundamental error: in two-phase conditions, heater energy should go entirely to latent heat (phase change at constant temperature/pressure), not sensible heat (temperature rise). The `IsolatedHeatingStep` subcooled liquid model is incorrect for two-phase PZR operation.",
+                       "resolution_candidate":  "Stage E FAILED â€” Pressure boundary collapse confirmed in interval logs at 8.00â€“10.00 hr sim time",
                        "links":  [
-                                     "CS-0036 (DRAIN duration excessive — likely same root cause), CS-0026 (post-bubble pressure escalation), CS-0034 (no equilibrium ceiling Regime 0/1 — related energy model), CS-0029 (high pressure ramp zero heat rate — related pressure model)",
-                                     "IP-0003 — Bubble Formation and Two-Phase"
+                                     "CS-0036 (DRAIN duration excessive â€” likely same root cause), CS-0026 (post-bubble pressure escalation), CS-0034 (no equilibrium ceiling Regime 0/1 â€” related energy model), CS-0029 (high pressure ramp zero heat rate â€” related pressure model)",
+                                     "IP-0003 â€” Bubble Formation and Two-Phase"
                                  ],
                        "tags":  [
-                                    "Core Physics — Two-Phase Pressurizer Energy Partition"
+                                    "Core Physics â€” Two-Phase Pressurizer Energy Partition"
                                 ],
                        "closure_reference":  "IP-0021",
                        "closure_evidence_path":  "Governance/Issues/IP-0021_StageD_DomainValidation_2026-02-15_141500.md",
@@ -679,7 +683,7 @@
                    },
                    {
                        "id":  "CS-0044",
-                       "title":  "Async log writer — move synchronous file I/O to background thread",
+                       "title":  "Async log writer â€” move synchronous file I/O to background thread",
                        "domain":  "Performance \u0026 Runtime",
                        "severity":  "LOW",
                        "status":  "CLOSED",
@@ -690,7 +694,7 @@
                        "assigned_ip":  "IP-0009",
                        "observations":  [
                                             "Synchronous `StreamWriter.Write` calls on the main thread can stall for milliseconds during disk flush, antivirus scan, or dense logging periods (e.g., DRAIN phase forensic logging). This manifests as intermittent frame time spikes rather than sustained unresponsiveness.",
-                                            "None — logging only, no physics changes."
+                                            "None â€” logging only, no physics changes."
                                         ],
                        "evidence":  [
 
@@ -701,8 +705,8 @@
                        "root_cause":  null,
                        "resolution_candidate":  "Not Tested",
                        "links":  [
-                                     "CS-0032 (resolved — parent performance issue), CS-0045 (snapshot boundary), CS-0046 (parallelization)",
-                                     "IP-0009 — Performance and Runtime Architecture (Phase B — Deferred)"
+                                     "CS-0032 (resolved â€” parent performance issue), CS-0045 (snapshot boundary), CS-0046 (parallelization)",
+                                     "IP-0009 â€” Performance and Runtime Architecture (Phase B â€” Deferred)"
                                  ],
                        "tags":  [
                                     "Performance / Runtime Architecture"
@@ -713,7 +717,7 @@
                    },
                    {
                        "id":  "CS-0045",
-                       "title":  "Physics snapshot boundary — decouple physics compute from UI rendering",
+                       "title":  "Physics snapshot boundary â€” decouple physics compute from UI rendering",
                        "domain":  "Performance \u0026 Runtime",
                        "severity":  "LOW",
                        "status":  "CLOSED",
@@ -724,7 +728,7 @@
                        "assigned_ip":  "IP-0009",
                        "observations":  [
                                             "Currently, physics writes to fields that UI reads on the same frame. This creates implicit coupling where UI must run after physics, and any field access is a potential race condition if physics is later moved off-thread.",
-                                            "None — snapshot values are identical to direct reads. Behavioral change: zero."
+                                            "None â€” snapshot values are identical to direct reads. Behavioral change: zero."
                                         ],
                        "evidence":  [
 
@@ -735,8 +739,8 @@
                        "root_cause":  null,
                        "resolution_candidate":  "Not Tested",
                        "links":  [
-                                     "CS-0032 (resolved — parent performance issue), CS-0044 (async log writer — prerequisite), CS-0046 (parallelization — depends on this)",
-                                     "IP-0009 — Performance and Runtime Architecture (Phase C — Deferred)"
+                                     "CS-0032 (resolved â€” parent performance issue), CS-0044 (async log writer â€” prerequisite), CS-0046 (parallelization â€” depends on this)",
+                                     "IP-0009 â€” Performance and Runtime Architecture (Phase C â€” Deferred)"
                                  ],
                        "tags":  [
                                     "Performance / Runtime Architecture"
@@ -747,7 +751,7 @@
                    },
                    {
                        "id":  "CS-0046",
-                       "title":  "Physics parallelization — move simulation step to worker thread or Unity Jobs",
+                       "title":  "Physics parallelization â€” move simulation step to worker thread or Unity Jobs",
                        "domain":  "Performance \u0026 Runtime",
                        "severity":  "LOW",
                        "status":  "CLOSED",
@@ -769,8 +773,8 @@
                        "root_cause":  null,
                        "resolution_candidate":  "Not Tested",
                        "links":  [
-                                     "CS-0032 (resolved — parent performance issue), CS-0044 (async log writer — prerequisite), CS-0045 (snapshot boundary — prerequisite)",
-                                     "IP-0009 — Performance and Runtime Architecture (Phase D — Deferred)"
+                                     "CS-0032 (resolved â€” parent performance issue), CS-0044 (async log writer â€” prerequisite), CS-0045 (snapshot boundary â€” prerequisite)",
+                                     "IP-0009 â€” Performance and Runtime Architecture (Phase D â€” Deferred)"
                                  ],
                        "tags":  [
                                     "Performance / Runtime Architecture"
@@ -1963,9 +1967,9 @@
                        "title":  "Solid-plant high pressure control band is configured above documented operating band.",
                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
                        "severity":  "MEDIUM",
-                       "status":  "INVESTIGATING",
+                       "status":  "CLOSED",
                        "created_at":  "2026-02-15T16:50:47Z",
-                       "updated_at":  "2026-02-15T16:51:57Z",
+                       "updated_at":  "2026-02-15T19:22:54Z",
                        "stage_detected":  "Audit-2026-02-15",
                        "assigned_dp":  "DP-0002",
                        "assigned_ip":  null,
@@ -2000,7 +2004,11 @@
                                     "Audit-2026-02-15",
                                     "F-003",
                                     "Constitution-Article-VI"
-                                ]
+                                ],
+                       "closure_reason":  "PASS",
+                       "closure_reference":  "IP-0024",
+                       "closure_evidence_path":  "Governance/Issues/IP-0024_StageH_DeterministicEvidence_2026-02-15_201932.md",
+                       "closure_runlog_path":  "HeatupLogs/Unity_IP0024_Closeout_20260215_201917.log"
                    },
                    {
                        "id":  "CS-0082",
@@ -2403,9 +2411,9 @@
                        "title":  "PZR bubble closure path shows persistent non-convergence with large residuals and post-residual renormalization masking.",
                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
                        "severity":  "HIGH",
-                       "status":  "INVESTIGATING",
+                       "status":  "CLOSED",
                        "created_at":  "2026-02-15T16:55:16Z",
-                       "updated_at":  "2026-02-15T17:31:24Z",
+                       "updated_at":  "2026-02-15T19:22:54Z",
                        "stage_detected":  "Investigation-2026-02-15",
                        "assigned_dp":  "DP-0002",
                        "assigned_ip":  null,
@@ -2447,16 +2455,20 @@
                                     "PZR-Bubble",
                                     "Two-Phase-Closure",
                                     "Constitution-Article-VI"
-                                ]
+                                ],
+                       "closure_reason":  "PASS",
+                       "closure_reference":  "IP-0024",
+                       "closure_evidence_path":  "Governance/Issues/IP-0024_StageH_DeterministicEvidence_2026-02-15_201932.md",
+                       "closure_runlog_path":  "HeatupLogs/Unity_IP0024_Closeout_20260215_201917.log"
                    },
                    {
                        "id":  "CS-0092",
                        "title":  "Drain-phase CVCS letdown uses aggregate command-first logic that can force immediate 1-to-3 orifice opening.",
                        "domain":  "CVCS / Inventory Control",
                        "severity":  "HIGH",
-                       "status":  "INVESTIGATING",
+                       "status":  "CLOSED",
                        "created_at":  "2026-02-15T16:55:16Z",
-                       "updated_at":  "2026-02-15T17:31:24Z",
+                       "updated_at":  "2026-02-15T19:22:54Z",
                        "stage_detected":  "Investigation-2026-02-15",
                        "assigned_dp":  "DP-0004",
                        "assigned_ip":  null,
@@ -2502,16 +2514,20 @@
                                     "Drain-Orifice",
                                     "CVCS",
                                     "Constitution-Article-VI"
-                                ]
+                                ],
+                       "closure_reason":  "PASS",
+                       "closure_reference":  "IP-0024",
+                       "closure_evidence_path":  "Governance/Issues/IP-0024_StageH_DeterministicEvidence_2026-02-15_201932.md",
+                       "closure_runlog_path":  "HeatupLogs/Unity_IP0024_Closeout_20260215_201917.log"
                    },
                    {
                        "id":  "CS-0093",
                        "title":  "Complete Pressurizer (PZR) System Remodel to Align with Technical_Documentation and Replace Current Heuristic Bubble Model",
                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
                        "severity":  "HIGH",
-                       "status":  "INVESTIGATING",
+                       "status":  "CLOSED",
                        "created_at":  "2026-02-15T17:16:00Z",
-                       "updated_at":  "2026-02-15T17:31:24Z",
+                       "updated_at":  "2026-02-15T19:22:54Z",
                        "stage_detected":  "Investigation-2026-02-15",
                        "assigned_dp":  null,
                        "assigned_ip":  null,
@@ -2537,11 +2553,11 @@
                                         }
                                     ],
                        "hypotheses":  [
-                                         "Incremental patching of the existing heuristic closure path is unlikely to deliver robust convergence and continuity targets across all bubble phases.",
-                                         "A control-volume energy-state formulation with coupled mass-volume-energy closure is required to remove structural discontinuities."
-                                     ],
+                                          "Incremental patching of the existing heuristic closure path is unlikely to deliver robust convergence and continuity targets across all bubble phases.",
+                                          "A control-volume energy-state formulation with coupled mass-volume-energy closure is required to remove structural discontinuities."
+                                      ],
                        "root_cause":  null,
-                       "resolution_candidate":  "Recommended action: execute full PZR subsystem remodel with acceptance targets: >95% solver convergence in bubble phases, bounded residuals for volume and energy, no post-failure renormalization masking, continuous phase transitions, and documented Technical_Documentation traceability for constants/behavior.",
+                       "resolution_candidate":  "Recommended action: execute full PZR subsystem remodel with acceptance targets: \u003e95% solver convergence in bubble phases, bounded residuals for volume and energy, no post-failure renormalization masking, continuous phase transitions, and documented Technical_Documentation traceability for constants/behavior.",
                        "links":  [
                                      "Directive source: User-issued CS logging instruction (2026-02-15)",
                                      "Parent umbrella issue for related active issues: CS-0091, CS-0092",
@@ -2553,16 +2569,20 @@
                                     "Two-Phase-Closure",
                                     "Technical-Documentation-Alignment",
                                     "Constitution-Article-VI"
-                                ]
+                                ],
+                       "closure_reason":  "PASS",
+                       "closure_reference":  "IP-0024",
+                       "closure_evidence_path":  "Governance/Issues/IP-0024_StageH_DeterministicEvidence_2026-02-15_201932.md",
+                       "closure_runlog_path":  "HeatupLogs/Unity_IP0024_Closeout_20260215_201917.log"
                    },
                    {
                        "id":  "CS-0094",
                        "title":  "Add Cold-Start Stabilization Hold and PZR Heater Off/Auto/Manual Control to Prevent Immediate Pressurization and Improve Operator Realism",
                        "domain":  "Pressurizer \u0026 Startup Control",
                        "severity":  "MEDIUM",
-                       "status":  "INVESTIGATING",
+                       "status":  "CLOSED",
                        "created_at":  "2026-02-15T17:43:27Z",
-                       "updated_at":  "2026-02-15T17:43:27Z",
+                       "updated_at":  "2026-02-15T19:22:54Z",
                        "stage_detected":  "Investigation-2026-02-15",
                        "assigned_dp":  null,
                        "assigned_ip":  null,
@@ -2599,7 +2619,11 @@
                                     "PZR-Heater-Control",
                                     "Operator-Realism",
                                     "Constitution-Article-VI"
-                                ]
+                                ],
+                       "closure_reason":  "PASS",
+                       "closure_reference":  "IP-0024",
+                       "closure_evidence_path":  "Governance/Issues/IP-0024_StageH_DeterministicEvidence_2026-02-15_201932.md",
+                       "closure_runlog_path":  "HeatupLogs/Unity_IP0024_Closeout_20260215_201917.log"
                    }
                ]
 }

@@ -1,0 +1,308 @@
+﻿HEATUP INTERVAL LOG
+======================================================================
+Log Entry:        #39
+Timestamp:        15/02/2026 8:19:34 p.m.
+Sim Time:         9.50 hours (09:30:09)
+Wall-Clock Time:  00:00:00
+Effective Speed:  1x (1x RT)
+
+VALIDATION BASELINE (IP-0018 / DP-0003):
+  Profile:          IP-0018 deterministic startup profile
+  Baseline Sig:     T0=120.0F;P0=114.7psia;PZR0=100.0%;dt=0.002778hr;log=0.25hr
+  Deterministic dt: 0.002778 hr
+  Interval Log:     0.25 hr
+
+THERMAL STATE:
+  T_avg:                122.04 °F
+  T_hot:                122.12 °F
+  T_cold:               121.96 °F
+  T_rcs:                122.04 °F
+  T_pzr:                516.31 °F
+  T_sat:                516.33 °F
+  T_sg_secondary:       120.13 °F
+  Subcooling:           394.29 °F
+  Heatup Rate:            7.34 °F/hr
+  PZR Heat Rate:         17.58 °F/hr
+  RCS Heat Rate:          7.34 °F/hr
+  Pressure Rate:        121.40 psi/hr
+
+PRESSURE / LEVEL:
+  RCS Pressure:          784.3 psia (769.6 psig)
+  PZR Level:              68.2 %
+  PZR Water Vol:        1227.2 ftÂ³
+  PZR Steam Vol:         572.8 ftÂ³
+  Surge Flow:              5.5 gpm
+  PZR Setpoint:           25.0 %
+
+CVCS (Chemical & Volume Control):
+  Charging Flow:           8.0 gpm
+  Charging to RCS:         0.0 gpm (to system)
+  Total CCP Output:        8.0 gpm (incl. seals)
+  Letdown Flow:           92.9 gpm
+  Letdown Path:     RHR CROSSCONNECT
+  Letdown Isolated:         NO
+  Orifice Lineup:   2×75 + 1×45 gpm
+    75 gpm valves:           2 open
+    45 gpm valve:         OPEN
+  Net CVCS:              -84.9 gpm
+  PI Error:            -600.00 %-hr
+  Divert Fraction:        0.94
+
+PZR PRESSURE CONTROL (v4.4.0):
+  Heater Mode:      PRESSURIZE_AUTO
+  Heater Power:          1.426 MW
+  Spray Enabled:           YES
+  Spray Active:             NO
+  Spray Valve Pos:         0.0 %
+  Spray Flow:              1.5 gpm
+  Spray ΔT:               394 °F
+  Steam Condensed:        0.99 lbm/step
+  Spray Status:     Spray bypass (1.5 gpm)
+
+BUBBLE FORMATION STATUS:
+  Solid Pressurizer:        NO
+  Bubble Formed:           YES
+  Formation Time:         9.00 hr
+  Formation Temp:        435.1 °F
+  Bubble Phase:       COMPLETE
+  CCP Started:             YES
+  Aux Spray Tested:         NO
+  Closure Conv:            YES
+  Closure V Res:        -0.332 ft^3
+  Closure E Res:           0.0 BTU
+  Closure Hit Rate:       99.8 % (421/422)
+  PZR H Total:      32848060.0 BTU
+
+RCP (Reactor Coolant Pump) STATE:
+  RCPs Running:              1 / 4
+  Total RCP Heat:         2.34 MW (input to RCS)
+    Physics Regime:   REGIME 2 (Blended α=0.64)
+    RCP #1        RAMPING    Flow: 0.641  Heat:  2.84 MW  (T+ 0.34 hr)
+    Effective Heat:         2.81 MW (vs 5.25 MW rated)
+    Ramp Efficiency:        53.6 %
+
+  SEAL INJECTION (Per-Pump Detail):
+    Seal Inj (total):        8.0 gpm
+      → RCP #1:            8.0 gpm
+    Seal Ret (total):        3.0 gpm
+      → RCP #1:            3.0 gpm
+
+  VCT (Volume Control Tank):
+    Level:                  88.8 %
+    Volume:                 3551 gal
+    Boron Conc:             2000 ppm
+    Net Flow:               -0.3 gpm
+    Status:            DIVERTING
+    Divert Active:           YES
+    Auto Makeup:              NO
+    RWST Suction:             NO
+    Makeup Source:          NONE
+
+  BRS (Boron Recycle System) — Per NRC HRTD 4.1 / Callaway FSAR Ch.11:
+    Status:           PROCESSING
+    Holdup Volume:          7051 / 44800 gal (15.7%)
+    Holdup Boron:           2000 ppm
+    Evaporator:          RUNNING
+    Evap Feed Rate:         15.0 gpm
+    Distillate Avail:      10313 gal
+    Concentrate Avail:       125 gal
+    Inflow (from VCT):      87.2 gpm
+    Return (to VCT):         0.0 gpm
+    Cumulative In:          7488 gal
+    Cumulative Proc:         438 gal
+    Cum Distillate:          313 gal
+    Cum Concentrate:         125 gal
+    Cumulative Ret:            0 gal
+
+  BORON:
+    RCS Boron:              2000 ppm
+    VCT Boron:              2000 ppm
+
+  MASS CONSERVATION:
+    VCT Cum In:            44534 gal
+    VCT Cum Out:           43183 gal
+    Conservation Err:      12.91 gal
+
+  HEAT SOURCES:
+    RCPs Running:              1 / 4
+    RCP Heat Input:         2.34 MW
+    PZR Heaters:            1.43 MW
+    Gross Heat Input:       3.77 MW
+    Heat Losses:            0.13 MW (temp dependent)
+    SG Secondary Loss:       0.06 MW
+    Net Plant Heat:         3.58 MW
+    IP-0018 Energy Artifact:
+      Primary Heat:           0.058 MW
+      TotalPrimaryEnergy_MJ:        0.000
+      TotalSGEnergyRemoved_MJ:      0.000
+      PercentMismatch:              0.000 %
+      Sample Count:                     0
+      Window Active:                   NO
+      Last SG Heat:                 0.058 MW
+      Neg Heat Violations:              0
+      >5% Violations:                   0
+      Max OverPrimary:              0.000 %
+
+  ELECTRICAL:
+    RCP Power:               6.0 MW
+    Heater Power:            1.4 MW
+    Aux Loads:              25.0 MW
+    Total Grid Load:        32.4 MW
+    Cumulative Energy:     256.3 MWh
+
+  SG SECONDARY SIDE (v1.3.0 / v4.3.0 — Multi-Node Stratified Model):
+    Bulk Avg Temp:        120.13 °F
+    Top Node Temp:        120.43 °F
+    Bottom Node Temp:     120.08 °F
+    Stratification:         0.35 °F (top-bottom)
+    T_RCS - T_SG_top:       1.61 °F
+    T_RCS - T_SG_avg:       1.91 °F
+    Heat to SG Sec:         0.06 MW
+    Heat to SG Sec:         0.20 MBTU/hr
+    SG Sec Pressure:        17.0 psia (2.3 psig)
+    SG T_sat:              219.4 °F
+    SG Max Superheat:         0.0 °F
+    Boiling Intensity:      0.000 (0=subcooled, 1=full boil)
+    N₂ Blanket:        BLANKETED
+    SG Boundary Mode:       OPEN
+    Pressure Source:       floor
+    SteamInventory:          0.0 lb
+    Startup State:    OPEN_PREHEAT
+    State Ticks:            3421
+    State Time:            9.503 hr
+    Hold Target P:          0.00 psia
+    Hold Dev:              0.000 %
+    Hold Leak:             0.000 %
+    PressWindow:        INACTIVE
+    PressWindow T0:        0.000 hr
+    Press Rise:             0.00 psia
+    Tsat Rise:              0.00 F
+    P Rise Streak:             0
+    Tsat Rise Streak:          0
+    PreBoil |T-Tsat|:       0.00 F
+    Dyn Active Intv:           0
+    Dyn P Rise Chk:            0
+    Dyn P Rise PASS:           0
+    Dyn P Rise FAIL:           0
+    Dyn Last dP:           0.000 psia
+    Dyn dT3 Last:           0.00 F
+    Dyn dT3 Min/Max:   0.00/0.00 F
+    Dyn dT3 >5F Cnt:           0
+    Dyn dT3 <2F Cnt:           0
+    Dyn Flat3 Cnt:             0
+    Dyn Clamp Cnt:             0
+    Dyn Top-Tsat:          98.98 F
+    Boiling Active:           NO
+    Circulation Frac:      0.000 [DEPRECATED]
+    Draining Status:   PRE-DRAIN
+    Mass Drained:              0 lb
+    Secondary Mass:      1660000 lb (of 1660000 initial)
+    Wide Range Level:      100.0 %
+    Narrow Range Lvl:      181.8 %
+    Steam Produced:            0 lb (cumulative boiloff)
+    Node Temps:       SG MultiNode [5 nodes] | Regime=SUBCOOLED | Q_total=0.06 MW | Thermocline=23.7 ft | ActiveArea=3.9% | t_heat=0.33 hr
+  P_sec=2 psig | T_sat=219.4°F | Superheat=0.0°F | N₂ BLANKETED
+  v5.1.0: T_hottest=120.4°F | P_sat(T_hot)=-13 psig | ΔT_driving(T_rcs-T_sat)=-97.4°F
+  Wall: T_wall=122.0°F | ΔT_wall(Tw-Tsat)=-97.4°F
+  SteamLine: T=120.0°F | Q_cond=0.00 MW
+  Steam: 0 lb/hr (0.00 MW) | Cumulative: 0 lb | Sec.Mass: 1660000 lb
+  v5.4.0: Inventory=0 lb | Outflow=0 lb/hr | V_steam=1000 ft³ | P_inv=2 psig | OPEN | Psrc=floor
+  Level: WR=100.0% NR=181.8% | PRE-DRAIN | Drained: 0 lb
+  TOP: T=120.4°F  ΔT=1.6°F  Q=0.033MW  h=24  Af=0.024  [TRANS]  B=0.00
+  N1: T=120.1°F  ΔT=2.0°F  Q=0.007MW  h=24  Af=0.004  [ABOVE]  B=0.00
+  N2: T=120.1°F  ΔT=2.0°F  Q=0.007MW  h=24  Af=0.004  [ABOVE]  B=0.00
+  N3: T=120.1°F  ΔT=2.0°F  Q=0.007MW  h=24  Af=0.004  [ABOVE]  B=0.00
+  BOT: T=120.1°F  ΔT=2.0°F  Q=0.005MW  h=24  Af=0.003  [ABOVE]  B=0.00
+
+
+  MASS INVENTORY:
+    RCS Water Mass:       706996 lb
+    PZR Water Mass:        59256 lb
+
+  RVLIS (Reactor Vessel Level Indication System):
+    Dynamic Range:         100.0 % (VALID - RCPs ON)
+    Full Range:              0.0 % (INVALID - RCPs ON)
+    Upper Range:             0.0 % (INVALID - RCPs ON)
+
+  SMM (Subcooling Margin Monitor):
+    Subcooling Margin:     394.3 °F
+    Low Margin (<15°F):        OK
+    No Margin (≤0°F):         OK
+
+  VALIDATION STATUS:
+    Subcooling >=30F: PASS
+    RCS Rate <=50F/hr:PASS
+    VCT Level Normal: FAIL
+    Mass Conservation:FAIL (611 lbm)
+    Interval Conservation:FAIL (610.7 lbm, 0.067%)
+    RTCC Telemetry:   PRESENT (count=1, failures=0)
+
+  v0.9.6 VALIDATION CHECKS:
+    PZR Level Stable:   PASS (level=68.2%, min=15%)
+    BRS Distillate:     10313 gal available
+    BRS Cum Returned:   0 gal (makeup from BRS)
+    RMS Makeup Avoided: CHECK
+    Boron Stable:       PASS (2000 ppm)
+
+  v4.4.0 PRESSURE/LEVEL CONTROL VALIDATION:
+    PZR Level within ±10%:  FAIL (level=68.2%, SP=25.0%, err=43.2%)
+    P Rate <200 psi/hr:   PASS (121.4 psi/hr)
+    Heater Mode at PID:   PASS (mode=PRESSURIZE_AUTO)
+    Spray if P>2275 psia: PASS (P=784, spray=False)
+
+  INVENTORY AUDIT (v1.1.0 — Comprehensive Mass Balance):
+    RCS Mass:               706996 lbm
+    PZR Water Mass:          34977 lbm
+    PZR Steam Mass:           2024 lbm
+    VCT Mass:                29375 lbm
+    BRS Mass:               144665 lbm
+    ------------------------------------
+    TOTAL MASS:             918036 lbm
+    Mass Source:        CANONICAL_TWO_PHASE
+    Initial Mass:           917592 lbm
+    Expected Mass:          917425 lbm
+
+    CUMULATIVE FLOWS:
+      Charging:              35674 gal
+      Letdown:               44474 gal
+      Seal Injection:          161 gal
+      Seal Return:              61 gal
+      Surge In:               1599 gal
+      Surge Out:                 0 gal
+      External Makeup:           0 gal
+      CBO Losses:               20 gal
+
+    CONSERVATION CHECK:
+      Error (absolute):      610.7 lbm
+      Error (percent):       0.067 %
+      Status:           ALARM: Δ=611 lbm
+      Alarm:            YES - INVESTIGATE
+      Plant External In:       0.0 gal
+      Plant External Out:     20.2 gal
+      Plant External Net:    -20.2 gal
+
+    RTCC LAST TRANSITION:
+      Name:             SOLID_TO_TWO_PHASE
+      Authority:        CANONICAL_SOLID -> CANONICAL_TWO_PHASE
+      Pre Mass:           806847.9 lbm
+      Reconstructed:      790230.8 lbm
+      Raw Delta:        -16617.130 lbm
+      Post Mass:          806847.9 lbm
+      Assert Delta:          0.000 lbm
+      Epsilon:                50.0 lbm
+      Result:           PASS
+
+    PBOC LAST EVENT:
+      Tick / Time:        3421 /  9.4999 hr
+      Regime:           R2_BLEND
+      dm_RCS:              -120.29 lbm
+      dm_PZRw:                0.00 lbm
+      dm_PZRs:                0.00 lbm
+      dm_VCT:                -0.45 lbm
+      dm_BRS:               120.20 lbm
+      dm_external:           -1.38 lbm
+      External In/Out:    0.00 /   0.17 gal
+      Mass In/Out:         10.96 /   131.25 lbm
+      Pairing Assert:   PASS (failures=0)
+
+======================================================================

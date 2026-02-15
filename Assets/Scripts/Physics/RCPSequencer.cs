@@ -142,7 +142,7 @@ namespace Critical.Physics
             bool bubbleFormed,
             float simTime,
             float bubbleFormationTime,
-            float pressure_psia = 2250f)
+            float pressure_psia = PlantConstants.OPERATING_PRESSURE)
         {
             // Requirement 1: Bubble must exist
             if (!bubbleFormed)

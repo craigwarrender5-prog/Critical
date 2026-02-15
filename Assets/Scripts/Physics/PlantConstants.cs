@@ -61,7 +61,7 @@ namespace Critical.Physics
         public const float RCS_METAL_MASS = 2200000f;
         
         /// <summary>Normal operating pressure in psia</summary>
-        public const float OPERATING_PRESSURE = 2250f;
+        public const float OPERATING_PRESSURE = PZR_BASELINE_PRESSURE_SETPOINT_PSIG + PSIG_TO_PSIA;
         
         /// <summary>Hot leg temperature in °F at 100% power</summary>
         public const float T_HOT = 619f;

@@ -36,6 +36,67 @@
 using UnityEngine;
 using Critical.Physics;
 
+/// <summary>
+/// Explicit CVCS lineup state used by cold shutdown initialization.
+/// </summary>
+public struct ColdShutdownCvcsLineupState
+{
+    public bool Hcv128Open;
+    public bool Pcv131Auto;
+    public bool LetdownIsolated;
+    public int Orifice75OpenCount;
+    public bool Orifice45Open;
+    public float LetdownFlow_gpm;
+    public float ChargingFlow_gpm;
+}
+
+/// <summary>
+/// Formal cold-shutdown profile authority for startup initialization.
+/// </summary>
+public struct ColdShutdownProfile
+{
+    public float Pressure_psia;
+    public float Temperature_F;
+    public float PzrLiquidMass_lbm;
+    public float PzrVaporMass_lbm;
+    public HeaterMode HeaterMode;
+    public bool StartupHoldEnabled;
+    public float StartupHoldDuration_sec;
+    public ColdShutdownCvcsLineupState CvcsLineup;
+
+    /// <summary>
+    /// Build the approved baseline profile for deterministic cold starts.
+    /// </summary>
+    public static ColdShutdownProfile CreateApprovedBaseline()
+    {
+        float pressure_psia = PlantConstants.PRESSURIZE_INITIAL_PRESSURE_PSIA;
+        float temperature_F = 120f;
+        float rho = WaterProperties.WaterDensity(temperature_F, pressure_psia);
+        float pzrLiquidMass_lbm = PlantConstants.PZR_TOTAL_VOLUME * rho;
+
+        return new ColdShutdownProfile
+        {
+            Pressure_psia = pressure_psia,
+            Temperature_F = temperature_F,
+            PzrLiquidMass_lbm = pzrLiquidMass_lbm,
+            PzrVaporMass_lbm = 0f,
+            HeaterMode = HeaterMode.OFF,
+            StartupHoldEnabled = true,
+            StartupHoldDuration_sec = 15f,
+            CvcsLineup = new ColdShutdownCvcsLineupState
+            {
+                Hcv128Open = true,
+                Pcv131Auto = true,
+                LetdownIsolated = false,
+                Orifice75OpenCount = 1,
+                Orifice45Open = false,
+                LetdownFlow_gpm = PlantConstants.LETDOWN_NORMAL_GPM,
+                ChargingFlow_gpm = PlantConstants.LETDOWN_NORMAL_GPM
+            }
+        };
+    }
+}
+
 public partial class HeatupSimEngine
 {
     // ========================================================================
@@ -131,32 +192,43 @@ public partial class HeatupSimEngine
         plantExternalOut_gal = 0f;
         plantExternalNet_gal = 0f;
 
+        bool useColdProfile = coldShutdownStart && startTemperature < 200f;
+        coldShutdownProfile = useColdProfile
+            ? ColdShutdownProfile.CreateApprovedBaseline()
+            : default;
+
+        float initTemperature = useColdProfile ? coldShutdownProfile.Temperature_F : startTemperature;
+        float initPressure = useColdProfile ? coldShutdownProfile.Pressure_psia : startPressure;
+        float initPzrLevel = useColdProfile ? 100f : startPZRLevel;
+
         simTime = 0f;
-        T_avg = startTemperature;
-        T_cold = startTemperature - 2f;
-        T_hot = startTemperature + 2f;
-        pressure = startPressure;
-        pzrLevel = startPZRLevel;
+        T_avg = initTemperature;
+        T_cold = initTemperature - 2f;
+        T_hot = initTemperature + 2f;
+        pressure = initPressure;
+        pzrLevel = initPzrLevel;
         rcpCount = 0;
         rcpHeat = 0f;
-        pzrHeaterPower = PZR_HEATER_POWER_MW;
+        pzrHeaterPower = 0f;
         gridEnergy = 0f;
         heatupRate = 0f;
-        statusMessage = "PZR HEATERS ENERGIZED - ESTABLISHING CONDITIONS";
+        statusMessage = useColdProfile
+            ? "COLD PROFILE LOADED - STARTUP HOLD ACTIVE"
+            : "PZR HEATERS ENERGIZED - ESTABLISHING CONDITIONS";
 
-        T_rcs = startTemperature;
-        T_avg = startTemperature;
-        T_cold = startTemperature;
-        T_hot = startTemperature;
+        T_rcs = initTemperature;
+        T_avg = initTemperature;
+        T_cold = initTemperature;
+        T_hot = initTemperature;
         
         // v0.8.0: Initialize SG secondary temperature (thermal equilibrium at cold shutdown)
-        T_sg_secondary = SGSecondaryThermal.InitializeSecondaryTemperature(startTemperature);
+        T_sg_secondary = SGSecondaryThermal.InitializeSecondaryTemperature(initTemperature);
         sgHeatTransfer_MW = 0f;
         
         // v1.3.0: Initialize multi-node SG model
-        sgMultiNodeState = SGMultiNodeThermal.Initialize(startTemperature);
-        sgTopNodeTemp = startTemperature;
-        sgBottomNodeTemp = startTemperature;
+        sgMultiNodeState = SGMultiNodeThermal.Initialize(initTemperature);
+        sgTopNodeTemp = initTemperature;
+        sgBottomNodeTemp = initTemperature;
         sgStratificationDeltaT = 0f;
         sgCirculationFraction = 0f;
         sgCirculationActive = false;
@@ -170,15 +242,15 @@ public partial class HeatupSimEngine
         sgSteamInventory_lb = 0f;
         ResetSGBoundaryStartupState();
         dp0003BaselineSignature =
-            $"T0={startTemperature:F1}F;P0={startPressure:F1}psia;PZR0={startPZRLevel:F1}%;dt={DP0003_DETERMINISTIC_TIMESTEP_HR:F6}hr;log={DP0003_INTERVAL_LOG_HR:F2}hr";
+            $"T0={initTemperature:F1}F;P0={initPressure:F1}psia;PZR0={initPzrLevel:F1}%;dt={DP0003_DETERMINISTIC_TIMESTEP_HR:F6}hr;log={DP0003_INTERVAL_LOG_HR:F2}hr";
         netPlantHeat_MW = 0f;
         
         // v3.0.0: Initialize RHR system
         // Cold shutdown: RHR running in heatup mode (HX bypassed, pumps on)
         // Warm start: RHR in standby (RCPs already running)
-        if (coldShutdownStart && startTemperature < 200f)
+        if (useColdProfile)
         {
-            rhrState = RHRSystem.Initialize(startTemperature);
+            rhrState = RHRSystem.Initialize(initTemperature);
         }
         else
         {
@@ -197,7 +269,7 @@ public partial class HeatupSimEngine
         isAccelerated = false;
 
         // Dispatch to appropriate initialization path
-        if (coldShutdownStart && startTemperature < 200f)
+        if (useColdProfile)
         {
             InitializeColdShutdown();
         }
@@ -229,37 +301,51 @@ public partial class HeatupSimEngine
         ccpStarted = false;
         ccpStartTime = 999f;
         ccpStartLevel = 0f;
-        currentHeaterMode = HeaterMode.STARTUP_FULL_POWER;
+        currentHeaterMode = coldShutdownProfile.HeaterMode;
         auxSprayActive = false;
         auxSprayTestPassed = false;
         auxSprayPressureDrop = 0f;
+        startupHoldActive = coldShutdownProfile.StartupHoldEnabled;
+        startupHoldReleaseTime_hr = startupHoldActive
+            ? coldShutdownProfile.StartupHoldDuration_sec / 3600f
+            : 0f;
+        startupHoldReleaseLogged = false;
+        startupHoldActivationLogged = false;
 
         // v5.4.1 Audit Fix: Initialize at post-fill/vent pressure (100 psig).
         // CVCS PI controller will ramp pressure up to the 350 psig setpoint.
         // Previous code used SOLID_PLANT_INITIAL_PRESSURE_PSIA (365 psia = setpoint),
         // which skipped the pressurization ramp entirely.
-        pressure = PlantConstants.PRESSURIZE_INITIAL_PRESSURE_PSIA;
+        pressure = coldShutdownProfile.Pressure_psia;
 
         // Initialize solid plant physics module — owns all P-T-V coupling during solid ops
         solidPlantState = SolidPlantPressure.Initialize(
-            pressure, startTemperature, startTemperature, 75f, 75f);
+            pressure,
+            coldShutdownProfile.Temperature_F,
+            coldShutdownProfile.Temperature_F,
+            coldShutdownProfile.CvcsLineup.LetdownFlow_gpm,
+            coldShutdownProfile.CvcsLineup.ChargingFlow_gpm);
 
         // Display values from physics module
         solidPlantPressureSetpoint = solidPlantState.PressureSetpoint;
         solidPlantPressureLow = PlantConstants.SOLID_PLANT_P_LOW_PSIA;
         solidPlantPressureHigh = PlantConstants.SOLID_PLANT_P_HIGH_PSIA;
 
-        float rhoWater = WaterProperties.WaterDensity(T_rcs, pressure);
+        float rhoWater = WaterProperties.WaterDensity(coldShutdownProfile.Temperature_F, pressure);
         rcsWaterMass = PlantConstants.RCS_WATER_VOLUME * rhoWater;
 
         pzrLevel = 100f;
         pzrWaterVolume = PlantConstants.PZR_TOTAL_VOLUME;
         pzrSteamVolume = 0f;
-        float pzrWaterMass = pzrWaterVolume * rhoWater;
+        float pzrWaterMass = coldShutdownProfile.PzrLiquidMass_lbm;
 
         totalSystemMass = rcsWaterMass + pzrWaterMass;
 
-        T_pzr = T_rcs;
+        T_rcs = coldShutdownProfile.Temperature_F;
+        T_avg = coldShutdownProfile.Temperature_F;
+        T_hot = coldShutdownProfile.Temperature_F;
+        T_cold = coldShutdownProfile.Temperature_F;
+        T_pzr = coldShutdownProfile.Temperature_F;
         T_sat = WaterProperties.SaturationTemperature(pressure);
 
         physicsState = new SystemState();
@@ -270,7 +356,7 @@ public partial class HeatupSimEngine
         physicsState.PZRWaterVolume = pzrWaterVolume;
         physicsState.PZRSteamVolume = 0f;
         physicsState.PZRWaterMass = pzrWaterMass;
-        physicsState.PZRSteamMass = 0f;
+        physicsState.PZRSteamMass = coldShutdownProfile.PzrVaporMass_lbm;
         physicsState.PZRTotalEnthalpy_BTU = pzrWaterMass * WaterProperties.WaterEnthalpy(T_pzr, pressure);
         physicsState.PZRClosureConverged = true;
         physicsState.PZRClosureVolumeResidual_ft3 = 0f;
@@ -298,6 +384,29 @@ public partial class HeatupSimEngine
         pzrClosureVolumeResidual_ft3 = 0f;
         pzrClosureEnergyResidual_BTU = 0f;
         pzrClosureConverged = true;
+        pzrClosureBracketMassTarget_lbm = 0f;
+        pzrClosureBracketEnthalpyTarget_BTU = 0f;
+        pzrClosureBracketVolumeTarget_ft3 = PlantConstants.PZR_TOTAL_VOLUME;
+        pzrClosureBracketPressureGuess_psia = pressure;
+        pzrClosureBracketOperatingMin_psia = 0f;
+        pzrClosureBracketOperatingMax_psia = 0f;
+        pzrClosureBracketHardMin_psia = 0f;
+        pzrClosureBracketHardMax_psia = 0f;
+        pzrClosureBracketLastLow_psia = 0f;
+        pzrClosureBracketLastHigh_psia = 0f;
+        pzrClosureBracketResidualLow_ft3 = 0f;
+        pzrClosureBracketResidualHigh_ft3 = 0f;
+        pzrClosureBracketResidualSignLow = 0;
+        pzrClosureBracketResidualSignHigh = 0;
+        pzrClosureBracketRegimeLow = "UNSET";
+        pzrClosureBracketRegimeHigh = "UNSET";
+        pzrClosureBracketWindowsTried = 0;
+        pzrClosureBracketValidEvaluations = 0;
+        pzrClosureBracketInvalidEvaluations = 0;
+        pzrClosureBracketNanEvaluations = 0;
+        pzrClosureBracketOutOfRangeEvaluations = 0;
+        pzrClosureBracketFound = false;
+        pzrClosureBracketSearchTrace = "";
 
         // v0.6.0: Initialize BRS
         // v0.9.6 FIX: Pre-load BRS with distillate inventory from prior operating cycle.
@@ -308,7 +417,16 @@ public partial class HeatupSimEngine
         brsState.DistillateAvailable_gal = PlantConstants.BRS_INITIAL_DISTILLATE_GAL;
         brsState.DistillateBoron_ppm = PlantConstants.BRS_DISTILLATE_BORON_PPM;  // 0 ppm (clean)
 
-        statusMessage = "COLD SHUTDOWN - SOLID PZR - HEATERS ENERGIZING";
+        pzrHeaterPower = 0f;
+        pzrHeatersOn = false;
+        orifice75Count = coldShutdownProfile.CvcsLineup.Orifice75OpenCount;
+        orifice45Open = coldShutdownProfile.CvcsLineup.Orifice45Open;
+        orificeLineupDesc = coldShutdownProfile.CvcsLineup.Orifice45Open
+            ? "1x75 + 1x45 gpm (PROFILE)"
+            : "1x75 gpm (PROFILE)";
+        statusMessage = startupHoldActive
+            ? "COLD SHUTDOWN - PROFILE LOADED - STARTUP HOLD ACTIVE"
+            : "COLD SHUTDOWN - PROFILE LOADED";
         Debug.Log($"[HeatupEngine] COLD SHUTDOWN: Solid pressurizer");
         Debug.Log($"  T_rcs = {T_rcs:F1}°F, P = {pressure - 14.7f:F0} psig ({pressure:F1} psia)");
         Debug.Log($"  Total mass = {totalSystemMass:F0} lb (conserved)");
@@ -332,6 +450,11 @@ public partial class HeatupSimEngine
         bubbleDrainStartLevel = 0f;
         bubblePreDrainPhase = false;
         pressure = startPressure;
+        startupHoldActive = false;
+        startupHoldReleaseTime_hr = 0f;
+        startupHoldReleaseLogged = true;
+        startupHoldActivationLogged = true;
+        coldShutdownProfile = default;
 
         physicsState = new SystemState();
         physicsState.Temperature = T_rcs;
@@ -382,6 +505,29 @@ public partial class HeatupSimEngine
         pzrClosureVolumeResidual_ft3 = 0f;
         pzrClosureEnergyResidual_BTU = 0f;
         pzrClosureConverged = true;
+        pzrClosureBracketMassTarget_lbm = 0f;
+        pzrClosureBracketEnthalpyTarget_BTU = 0f;
+        pzrClosureBracketVolumeTarget_ft3 = PlantConstants.PZR_TOTAL_VOLUME;
+        pzrClosureBracketPressureGuess_psia = pressure;
+        pzrClosureBracketOperatingMin_psia = 0f;
+        pzrClosureBracketOperatingMax_psia = 0f;
+        pzrClosureBracketHardMin_psia = 0f;
+        pzrClosureBracketHardMax_psia = 0f;
+        pzrClosureBracketLastLow_psia = 0f;
+        pzrClosureBracketLastHigh_psia = 0f;
+        pzrClosureBracketResidualLow_ft3 = 0f;
+        pzrClosureBracketResidualHigh_ft3 = 0f;
+        pzrClosureBracketResidualSignLow = 0;
+        pzrClosureBracketResidualSignHigh = 0;
+        pzrClosureBracketRegimeLow = "UNSET";
+        pzrClosureBracketRegimeHigh = "UNSET";
+        pzrClosureBracketWindowsTried = 0;
+        pzrClosureBracketValidEvaluations = 0;
+        pzrClosureBracketInvalidEvaluations = 0;
+        pzrClosureBracketNanEvaluations = 0;
+        pzrClosureBracketOutOfRangeEvaluations = 0;
+        pzrClosureBracketFound = false;
+        pzrClosureBracketSearchTrace = "";
 
         vctState = VCTPhysics.InitializeNormal(55f, 1000f);
         rcsBoronConcentration = 1000f;
@@ -409,8 +555,21 @@ public partial class HeatupSimEngine
 
     void InitializeCommon()
     {
-        letdownFlow = 75f;
-        chargingFlow = 75f;
+        if (solidPressurizer)
+        {
+            letdownFlow = coldShutdownProfile.CvcsLineup.LetdownFlow_gpm;
+            chargingFlow = coldShutdownProfile.CvcsLineup.ChargingFlow_gpm;
+            orifice75Count = coldShutdownProfile.CvcsLineup.Orifice75OpenCount;
+            orifice45Open = coldShutdownProfile.CvcsLineup.Orifice45Open;
+            orificeLineupDesc = coldShutdownProfile.CvcsLineup.Orifice45Open
+                ? "1x75 + 1x45 gpm (PROFILE)"
+                : "1x75 gpm (PROFILE)";
+        }
+        else
+        {
+            letdownFlow = 75f;
+            chargingFlow = 75f;
+        }
         cvcsIntegralError = 0f;
 
         // Cold start always begins with RHR crossconnect letdown path
@@ -424,6 +583,10 @@ public partial class HeatupSimEngine
         pzrClosureSolveAttempts = 0;
         pzrClosureSolveConverged = 0;
         pzrClosureConvergencePct = 0f;
+        pzrClosureLastIterationCount = 0;
+        pzrClosureLastFailureReason = "NONE";
+        pzrClosureLastConvergencePattern = "UNSET";
+        pzrClosureLastPhaseFraction = 0f;
         drainSteamDisplacement_lbm = 0f;
         drainCvcsTransfer_lbm = 0f;
         drainDuration_hr = 0f;
@@ -434,8 +597,26 @@ public partial class HeatupSimEngine
         drainTransitionReason = "NONE";
         drainCvcsPolicyMode = "LEGACY_FIXED";
         drainLetdownFlow_gpm = 0f;
+        drainLetdownDemand_gpm = 0f;
         drainChargingFlow_gpm = 0f;
         drainNetOutflowFlow_gpm = 0f;
+        drainLineupDemandIndex = 1;
+        drainHydraulicCapacity_gpm = 0f;
+        drainHydraulicDeltaP_psi = 0f;
+        drainHydraulicDensity_lbm_ft3 = 0f;
+        drainHydraulicQuality = 0f;
+        drainLetdownSaturated = false;
+        drainLineupEventThisStep = false;
+        drainLineupEventCount = 0;
+        drainLastLineupEventTime_hr = -1f;
+        drainLastLineupPrevIndex = 1;
+        drainLastLineupNewIndex = 1;
+        drainLastLineupTrigger = "NONE";
+        drainLastLineupReason = "NONE";
+        drainLineupChangePending = false;
+        drainLineupRequestedIndex = 1;
+        drainLineupRequestedTrigger = "NONE";
+        drainLineupRequestedReason = "NONE";
         cvcsThermalMixing_MW = 0f;
         cvcsThermalMixingDeltaF = 0f;
 
@@ -452,7 +633,7 @@ public partial class HeatupSimEngine
         for (int i = 0; i < 4; i++) rcpStartTimes[i] = float.MaxValue;
         rcpContribution = new RCPContribution();
         effectiveRCPHeat = 0f;
-        pzrHeatersOn = true;
+        pzrHeatersOn = !startupHoldActive && currentHeaterMode != HeaterMode.OFF;
         ccwRunning = true;
         sealInjectionOK = true;
         chargingActive = true;
@@ -471,7 +652,9 @@ public partial class HeatupSimEngine
         else
             LogEvent(EventSeverity.INFO, "INIT: Warm start - steam bubble exists");
         LogEvent(EventSeverity.INFO, $"T_rcs={T_rcs:F0}F  P={pressure:F0}psia  PZR={pzrLevel:F0}%");
-        LogEvent(EventSeverity.ACTION, "PZR heaters energized");
+        LogEvent(
+            EventSeverity.ACTION,
+            pzrHeatersOn ? "PZR heaters energized" : "PZR heaters inhibited (cold profile startup state)");
 
         T_sat = GetTsat(pressure);
         subcooling = T_sat - T_rcs;

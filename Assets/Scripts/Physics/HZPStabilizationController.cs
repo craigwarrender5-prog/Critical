@@ -143,7 +143,7 @@ namespace Critical.Physics
         public const float TAVG_TOLERANCE_F = 2f;
         
         /// <summary>RCS pressure setpoint at HZP (psig). Source: NRC HRTD 10.2</summary>
-        public const float PRESSURE_SETPOINT_PSIG = 2235f;
+        public const float PRESSURE_SETPOINT_PSIG = PlantConstants.PZR_OPERATING_PRESSURE_PSIG;
         
         /// <summary>RCS pressure tolerance band (psi)</summary>
         public const float PRESSURE_TOLERANCE_PSI = 10f;

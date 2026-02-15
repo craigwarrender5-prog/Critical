@@ -356,7 +356,7 @@ public partial class HeatupSimEngine
     {
         // Only manage orifices during normal two-phase operations
         // (not during solid plant, pre-drain, or active drain phases)
-        if (solidPressurizer || bubblePreDrainPhase)
+        if (solidPressurizer || bubblePreDrainPhase || bubblePhase == BubbleFormationPhase.DRAIN)
             return;
 
         // Calculate level error (positive = level above setpoint)

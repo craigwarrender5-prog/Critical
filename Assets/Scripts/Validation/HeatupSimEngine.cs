@@ -100,8 +100,8 @@ public partial class HeatupSimEngine : MonoBehaviour
 
     [Header("Initial Conditions")]
     public float startTemperature = 100f;
-    public float startPressure = 400f;
-    public float startPZRLevel = 25f;
+    public float startPressure = PlantConstants.PRESSURIZE_INITIAL_PRESSURE_PSIA;
+    public float startPZRLevel = 100f;
 
     [Header("Cold Shutdown Mode (NRC ML11223A342)")]
     [Tooltip("True cold shutdown: SOLID pressurizer (100% water, no steam bubble), low pressure")]
@@ -109,7 +109,7 @@ public partial class HeatupSimEngine : MonoBehaviour
 
     [Header("Targets")]
     public float targetTemperature = 557f;
-    public float targetPressure = 2235f;
+    public float targetPressure = PlantConstants.PZR_OPERATING_PRESSURE_PSIG;
 
     [Header("Runtime Performance Controls (IP-0023)")]
     [Tooltip("Enable async interval-log file writing while simulation is running.")]
@@ -268,6 +268,33 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public int pzrClosureSolveAttempts;
     [HideInInspector] public int pzrClosureSolveConverged;
     [HideInInspector] public float pzrClosureConvergencePct;
+    [HideInInspector] public int pzrClosureLastIterationCount;
+    [HideInInspector] public string pzrClosureLastFailureReason = "NONE";
+    [HideInInspector] public string pzrClosureLastConvergencePattern = "UNSET";
+    [HideInInspector] public float pzrClosureLastPhaseFraction;
+    [HideInInspector] public float pzrClosureBracketMassTarget_lbm;
+    [HideInInspector] public float pzrClosureBracketEnthalpyTarget_BTU;
+    [HideInInspector] public float pzrClosureBracketVolumeTarget_ft3;
+    [HideInInspector] public float pzrClosureBracketPressureGuess_psia;
+    [HideInInspector] public float pzrClosureBracketOperatingMin_psia;
+    [HideInInspector] public float pzrClosureBracketOperatingMax_psia;
+    [HideInInspector] public float pzrClosureBracketHardMin_psia;
+    [HideInInspector] public float pzrClosureBracketHardMax_psia;
+    [HideInInspector] public float pzrClosureBracketLastLow_psia;
+    [HideInInspector] public float pzrClosureBracketLastHigh_psia;
+    [HideInInspector] public float pzrClosureBracketResidualLow_ft3;
+    [HideInInspector] public float pzrClosureBracketResidualHigh_ft3;
+    [HideInInspector] public int pzrClosureBracketResidualSignLow;
+    [HideInInspector] public int pzrClosureBracketResidualSignHigh;
+    [HideInInspector] public string pzrClosureBracketRegimeLow = "UNSET";
+    [HideInInspector] public string pzrClosureBracketRegimeHigh = "UNSET";
+    [HideInInspector] public int pzrClosureBracketWindowsTried;
+    [HideInInspector] public int pzrClosureBracketValidEvaluations;
+    [HideInInspector] public int pzrClosureBracketInvalidEvaluations;
+    [HideInInspector] public int pzrClosureBracketNanEvaluations;
+    [HideInInspector] public int pzrClosureBracketOutOfRangeEvaluations;
+    [HideInInspector] public bool pzrClosureBracketFound;
+    [HideInInspector] public string pzrClosureBracketSearchTrace = "";
     [HideInInspector] public float rcsWaterMass;
     [HideInInspector] public float chargingFlow;
     [HideInInspector] public float letdownFlow;
@@ -465,6 +492,12 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public float bubbleFormationTemp;
     [HideInInspector] public float bubbleFormationTime;
 
+    [HideInInspector] public ColdShutdownProfile coldShutdownProfile;
+    [HideInInspector] public bool startupHoldActive;
+    [HideInInspector] public float startupHoldReleaseTime_hr;
+    [HideInInspector] public bool startupHoldReleaseLogged;
+    [HideInInspector] public bool startupHoldActivationLogged;
+
     // Bubble formation state machine (see HeatupSimEngine.BubbleFormation.cs)
     [HideInInspector] public BubbleFormationPhase bubblePhase = BubbleFormationPhase.NONE;
     [HideInInspector] public float bubblePhaseStartTime;
@@ -501,8 +534,27 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public string drainTransitionReason = "NONE";
     [HideInInspector] public string drainCvcsPolicyMode = "LEGACY_FIXED";
     [HideInInspector] public float drainLetdownFlow_gpm;
+    [HideInInspector] public float drainLetdownDemand_gpm;
     [HideInInspector] public float drainChargingFlow_gpm;
     [HideInInspector] public float drainNetOutflowFlow_gpm;
+    [HideInInspector] public int drainLineupDemandIndex = 1;
+    [HideInInspector] public float drainHydraulicCapacity_gpm;
+    [HideInInspector] public float drainHydraulicDeltaP_psi;
+    [HideInInspector] public float drainHydraulicDensity_lbm_ft3;
+    [HideInInspector] public float drainHydraulicQuality;
+    [HideInInspector] public bool drainLetdownSaturated;
+    [HideInInspector] public bool drainLineupEventThisStep;
+    [HideInInspector] public int drainLineupEventCount;
+    [HideInInspector] public float drainLastLineupEventTime_hr = -1f;
+    [HideInInspector] public int drainLastLineupPrevIndex = 1;
+    [HideInInspector] public int drainLastLineupNewIndex = 1;
+    [HideInInspector] public string drainLastLineupTrigger = "NONE";
+    [HideInInspector] public string drainLastLineupReason = "NONE";
+
+    private bool drainLineupChangePending;
+    private int drainLineupRequestedIndex = 1;
+    private string drainLineupRequestedTrigger = "NONE";
+    private string drainLineupRequestedReason = "NONE";
 
     // Pre-drain phase flag (DETECTION/VERIFICATION still use solid-plant CVCS)
     private bool bubblePreDrainPhase = false;
@@ -1106,6 +1158,8 @@ public partial class HeatupSimEngine : MonoBehaviour
         //     with proportional + backup heater staging at 2235 psig.
         // ================================================================
         {
+            UpdateStartupHoldState();
+
             float pzrLevelSetpointForHeater;
             if (solidPressurizer || bubblePreDrainPhase)
                 pzrLevelSetpointForHeater = 100f;
@@ -1120,7 +1174,14 @@ public partial class HeatupSimEngine : MonoBehaviour
             // proportional + backup heater groups at 2235 psig setpoint.
             // Transition occurs when pressure reaches operating band.
             // ==============================================================
-            if (currentHeaterMode == HeaterMode.PRESSURIZE_AUTO &&
+            if (startupHoldActive)
+            {
+                pzrHeaterPower = 0f;
+                pzrHeatersOn = false;
+                heaterPIDOutput = 0f;
+                heaterPIDActive = false;
+            }
+            else if (currentHeaterMode == HeaterMode.PRESSURIZE_AUTO &&
                 pressure >= PlantConstants.HEATER_MODE_TRANSITION_PRESSURE_PSIA)
             {
                 currentHeaterMode = HeaterMode.AUTOMATIC_PID;
@@ -1142,7 +1203,14 @@ public partial class HeatupSimEngine : MonoBehaviour
             //   AUTOMATIC_PID: PID controller with prop/backup staging
             //   All others: CalculateHeaterState (rate-modulated or fixed)
             // ==============================================================
-            if (currentHeaterMode == HeaterMode.AUTOMATIC_PID)
+            if (startupHoldActive)
+            {
+                pzrHeaterPower = 0f;
+                pzrHeatersOn = false;
+                heaterPIDOutput = 0f;
+                heaterPIDActive = false;
+            }
+            else if (currentHeaterMode == HeaterMode.AUTOMATIC_PID)
             {
                 // v4.4.0: PID heater control for normal operations
                 float currentP_psig = pressure - PlantConstants.PSIG_TO_PSIA;
@@ -1979,6 +2047,28 @@ public partial class HeatupSimEngine : MonoBehaviour
     // ========================================================================
     // HELPER METHODS
     // ========================================================================
+
+    void UpdateStartupHoldState()
+    {
+        if (!startupHoldActive)
+            return;
+
+        if (!startupHoldActivationLogged)
+        {
+            float holdSeconds = Mathf.Max(0f, startupHoldReleaseTime_hr * 3600f);
+            LogEvent(EventSeverity.INFO,
+                $"HEATER STARTUP HOLD ACTIVE for {holdSeconds:F0}s (mode={currentHeaterMode})");
+            startupHoldActivationLogged = true;
+        }
+
+        if (!startupHoldReleaseLogged && simTime >= startupHoldReleaseTime_hr)
+        {
+            startupHoldActive = false;
+            startupHoldReleaseLogged = true;
+            LogEvent(EventSeverity.ACTION,
+                $"HEATER STARTUP HOLD RELEASED at T+{simTime:F4} hr (mode={currentHeaterMode})");
+        }
+    }
 
     public void BeginLongHoldPressureAudit()
     {

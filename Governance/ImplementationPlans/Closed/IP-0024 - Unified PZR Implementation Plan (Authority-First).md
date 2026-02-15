@@ -1,13 +1,26 @@
 ---
 IP ID: IP-0024
 Title: Unified Pressurizer (PZR) Implementation Plan (Authority-First)
-Status: INVESTIGATING
+Status: CLOSED
+Changelog Version Association: 0.6.0.0
 Date: 2026-02-15
+Closure Date: 2026-02-15
+Closure Timestamp: 2026-02-15 20:19:32
+Final Run Stamp: 2026-02-15_201932
+Final Stage D Gate Artifact: Governance/Issues/IP-0024_StageD_ExitGate_SinglePhaseHold_2026-02-15_201932.md
+Final Stage H Deterministic Evidence: Governance/Issues/IP-0024_StageH_DeterministicEvidence_2026-02-15_201932.md
 Scope Source: Governance/IssueRegister/issue_register.json (active PZR-related CS items)
 Constraint: Planning artifact only; no code changes in this step
 ---
 
 # IP-0024 - Unified Pressurizer (PZR) Implementation Plan
+
+## Closeout Record
+- Status: CLOSED
+- Closure timestamp: 2026-02-15 20:19:32
+- Final deterministic run stamp: `2026-02-15_201932`
+- Stage D gate artifact: `Governance/Issues/IP-0024_StageD_ExitGate_SinglePhaseHold_2026-02-15_201932.md`
+- Stage H deterministic evidence artifact: `Governance/Issues/IP-0024_StageH_DeterministicEvidence_2026-02-15_201932.md`
 
 ## 1) Documentation Baseline Summary (Mandatory First Phase)
 

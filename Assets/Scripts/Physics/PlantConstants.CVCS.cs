@@ -282,32 +282,32 @@ namespace Critical.Physics
         /// PZR level program minimum setpoint (%) at no-load Tavg.
         /// Source: NRC HRTD Section 10.3, Figure 10.3-2
         /// </summary>
-        public const float PZR_LEVEL_PROGRAM_MIN = 25f;
+        public const float PZR_LEVEL_PROGRAM_MIN = PZR_BASELINE_LEVEL_NO_LOAD_PERCENT;
         
         /// <summary>
         /// PZR level program maximum setpoint (%) at full-load Tavg.
         /// Source: NRC HRTD Section 10.3, Figure 10.3-2
         /// </summary>
-        public const float PZR_LEVEL_PROGRAM_MAX = 61.5f;
+        public const float PZR_LEVEL_PROGRAM_MAX = PZR_BASELINE_LEVEL_FULL_POWER_PERCENT;
         
         /// <summary>
         /// PZR level program low Tavg (no-load) in °F.
         /// Source: NRC HRTD Section 10.3 — auctioneered-high Tavg at no-load
         /// </summary>
-        public const float PZR_LEVEL_PROGRAM_TAVG_LOW = 557f;
+        public const float PZR_LEVEL_PROGRAM_TAVG_LOW = PZR_BASELINE_LEVEL_TAVG_NO_LOAD_F;
         
         /// <summary>
         /// PZR level program high Tavg (full-load) in °F.
         /// Source: NRC HRTD Section 10.3 — auctioneered-high Tavg at full load
         /// </summary>
-        public const float PZR_LEVEL_PROGRAM_TAVG_HIGH = 584.7f;
+        public const float PZR_LEVEL_PROGRAM_TAVG_HIGH = PZR_BASELINE_LEVEL_TAVG_FULL_POWER_F;
         
         /// <summary>
         /// PZR level program slope in %/°F.
         /// = (61.5 - 25) / (584.7 - 557) = 36.5 / 27.7 = 1.318
         /// Source: NRC HRTD Section 10.3
         /// </summary>
-        public const float PZR_LEVEL_PROGRAM_SLOPE = 1.318f;
+        public const float PZR_LEVEL_PROGRAM_SLOPE = PZR_BASELINE_LEVEL_PROGRAM_SLOPE;
         
         /// <summary>
         /// Backup heater actuation offset above PZR level program in %.
