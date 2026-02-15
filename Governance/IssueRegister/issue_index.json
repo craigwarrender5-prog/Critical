@@ -1,7 +1,7 @@
 ﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-15T08:50:52Z",
-    "entry_count":  71,
+    "generated_at":  "2026-02-15T10:45:00Z",
+    "entry_count":  78,
     "entries":  [
                     {
                         "id":  "CS-0001",
@@ -584,11 +584,11 @@
                         "title":  "Surge line flow direction and net inventory display enhancement",
                         "domain":  "Operator Interface \u0026 Scenarios",
                         "severity":  "LOW",
-                        "status":  "READY_FOR_FIX",
+                        "status":  "INVESTIGATING",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0008",
-                        "assigned_ip":  "IP-0013",
-                        "updated_at":  "2026-02-14T15:57:51Z",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-15T10:45:00Z",
                         "closed_at":  null,
                         "resolution_type":  null,
                         "tags":  [
@@ -664,13 +664,13 @@
                         "title":  "Professional interactive dashboard visualization upgrade (uGUI modernization)",
                         "domain":  "Operator Interface \u0026 Scenarios",
                         "severity":  "HIGH",
-                        "status":  "READY_FOR_FIX",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0008",
-                        "assigned_ip":  "IP-0013",
-                        "updated_at":  "2026-02-15T08:58:22Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-15T10:02:07Z",
+                        "closed_at":  "2026-02-15T10:02:07Z",
+                        "resolution_type":  "INVALID",
                         "tags":  [
                                      "Operator \u0026 Scenario Framework â€” Dashboard Visualization"
                                  ]
@@ -1157,6 +1157,128 @@
                         "tags":  [
                                      "Lifecycle / State Ownership",
                                      "Multiple Writers"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0072",
+                        "title":  "Validation failure: Bubble draw duration exceeds documented expectation (~165-180 min observed vs 30-60 min expected)",
+                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
+                        "severity":  "HIGH",
+                        "status":  "INVESTIGATING",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0002",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-15T09:27:32Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "Validation Failure",
+                                     "Bubble Formation Duration"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0073",
+                        "title":  "DRAIN progression is strongly constrained by fixed post-CCP net outflow policy (75 letdown, 44 charging, net 31 gpm)",
+                        "domain":  "CVCS / Inventory Control",
+                        "severity":  "HIGH",
+                        "status":  "INVESTIGATING",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0004",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-15T09:35:45Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "CVCS-PZR Coupling",
+                                     "Drain Rate Limiter"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0074",
+                        "title":  "Steam displacement declared primary, but DRAIN volumetric reconciliation path de-emphasizes steam mass-to-volume closure",
+                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
+                        "severity":  "HIGH",
+                        "status":  "INVESTIGATING",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0002",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-15T09:27:32Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "PZR Volumetrics",
+                                     "Steam Displacement Semantics"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0075",
+                        "title":  "40-minute DRAIN constant is advisory only; state machine transition is level-threshold driven",
+                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
+                        "severity":  "MEDIUM",
+                        "status":  "INVESTIGATING",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0002",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-15T09:27:32Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "State Machine Validation",
+                                     "Duration Gate Missing"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0076",
+                        "title":  "Procedure alignment risk: startup reference max-letdown/min-charging intent differs from fixed DRAIN policy (75/0->44)",
+                        "domain":  "CVCS / Inventory Control",
+                        "severity":  "MEDIUM",
+                        "status":  "INVESTIGATING",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0004",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-15T09:35:45Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "Procedure Alignment",
+                                     "CVCS Scheduling"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0077",
+                        "title":  "HeatupValidationVisual redesign from tabbed layout to unified instrumentation screen",
+                        "domain":  "Operator Interface \u0026 Scenarios",
+                        "severity":  "HIGH",
+                        "status":  "INVESTIGATING",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0008",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-15T10:45:00Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "UI Redesign - Unified Dashboard",
+                                     "Operator Cognitive Load Reduction",
+                                     "Validation Observability",
+                                     "Alarm-First Layout"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0078",
+                        "title":  "SG secondary pressure response does not begin at RCP circulation onset; rise is delayed until near-boiling",
+                        "domain":  "Steam Generator Secondary Physics",
+                        "severity":  "HIGH",
+                        "status":  "READY_FOR_FIX",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0011",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-15T10:24:34Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "SG Secondary Physics - Warmup Pressurization",
+                                     "Pre-Boil Pressure Response",
+                                     "RCP Heatup Coupling"
                                  ]
                     }
                 ],

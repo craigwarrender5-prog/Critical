@@ -1,8 +1,8 @@
 ﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-15T08:50:52Z",
+    "generated_at":  "2026-02-15T10:45:00Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-    "active_issue_count":  38,
+    "active_issue_count":  44,
     "issues":  [
                    {
                        "id":  "CS-0006",
@@ -479,17 +479,17 @@
                                     "Bubble Formation â€” Phase Controller / CVCS Flow Balance"
                                 ]
                    },
-                   {
-                       "id":  "CS-0037",
-                       "title":  "Surge line flow direction and net inventory display enhancement",
-                       "domain":  "Operator Interface \u0026 Scenarios",
-                       "severity":  "LOW",
-                       "status":  "READY_FOR_FIX",
-                       "created_at":  "2026-02-13T00:00:00Z",
-                       "updated_at":  "2026-02-14T15:57:51Z",
-                       "stage_detected":  null,
-                       "assigned_dp":  "DP-0008",
-                       "assigned_ip":  "IP-0013",
+                    {
+                        "id":  "CS-0037",
+                        "title":  "Surge line flow direction and net inventory display enhancement",
+                        "domain":  "Operator Interface \u0026 Scenarios",
+                        "severity":  "LOW",
+                        "status":  "INVESTIGATING",
+                        "created_at":  "2026-02-13T00:00:00Z",
+                        "updated_at":  "2026-02-15T10:45:00Z",
+                        "stage_detected":  null,
+                        "assigned_dp":  "DP-0008",
+                        "assigned_ip":  null,
                        "observations":  [
                                             "Surge flow display currently shows magnitude only, without explicit direction indicator. During DRAIN and PRESSURIZE phases, ambiguity exists about whether flow is PZRâ†’RCS or RCSâ†’PZR. Net CVCS flow and derived PZR mass change rate are not displayed, making it difficult to diagnose mass balance during transient phases. Operators must infer flow direction from other parameters.",
                                             "None â€” Pure observability enhancement. No physics equations, conservation logic, or state computation changes."
@@ -502,9 +502,10 @@
                                       ],
                        "root_cause":  "Confirmed â€” UI displays surge flow magnitude without sign convention or directional indicator. No derived net mass change display exists.",
                        "resolution_candidate":  "Not Tested",
-                       "links":  [
-                                     "Subsumed by: CS-0042 (dashboard modernization â€” directional flow indicators). Related: CS-0012 (regime transition logging). Related: CS-0036 (DRAIN duration â€” flow direction clarity aids diagnosis). Related: CS-0027 (bubble phase labeling).",
-                                     "IP-0013 â€” Operator and Scenario Framework (subsumed by CS-0042)"
+                        "links":  [
+                                     "Subsumed by: CS-0077 (HeatupValidationVisual unified dashboard redesign). Related: CS-0012 (regime transition logging). Related: CS-0036 (DRAIN duration â€” flow direction clarity aids diagnosis). Related: CS-0027 (bubble phase labeling).",
+                                     "DP-0008 unified instrumentation redesign scope (CS-0077)",
+                                     "IP-0020 closed as FAILED on 2026-02-15; CS reclassified to INVESTIGATING pending replacement planning."
                                  ],
                        "tags":  [
                                     "Observability â€” Operator/Visual Enhancement"
@@ -604,43 +605,6 @@
                                  ],
                        "tags":  [
                                     "Validation / Diagnostic Display â€” Conservation Metric Integrity"
-                                ]
-                   },
-                    {
-                        "id":  "CS-0042",
-                        "title":  "Professional interactive dashboard visualization upgrade (uGUI modernization)",
-                        "domain":  "Operator Interface \u0026 Scenarios",
-                        "severity":  "HIGH",
-                        "status":  "READY_FOR_FIX",
-                        "created_at":  "2026-02-13T00:00:00Z",
-                        "updated_at":  "2026-02-15T08:58:22Z",
-                        "stage_detected":  null,
-                        "assigned_dp":  "DP-0008",
-                        "assigned_ip":  "IP-0013",
-                        "observations":  [
-                                             "Critical Tab Redesign – Functional Requirements: Applies only to the Critical tab and must not alter layout or behavior of other tabs. UI-only change. No physics model changes. No acceptance logic changes. Must consume the existing telemetry snapshot interface exclusively (no direct physics reads from UI).",
-                                             "Always-Visible Metrics (Non-Negotiable): RCS (Thermal State), RCS Temperature (Tavg), RCS Pressure, dT/dt (rate), dP/dt (rate), Pressurizer (Control Authority), PZR Temperature, PZR Pressure, PZR Level %, Heater status, Spray status, Inventory / CVCS (Inventory Truth), Charging flow (gpm), Letdown flow (gpm), Net flow (direction emphasized), VCT Level %, and inventory alarm state (if active). These values must be readable within 5 seconds without tab switching.",
-                                             "Layout Constraints: Maximum 4 large gauges. Sparkline trends allowed only as compact elements (no full graph panels). Alarm strip limited to top 4-6 active alarms. No SG detailed panels permanently visible (secondary belongs in its own tab). No scrolling at 1080p.",
-                                             "Interaction Rules: Expandable drawers allowed for deeper detail. Animated transitions permitted (150-250 ms). No per-frame allocations. Trend buffers must be fixed-size ring buffers. UI update frequency must be rate-limited to <=10 Hz.",
-                                             "Performance Safeguards: No measurable frame-time increase at 10x simulation speed. No LINQ or heap allocations in Update loops. UI must degrade gracefully if telemetry is unavailable.",
-                                             "Acceptance Criteria: Operator can determine plant thermal state, pressure control state, and inventory state within 5 seconds. All defined metrics visible simultaneously at 1080p. Other tabs remain unaffected. CS-0042 may only be closed once Critical tab redesign is implemented and verified under load.",
-                                             "Severity Re-evaluation: Elevated to HIGH due to operational impact because this tab is central to validation workflow."
-                                         ],
-                       "evidence":  [
-
-                                    ],
-                       "hypotheses":  [
-
-                                      ],
-                       "root_cause":  "Confirmed â€” Dashboard was built incrementally as a validation tool (OnGUI text-based). It was never designed as a professional instrumentation interface. The telemetry data is correct; the presentation layer does not exploit it effectively.",
-                       "resolution_candidate":  "Not Tested",
-                       "links":  [
-                                     "Subsumes: CS-0037 (surge flow direction display â€” directional indicators are a subset of this scope). Related: CS-0041 (inventory audit baseline type mismatch â€” conservation display alignment). Related: CS-0007 (primary ledger drift UI). Related: CS-0012 (regime transition logging â€” observability domain overlap).",
-                                     "FUTURE_ENHANCEMENTS_ROADMAP.md â€” v5.5.0.0 Validation Dashboard Redesign",
-                                     "IP-0013 â€” Operator and Scenario Framework"
-                                 ],
-                       "tags":  [
-                                    "Operator \u0026 Scenario Framework â€” Dashboard Visualization"
                                 ]
                    },
                    {
@@ -1344,11 +1308,11 @@
                                     "Undocumented Magic Numbers"
                                 ]
                    },
-                   {
-                       "id":  "CS-0070",
-                       "title":  "HeatupSimEngine header lacks mandatory GOLD C01 sections (SOURCES and UNITS)",
-                       "domain":  "Project Governance",
-                       "severity":  "LOW",
+                    {
+                        "id":  "CS-0070",
+                        "title":  "HeatupSimEngine header lacks mandatory GOLD C01 sections (SOURCES and UNITS)",
+                        "domain":  "Project Governance",
+                        "severity":  "LOW",
                        "status":  "READY_FOR_FIX",
                        "created_at":  "2026-02-14T19:55:32Z",
                        "updated_at":  "2026-02-14T19:55:32Z",
@@ -1385,10 +1349,442 @@
                        "links":  [
                                      "Assigned DP: DP-0010 - Project Governance"
                                  ],
-                       "tags":  [
-                                    "GOLD C01",
-                                    "Header Completeness"
-                                ]
-                   }
-               ]
+                        "tags":  [
+                                     "GOLD C01",
+                                     "Header Completeness"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0072",
+                        "title":  "Validation failure: Bubble draw duration exceeds documented expectation (~165-180 min observed vs 30-60 min expected)",
+                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
+                        "severity":  "HIGH",
+                        "status":  "INVESTIGATING",
+                        "created_at":  "2026-02-15T09:27:32Z",
+                        "updated_at":  "2026-02-15T09:27:32Z",
+                        "stage_detected":  "Stage E",
+                        "assigned_dp":  "DP-0002",
+                        "assigned_ip":  null,
+                        "observations":  [
+                                             "Expected behavior: documentation and internal constants indicate bubble draw is a short operation (nominal ~40 min, practical ~30-60 min) while level drops toward ~25% with startup-band pressure control.",
+                                             "Observed behavior: in `IP-0019_Extended_20260215_081706`, DRAIN runs from 8.50 hr (90.6%) to 11.25 hr (25.5%), i.e., ~165 min; transition to COMPLETE appears at ~11.50 hr.",
+                                             "Acceptance criteria: (1) DRAIN start->complete <=60 min (pass), <=40 min (advisory), (2) pressure remains in startup band while level drops toward ~25%, (3) closure blocked until these gates are validated in runtime logs."
+                                         ],
+                        "evidence":  [
+                                         {
+                                             "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:64",
+                                             "notes":  "doc_target_level_drop_to_25_percent"
+                                         },
+                                         {
+                                             "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:67",
+                                             "notes":  "doc_pressure_maintained_during_draw"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Physics/PlantConstants.Pressurizer.cs:155",
+                                             "notes":  "internal_nominal_drain_duration_40_min"
+                                         },
+                                         {
+                                             "ref":  "HeatupLogs/IP-0019_Extended_20260215_081706/ExtendedHeatup/Heatup_Interval_094_8.50hr.txt:31",
+                                             "notes":  "drain_start_level_90_6_percent"
+                                         },
+                                         {
+                                             "ref":  "HeatupLogs/IP-0019_Extended_20260215_081706/ExtendedHeatup/Heatup_Interval_105_11.25hr.txt:31",
+                                             "notes":  "near_target_level_25_5_percent_after_165_min"
+                                         },
+                                         {
+                                             "ref":  "HeatupLogs/IP-0019_Extended_20260215_081706/ExtendedHeatup/Heatup_Interval_106_11.50hr.txt:67",
+                                             "notes":  "phase_complete_marker"
+                                         }
+                                     ],
+                        "hypotheses":  [
+                                           "Duration overrun is multi-factor: state-machine transition logic is level-only, CVCS schedule imposes a fixed post-CCP baseline, and volumetric displacement semantics are not strongly enforced in DRAIN."
+                                       ],
+                        "root_cause":  null,
+                        "resolution_candidate":  "Pending preliminary investigation package under approved plans DP-0002 and DP-0004. No code changes authorized in this phase.",
+                        "links":  [
+                                      "Assigned DP: DP-0002 - Pressurizer \u0026 Two-Phase Physics",
+                                      "Related: CS-0036, CS-0043, CS-0073, CS-0074, CS-0075, CS-0076"
+                                  ],
+                        "tags":  [
+                                     "Validation Failure",
+                                     "Bubble Formation Duration"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0073",
+                        "title":  "DRAIN progression is strongly constrained by fixed post-CCP net outflow policy (75 letdown, 44 charging, net 31 gpm)",
+                        "domain":  "CVCS / Inventory Control",
+                        "severity":  "HIGH",
+                        "status":  "INVESTIGATING",
+                        "created_at":  "2026-02-15T09:27:32Z",
+                        "updated_at":  "2026-02-15T09:35:45Z",
+                        "stage_detected":  "Stage E",
+                        "assigned_dp":  "DP-0004",
+                        "assigned_ip":  null,
+                        "observations":  [
+                                             "Expected behavior: if steam displacement is primary, DRAIN progression should not be explained mainly by fixed CVCS net outflow after CCP start.",
+                                             "Observed behavior: documentation indicates multi-orifice letdown capability (2x75 + 1x45 gpm, capped to 120 gpm), but active DRAIN uses fixed 75/0->44 policy (net 31 gpm after CCP start). Measured post-CCP implied drain (~9.00->11.25 hr) is ~49.0 gpm, indicating CVCS baseline plus additional displacement contribution.",
+                                             "Acceptance criteria: runtime evidence must show DRAIN progression is not solely dominated by CVCS net outflow when displacement is intended primary; multi-orifice authority and its impact on drain progression must be explicitly validated or formally waived."
+                                         ],
+                        "evidence":  [
+                                         {
+                                             "ref":  "Assets/Scripts/Physics/PlantConstants.CVCS.cs:146",
+                                             "notes":  "fixed_bubble_drain_letdown_75_gpm"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Physics/PlantConstants.CVCS.cs:162",
+                                             "notes":  "fixed_ccp_charging_44_gpm"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Validation/HeatupSimEngine.BubbleFormation.cs:413",
+                                             "notes":  "net_outflow_computation_letdown_minus_charging"
+                                         },
+                                         {
+                                             "ref":  "HeatupLogs/IP-0019_Extended_20260215_081706/ExtendedHeatup/Heatup_Interval_096_9.00hr.txt:47",
+                                             "notes":  "post_ccp_net_cvcs_minus_31_gpm"
+                                         },
+                                         {
+                                             "ref":  "HeatupLogs/IP-0019_Extended_20260215_081706/ExtendedHeatup/Heatup_Interval_105_11.25hr.txt:31",
+                                             "notes":  "post_ccp_level_progress_used_for_implied_rate"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Physics/PlantConstants.CVCS.cs:398",
+                                             "notes":  "two_75gpm_orifices_defined"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Physics/PlantConstants.CVCS.cs:404",
+                                             "notes":  "one_45gpm_orifice_defined"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Physics/PlantConstants.CVCS.cs:425",
+                                             "notes":  "ion_exchanger_letdown_cap_120gpm"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Validation/HeatupSimEngine.CVCS.cs:79",
+                                             "notes":  "bubble_drain_active_bypasses_general_letdown_calc"
+                                         },
+                                         {
+                                             "ref":  "Technical_Documentation/PZR_Level_Pressure_Deficit_Analysis_v4.4.0.md:60",
+                                             "notes":  "documentation_three_orifices_statement"
+                                         },
+                                         {
+                                             "ref":  "Technical_Documentation/PZR_Level_Pressure_Deficit_Analysis_v4.4.0.md:64",
+                                             "notes":  "documentation_120gpm_max_statement"
+                                         }
+                                     ],
+                        "hypotheses":  [
+                                           "The fixed post-CCP net outflow acts as the dominant baseline limiter, with displacement adding variable margin rather than governing progression directly.",
+                                           "DRAIN currently behaves like a single-drain-policy regime even though the codebase contains multi-orifice infrastructure for non-DRAIN operation."
+                                       ],
+                        "root_cause":  null,
+                        "resolution_candidate":  "Pending procedure-alignment and coupling-policy investigation under approved plan DP-0004; multi-orifice finding folded into this issue.",
+                        "links":  [
+                                      "Assigned DP: DP-0004 - CVCS / Inventory Control",
+                                      "Related: CS-0072 and CS-0076"
+                                  ],
+                        "tags":  [
+                                     "CVCS-PZR Coupling",
+                                     "Drain Rate Limiter",
+                                     "Orifice Lineup Authority"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0074",
+                        "title":  "Steam displacement declared primary, but DRAIN volumetric reconciliation path de-emphasizes steam mass-to-volume closure",
+                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
+                        "severity":  "HIGH",
+                        "status":  "INVESTIGATING",
+                        "created_at":  "2026-02-15T09:27:32Z",
+                        "updated_at":  "2026-02-15T09:27:32Z",
+                        "stage_detected":  "Stage E",
+                        "assigned_dp":  "DP-0002",
+                        "assigned_ip":  null,
+                        "observations":  [
+                                             "Expected behavior: if steam displacement is primary, steam generation and volumetric closure should directly govern level reduction under total-volume constraint.",
+                                             "Observed behavior: DRAIN computes water volume from water mass with floor to target water volume; steam volume is residual, while explicit steam mass <- V*rho reconciliation is intentionally disabled in this path.",
+                                             "Acceptance criteria: volumetric displacement path must be explicitly validated as a primary contributor to level reduction and remain mass-conservative."
+                                         ],
+                        "evidence":  [
+                                         {
+                                             "ref":  "Assets/Scripts/Physics/PlantConstants.Pressurizer.cs:149",
+                                             "notes":  "comments_declare_steam_displacement_primary"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Validation/HeatupSimEngine.BubbleFormation.cs:366",
+                                             "notes":  "primary_mechanism_comment"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Validation/HeatupSimEngine.BubbleFormation.cs:456",
+                                             "notes":  "water_volume_derived_from_water_mass_with_floor"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Validation/HeatupSimEngine.BubbleFormation.cs:459",
+                                             "notes":  "steam_mass_reconciliation_disabled_in_drain_path"
+                                         }
+                                     ],
+                        "hypotheses":  [
+                                           "Current mass-first derivation is conservative for inventory accounting but may under-express volumetric displacement intent, making CVCS schedule appear overly dominant."
+                                       ],
+                        "root_cause":  null,
+                        "resolution_candidate":  "Pending targeted volumetric-closure design under approved plan DP-0002.",
+                        "links":  [
+                                      "Assigned DP: DP-0002 - Pressurizer \u0026 Two-Phase Physics",
+                                      "Related: CS-0072 and CS-0075"
+                                  ],
+                        "tags":  [
+                                     "PZR Volumetrics",
+                                     "Steam Displacement Semantics"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0075",
+                        "title":  "40-minute DRAIN constant is advisory only; state machine transition is level-threshold driven",
+                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
+                        "severity":  "MEDIUM",
+                        "status":  "INVESTIGATING",
+                        "created_at":  "2026-02-15T09:27:32Z",
+                        "updated_at":  "2026-02-15T09:27:32Z",
+                        "stage_detected":  "Stage E",
+                        "assigned_dp":  "DP-0002",
+                        "assigned_ip":  null,
+                        "observations":  [
+                                             "Expected behavior: internal nominal DRAIN duration constant (~40 min) should influence transition validation when duration materially exceeds expectation.",
+                                             "Observed behavior: `BUBBLE_PHASE_DRAIN_HR` is not consumed by transition logic; DRAIN exits when `pzrLevel <= target + 0.5`, with pressure-rate advisory only.",
+                                             "Acceptance criteria: DRAIN transition validation must enforce <=60 min pass and <=40 min advisory, in addition to existing level and pressure checks."
+                                         ],
+                        "evidence":  [
+                                         {
+                                             "ref":  "Assets/Scripts/Physics/PlantConstants.Pressurizer.cs:155",
+                                             "notes":  "nominal_drain_duration_constant"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Validation/HeatupSimEngine.BubbleFormation.cs:512",
+                                             "notes":  "level_only_exit_condition"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Validation/HeatupSimEngine.BubbleFormation.cs:516",
+                                             "notes":  "pressure_rate_is_advisory_not_blocking"
+                                         }
+                                     ],
+                        "hypotheses":  [
+                                           "Because duration is not a gate, prolonged drain can pass phase progression as long as level threshold is eventually met."
+                                       ],
+                        "root_cause":  null,
+                        "resolution_candidate":  "Pending state-machine validation gate design in approved plan DP-0002.",
+                        "links":  [
+                                      "Assigned DP: DP-0002 - Pressurizer \u0026 Two-Phase Physics",
+                                      "Related: CS-0072"
+                                  ],
+                        "tags":  [
+                                     "State Machine Validation",
+                                     "Duration Gate Missing"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0076",
+                        "title":  "Procedure alignment risk: startup reference max-letdown/min-charging intent differs from fixed DRAIN policy (75/0->44)",
+                        "domain":  "CVCS / Inventory Control",
+                        "severity":  "MEDIUM",
+                        "status":  "INVESTIGATING",
+                        "created_at":  "2026-02-15T09:27:32Z",
+                        "updated_at":  "2026-02-15T09:35:45Z",
+                        "stage_detected":  "Stage E",
+                        "assigned_dp":  "DP-0004",
+                        "assigned_ip":  null,
+                        "observations":  [
+                                             "Expected behavior: startup procedure references maximizing letdown and minimizing charging while drawing the bubble, with pressure held in startup band; source documents also describe multi-orifice letdown capability and a 120 gpm upper limit during heatup operations.",
+                                             "Observed behavior: implementation uses fixed DRAIN policy (75 gpm letdown, charging 0 then 44 gpm after CCP start at 80% level) and does not apply dynamic orifice lineup logic in active DRAIN.",
+                                             "Acceptance criteria: either (a) implement a documented procedure-aligned flow schedule that explicitly uses/justifies available orifice authority, or (b) formally justify fixed policy with validation proving duration and pressure-band gates."
+                                         ],
+                        "evidence":  [
+                                         {
+                                             "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:63",
+                                             "notes":  "reference_max_letdown_min_charging_intent"
+                                         },
+                                         {
+                                             "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:67",
+                                             "notes":  "reference_pressure_maintenance_during_draw"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Physics/PlantConstants.CVCS.cs:146",
+                                             "notes":  "implemented_fixed_letdown_75"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Physics/PlantConstants.CVCS.cs:155",
+                                             "notes":  "implemented_initial_charging_zero"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Physics/PlantConstants.CVCS.cs:162",
+                                             "notes":  "implemented_post_ccp_charging_44"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Physics/PlantConstants.CVCS.cs:398",
+                                             "notes":  "two_75_orifices_available"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Physics/PlantConstants.CVCS.cs:404",
+                                             "notes":  "one_45_orifice_available"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Physics/PlantConstants.CVCS.cs:425",
+                                             "notes":  "letdown_cap_120gpm"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Validation/HeatupSimEngine.CVCS.cs:86",
+                                             "notes":  "orifice_lineup_used_only_outside_drain"
+                                         },
+                                         {
+                                             "ref":  "Assets/Scripts/Validation/HeatupSimEngine.BubbleFormation.cs:471",
+                                             "notes":  "drain_path_forces_fixed_letdown"
+                                         }
+                                     ],
+                        "hypotheses":  [
+                                           "Procedure-to-implementation divergence narrows control authority during draw and contributes to prolonged duration risk.",
+                                           "A deliberate simplification to fixed DRAIN policy may have overridden documented multi-orifice operating flexibility without a formal validation waiver."
+                                       ],
+                        "root_cause":  null,
+                        "resolution_candidate":  "Pending procedure alignment decision under approved plan DP-0004.",
+                        "links":  [
+                                      "Assigned DP: DP-0004 - CVCS / Inventory Control",
+                                      "Related: CS-0073 and CS-0072"
+                                  ],
+                        "tags":  [
+                                     "Procedure Alignment",
+                                     "CVCS Scheduling"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0077",
+                        "title":  "HeatupValidationVisual redesign from tabbed layout to unified instrumentation screen",
+                        "domain":  "Operator Interface \u0026 Scenarios",
+                        "severity":  "HIGH",
+                        "status":  "INVESTIGATING",
+                        "created_at":  "2026-02-15T10:06:26Z",
+                        "updated_at":  "2026-02-15T10:45:00Z",
+                        "stage_detected":  null,
+                        "assigned_dp":  "DP-0008",
+                        "assigned_ip":  null,
+                        "observations":  [
+                                             "Problem statement: the current HeatupValidationVisual tab architecture fragments critical telemetry across multiple views and forces operators to hunt for state during validation runs.",
+                                             "Redesign objective: replace tabbed telemetry navigation with a single unified, high-density instrumentation screen based on Dashboard Proposal.png.",
+                                             "Layout requirement: all key telemetry must be visible simultaneously at 1920x1080 with no scrolling.",
+                                             "Alarm hierarchy requirement: top alarm strip is highest visual priority and displays active alarms with compact trend indicators, limited to 4-6 active alarms.",
+                                             "Section grouping requirement: distinct, always-visible groupings for Primary (RCS pressure/temperature/trends), Pressurizer (pressure/level/temperature/subcooling/heaters/sprays), Secondary (SG pressure/temperature with worst-case indicators), Inventory/CVCS (charging/letdown/net flow/system mass/VCT level), and System Mass/Conservation with drift indicator.",
+                                             "Trend requirement: each major section provides uniform micro-trend sparklines with 3-minute lookback; full graph panels are excluded from this scope.",
+                                             "Flow awareness requirement: net flow direction and rate must be continuously emphasized both numerically and visually.",
+                                             "Performance requirement: UI update loop must be rate-limited to <=10 Hz using fixed-size ring buffers for trend samples.",
+                                             "Runtime safety requirement: no per-frame allocations and no LINQ in update loops; redesign must not measurably increase frame time at 10x simulation speed.",
+                                             "Availability requirement: UI must degrade gracefully when telemetry is unavailable (stale/missing data surfaced without exception spam or hard UI failure).",
+                                             "Acceptance gate: closure requires visual verification against the design reference and an under-load runtime check at 10x simulation speed confirming performance constraints."
+                                         ],
+                        "evidence":  [
+                                         {
+                                             "ref":  "Dashboard Proposal.png",
+                                             "notes":  "authoritative visual/layout reference for unified screen"
+                                         }
+                                     ],
+                        "hypotheses":  [
+
+                                       ],
+                        "root_cause":  "The tabbed monitoring design increases cognitive load and delays anomaly recognition because subsystem state must be mentally reassembled across separate views.",
+                        "resolution_candidate":  "Not Tested",
+                        "links":  [
+                                      "Scope boundary: UI redesign only for HeatupValidationVisual presentation layer; no physics model changes, no validation logic changes, and no acceptance logic changes.",
+                                      "Data boundary: dashboard must consume a read-only telemetry snapshot interface and must not read simulation/physics internals directly.",
+                                      "Out of scope: reactor/pressurizer/CVCS physics behavior, validation scenario sequencing, acceptance-rule thresholds, and non-dashboard workflow refactors.",
+                                      "IP-0020 closed as FAILED on 2026-02-15; CS remains open and reclassified to INVESTIGATING until a new implementation plan is approved."
+                                  ],
+                        "tags":  [
+                                     "UI Redesign - Unified Dashboard",
+                                     "Operator Cognitive Load Reduction",
+                                     "Validation Observability",
+                                     "Alarm-First Layout"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0078",
+                        "title":  "SG secondary pressure response does not begin at RCP circulation onset; rise is delayed until near-boiling",
+                        "domain":  "Steam Generator Secondary Physics",
+                        "severity":  "HIGH",
+                        "status":  "READY_FOR_FIX",
+                        "created_at":  "2026-02-15T10:19:57Z",
+                        "updated_at":  "2026-02-15T10:24:34Z",
+                        "stage_detected":  "Stage E",
+                        "assigned_dp":  "DP-0011",
+                        "assigned_ip":  null,
+                        "observations":  [
+                                             "Technical documentation defines SG warmup as simultaneous heating and pressurization: as RCP heat input warms SG secondary, pressure should rise with temperature and later be regulated by steam dump control.",
+                                             "Current build logs show SG secondary pressure remains near blanket floor (~17 psia) from first non-zero RCP circulation through extended post-bubble RCP-driven warmup and temperature rise, then increases only near/after boiling onset, indicating delayed pressure response inconsistent with documented warmup behavior.",
+                                             "Scope note: this CS starts at first non-zero RCP circulation (ramp onset) after bubble precondition and does not require full pump ramp completion. Bubble formation/draining timing defects are tracked separately under existing bubble-phase CS items and are not duplicated here.",
+                                             "In latest build run, with RCPs at 4/4 and SG top node increasing from 109.53F to 216.90F (13.25hr -> 16.00hr), SG pressure remains only 17.1 -> 17.8 psia; pressure rise accelerates only near 234.95F/255.31F around boiling transition.",
+                                             "Acceptance criteria: SG secondary pressure response must begin at circulation onset (first non-zero RCP state) and continue directionally upward through warmup, even if initial increments are small, without remaining floor-clamped until near-boiling transition."
+                                         ],
+                        "evidence":  [
+                                         {
+                                             "ref":  "Technical_Documentation/SG_Secondary_Pressurization_During_Heatup_Research.md:94",
+                                             "notes":  "nrc_statement_rcp_heat_input_causes_steam_pressure_increase"
+                                         },
+                                         {
+                                             "ref":  "Technical_Documentation/SG_Secondary_Pressurization_During_Heatup_Research.md:36",
+                                             "notes":  "documented_pressure_continues_rising_with_heatup"
+                                         },
+                                         {
+                                             "ref":  "Technical_Documentation/SG_THERMAL_MODEL_RESEARCH_v3.0.0.md:145",
+                                             "notes":  "simultaneous_heating_and_pressurization_expected"
+                                         },
+                                         {
+                                             "ref":  "build/HeatupLogs/Heatup_Interval_094_11.75hr.txt:72",
+                                             "notes":  "first_nonzero_rcp_circulation_1_of_4"
+                                         },
+                                         {
+                                             "ref":  "build/HeatupLogs/Heatup_Interval_094_11.75hr.txt:157",
+                                             "notes":  "pressure_still_floor_at_rcp_circulation_onset"
+                                         },
+                                         {
+                                             "ref":  "build/HeatupLogs/Heatup_Interval_106_13.25hr.txt:72",
+                                             "notes":  "rcp_4_of_4_running"
+                                         },
+                                         {
+                                             "ref":  "build/HeatupLogs/Heatup_Interval_106_13.25hr.txt:159",
+                                             "notes":  "sg_top_temperature_109_53f"
+                                         },
+                                         {
+                                             "ref":  "build/HeatupLogs/Heatup_Interval_106_13.25hr.txt:166",
+                                             "notes":  "sg_pressure_17_1_psia"
+                                         },
+                                         {
+                                             "ref":  "build/HeatupLogs/Heatup_Interval_128_16.00hr.txt:159",
+                                             "notes":  "sg_top_temperature_216_90f"
+                                         },
+                                         {
+                                             "ref":  "build/HeatupLogs/Heatup_Interval_128_16.00hr.txt:166",
+                                             "notes":  "sg_pressure_17_8_psia_still_near_floor"
+                                         },
+                                         {
+                                             "ref":  "build/HeatupLogs/Heatup_Interval_132_16.50hr.txt:166",
+                                             "notes":  "pressure_rise_after_near_boiling_transition"
+                                         },
+                                         {
+                                             "ref":  "build/HeatupLogs/Heatup_Interval_132_16.50hr.txt:199",
+                                             "notes":  "boiling_active_yes_at_pressure_takeoff"
+                                         }
+                                     ],
+                        "hypotheses":  [
+                                           "Startup pressure source selection and/or floor-clamped boundary behavior in OPEN_PREHEAT and early ISOLATED_HEATUP is suppressing expected compressibility/thermal-expansion pressure rise.",
+                                           "Pressure evolution may be over-coupled to boiling activation thresholds, producing near-flat pre-boil pressure instead of gradual warmup pressurization."
+                                       ],
+                        "root_cause":  null,
+                        "resolution_candidate":  "Pending implementation of pre-boil pressurization coupling consistent with documented SG warmup process under DP-0011.",
+                        "links":  [
+                                      "Assigned DP: DP-0011 - Steam Generator Secondary Physics (Audit Reopen)",
+                                      "Related closed chain: CS-0017, CS-0019, CS-0020, CS-0054 (reopened symptom class under current build evidence).",
+                                      "Prerequisite dependency (separate scope): bubble formation/draining issue chain CS-0072, CS-0074, CS-0075, CS-0076."
+                                  ],
+                        "tags":  [
+                                     "SG Secondary Physics - Warmup Pressurization",
+                                     "Pre-Boil Pressure Response",
+                                     "RCP Heatup Coupling"
+                                 ]
+                    }
+                ]
 }
