@@ -56,6 +56,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
 using Critical.Physics;
+using Critical.Simulation.Modular.State;
 
 /// <summary>
 /// Heatup Validation Dashboard — OnGUI coordinator.
@@ -161,6 +162,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
     private int _cachedPlantMode = -1;
     private string _cachedPhaseDesc;
     private HeatupSimEngine.RuntimeTelemetrySnapshot _telemetrySnapshot;
+    private StepSnapshot _stepSnapshot = StepSnapshot.Empty;
 
     // v0.3.0.0 Phase A (CS-0032): Frame time diagnostic — lightweight probe
     private float _frameTimeAccum;
@@ -187,7 +189,10 @@ public partial class HeatupValidationVisual : MonoBehaviour
         if (engine == null)
             Debug.LogError("[HeatupValidationVisual] No HeatupSimEngine found in scene!");
         else
+        {
             _telemetrySnapshot = engine.GetTelemetrySnapshot();
+            _stepSnapshot = engine.GetStepSnapshot();
+        }
 
         // Note: Styles are initialized lazily in OnGUI (GUI.skin requires OnGUI context)
     }
@@ -256,7 +261,10 @@ public partial class HeatupValidationVisual : MonoBehaviour
     void Update()
     {
         if (engine != null)
+        {
             _telemetrySnapshot = engine.GetTelemetrySnapshot();
+            _stepSnapshot = engine.GetStepSnapshot();
+        }
 
         // ============================================================
         // v0.3.0.0 Phase A (CS-0032): Frame time diagnostic probe.

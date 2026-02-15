@@ -6,6 +6,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using Critical.Simulation.Modular;
+using Critical.Simulation.Modular.State;
 
 public partial class HeatupSimEngine
 {
@@ -19,6 +20,21 @@ public partial class HeatupSimEngine
 
     public readonly struct RuntimeTelemetrySnapshot
     {
+        public static readonly RuntimeTelemetrySnapshot Empty = new RuntimeTelemetrySnapshot(
+            0f,
+            0f,
+            0,
+            string.Empty,
+            0,
+            false,
+            0f,
+            0f,
+            0f,
+            0f,
+            0,
+            0f,
+            0f);
+
         public readonly float SimTime;
         public readonly float WallClockTime;
         public readonly int PlantMode;
@@ -66,6 +82,7 @@ public partial class HeatupSimEngine
 
     private readonly object _runtimeSync = new object();
     private RuntimeTelemetrySnapshot _latestSnapshot;
+    private StepSnapshot _latestStepSnapshot = StepSnapshot.Empty;
 
     private readonly object _asyncLogQueueLock = new object();
     private readonly Queue<PendingLogWrite> _asyncLogQueue = new Queue<PendingLogWrite>();
@@ -96,6 +113,14 @@ public partial class HeatupSimEngine
         lock (_runtimeSync)
         {
             return _latestSnapshot;
+        }
+    }
+
+    public StepSnapshot GetStepSnapshot()
+    {
+        lock (_runtimeSync)
+        {
+            return _latestStepSnapshot;
         }
     }
 
@@ -130,6 +155,7 @@ public partial class HeatupSimEngine
                 workerThreadSteppingLastStepUsed = false;
                 ExecutePhysicsStepAuthorityPath(dt);
                 PublishTelemetrySnapshot();
+                PublishStepSnapshot(dt);
             }
             return;
         }
@@ -146,6 +172,7 @@ public partial class HeatupSimEngine
                     {
                         ExecutePhysicsStepAuthorityPath(dt);
                         PublishTelemetrySnapshot();
+                        PublishStepSnapshot(dt);
                     }
                 }
                 catch (Exception ex)
@@ -192,6 +219,18 @@ public partial class HeatupSimEngine
     internal void RunLegacySimulationStepForCoordinator(float dt)
     {
         StepSimulation(dt);
+    }
+
+    private void PublishStepSnapshot(float dt)
+    {
+        // Stage B single-writer rule: projection is emitted only through LegacyStateBridge.
+        PlantState projected = LegacyStateBridge.Export(this, dt);
+        _latestStepSnapshot = new StepSnapshot(
+            simTime,
+            dt,
+            projected,
+            _latestSnapshot,
+            Array.Empty<string>());
     }
 
     void WriteTextFileRuntime(string filePath, StringBuilder contentBuilder, bool preferAsync, string source)
