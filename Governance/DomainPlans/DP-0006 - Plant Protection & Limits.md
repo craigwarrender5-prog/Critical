@@ -26,7 +26,7 @@ Mode: SPEC/DRAFT
 ## C) Ordered Issue Backlog
 | CS ID | Title | Severity | Status | Blocking Dependency | Validation Outcome |
 |---|---|---|---|---|---|
-| CS-0010 | No SG secondary pressure alarm | Low | Assigned | - | Not Tested |
+| CS-0010 | No SG secondary pressure alarm | Low | READY_FOR_FIX | - | Pending (active issue) |
 
 ## D) Execution Readiness Indicator
 **READY FOR AUTHORIZATION**
@@ -34,5 +34,4 @@ Mode: SPEC/DRAFT
 No blocking Critical issues unresolved outside domain.
 
 ## E) Notes / Investigation Links
-- Prior IP references:
-  - IP-0007 â€” SG Energy and Pressure Validation
+- Registry consistency synchronized against Governance/IssueRegister/issue_index.json and Governance/IssueRegister/issue_register.json on 2026-02-14.

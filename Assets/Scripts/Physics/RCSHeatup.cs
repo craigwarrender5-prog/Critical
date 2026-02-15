@@ -269,6 +269,12 @@ namespace Critical.Physics
             public float ConductionHeat_MW; // Heat conducted through surge line (MW)
             public float PZRConductionLoss_MW; // v0.3.2.0: PZR surge line heat loss (MW)
             public float PZRInsulationLoss_MW; // v0.3.2.0: PZR insulation heat loss (MW)
+            public string PressureEquationBranch; // Diagnostic branch label for pressure source
+            public bool PressureModelUsesSaturation; // True when pressure is saturation-locked
+            public float PressureModelSaturationPsia; // Saturation pressure used by model
+            public float PressureModelDensity; // Density input used by pressure model
+            public float PressureModelCompressibility; // Compressibility input used by pressure model
+            public float PressureDeltaPsi; // Pressure delta produced by selected branch
         }
         
         /// <summary>
@@ -308,7 +314,9 @@ namespace Critical.Physics
             float pzrHeatCapacity,
             float rcsHeatCapacity,
             float dt_hr,
-            bool twoPhaseActive = false)
+            bool twoPhaseActive = false,
+            float bulkTransportFactor = 1f,
+            float pzrSteamVolume = -1f)
         {
             var result = new IsolatedHeatingResult();
 
@@ -317,7 +325,9 @@ namespace Critical.Physics
             // Uses stratified natural convection model (v1.0.3.0)
             // ================================================================
 
-            float conductionHeat_MW = HeatTransfer.SurgeLineHeatTransfer_MW(T_pzr, T_rcs, pressure);
+            bulkTransportFactor = Math.Max(0f, Math.Min(1f, bulkTransportFactor));
+            float conductionHeat_MW = HeatTransfer.SurgeLineHeatTransfer_MW(T_pzr, T_rcs, pressure)
+                                    * bulkTransportFactor;
             result.ConductionHeat_MW = conductionHeat_MW;
 
             // v0.3.2.0: Always compute PZR losses (needed by UpdateDrainPhase)
@@ -340,6 +350,12 @@ namespace Critical.Physics
                 result.T_pzr = WaterProperties.SaturationTemperature(pressure);
                 result.Pressure = pressure;
                 result.SurgeFlow = 0f;
+                result.PressureEquationBranch = "R1_ISOLATED_TWO_PHASE_LOCKED_PSAT(T)";
+                result.PressureModelUsesSaturation = true;
+                result.PressureModelSaturationPsia = pressure;
+                result.PressureModelDensity = WaterProperties.WaterDensity(result.T_pzr, pressure);
+                result.PressureModelCompressibility = ThermalExpansion.Compressibility(result.T_pzr, pressure);
+                result.PressureDeltaPsi = 0f;
 
                 // RCS still receives surge line conduction heat and loses insulation heat
                 float rcsFromConduction = (rcsHeatCapacity > 0f) ? conductionHeat_BTU / rcsHeatCapacity : 0f;
@@ -389,10 +405,56 @@ namespace Critical.Physics
             // ================================================================
             // PRESSURE UPDATE from PZR thermal expansion
             // ================================================================
+            // v5.5.0 IP-0019: In no-energy isolated hold (heaters off), pressure must
+            // come from bulk thermodynamic state change, not local PZR-only dT.
+            float dP;
+            float modelTempF;
+            float modelKappa;
+            float effectiveSteamVolume = pzrSteamVolume >= 0f ? pzrSteamVolume : 0f;
+            if (effectiveSteamVolume <= 1e-6f)
+            {
+                // Backstop for callers that only provide water volume.
+                float inferredSteam = PlantConstants.PZR_TOTAL_VOLUME - pzrWaterVolume;
+                effectiveSteamVolume = Math.Max(0f, inferredSteam);
+            }
 
-            float dP = ThermalExpansion.PressureChangeFromTemp(pzrDeltaT, result.T_pzr, pressure);
-            const float DAMPING_FACTOR = 0.5f;
-            result.Pressure = pressure + dP * DAMPING_FACTOR;
+            float effectiveLiquidVolume = PlantConstants.RCS_WATER_VOLUME + Math.Max(0f, pzrWaterVolume);
+            float mixedT0 = effectiveLiquidVolume > 1e-6f
+                ? (T_rcs * PlantConstants.RCS_WATER_VOLUME + T_pzr * Math.Max(0f, pzrWaterVolume)) / effectiveLiquidVolume
+                : T_rcs;
+            float mixedT1 = effectiveLiquidVolume > 1e-6f
+                ? (result.T_rcs * PlantConstants.RCS_WATER_VOLUME + result.T_pzr * Math.Max(0f, pzrWaterVolume)) / effectiveLiquidVolume
+                : result.T_rcs;
+            float mixedDeltaT = mixedT1 - mixedT0;
+            bool noEnergyHold = Math.Abs(heaterPower_MW) <= 1e-6f;
+
+            if (noEnergyHold)
+            {
+                dP = CoupledThermo.QuickPressureEstimate(
+                    mixedT0,
+                    pressure,
+                    mixedDeltaT,
+                    effectiveLiquidVolume,
+                    effectiveSteamVolume);
+                result.PressureEquationBranch = "R1_ISOLATED_SUBCOOLED_QPE_MIXED_DT";
+                modelTempF = mixedT0;
+            }
+            else
+            {
+                float localDp = ThermalExpansion.PressureChangeFromTemp(pzrDeltaT, result.T_pzr, pressure);
+                const float DAMPING_FACTOR = 0.5f;
+                dP = localDp * DAMPING_FACTOR;
+                result.PressureEquationBranch = "R1_ISOLATED_SUBCOOLED_dP=PressureCoeff(T,P)*dT*0.5";
+                modelTempF = result.T_pzr;
+            }
+
+            result.Pressure = pressure + dP;
+            modelKappa = ThermalExpansion.Compressibility(modelTempF, pressure);
+            result.PressureModelUsesSaturation = false;
+            result.PressureModelSaturationPsia = WaterProperties.SaturationPressure(result.T_pzr);
+            result.PressureModelDensity = WaterProperties.WaterDensity(modelTempF, pressure);
+            result.PressureModelCompressibility = modelKappa;
+            result.PressureDeltaPsi = dP;
 
             // ================================================================
             // SURGE FLOW from PZR thermal expansion
@@ -464,7 +526,7 @@ namespace Critical.Physics
             
             // Test 4: Isolated heating should increase PZR temp
             var isoResult = IsolatedHeatingStep(
-                400f, 350f, 800f, 1.8f, 1080f, 50000f, 1000000f, 1f/360f);
+                400f, 350f, 800f, 1.8f, 1080f, 50000f, 1000000f, 1f/360f, pzrSteamVolume: 720f);
             if (isoResult.T_pzr <= 400f) valid = false;
             
             // Test 5: Conduction should heat RCS when T_pzr > T_rcs
@@ -480,19 +542,25 @@ namespace Critical.Physics
             
             // Test 7: PZR heatup rate 60-100°F/hr with 1800 kW heaters
             var isoTest = IsolatedHeatingStep(
-                150f, 100f, 365f, 1.8f, 1080f, 74000f, 985000f, 1f/360f);
+                150f, 100f, 365f, 1.8f, 1080f, 74000f, 985000f, 1f/360f, pzrSteamVolume: 720f);
             float pzrRate = (isoTest.T_pzr - 150f) / (1f/360f);
             if (pzrRate < 40f || pzrRate > 120f) valid = false;
             
             // Test 8: PZR still heats even at large ΔT=200°F
             var isoTest2 = IsolatedHeatingStep(
-                300f, 100f, 365f, 1.8f, 1080f, 74000f, 985000f, 1f/360f);
+                300f, 100f, 365f, 1.8f, 1080f, 74000f, 985000f, 1f/360f, pzrSteamVolume: 720f);
             if (isoTest2.T_pzr <= 300f) valid = false;
             
             // Test 9: RCS nearly static during isolated heating
             float rcsDeltaPerStep = isoTest.T_rcs - 100f;
             if (rcsDeltaPerStep > 0.01f) valid = false;
             if (rcsDeltaPerStep < -0.01f) valid = false;
+
+            // Test 10: no-energy isolated hold with no steam cushion should not increase pressure.
+            var isoNoEnergy = IsolatedHeatingStep(
+                100f, 100f, 114.7f, 0f, PlantConstants.PZR_TOTAL_VOLUME, 74000f, 985000f, 1f/360f, pzrSteamVolume: 0f);
+            if (isoNoEnergy.Pressure > 114.7f + 1e-4f) valid = false;
+            if (float.IsNaN(isoNoEnergy.Pressure) || float.IsInfinity(isoNoEnergy.Pressure)) valid = false;
             
             return valid;
         }

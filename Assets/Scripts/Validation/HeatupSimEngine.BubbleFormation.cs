@@ -297,7 +297,8 @@ public partial class HeatupSimEngine
             {
                 // Spray condensation reduces pressure ~0.2-0.3 psi/sec
                 float sprayEffect_psi_sec = 0.25f;
-                pressure -= sprayEffect_psi_sec * (dt * 3600f);
+                float nextPressure = pressure - sprayEffect_psi_sec * (dt * 3600f);
+                ApplyPressureWrite(nextPressure, "BUBBLE_VERIFICATION_AUX_SPRAY", stateDerived: true);
                 auxSprayPressureDrop = auxSprayPressureBefore - pressure;
             }
             else if (sprayElapsed_sec >= PlantConstants.AUX_SPRAY_TEST_DURATION_SEC && auxSprayActive)

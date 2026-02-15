@@ -2,7 +2,7 @@
 Identifier: DP-0004
 Domain (Canonical): CVCS / Inventory Control
 Status: Open
-Linked Issues: CS-0039, CS-0035
+Linked Issues: CS-0035, CS-0039
 Last Reviewed: 2026-02-14
 Authorization Status: NOT AUTHORIZED
 Mode: SPEC/DRAFT
@@ -26,8 +26,8 @@ Mode: SPEC/DRAFT
 ## C) Ordered Issue Backlog
 | CS ID | Title | Severity | Status | Blocking Dependency | Validation Outcome |
 |---|---|---|---|---|---|
-| CS-0039 | VCT conservation error growth (~1,700 gal at 15.75 hr) | High | Assigned | - | Not Tested |
-| CS-0035 | CVCS thermal mixing contribution missing from RCS energy balance | Low | Assigned | - | Not Tested |
+| CS-0039 | VCT conservation error growth (~1,700 gal at 15.75 hr) | High | READY_FOR_FIX | - | Pending (active issue) |
+| CS-0035 | CVCS thermal mixing contribution missing from RCS energy balance | Low | READY_FOR_FIX | - | Pending (active issue) |
 
 ## D) Execution Readiness Indicator
 **READY FOR AUTHORIZATION**
@@ -35,7 +35,4 @@ Mode: SPEC/DRAFT
 No blocking Critical issues unresolved outside domain.
 
 ## E) Notes / Investigation Links
-- Prior IP references:
-  - IP-0008 - CVCS Energy Balance and VCT Flow Accounting
-- Preliminary investigation reports:
-  - No new domain-specific investigation reports added in this routing cycle.
+- Registry consistency synchronized against Governance/IssueRegister/issue_index.json and Governance/IssueRegister/issue_register.json on 2026-02-14.

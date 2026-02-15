@@ -1,415 +1,662 @@
-{
-  "version": "1.0.0",
-  "generated_at": "2026-02-14T16:33:37Z",
-  "source": "Updates/IssueRegister_DEPRECATED.md",
-  "archived_issue_count": 17,
-  "issues": [
-    {
-      "id": "CS-0001",
-      "title": "CoupledThermo canonical mass mode never activated",
-      "domain": "Mass & Energy Conservation",
-      "severity": "CRITICAL",
-      "status": "CLOSED",
-      "created_at": "2026-02-13T00:00:00Z",
-      "closed_at": "2026-02-14T00:00:00Z",
-      "resolution_type": "FIXED",
-      "fix_refs": [
-        "IP-0017"
-      ],
-      "validation_refs": [
-        "Updates/Issues/IP-0017_StageE_NonRegression_2026-02-14_164742.md",
-        "HeatupLogs/IP-0017_RunA_20260214_164402/Unity_StageE_IP0017_RunA_20260214_164347.log:163926",
-        "HeatupLogs/IP-0017_RunB_20260214_164459/Unity_StageE_IP0017_RunB_20260214_164445.log:163872",
-        "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_034_8.25hr.txt:209"
-      ],
-      "one_line_rca": "Confirmed \u00e2\u20ac\u201d `BulkHeatupStep()` parameter `totalPrimaryMass_lb` defaults to `0f` (RCSHeatup.cs:114). Neither call site (HeatupSimEngine.cs:1214-1217, 1378-1381) passes the 10th argument. Gate at Coup",
-      "tags": [
-        "Mass Conservation \u00e2\u20ac\u201d Authority Enforcement"
-      ]
-    },
-    {
-      "id": "CS-0002",
-      "title": "TotalPrimaryMass_lb freezes after first step in Regime 2/3",
-      "domain": "Mass & Energy Conservation",
-      "severity": "HIGH",
-      "status": "CLOSED",
-      "created_at": "2026-02-13T00:00:00Z",
-      "closed_at": "2026-02-14T00:00:00Z",
-      "resolution_type": "FIXED",
-      "fix_refs": [
-        "IP-0017"
-      ],
-      "validation_refs": [
-        "Updates/Issues/IP-0017_StageE_NonRegression_2026-02-14_164742.md",
-        "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_034_8.25hr.txt:35",
-        "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_035_8.50hr.txt:35",
-        "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_036_8.75hr.txt:35",
-        "HeatupLogs/IP-0017_RunB_20260214_164459/Heatup_Interval_035_8.50hr.txt:35"
-      ],
-      "one_line_rca": "Confirmed \u00e2\u20ac\u201d Ledger was designed to be maintained by the solver in canonical mode. Canonical mode is never active (CS-0001), so no one updates the ledger after the initial rebase.",
-      "tags": [
-        "Mass Conservation \u00e2\u20ac\u201d Ledger Integrity"
-      ]
-    },
-    {
-      "id": "CS-0003",
-      "title": "Boundary flow accumulators never incremented",
-      "domain": "Mass & Energy Conservation",
-      "severity": "MEDIUM",
-      "status": "CLOSED",
-      "created_at": "2026-02-13T00:00:00Z",
-      "closed_at": "2026-02-14T00:00:00Z",
-      "resolution_type": "FIXED",
-      "fix_refs": [
-        "IP-0017"
-      ],
-      "validation_refs": [
-        "Updates/Issues/IP-0017_StageE_NonRegression_2026-02-14_164742.md",
-        "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:43",
-        "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:44",
-        "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:45",
-        "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:46"
-      ],
-      "one_line_rca": "Confirmed \u00e2\u20ac\u201d Fields declared in v5.3.0 as part of canonical architecture. Increment logic was never added to the CVCS flow paths in `StepSimulation()`. Full codebase grep confirms zero assignment sit",
-      "tags": [
-        "Mass Conservation \u00e2\u20ac\u201d Boundary Accounting"
-      ]
-    },
-    {
-      "id": "CS-0004",
-      "title": "Pre-solver V*rho PZR mass computation redundant with solver",
-      "domain": "Mass & Energy Conservation",
-      "severity": "LOW",
-      "status": "CLOSED",
-      "created_at": "2026-02-13T00:00:00Z",
-      "closed_at": "2026-02-14T00:00:00Z",
-      "resolution_type": "FIXED",
-      "fix_refs": [
-        "IP-0017"
-      ],
-      "validation_refs": [
-        "Updates/Issues/IP-0017_StageE_NonRegression_2026-02-14_164742.md",
-        "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_034_8.25hr.txt:232",
-        "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_034_8.25hr.txt:234",
-        "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_034_8.25hr.txt:239"
-      ],
-      "one_line_rca": "Confirmed \u00e2\u20ac\u201d v0.9.6 added pre-sync for solver input. In LEGACY mode, solver ignores PZR mass input and recomputes everything. Creates confusion about field ownership.",
-      "tags": [
-        "Mass Conservation \u00e2\u20ac\u201d State Ownership"
-      ]
-    },
-    {
-      "id": "CS-0005",
-      "title": "CVCS double-count guard works by accident",
-      "domain": "Mass & Energy Conservation",
-      "severity": "MEDIUM",
-      "status": "CLOSED",
-      "created_at": "2026-02-13T00:00:00Z",
-      "closed_at": "2026-02-14T00:00:00Z",
-      "resolution_type": "FIXED",
-      "fix_refs": [
-        "IP-0017"
-      ],
-      "validation_refs": [
-        "Updates/Issues/IP-0017_StageE_NonRegression_2026-02-14_164742.md",
-        "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:22",
-        "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_035_8.50hr.txt:243",
-        "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_035_8.50hr.txt:254"
-      ],
-      "one_line_rca": "Confirmed \u00e2\u20ac\u201d v4.4.0 fix applied CVCS before solver to fix PZR level. Guard prevents double-counting. Architecturally correct in LEGACY mode but semantically wrong for canonical mode.",
-      "tags": [
-        "Mass Conservation \u00e2\u20ac\u201d Order of Operations"
-      ]
-    },
-    {
-      "id": "CS-0008",
-      "title": "No runtime solver mass conservation check",
-      "domain": "Mass & Energy Conservation",
-      "severity": "MEDIUM",
-      "status": "CLOSED",
-      "created_at": "2026-02-13T00:00:00Z",
-      "closed_at": "2026-02-14T00:00:00Z",
-      "resolution_type": "FIXED",
-      "fix_refs": [
-        "IP-0017"
-      ],
-      "validation_refs": [
-        "Updates/Issues/IP-0017_StageE_NonRegression_2026-02-14_164742.md",
-        "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md:21",
-        "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md:28",
-        "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:18"
-      ],
-      "one_line_rca": "Confirmed \u00e2\u20ac\u201d DEBUG-only conservation check exists in canonical path (CoupledThermo.cs:264-272, dead code). Static `ValidateMassConservation()` test exists (CoupledThermo.cs:516-529, manual runner onl",
-      "tags": [
-        "Mass Conservation \u00e2\u20ac\u201d Runtime Validation"
-      ]
-    },
-    {
-      "id": "CS-0013",
-      "title": "Session lifecycle resets for canonical baseline and solver log flag",
-      "domain": "Mass & Energy Conservation",
-      "severity": "LOW",
-      "status": "CLOSED",
-      "created_at": "2026-02-13T00:00:00Z",
-      "closed_at": "2026-02-14T16:27:40Z",
-      "resolution_type": "FIXED",
-      "fix_refs": [
-        "IP-0017"
-      ],
-      "validation_refs": [
-        "Updates/Issues/IP-0017_RunA_RunB_SameProcess_STRICT_2026-02-14_171456.md",
-        "Updates/Issues/IP-0017_SameProcess_Execution_20260214_171456.md",
-        "HeatupLogs/Unity_IP0017_SameProcess_STRICT_20260214_171445.log:97",
-        "HeatupLogs/Unity_IP0017_SameProcess_STRICT_20260214_171445.log:400",
-        "HeatupLogs/Unity_IP0017_SameProcess_STRICT_20260214_171445.log:396341",
-        "HeatupLogs/IP-0017_RunA_SameProcess_20260214_171456/Heatup_Report_20260214_171500.txt:18",
-        "HeatupLogs/IP-0017_RunB_SameProcess_20260214_171456/Heatup_Report_20260214_171503.txt:18"
-      ],
-      "one_line_rca": "Session reset path was previously fixed; strict same-process Run A/B evidence now confirms reset-state parity with no stale-session carryover.",
-      "tags": [
-        "Mass Conservation \u00e2\u20ac\u201d Session Integrity"
-      ]
-    },
-    {
-      "id": "CS-0014",
-      "title": "SG \"ISOLATED\" mode behaves like open inventory pressure boundary",
-      "domain": "Steam Generator Secondary Physics",
-      "severity": "CRITICAL",
-      "status": "CLOSED",
-      "created_at": "2026-02-13T00:00:00Z",
-      "closed_at": "2026-02-14T16:33:37Z",
-      "resolution_type": "FIXED",
-      "fix_refs": [
-        "IP-0015"
-      ],
-      "validation_refs": [
-        "Updates/Issues/IP-0015_Closure_Report_2026-02-14.md",
-        "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md",
-        "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md"
-      ],
-      "one_line_rca": "Isolation boundary path now transitions correctly and no longer behaves as open inventory pressure boundary during startup.",
-      "tags": [
-        "SG Secondary Physics \u00e2\u20ac\u201d Pressure Boundary"
-      ]
-    },
-    {
-      "id": "CS-0015",
-      "title": "Steam generation does not accumulate compressible volume/mass (no internal pressure build)",
-      "domain": "Steam Generator Secondary Physics",
-      "severity": "CRITICAL",
-      "status": "CLOSED",
-      "created_at": "2026-02-13T00:00:00Z",
-      "closed_at": "2026-02-14T16:33:37Z",
-      "resolution_type": "FIXED",
-      "fix_refs": [
-        "IP-0015"
-      ],
-      "validation_refs": [
-        "Updates/Issues/IP-0015_Closure_Report_2026-02-14.md",
-        "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md",
-        "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md"
-      ],
-      "one_line_rca": "Steam generation now accumulates inventory in isolated operation and contributes to physically consistent secondary pressurization.",
-      "tags": [
-        "SG Secondary Physics \u00e2\u20ac\u201d Compressible Volume"
-      ]
-    },
-    {
-      "id": "CS-0016",
-      "title": "SG modeled as unrealistically strong heat sink during heatup",
-      "domain": "Steam Generator Secondary Physics",
-      "severity": "CRITICAL",
-      "status": "CLOSED",
-      "created_at": "2026-02-13T00:00:00Z",
-      "closed_at": "2026-02-14T16:33:37Z",
-      "resolution_type": "FIXED",
-      "fix_refs": [
-        "IP-0015"
-      ],
-      "validation_refs": [
-        "Updates/Issues/IP-0015_Closure_Report_2026-02-14.md",
-        "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md",
-        "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md"
-      ],
-      "one_line_rca": "SG sink behavior is bounded by corrected secondary-state physics, removing unrealistically dominant heat removal in startup.",
-      "tags": [
-        "SG Secondary Physics \u00e2\u20ac\u201d Heat Balance"
-      ]
-    },
-    {
-      "id": "CS-0018",
-      "title": "N\u00e2\u201a\u201a blanket treated as pressure clamp, not compressible cushion",
-      "domain": "Steam Generator Secondary Physics",
-      "severity": "HIGH",
-      "status": "CLOSED",
-      "created_at": "2026-02-13T00:00:00Z",
-      "closed_at": "2026-02-14T16:33:37Z",
-      "resolution_type": "FIXED",
-      "fix_refs": [
-        "IP-0015"
-      ],
-      "validation_refs": [
-        "Updates/Issues/IP-0015_Closure_Report_2026-02-14.md",
-        "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md",
-        "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md"
-      ],
-      "one_line_rca": "N2 blanket behavior is treated as compressible cushion response instead of rigid pressure clamp in startup conditions.",
-      "tags": [
-        "SG Secondary Physics \u00e2\u20ac\u201d Gas Volume Model"
-      ]
-    },
-    {
-      "id": "CS-0047",
-      "title": "Heat-up progression stalls during intended startup heat addition",
-      "domain": "Steam Generator Secondary Physics",
-      "severity": "CRITICAL",
-      "status": "CLOSED",
-      "created_at": "2026-02-13T00:00:00Z",
-      "closed_at": "2026-02-14T16:33:37Z",
-      "resolution_type": "FIXED",
-      "fix_refs": [
-        "IP-0015"
-      ],
-      "validation_refs": [
-        "Updates/Issues/IP-0015_Closure_Report_2026-02-14.md",
-        "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md",
-        "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md"
-      ],
-      "one_line_rca": "Heat-up progression no longer stalls in intended startup window after SG secondary-state corrections validated by Stage E PASS.",
-      "tags": [
-        "Heat-up Progression - Net Plant Heat Balance"
-      ]
-    },
-    {
-      "id": "CS-0048",
-      "title": "Steam generator secondary stays near atmospheric and behaves as constant heat sink during heat-up",
-      "domain": "Steam Generator Secondary Physics",
-      "severity": "CRITICAL",
-      "status": "CLOSED",
-      "created_at": "2026-02-13T00:00:00Z",
-      "closed_at": "2026-02-14T16:33:37Z",
-      "resolution_type": "FIXED",
-      "fix_refs": [
-        "IP-0015"
-      ],
-      "validation_refs": [
-        "Updates/Issues/IP-0015_Closure_Report_2026-02-14.md",
-        "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md",
-        "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md"
-      ],
-      "one_line_rca": "Secondary pressure no longer remains pinned near atmospheric in isolated boiling startup validation windows.",
-      "tags": [
-        "SG Secondary Pressure Boundary and Heat Sink Behavior"
-      ]
-    },
-    {
-      "id": "CS-0050",
-      "title": "Persistent plant-wide mass conservation imbalance (~10,000 gal class) across multiple intervals",
-      "domain": "Mass & Energy Conservation",
-      "severity": "CRITICAL",
-      "status": "CLOSED",
-      "created_at": "2026-02-13T00:00:00Z",
-      "closed_at": "2026-02-14T00:00:00Z",
-      "resolution_type": "FIXED",
-      "fix_refs": [
-        "IP-0016"
-      ],
-      "validation_refs": [
-        "Documentation/PWR_Heatup_Simulation_Analysis_Report.md:116,119-120,171",
-        "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_123200.md",
-        "Updates/Issues/IP-0016_StageE_Validation_2026-02-14_133520.md",
-        "Updates/Issues/IP-0016_StageE_Validation_2026-02-14_141059.md",
-        "HeatupLogs/Heatup_Report_20260214_141059.txt",
-        "Updates/Issues/CS-0050_Investigation_Report.md",
-        "HeatupLogs/Heatup_Interval_034_8.25hr.txt",
-        "HeatupLogs/Heatup_Interval_035_8.50hr.txt",
-        "HeatupLogs/Heatup_Interval_036_8.75hr.txt",
-        "HeatupLogs/Unity_StageE_IP0016_final.log"
-      ],
-      "one_line_rca": "Confirmed and corrected in IP-0016 via Primary Boundary Ownership Contract (PBOC) single-authority compute/apply order and paired ledger/component boundary application.",
-      "tags": [
-        "Plant-Wide Conservation Audit Integrity"
-      ]
-    },
-    {
-      "id": "CS-0051",
-      "title": "Stage E mass conservation discontinuity at 8.25 hr during solid->two-phase handoff",
-      "domain": "Mass & Energy Conservation",
-      "severity": "CRITICAL",
-      "status": "CLOSED",
-      "created_at": "2026-02-14T00:00:00Z",
-      "closed_at": "2026-02-14T00:00:00Z",
-      "resolution_type": "FIXED",
-      "fix_refs": [
-        "IP-0016"
-      ],
-      "validation_refs": [
-        "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_123200.md:21,24-30",
-        "Updates/Issues/IP-0016_StageE_Validation_2026-02-14_133520.md",
-        "Updates/Issues/IP-0016_StageE_Validation_2026-02-14_141059.md",
-        "HeatupLogs/Heatup_Report_20260214_141059.txt",
-        "HeatupLogs/Heatup_Interval_033_8.00hr.txt",
-        "HeatupLogs/Heatup_Interval_034_8.25hr.txt",
-        "HeatupLogs/Heatup_Interval_035_8.50hr.txt",
-        "HeatupLogs/Heatup_Interval_036_8.75hr.txt",
-        "Updates/Issues/CS-0051_Investigation_Report.md",
-        "HeatupLogs/Unity_StageE_IP0016_final.log"
-      ],
-      "one_line_rca": "Confirmed and corrected for transition boundary class via RTCC reconciliation + assertion infrastructure in IP-0016.",
-      "tags": [
-        "Regime-Transition Mass Authority Continuity"
-      ]
-    },
-    {
-      "id": "CS-0052",
-      "title": "Post-RTCC residual long-run conservation divergence after 8.50 hr",
-      "domain": "Mass & Energy Conservation",
-      "severity": "CRITICAL",
-      "status": "CLOSED",
-      "created_at": "2026-02-14T00:00:00Z",
-      "closed_at": "2026-02-14T00:00:00Z",
-      "resolution_type": "FIXED",
-      "fix_refs": [
-        "IP-0016"
-      ],
-      "validation_refs": [
-        "Updates/Issues/IP-0016_StageE_Validation_2026-02-14_133520.md",
-        "Updates/Issues/IP-0016_StageE_Validation_2026-02-14_141059.md",
-        "HeatupLogs/Heatup_Interval_035_8.50hr.txt",
-        "HeatupLogs/Heatup_Interval_036_8.75hr.txt",
-        "HeatupLogs/Heatup_Report_20260214_141059.txt",
-        "HeatupLogs/Unity_StageE_IP0016_final.log",
-        "Updates/Issues/CS-0052_Investigation_Report.md",
-        "HeatupLogs/Heatup_Interval_034_8.25hr.txt"
-      ],
-      "one_line_rca": "Confirmed and corrected by PBOC ownership/order enforcement: single primary-boundary event drives both component and ledger application each tick.",
-      "tags": [
-        "Post-Transition Plant-Wide Conservation Divergence"
-      ]
-    },
-    {
-      "id": "CS-0053",
-      "title": "No strict same-process Stage E dual-run entrypoint for CS-0013 governance validation",
-      "domain": "Validation & Diagnostics",
-      "severity": "LOW",
-      "status": "CLOSED",
-      "created_at": "2026-02-14T16:12:42Z",
-      "closed_at": "2026-02-14T16:28:59Z",
-      "resolution_type": "FIXED",
-      "fix_refs": [
-        "IP-0017"
-      ],
-      "validation_refs": [
-        "Assets/Scripts/UI/Editor/IP0017SameProcessRunner.cs",
-        "Updates/Issues/IP-0017_SameProcess_Execution_20260214_171456.md",
-        "HeatupLogs/Unity_IP0017_SameProcess_STRICT_20260214_171445.log:400",
-        "HeatupLogs/Unity_IP0017_SameProcess_STRICT_20260214_171445.log:396341"
-      ],
-      "one_line_rca": "Added editor-only dual-run entrypoint and executed strict same-process Run A/B successfully in one Unity process.",
-      "tags": [
-        "Validation Automation",
-        "Session Integrity"
-      ]
-    }
-  ]
+﻿{
+    "version":  "1.0.0",
+    "generated_at":  "2026-02-15T08:50:52Z",
+    "source":  "Updates/IssueRegister_DEPRECATED.md",
+    "archived_issue_count":  28,
+    "issues":  [
+                   {
+                       "id":  "CS-0001",
+                       "title":  "CoupledThermo canonical mass mode never activated",
+                       "domain":  "Mass \u0026 Energy Conservation",
+                       "severity":  "CRITICAL",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-14T00:00:00Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0017"
+                                    ],
+                       "validation_refs":  [
+                                               "Updates/Issues/IP-0017_StageE_NonRegression_2026-02-14_164742.md",
+                                               "HeatupLogs/IP-0017_RunA_20260214_164402/Unity_StageE_IP0017_RunA_20260214_164347.log:163926",
+                                               "HeatupLogs/IP-0017_RunB_20260214_164459/Unity_StageE_IP0017_RunB_20260214_164445.log:163872",
+                                               "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_034_8.25hr.txt:209"
+                                           ],
+                       "one_line_rca":  "Confirmed â€” `BulkHeatupStep()` parameter `totalPrimaryMass_lb` defaults to `0f` (RCSHeatup.cs:114). Neither call site (HeatupSimEngine.cs:1214-1217, 1378-1381) passes the 10th argument. Gate at Coup",
+                       "tags":  [
+                                    "Mass Conservation â€” Authority Enforcement"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0002",
+                       "title":  "TotalPrimaryMass_lb freezes after first step in Regime 2/3",
+                       "domain":  "Mass \u0026 Energy Conservation",
+                       "severity":  "HIGH",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-14T00:00:00Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0017"
+                                    ],
+                       "validation_refs":  [
+                                               "Updates/Issues/IP-0017_StageE_NonRegression_2026-02-14_164742.md",
+                                               "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_034_8.25hr.txt:35",
+                                               "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_035_8.50hr.txt:35",
+                                               "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_036_8.75hr.txt:35",
+                                               "HeatupLogs/IP-0017_RunB_20260214_164459/Heatup_Interval_035_8.50hr.txt:35"
+                                           ],
+                       "one_line_rca":  "Confirmed â€” Ledger was designed to be maintained by the solver in canonical mode. Canonical mode is never active (CS-0001), so no one updates the ledger after the initial rebase.",
+                       "tags":  [
+                                    "Mass Conservation â€” Ledger Integrity"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0003",
+                       "title":  "Boundary flow accumulators never incremented",
+                       "domain":  "Mass \u0026 Energy Conservation",
+                       "severity":  "MEDIUM",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-14T00:00:00Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0017"
+                                    ],
+                       "validation_refs":  [
+                                               "Updates/Issues/IP-0017_StageE_NonRegression_2026-02-14_164742.md",
+                                               "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:43",
+                                               "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:44",
+                                               "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:45",
+                                               "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:46"
+                                           ],
+                       "one_line_rca":  "Confirmed â€” Fields declared in v5.3.0 as part of canonical architecture. Increment logic was never added to the CVCS flow paths in `StepSimulation()`. Full codebase grep confirms zero assignment sit",
+                       "tags":  [
+                                    "Mass Conservation â€” Boundary Accounting"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0004",
+                       "title":  "Pre-solver V*rho PZR mass computation redundant with solver",
+                       "domain":  "Mass \u0026 Energy Conservation",
+                       "severity":  "LOW",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-14T00:00:00Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0017"
+                                    ],
+                       "validation_refs":  [
+                                               "Updates/Issues/IP-0017_StageE_NonRegression_2026-02-14_164742.md",
+                                               "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_034_8.25hr.txt:232",
+                                               "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_034_8.25hr.txt:234",
+                                               "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_034_8.25hr.txt:239"
+                                           ],
+                       "one_line_rca":  "Confirmed â€” v0.9.6 added pre-sync for solver input. In LEGACY mode, solver ignores PZR mass input and recomputes everything. Creates confusion about field ownership.",
+                       "tags":  [
+                                    "Mass Conservation â€” State Ownership"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0005",
+                       "title":  "CVCS double-count guard works by accident",
+                       "domain":  "Mass \u0026 Energy Conservation",
+                       "severity":  "MEDIUM",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-14T00:00:00Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0017"
+                                    ],
+                       "validation_refs":  [
+                                               "Updates/Issues/IP-0017_StageE_NonRegression_2026-02-14_164742.md",
+                                               "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:22",
+                                               "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_035_8.50hr.txt:243",
+                                               "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_035_8.50hr.txt:254"
+                                           ],
+                       "one_line_rca":  "Confirmed â€” v4.4.0 fix applied CVCS before solver to fix PZR level. Guard prevents double-counting. Architecturally correct in LEGACY mode but semantically wrong for canonical mode.",
+                       "tags":  [
+                                    "Mass Conservation â€” Order of Operations"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0008",
+                       "title":  "No runtime solver mass conservation check",
+                       "domain":  "Mass \u0026 Energy Conservation",
+                       "severity":  "MEDIUM",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-14T00:00:00Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0017"
+                                    ],
+                       "validation_refs":  [
+                                               "Updates/Issues/IP-0017_StageE_NonRegression_2026-02-14_164742.md",
+                                               "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md:21",
+                                               "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md:28",
+                                               "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:18"
+                                           ],
+                       "one_line_rca":  "Confirmed â€” DEBUG-only conservation check exists in canonical path (CoupledThermo.cs:264-272, dead code). Static `ValidateMassConservation()` test exists (CoupledThermo.cs:516-529, manual runner onl",
+                       "tags":  [
+                                    "Mass Conservation â€” Runtime Validation"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0013",
+                       "title":  "Session lifecycle resets for canonical baseline and solver log flag",
+                       "domain":  "Mass \u0026 Energy Conservation",
+                       "severity":  "LOW",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-14T16:27:40Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0017"
+                                    ],
+                       "validation_refs":  [
+                                               "Updates/Issues/IP-0017_RunA_RunB_SameProcess_STRICT_2026-02-14_171456.md",
+                                               "Updates/Issues/IP-0017_SameProcess_Execution_20260214_171456.md",
+                                               "HeatupLogs/Unity_IP0017_SameProcess_STRICT_20260214_171445.log:97",
+                                               "HeatupLogs/Unity_IP0017_SameProcess_STRICT_20260214_171445.log:400",
+                                               "HeatupLogs/Unity_IP0017_SameProcess_STRICT_20260214_171445.log:396341",
+                                               "HeatupLogs/IP-0017_RunA_SameProcess_20260214_171456/Heatup_Report_20260214_171500.txt:18",
+                                               "HeatupLogs/IP-0017_RunB_SameProcess_20260214_171456/Heatup_Report_20260214_171503.txt:18"
+                                           ],
+                       "one_line_rca":  "Session reset path was previously fixed; strict same-process Run A/B evidence now confirms reset-state parity with no stale-session carryover.",
+                       "tags":  [
+                                    "Mass Conservation â€” Session Integrity"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0014",
+                       "title":  "SG \"ISOLATED\" mode behaves like open inventory pressure boundary",
+                       "domain":  "Steam Generator Secondary Physics",
+                       "severity":  "CRITICAL",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-14T16:33:37Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0015"
+                                    ],
+                       "validation_refs":  [
+                                               "Updates/Issues/IP-0015_Closure_Report_2026-02-14.md",
+                                               "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md",
+                                               "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md"
+                                           ],
+                       "one_line_rca":  "Isolation boundary path now transitions correctly and no longer behaves as open inventory pressure boundary during startup.",
+                       "tags":  [
+                                    "SG Secondary Physics â€” Pressure Boundary"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0015",
+                       "title":  "Steam generation does not accumulate compressible volume/mass (no internal pressure build)",
+                       "domain":  "Steam Generator Secondary Physics",
+                       "severity":  "CRITICAL",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-14T16:33:37Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0015"
+                                    ],
+                       "validation_refs":  [
+                                               "Updates/Issues/IP-0015_Closure_Report_2026-02-14.md",
+                                               "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md",
+                                               "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md"
+                                           ],
+                       "one_line_rca":  "Steam generation now accumulates inventory in isolated operation and contributes to physically consistent secondary pressurization.",
+                       "tags":  [
+                                    "SG Secondary Physics â€” Compressible Volume"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0016",
+                       "title":  "SG modeled as unrealistically strong heat sink during heatup",
+                       "domain":  "Steam Generator Secondary Physics",
+                       "severity":  "CRITICAL",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-14T16:33:37Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0015"
+                                    ],
+                       "validation_refs":  [
+                                               "Updates/Issues/IP-0015_Closure_Report_2026-02-14.md",
+                                               "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md",
+                                               "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md"
+                                           ],
+                       "one_line_rca":  "SG sink behavior is bounded by corrected secondary-state physics, removing unrealistically dominant heat removal in startup.",
+                       "tags":  [
+                                    "SG Secondary Physics â€” Heat Balance"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0018",
+                       "title":  "Nâ‚‚ blanket treated as pressure clamp, not compressible cushion",
+                       "domain":  "Steam Generator Secondary Physics",
+                       "severity":  "HIGH",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-14T16:33:37Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0015"
+                                    ],
+                       "validation_refs":  [
+                                               "Updates/Issues/IP-0015_Closure_Report_2026-02-14.md",
+                                               "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md",
+                                               "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md"
+                                           ],
+                       "one_line_rca":  "N2 blanket behavior is treated as compressible cushion response instead of rigid pressure clamp in startup conditions.",
+                       "tags":  [
+                                    "SG Secondary Physics â€” Gas Volume Model"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0047",
+                       "title":  "Heat-up progression stalls during intended startup heat addition",
+                       "domain":  "Steam Generator Secondary Physics",
+                       "severity":  "CRITICAL",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-14T16:33:37Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0015"
+                                    ],
+                       "validation_refs":  [
+                                               "Updates/Issues/IP-0015_Closure_Report_2026-02-14.md",
+                                               "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md",
+                                               "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md"
+                                           ],
+                       "one_line_rca":  "Heat-up progression no longer stalls in intended startup window after SG secondary-state corrections validated by Stage E PASS.",
+                       "tags":  [
+                                    "Heat-up Progression - Net Plant Heat Balance"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0048",
+                       "title":  "Steam generator secondary stays near atmospheric and behaves as constant heat sink during heat-up",
+                       "domain":  "Steam Generator Secondary Physics",
+                       "severity":  "CRITICAL",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-14T16:33:37Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0015"
+                                    ],
+                       "validation_refs":  [
+                                               "Updates/Issues/IP-0015_Closure_Report_2026-02-14.md",
+                                               "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md",
+                                               "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164456.md"
+                                           ],
+                       "one_line_rca":  "Secondary pressure no longer remains pinned near atmospheric in isolated boiling startup validation windows.",
+                       "tags":  [
+                                    "SG Secondary Pressure Boundary and Heat Sink Behavior"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0050",
+                       "title":  "Persistent plant-wide mass conservation imbalance (~10,000 gal class) across multiple intervals",
+                       "domain":  "Mass \u0026 Energy Conservation",
+                       "severity":  "CRITICAL",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-14T00:00:00Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0016"
+                                    ],
+                       "validation_refs":  [
+                                               "Documentation/PWR_Heatup_Simulation_Analysis_Report.md:116,119-120,171",
+                                               "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_123200.md",
+                                               "Updates/Issues/IP-0016_StageE_Validation_2026-02-14_133520.md",
+                                               "Updates/Issues/IP-0016_StageE_Validation_2026-02-14_141059.md",
+                                               "HeatupLogs/Heatup_Report_20260214_141059.txt",
+                                               "Updates/Issues/CS-0050_Investigation_Report.md",
+                                               "HeatupLogs/Heatup_Interval_034_8.25hr.txt",
+                                               "HeatupLogs/Heatup_Interval_035_8.50hr.txt",
+                                               "HeatupLogs/Heatup_Interval_036_8.75hr.txt",
+                                               "HeatupLogs/Unity_StageE_IP0016_final.log"
+                                           ],
+                       "one_line_rca":  "Confirmed and corrected in IP-0016 via Primary Boundary Ownership Contract (PBOC) single-authority compute/apply order and paired ledger/component boundary application.",
+                       "tags":  [
+                                    "Plant-Wide Conservation Audit Integrity"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0051",
+                       "title":  "Stage E mass conservation discontinuity at 8.25 hr during solid-\u003etwo-phase handoff",
+                       "domain":  "Mass \u0026 Energy Conservation",
+                       "severity":  "CRITICAL",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-14T00:00:00Z",
+                       "closed_at":  "2026-02-14T00:00:00Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0016"
+                                    ],
+                       "validation_refs":  [
+                                               "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_123200.md:21,24-30",
+                                               "Updates/Issues/IP-0016_StageE_Validation_2026-02-14_133520.md",
+                                               "Updates/Issues/IP-0016_StageE_Validation_2026-02-14_141059.md",
+                                               "HeatupLogs/Heatup_Report_20260214_141059.txt",
+                                               "HeatupLogs/Heatup_Interval_033_8.00hr.txt",
+                                               "HeatupLogs/Heatup_Interval_034_8.25hr.txt",
+                                               "HeatupLogs/Heatup_Interval_035_8.50hr.txt",
+                                               "HeatupLogs/Heatup_Interval_036_8.75hr.txt",
+                                               "Updates/Issues/CS-0051_Investigation_Report.md",
+                                               "HeatupLogs/Unity_StageE_IP0016_final.log"
+                                           ],
+                       "one_line_rca":  "Confirmed and corrected for transition boundary class via RTCC reconciliation + assertion infrastructure in IP-0016.",
+                       "tags":  [
+                                    "Regime-Transition Mass Authority Continuity"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0052",
+                       "title":  "Post-RTCC residual long-run conservation divergence after 8.50 hr",
+                       "domain":  "Mass \u0026 Energy Conservation",
+                       "severity":  "CRITICAL",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-14T00:00:00Z",
+                       "closed_at":  "2026-02-14T00:00:00Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0016"
+                                    ],
+                       "validation_refs":  [
+                                               "Updates/Issues/IP-0016_StageE_Validation_2026-02-14_133520.md",
+                                               "Updates/Issues/IP-0016_StageE_Validation_2026-02-14_141059.md",
+                                               "HeatupLogs/Heatup_Interval_035_8.50hr.txt",
+                                               "HeatupLogs/Heatup_Interval_036_8.75hr.txt",
+                                               "HeatupLogs/Heatup_Report_20260214_141059.txt",
+                                               "HeatupLogs/Unity_StageE_IP0016_final.log",
+                                               "Updates/Issues/CS-0052_Investigation_Report.md",
+                                               "HeatupLogs/Heatup_Interval_034_8.25hr.txt"
+                                           ],
+                       "one_line_rca":  "Confirmed and corrected by PBOC ownership/order enforcement: single primary-boundary event drives both component and ledger application each tick.",
+                       "tags":  [
+                                    "Post-Transition Plant-Wide Conservation Divergence"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0053",
+                       "title":  "No strict same-process Stage E dual-run entrypoint for CS-0013 governance validation",
+                       "domain":  "Validation \u0026 Diagnostics",
+                       "severity":  "LOW",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-14T16:12:42Z",
+                       "closed_at":  "2026-02-14T16:28:59Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0017"
+                                    ],
+                       "validation_refs":  [
+                                               "Assets/Scripts/UI/Editor/IP0017SameProcessRunner.cs",
+                                               "Updates/Issues/IP-0017_SameProcess_Execution_20260214_171456.md",
+                                               "HeatupLogs/Unity_IP0017_SameProcess_STRICT_20260214_171445.log:400",
+                                               "HeatupLogs/Unity_IP0017_SameProcess_STRICT_20260214_171445.log:396341"
+                                           ],
+                       "one_line_rca":  "Added editor-only dual-run entrypoint and executed strict same-process Run A/B successfully in one Unity process.",
+                       "tags":  [
+                                    "Validation Automation",
+                                    "Session Integrity"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0021",
+                       "title":  "Solid-regime pressure decoupled from mass change",
+                       "domain":  "Primary Thermodynamics",
+                       "severity":  "HIGH",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-15T08:50:52Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0019"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/ImplementationReports/IP-0019_StageE_ExtendedValidation_Report_2026-02-15.md",
+                                               "Governance/ImplementationReports/IP-0019_Closeout_Report.md",
+                                               "HeatupLogs/IP-0019_Extended_20260215_085052"
+                                           ],
+                       "one_line_rca":  "Solid hold pressure now follows physical state with bounded oscillation after isolated-branch and writer-governance corrections.",
+                       "tags":  [
+                                    "Primary Thermodynamics â€” Solid Regime"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0022",
+                       "title":  "Early pressurization response mismatched with controller actuation",
+                       "domain":  "Primary Thermodynamics",
+                       "severity":  "MEDIUM",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-15T08:50:52Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0019"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/ImplementationReports/IP-0019_StageE_ExtendedValidation_Report_2026-02-15.md",
+                                               "Governance/ImplementationReports/IP-0019_Closeout_Report.md",
+                                               "HeatupLogs/IP-0019_Extended_20260215_085052"
+                                           ],
+                       "one_line_rca":  "Pressurization coupling now tracks controller actuation coherently after transport and regime-coupling stabilization.",
+                       "tags":  [
+                                    "Primary Thermodynamics â€” Controller Coupling"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0023",
+                       "title":  "Surge flow trend rises while pressure remains flat",
+                       "domain":  "Primary Thermodynamics",
+                       "severity":  "MEDIUM",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-15T08:50:52Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0019"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/ImplementationReports/IP-0019_StageE_ExtendedValidation_Report_2026-02-15.md",
+                                               "Governance/ImplementationReports/IP-0019_Closeout_Report.md",
+                                               "HeatupLogs/IP-0019_Extended_20260215_085052"
+                                           ],
+                       "one_line_rca":  "Surge and pressure trends are now consistently coupled through state-derived pressure evolution.",
+                       "tags":  [
+                                    "Primary Thermodynamics â€” Solid Regime"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0031",
+                       "title":  "RCS heat rate escalation after RCP start may be numerically aggressive",
+                       "domain":  "Primary Thermodynamics",
+                       "severity":  "MEDIUM",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-15T08:50:52Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0019"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/ImplementationReports/IP-0019_StageE_ExtendedValidation_Report_2026-02-15.md",
+                                               "Governance/ImplementationReports/IP-0019_Closeout_Report.md",
+                                               "HeatupLogs/IP-0019_Extended_20260215_085052"
+                                           ],
+                       "one_line_rca":  "RCP start heat-rate and pressure-step behavior are now stress-window bounded with corrected transient measurement logic.",
+                       "tags":  [
+                                    "Primary Thermodynamics â€” Thermal Inertia"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0033",
+                       "title":  "RCS bulk temperature rise with RCPs OFF and no confirmed forced flow",
+                       "domain":  "Primary Thermodynamics",
+                       "severity":  "HIGH",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-15T08:50:52Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0019"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/ImplementationReports/IP-0019_StageE_ExtendedValidation_Report_2026-02-15.md",
+                                               "Governance/ImplementationReports/IP-0019_Closeout_Report.md",
+                                               "HeatupLogs/IP-0019_Extended_20260215_085052"
+                                           ],
+                       "one_line_rca":  "No-RCP isolated hold now preserves stable/non-rising thermal response with corrected no-energy transport handling.",
+                       "tags":  [
+                                    "Core Physics â€” Primary Energy Balance"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0034",
+                       "title":  "No equilibrium ceiling for RCS temperature in Regime 0/1 (pre-RCP)",
+                       "domain":  "Primary Thermodynamics",
+                       "severity":  "MEDIUM",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-15T08:50:52Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0019"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/ImplementationReports/IP-0019_StageE_ExtendedValidation_Report_2026-02-15.md",
+                                               "Governance/ImplementationReports/IP-0019_Closeout_Report.md",
+                                               "HeatupLogs/IP-0019_Extended_20260215_085052"
+                                           ],
+                       "one_line_rca":  "Pre-RCP regime behavior now exhibits bounded ceiling behavior instead of unbounded drift.",
+                       "tags":  [
+                                    "Core Physics â€” Primary Energy Balance"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0038",
+                       "title":  "PZR level spike on RCP start (single-frame transient)",
+                       "domain":  "Primary Thermodynamics",
+                       "severity":  "HIGH",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "closed_at":  "2026-02-15T08:50:52Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0019"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/ImplementationReports/IP-0019_StageE_ExtendedValidation_Report_2026-02-15.md",
+                                               "Governance/ImplementationReports/IP-0019_Closeout_Report.md",
+                                               "HeatupLogs/IP-0019_Extended_20260215_085052"
+                                           ],
+                       "one_line_rca":  "RCP start/stop transient forcing and coupling were smoothed, removing prior PZR envelope spikes.",
+                       "tags":  [
+                                    "Primary Thermodynamics â€” Regime Transition Stability"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0055",
+                       "title":  "RCS temperature rises during isolated PZR heating with no RCP active",
+                       "domain":  "Primary Thermodynamics",
+                       "severity":  "CRITICAL",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-14T18:37:44Z",
+                       "closed_at":  "2026-02-15T08:50:52Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0019"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/ImplementationReports/IP-0019_StageE_ExtendedValidation_Report_2026-02-15.md",
+                                               "Governance/ImplementationReports/IP-0019_Closeout_Report.md",
+                                               "HeatupLogs/IP-0019_Extended_20260215_085052"
+                                           ],
+                       "one_line_rca":  "Isolated long-hold state application was corrected to prevent non-physical no-RCP heatup drift.",
+                       "tags":  [
+                                    "No-RCP Thermal State Application",
+                                    "Effective Mixed Mass",
+                                    "RHR-PZR-RCS Interaction"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0056",
+                       "title":  "RHR isolation initiates on first RCP start instead of post-4-RCP near-350F sequence",
+                       "domain":  "Primary Thermodynamics",
+                       "severity":  "HIGH",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-14T19:55:32Z",
+                       "closed_at":  "2026-02-15T08:50:52Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0019"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/ImplementationReports/IP-0019_StageE_ExtendedValidation_Report_2026-02-15.md",
+                                               "Governance/ImplementationReports/IP-0019_Closeout_Report.md",
+                                               "HeatupLogs/IP-0019_Extended_20260215_085052"
+                                           ],
+                       "one_line_rca":  "Isolation evaluation semantics corrected to PASS/FAIL/NOT_REACHED with non-fabricated sampling and policy handling.",
+                       "tags":  [
+                                    "Technical Documentation Mismatch",
+                                    "RHR Isolation Sequencing"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0061",
+                       "title":  "Primary boundary mass transfer uses fixed 100F atmospheric density instead of runtime state",
+                       "domain":  "Primary Thermodynamics",
+                       "severity":  "CRITICAL",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-14T19:55:32Z",
+                       "closed_at":  "2026-02-15T08:50:52Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0019"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/ImplementationReports/IP-0019_StageE_ExtendedValidation_Report_2026-02-15.md",
+                                               "Governance/ImplementationReports/IP-0019_Closeout_Report.md",
+                                               "HeatupLogs/IP-0019_Extended_20260215_085052"
+                                           ],
+                       "one_line_rca":  "Primary boundary transfer now uses runtime thermodynamic density state instead of fixed atmospheric density.",
+                       "tags":  [
+                                    "Formula Integrity",
+                                    "Unit/State Dependence"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0071",
+                       "title":  "Coordinator owns multiple writer paths for T_rcs/pressure with post-module mutation",
+                       "domain":  "Primary Thermodynamics",
+                       "severity":  "HIGH",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-14T19:55:32Z",
+                       "closed_at":  "2026-02-15T08:50:52Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0019"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/ImplementationReports/IP-0019_StageE_ExtendedValidation_Report_2026-02-15.md",
+                                               "Governance/ImplementationReports/IP-0019_Closeout_Report.md",
+                                               "HeatupLogs/IP-0019_Extended_20260215_085052"
+                                           ],
+                       "one_line_rca":  "Writer transitions are now atomic and invariant-guarded, eliminating illegal post-mutation state paths.",
+                       "tags":  [
+                                    "Lifecycle / State Ownership",
+                                    "Multiple Writers"
+                                ]
+                   }
+               ]
 }

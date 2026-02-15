@@ -59,6 +59,10 @@ public partial class HeatupSimEngine
         // v0.1.0.0: Reset canonical ledger flags for new simulation run
         firstStepLedgerBaselined = false;
         regime3CVCSPreApplied = false;
+        deliveredRcpHeat_MW = 0f;
+        noRcpTransportFactor = 1f;
+        thermoStateWriter = "INIT";
+        smoothedRegime2Alpha = 0f;
         pbocTickIndex = 0;
         pbocEventActiveThisTick = false;
         pbocCurrentEvent = default;
@@ -68,6 +72,26 @@ public partial class HeatupSimEngine
         pbocEventCount = 0;
         pbocPairingAssertionFailures = 0;
         CoupledThermo.ResetSessionFlags();
+
+        longHoldPressureAuditActive = false;
+        longHoldPressureWriteCount = 0;
+        longHoldPressureStateDerivedWriteCount = 0;
+        longHoldPressureOverrideAttemptCount = 0;
+        longHoldPressureBlockedOverrideCount = 0;
+        longHoldPressureInvariantFailed = false;
+        longHoldPressureInvariantReason = "";
+        longHoldLastPressureBefore = 0f;
+        longHoldLastPressureAfter = 0f;
+        longHoldLastPressureSource = "NONE";
+        longHoldLastPressureStack = "";
+        longHoldPressureTickCount = 0;
+        longHoldPressureRegime = "UNSET";
+        longHoldPressureEquationBranch = "UNSET";
+        longHoldPressureUsesSaturation = false;
+        longHoldPressureSaturationPsia = 0f;
+        longHoldPressureModelDensity = 0f;
+        longHoldPressureModelCompressibility = 0f;
+        longHoldPressureModelDeltaPsi = 0f;
 
         // v0.1.0.0 Phase C: Reset diagnostic display to pre-run state
         primaryMassStatus = "NOT_CHECKED";

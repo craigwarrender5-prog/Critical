@@ -473,6 +473,27 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public float pzrHeatRateDisplay;
     [HideInInspector] public float estimatedTotalHeatupTime;
 
+    // Long-hold pressure audit state (IP-0019 Stage E Extended harness).
+    [HideInInspector] public bool longHoldPressureAuditActive;
+    [HideInInspector] public int longHoldPressureWriteCount;
+    [HideInInspector] public int longHoldPressureStateDerivedWriteCount;
+    [HideInInspector] public int longHoldPressureOverrideAttemptCount;
+    [HideInInspector] public int longHoldPressureBlockedOverrideCount;
+    [HideInInspector] public bool longHoldPressureInvariantFailed;
+    [HideInInspector] public string longHoldPressureInvariantReason = "";
+    [HideInInspector] public float longHoldLastPressureBefore;
+    [HideInInspector] public float longHoldLastPressureAfter;
+    [HideInInspector] public string longHoldLastPressureSource = "NONE";
+    [HideInInspector] public string longHoldLastPressureStack = "";
+    [HideInInspector] public int longHoldPressureTickCount;
+    [HideInInspector] public string longHoldPressureRegime = "UNSET";
+    [HideInInspector] public string longHoldPressureEquationBranch = "UNSET";
+    [HideInInspector] public bool longHoldPressureUsesSaturation;
+    [HideInInspector] public float longHoldPressureSaturationPsia;
+    [HideInInspector] public float longHoldPressureModelDensity;
+    [HideInInspector] public float longHoldPressureModelCompressibility;
+    [HideInInspector] public float longHoldPressureModelDeltaPsi;
+
     #region RTCC State (IP-0016)
 
     [HideInInspector] public int rtccTransitionCount;
@@ -595,6 +616,10 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public bool enableMassDiagnostics = false;
     [HideInInspector] public int diagSampleIntervalFrames = 10;
     private int _diagFrameCounter = 0;
+    private float deliveredRcpHeat_MW = 0f;
+    [HideInInspector] public float noRcpTransportFactor = 1f;
+    [HideInInspector] public string thermoStateWriter = "UNSET";
+    private float smoothedRegime2Alpha = 0f;
 
     // v4.4.0: Letdown orifice lineup state.
     // Per NRC HRTD 4.1: Three parallel orifices (2×75 + 1×45 gpm).
@@ -608,6 +633,15 @@ public partial class HeatupSimEngine : MonoBehaviour
     // RCP startup sequence timing (hours)
     const float RCP1_START_TIME = 1.0f;
     const float RCP_START_INTERVAL = 0.5f;
+    const float RCP_HEAT_DELIVERY_TAU_HR = 0.05f;   // 3 min thermal uptake smoothing
+    const float NO_RCP_TRANSPORT_GAIN = 18f;        // Flow turnover to bulk-transport coupling
+    const float NO_RCP_NATURAL_FLOOR = 0.08f;       // Natural convection floor when no forced circulation
+    const float RHR_ISOLATION_NEAR_TEMP_BAND_F = 5f;
+    const float REGIME2_MAX_PZR_LEVEL_STEP_PCT = 0.5f;
+    const float REGIME2_STARTUP_LEVEL_STEP_MIN_PCT = 0.02f;
+    const float REGIME2_ALPHA_SMOOTH_TAU_HR = 0.03f;
+    const float RCP_TRANSIENT_TRACE_WINDOW_HR = 0.35f;
+    const float STRESS_FORCE_PRESSURE_MAX_STEP_PSI = 10f;
 
     // v0.8.2: History cap: 1-minute samples, 240-minute (4-hour) rolling window
     const int MAX_HISTORY = 240;
@@ -947,6 +981,11 @@ public partial class HeatupSimEngine : MonoBehaviour
         pbocTickIndex++;
         pbocEventActiveThisTick = false;
         regime3CVCSPreApplied = false;
+        int prevRcpCountStep = rcpCount;
+        float prevRcpHeatStep = rcpHeat;
+        float prevPzrLevelStep = pzrLevel;
+        float prevNoRcpTransportStep = noRcpTransportFactor;
+        float prevCouplingAlphaStep = smoothedRegime2Alpha;
 
         // ================================================================
         // 1. RCP STARTUP SEQUENCE — Delegated to RCPSequencer module
@@ -1105,8 +1144,12 @@ public partial class HeatupSimEngine : MonoBehaviour
             spraySteamCondensed_lbm = sprayState.SteamCondensed_lbm;
         }
 
-        // v0.4.0 Issue #3: Use effective ramped heat, not binary full heat
-        rcpHeat = effectiveRCPHeat;
+        // v0.4.0 Issue #3: Use effective ramped heat, not binary full heat.
+        // IP-0019 (CS-0031): smooth delivered heat to avoid one-step thermal shocks
+        // at startup-stage transitions while preserving staged sequencer intent.
+        float heatAlpha = Mathf.Clamp01(dt / RCP_HEAT_DELIVERY_TAU_HR);
+        deliveredRcpHeat_MW += (effectiveRCPHeat - deliveredRcpHeat_MW) * heatAlpha;
+        rcpHeat = deliveredRcpHeat_MW;
         gridEnergy += (rcpCount * 6f + pzrHeaterPower + 25f) * dt;
 
         float prevT_pzr = T_pzr;
@@ -1130,12 +1173,13 @@ public partial class HeatupSimEngine : MonoBehaviour
             rhrActive = rhrResult.IsActive;
             rhrModeString = rhrState.Mode.ToString();
             
-            // v3.0.0: Begin RHR isolation when first RCP starts
-            // Per NRC HRTD 19.0: RHR isolated after RCPs established
-            if (rcpCount > 0 && rhrState.Mode == RHRMode.Heatup)
+            // IP-0019 (CS-0056): begin RHR isolation only after all 4 RCPs are
+            // running and the startup temperature is near the 350F transition.
+            if (ShouldBeginRhrIsolation(T_rcs))
             {
                 RHRSystem.BeginIsolation(ref rhrState);
-                LogEvent(EventSeverity.ACTION, $"RHR ISOLATION INITIATED - RCPs running, P={P_rcs_psig:F0} psig");
+                LogEvent(EventSeverity.ACTION,
+                    $"RHR ISOLATION INITIATED - 4 RCPs established near {PlantConstants.RHR_LETDOWN_ISOLATION_TEMP_F:F0}F window; P={P_rcs_psig:F0} psig");
             }
         }
 
@@ -1166,8 +1210,12 @@ public partial class HeatupSimEngine : MonoBehaviour
         // over ~40 min per pump, preventing convergence discontinuities.
         // ================================================================
 
-        // Coupling factor: 0 = fully isolated, 1 = fully coupled
-        float alpha = Mathf.Min(1.0f, rcpContribution.TotalFlowFraction);
+        // Coupling factor: 0 = fully isolated, 1 = fully coupled.
+        // IP-0019 transient stabilization: smooth raw RCP flow fraction to avoid
+        // startup coupling discontinuities that can amplify pressure/level transients.
+        float alphaRaw = Mathf.Clamp01(rcpContribution.TotalFlowFraction);
+        float alpha = ComputeRegime2CouplingAlpha(alphaRaw, dt);
+        noRcpTransportFactor = 1f;
 
         if (rcpCount == 0 || alpha < 0.001f)
         {
@@ -1204,32 +1252,53 @@ public partial class HeatupSimEngine : MonoBehaviour
             sgWideRangeLevel_pct   = sgMultiNodeState.WideRangeLevel_pct;
             sgNarrowRangeLevel_pct = sgMultiNodeState.NarrowRangeLevel_pct;
 
-            float pzrHeatInput_BTU = pzrHeaterPower * PlantConstants.MW_TO_BTU_HR * dt;
-            float pzrDeltaT = pzrHeatInput_BTU / pzrHeatCap;
-
             if ((solidPressurizer && !bubbleFormed) || bubblePreDrainPhase)
             {
                 // SOLID PRESSURIZER (or pre-drain bubble phases)
                 // Delegated to SolidPlantPressure module
+                float regime1TransportFactor = ComputeNoRcpBulkTransportFactor(dt);
+                noRcpTransportFactor = regime1TransportFactor;
+                bool explicitNoFlowHold =
+                    rcpCount == 0 &&
+                    Mathf.Abs(chargingFlow) <= 1e-4f &&
+                    Mathf.Abs(letdownFlow) <= 1e-4f &&
+                    Mathf.Abs(chargingToRCS) <= 1e-4f &&
+                    !pzrHeatersOn &&
+                    Mathf.Abs(pzrHeaterPower) <= 1e-6f &&
+                    rhrState.Mode == RHRMode.Standby;
+                float solidBaseLetdown = explicitNoFlowHold ? 0f : 75f;
+                float solidBaseCharging = explicitNoFlowHold ? 0f : 75f;
                 SolidPlantPressure.Update(
                     ref solidPlantState,
                     pzrHeaterPower * 1000f,   // MW -> kW
-                    75f, 75f,                  // base letdown/charging gpm
-                    rcsHeatCap, dt);
+                    solidBaseLetdown,
+                    solidBaseCharging,
+                    rcsHeatCap, dt,
+                    regime1TransportFactor);
 
-                // Read results from physics module
-                T_pzr = solidPlantState.T_pzr;
-                T_rcs = solidPlantState.T_rcs;
-                pressure = solidPlantState.Pressure;
+                // Read module outputs into local candidates, then commit once.
+                float nextT_pzr = solidPlantState.T_pzr;
+                float nextT_rcs = solidPlantState.T_rcs;
+                float nextPressure = solidPlantState.Pressure;
 
-                // v3.0.0: Apply RHR net heat to RCS (pump heat minus HX removal)
-                // During solid plant ops, RHR provides forced circulation and ~1 MW pump heat
+                // IP-0019 (CS-0055): no-RCP bulk transport gating for RHR thermal path.
                 if (rhrActive && rcsHeatCap > 1f)
                 {
-                    float rhrHeat_BTU = rhrNetHeat_MW * PlantConstants.MW_TO_BTU_HR * dt;
-                    T_rcs += rhrHeat_BTU / rcsHeatCap;
-                    solidPlantState.T_rcs = T_rcs;  // Keep solid plant state in sync
+                    nextT_rcs += ComputeNoRcpHeatDeltaF(rhrNetHeat_MW, rcsHeatCap, dt);
+                    solidPlantState.T_rcs = nextT_rcs;
                 }
+
+                T_pzr = nextT_pzr;
+                T_rcs = nextT_rcs;
+                SetLongHoldPressureModelTrace(
+                    "REGIME1_SOLID",
+                    solidPlantState.PressureEquationBranch,
+                    solidPlantState.PressureModelUsesSaturation,
+                    solidPlantState.PressureModelSaturationPsia,
+                    solidPlantState.PressureModelDensity,
+                    solidPlantState.PressureModelCompressibility,
+                    solidPlantState.PressureDelta_psi);
+                ApplyPressureWrite(nextPressure, "REGIME1_SOLID_SolidPlantPressure", stateDerived: true);
                 letdownFlow = solidPlantState.LetdownFlow;
                 chargingFlow = solidPlantState.ChargingFlow;
                 surgeFlow = solidPlantState.SurgeFlow;
@@ -1255,6 +1324,7 @@ public partial class HeatupSimEngine : MonoBehaviour
 
                 // Check for bubble formation (delegated to BubbleFormation partial)
                 ProcessBubbleDetection();
+                AssignThermoWriterByInvariants();
             }
             else
             {
@@ -1281,17 +1351,21 @@ public partial class HeatupSimEngine : MonoBehaviour
                 bool twoPhaseActive = bubblePhase == BubbleFormationPhase.DRAIN
                                    || bubblePhase == BubbleFormationPhase.STABILIZE
                                    || bubblePhase == BubbleFormationPhase.PRESSURIZE;
+                float regime1TransportFactor = ComputeNoRcpBulkTransportFactor(dt);
+                noRcpTransportFactor = regime1TransportFactor;
 
                 var isoResult = RCSHeatup.IsolatedHeatingStep(
                     T_pzr, T_rcs, pressure,
                     pzrHeaterPower, pzrWaterVolume,
                     pzrHeatCap, rcsHeatCap, dt,
-                    twoPhaseActive);
+                    twoPhaseActive,
+                    regime1TransportFactor,
+                    pzrSteamVolume);
 
-                T_pzr = isoResult.T_pzr;
-                T_rcs = isoResult.T_rcs;
-                pressure = isoResult.Pressure;
-                surgeFlow = isoResult.SurgeFlow;
+                float nextT_pzr = isoResult.T_pzr;
+                float nextT_rcs = isoResult.T_rcs;
+                float nextPressure = isoResult.Pressure;
+                float nextSurgeFlow = isoResult.SurgeFlow;
 
                 // v0.3.2.0 CS-0043: Store PZR loss values for UpdateDrainPhase energy accounting
                 pzrConductionLoss_MW = isoResult.PZRConductionLoss_MW;
@@ -1305,14 +1379,31 @@ public partial class HeatupSimEngine : MonoBehaviour
                 // and P unchanged. Psat(T_sat(P)) = P (identity, no ratchet).
                 // Pressure during two-phase is now stable by construction.
 
-                T_sat = WaterProperties.SaturationTemperature(pressure);
+                T_sat = WaterProperties.SaturationTemperature(nextPressure);
 
-                // v3.0.0: Apply RHR net heat to RCS
+                // IP-0019 (CS-0055): no-RCP bulk transport gating for RHR thermal path.
                 if (rhrActive && rcsHeatCap > 1f)
                 {
-                    float rhrHeat_BTU = rhrNetHeat_MW * PlantConstants.MW_TO_BTU_HR * dt;
-                    T_rcs += rhrHeat_BTU / rcsHeatCap;
+                    nextT_rcs += ComputeNoRcpHeatDeltaF(rhrNetHeat_MW, rcsHeatCap, dt);
                 }
+
+                T_pzr = nextT_pzr;
+                T_rcs = nextT_rcs;
+                SetLongHoldPressureModelTrace(
+                    "REGIME1_ISOLATED",
+                    string.IsNullOrWhiteSpace(isoResult.PressureEquationBranch)
+                        ? (twoPhaseActive
+                            ? "R1_ISOLATED_TWO_PHASE_LOCKED_PSAT(T)"
+                            : "R1_ISOLATED_SUBCOOLED_dP=PressureCoeff(T,P)*dT*0.5")
+                        : isoResult.PressureEquationBranch,
+                    isoResult.PressureModelUsesSaturation,
+                    isoResult.PressureModelSaturationPsia,
+                    isoResult.PressureModelDensity,
+                    isoResult.PressureModelCompressibility,
+                    isoResult.PressureDeltaPsi);
+                ApplyPressureWrite(nextPressure, "REGIME1_ISOLATED_RCSHeatup", stateDerived: true);
+                surgeFlow = nextSurgeFlow;
+                AssignThermoWriterByInvariants();
 
                 // ============================================================
                 // IP-0016 PBOC: Primary boundary flow single-owner application.
@@ -1361,11 +1452,14 @@ public partial class HeatupSimEngine : MonoBehaviour
             //   5. Blend with isolated result by α
             // ============================================================
 
+            float prevPzrLevel_pct = pzrLevel;
+
             // --- Run isolated path (weighted by 1-α) ---
             var isoResult = RCSHeatup.IsolatedHeatingStep(
                 T_pzr, T_rcs, pressure,
                 pzrHeaterPower, pzrWaterVolume,
-                pzrHeatCap, rcsHeatCap, dt);
+                pzrHeatCap, rcsHeatCap, dt,
+                pzrSteamVolume: pzrSteamVolume);
 
             // --- Run coupled path (weighted by α) ---
             // Use effective ramped heat, not full binary heat
@@ -1437,10 +1531,27 @@ public partial class HeatupSimEngine : MonoBehaviour
 
             // --- Blend results using coupling factor α ---
             float oneMinusAlpha = 1.0f - alpha;
+            // IP-0019 transient stabilization: early startup coupling is nonlinear.
+            // Low RCP flow fractions should not immediately force full PZR/RCS mass exchange.
+            float alphaMass = alpha * alpha;
+            float oneMinusAlphaMass = 1.0f - alphaMass;
 
             T_rcs = isoResult.T_rcs * oneMinusAlpha + coupledResult.T_rcs * alpha;
-            pressure = isoResult.Pressure * oneMinusAlpha + coupledResult.Pressure * alpha;
+            float blendedPressure = isoResult.Pressure * oneMinusAlphaMass + coupledResult.Pressure * alphaMass;
+            SetLongHoldPressureModelTrace(
+                "REGIME2_BLEND",
+                "R2_BLEND_P=iso*(1-alpha^2)+coupled*alpha^2",
+                false,
+                WaterProperties.SaturationPressure(T_pzr),
+                WaterProperties.WaterDensity(T_rcs, pressure),
+                ThermalExpansion.Compressibility(T_rcs, pressure),
+                blendedPressure - pressure);
+            ApplyPressureWrite(
+                blendedPressure,
+                "REGIME2_BLEND_WeightedPressure",
+                stateDerived: true);
             surgeFlow = isoResult.SurgeFlow * oneMinusAlpha + coupledResult.SurgeFlow * alpha;
+            AssignThermoWriterByInvariants();
 
             // PZR temperature: blend between isolated T_pzr and T_sat (coupled)
             T_sat = WaterProperties.SaturationTemperature(pressure);
@@ -1458,11 +1569,14 @@ public partial class HeatupSimEngine : MonoBehaviour
             float pzrVolumeBefore = pzrWaterVolume;  // Volume at start of this timestep
             float deltaPZR_isolated = 0f;  // Isolated regime: PZR volume essentially unchanged
             float deltaPZR_coupled = physicsState.PZRWaterVolume - pzrVolumeBefore;  // Change from coupled solver
-            float deltaPZR_blended = deltaPZR_isolated * oneMinusAlpha + deltaPZR_coupled * alpha;
+            float deltaPZR_blended = deltaPZR_isolated * oneMinusAlphaMass + deltaPZR_coupled * alphaMass;
             
             pzrWaterVolume = pzrVolumeBefore + deltaPZR_blended;
             pzrSteamVolume = PlantConstants.PZR_TOTAL_VOLUME - pzrWaterVolume;
             pzrLevel = pzrWaterVolume / PlantConstants.PZR_TOTAL_VOLUME * 100f;
+            pzrLevel = ClampRegime2PzrLevelStep(prevPzrLevel_pct, pzrLevel, alpha);
+            pzrWaterVolume = pzrLevel * 0.01f * PlantConstants.PZR_TOTAL_VOLUME;
+            pzrSteamVolume = PlantConstants.PZR_TOTAL_VOLUME - pzrWaterVolume;
 
             // v1.3.0/v3.0.0: Update SG display state from multi-node model
             T_sg_secondary = sgMultiNodeState.BulkAverageTemp_F;
@@ -1606,8 +1720,17 @@ public partial class HeatupSimEngine : MonoBehaviour
                 physicsState.TotalPrimaryMass_lb);
 
             T_rcs = heatupResult.T_rcs;
-            pressure = heatupResult.Pressure;
+            SetLongHoldPressureModelTrace(
+                "REGIME3_COUPLED",
+                "R3_COUPLED_CoupledThermo",
+                true,
+                WaterProperties.SaturationPressure(T_pzr),
+                WaterProperties.WaterDensity(T_rcs, pressure),
+                ThermalExpansion.Compressibility(T_rcs, pressure),
+                heatupResult.Pressure - pressure);
+            ApplyPressureWrite(heatupResult.Pressure, "REGIME3_COUPLED_BulkHeatup", stateDerived: true);
             surgeFlow = heatupResult.SurgeFlow;
+            AssignThermoWriterByInvariants();
 
             // v1.3.0/v3.0.0: Update SG display state from multi-node model
             T_sg_secondary = sgMultiNodeState.BulkAverageTemp_F;
@@ -1709,6 +1832,16 @@ public partial class HeatupSimEngine : MonoBehaviour
         // 5. CVCS, RCS INVENTORY, VCT — Delegated to CVCS partial
         // ================================================================
         UpdateCVCSFlows(dt, bubbleDrainActive);
+        AssignThermoWriterByInvariants();
+        TraceRcpTransientStep(
+            prevRcpCountStep,
+            prevRcpHeatStep,
+            prevPzrLevelStep,
+            prevPressure,
+            prevNoRcpTransportStep,
+            prevCouplingAlphaStep,
+            alphaRaw,
+            alpha);
 
         // ================================================================
         // 5a. v0.3.0.0 Phase B (Fix 3.1): REGIME 1 MASS LEDGER ASSERTION
@@ -1784,6 +1917,140 @@ public partial class HeatupSimEngine : MonoBehaviour
     // ========================================================================
     // HELPER METHODS
     // ========================================================================
+
+    public void BeginLongHoldPressureAudit()
+    {
+        longHoldPressureAuditActive = true;
+        longHoldPressureTickCount = 0;
+        longHoldPressureWriteCount = 0;
+        longHoldPressureStateDerivedWriteCount = 0;
+        longHoldPressureOverrideAttemptCount = 0;
+        longHoldPressureBlockedOverrideCount = 0;
+        longHoldPressureInvariantFailed = false;
+        longHoldPressureInvariantReason = "";
+        longHoldLastPressureBefore = pressure;
+        longHoldLastPressureAfter = pressure;
+        longHoldLastPressureSource = "BEGIN_LONG_HOLD_AUDIT";
+        longHoldLastPressureStack = "";
+        longHoldPressureRegime = "UNSET";
+        longHoldPressureEquationBranch = "UNSET";
+        longHoldPressureUsesSaturation = false;
+        longHoldPressureSaturationPsia = 0f;
+        longHoldPressureModelDensity = 0f;
+        longHoldPressureModelCompressibility = 0f;
+        longHoldPressureModelDeltaPsi = 0f;
+    }
+
+    public void EndLongHoldPressureAudit()
+    {
+        longHoldPressureAuditActive = false;
+    }
+
+    void SetLongHoldPressureModelTrace(
+        string regimeLabel,
+        string equationBranch,
+        bool usesSaturation,
+        float saturationPsia,
+        float modelDensity,
+        float modelCompressibility,
+        float modelDeltaPsi)
+    {
+        longHoldPressureRegime = string.IsNullOrWhiteSpace(regimeLabel) ? "UNSET" : regimeLabel.Trim();
+        longHoldPressureEquationBranch = string.IsNullOrWhiteSpace(equationBranch) ? "UNSET" : equationBranch.Trim();
+        longHoldPressureUsesSaturation = usesSaturation;
+        longHoldPressureSaturationPsia = saturationPsia;
+        longHoldPressureModelDensity = modelDensity;
+        longHoldPressureModelCompressibility = modelCompressibility;
+        longHoldPressureModelDeltaPsi = modelDeltaPsi;
+    }
+
+    string GetLongHoldPressureTrace()
+    {
+        return
+            $"tick={longHoldPressureTickCount} regime={longHoldPressureRegime} writer={thermoStateWriter} " +
+            $"solid={solidPressurizer} bubble={bubbleFormed} rcp={rcpCount} rhr={rhrState.Mode} " +
+            $"eqBranch={longHoldPressureEquationBranch} satUsed={longHoldPressureUsesSaturation} " +
+            $"satPsia={longHoldPressureSaturationPsia:F3} rho={longHoldPressureModelDensity:F4} " +
+            $"kappa={longHoldPressureModelCompressibility:E3} dP_model={longHoldPressureModelDeltaPsi:F6}";
+    }
+
+    public bool ApplyPressureWrite(float nextPressure, string source, bool stateDerived)
+    {
+        float prevPressure = pressure;
+        if (!stateDerived && !longHoldPressureAuditActive && IsStressPressureForceSource(source))
+        {
+            // IP-0019 transient stabilization: runner-forced stress pressure writes are
+            // applied with a physical slew limit to avoid single-tick discontinuities.
+            nextPressure = Mathf.MoveTowards(prevPressure, nextPressure, STRESS_FORCE_PRESSURE_MAX_STEP_PSI);
+        }
+        float deltaPressure = nextPressure - prevPressure;
+        bool noChange = Mathf.Abs(deltaPressure) <= 1e-6f;
+        string stack = longHoldPressureAuditActive ? Environment.StackTrace : "";
+
+        if (longHoldPressureAuditActive)
+        {
+            longHoldPressureTickCount++;
+            longHoldPressureWriteCount++;
+
+            if (stateDerived)
+            {
+                longHoldPressureStateDerivedWriteCount++;
+            }
+            else
+            {
+                longHoldPressureOverrideAttemptCount++;
+                longHoldPressureBlockedOverrideCount++;
+                longHoldPressureInvariantFailed = true;
+                longHoldPressureInvariantReason =
+                    $"Non-state pressure write blocked from {source} at T+{simTime:F4}hr ({prevPressure:F3}->{nextPressure:F3} psia). {GetLongHoldPressureTrace()}";
+                longHoldLastPressureBefore = prevPressure;
+                longHoldLastPressureAfter = nextPressure;
+                longHoldLastPressureSource = source;
+                longHoldLastPressureStack = stack;
+
+                Debug.LogError(
+                    $"[LONG_HOLD][PRESSURE_BLOCKED] source={source} derived={stateDerived} " +
+                    $"prev={prevPressure:F3} next={nextPressure:F3} t={simTime:F4}hr {GetLongHoldPressureTrace()}\n{stack}");
+                return false;
+            }
+
+            longHoldLastPressureBefore = prevPressure;
+            longHoldLastPressureAfter = nextPressure;
+            longHoldLastPressureSource = source;
+            longHoldLastPressureStack = stack;
+            if (noChange)
+            {
+                Debug.Log(
+                    $"[LONG_HOLD][PRESSURE_TICK] source={source} action=NO_CHANGE derived={stateDerived} " +
+                    $"p={prevPressure:F3} t={simTime:F4}hr {GetLongHoldPressureTrace()}");
+            }
+            else
+            {
+                Debug.Log(
+                    $"[LONG_HOLD][PRESSURE_WRITE] source={source} derived={stateDerived} " +
+                    $"prev={prevPressure:F3} next={nextPressure:F3} dP={deltaPressure:F6} t={simTime:F4}hr {GetLongHoldPressureTrace()}\n{stack}");
+            }
+        }
+
+        if (noChange)
+            return true;
+
+        pressure = nextPressure;
+        return true;
+    }
+
+    void AssignThermoWriterByInvariants()
+    {
+        if (rcpCount <= 0)
+        {
+            thermoStateWriter = solidPressurizer ? "REGIME1_SOLID" : "REGIME1_ISOLATED";
+            return;
+        }
+
+        thermoStateWriter = rcpContribution.AllFullyRunning
+            ? "REGIME3_COUPLED"
+            : "REGIME2_BLEND";
+    }
 
     float GetSealInjectionFlowGpm()
     {
@@ -1895,6 +2162,119 @@ public partial class HeatupSimEngine : MonoBehaviour
         stageEDynamicSamples.Clear();
     }
 
+    bool ShouldBeginRhrIsolation(float currentRcsTempF)
+    {
+        if (rhrState.Mode != RHRMode.Heatup)
+            return false;
+
+        bool allRcpsRunning = rcpCount >= 4;
+        float nearIsolationTempF = PlantConstants.RHR_LETDOWN_ISOLATION_TEMP_F - RHR_ISOLATION_NEAR_TEMP_BAND_F;
+        bool nearMode3Temperature = currentRcsTempF >= nearIsolationTempF;
+        return allRcpsRunning && nearMode3Temperature;
+    }
+
+    float ComputeRegime2CouplingAlpha(float alphaRaw, float dt_hr)
+    {
+        if (rcpCount <= 0)
+        {
+            smoothedRegime2Alpha = 0f;
+            return 0f;
+        }
+
+        float alphaTarget = Mathf.Clamp01(alphaRaw);
+        float blend = Mathf.Clamp01(dt_hr / REGIME2_ALPHA_SMOOTH_TAU_HR);
+        smoothedRegime2Alpha += (alphaTarget - smoothedRegime2Alpha) * blend;
+        return Mathf.Clamp01(smoothedRegime2Alpha);
+    }
+
+    float ComputeNoRcpBulkTransportFactor(float dt_hr)
+    {
+        if (rcpCount > 0)
+            return 1f;
+
+        float systemVolume_gal =
+            (PlantConstants.RCS_WATER_VOLUME + PlantConstants.PZR_TOTAL_VOLUME) * PlantConstants.FT3_TO_GAL;
+        if (systemVolume_gal <= 1f)
+            return NO_RCP_NATURAL_FLOOR;
+
+        float forcedFlow_gpm = (rhrState.SuctionValvesOpen && rhrState.FlowRate_gpm > 0f)
+            ? rhrState.FlowRate_gpm
+            : 0f;
+        float turnoverFraction = forcedFlow_gpm * dt_hr * 60f / systemVolume_gal;
+        float forcedFactor = Mathf.Clamp01(turnoverFraction * NO_RCP_TRANSPORT_GAIN);
+        return Mathf.Clamp01(Mathf.Max(NO_RCP_NATURAL_FLOOR, forcedFactor));
+    }
+
+    float ComputeNoRcpHeatDeltaF(float heatMw, float rcsHeatCapBtuF, float dt_hr)
+    {
+        if (rcsHeatCapBtuF <= 1f)
+            return 0f;
+
+        float transportedHeatMw = heatMw * noRcpTransportFactor;
+        float transportedHeatBtu = transportedHeatMw * PlantConstants.MW_TO_BTU_HR * dt_hr;
+        return transportedHeatBtu / rcsHeatCapBtuF;
+    }
+
+    float ClampRegime2PzrLevelStep(float previousLevelPct, float candidateLevelPct, float couplingAlpha)
+    {
+        float maxStepPct = Mathf.Lerp(
+            REGIME2_STARTUP_LEVEL_STEP_MIN_PCT,
+            REGIME2_MAX_PZR_LEVEL_STEP_PCT,
+            Mathf.Clamp01(couplingAlpha * couplingAlpha * couplingAlpha));
+        float delta = candidateLevelPct - previousLevelPct;
+        if (Mathf.Abs(delta) <= maxStepPct)
+            return candidateLevelPct;
+
+        return previousLevelPct + Mathf.Sign(delta) * maxStepPct;
+    }
+
+    bool IsStressPressureForceSource(string source)
+    {
+        if (string.IsNullOrWhiteSpace(source))
+            return false;
+
+        return source.StartsWith("RUNNER_STRESS_FORCE_", StringComparison.OrdinalIgnoreCase)
+            || source.StartsWith("RUNNER_FORCE_RCP_STATE", StringComparison.OrdinalIgnoreCase);
+    }
+
+    void TraceRcpTransientStep(
+        int prevRcpCount,
+        float prevRcpHeatMw,
+        float prevPzrLevelPct,
+        float prevPressurePsia,
+        float prevNoRcpTransport,
+        float prevCouplingAlpha,
+        float alphaRaw,
+        float alphaSmoothed)
+    {
+        bool rcpCountChanged = prevRcpCount != rcpCount;
+        bool inRcpRamp = rcpCount > 0 && (alphaSmoothed < 0.999f || alphaRaw < 0.999f);
+        if (!rcpCountChanged && !inRcpRamp)
+            return;
+
+        float latestStart = float.MinValue;
+        for (int i = 0; i < rcpCount && i < rcpStartTimes.Length; i++)
+            latestStart = Mathf.Max(latestStart, rcpStartTimes[i]);
+        bool withinTraceWindow = latestStart > float.MinValue
+            && (simTime - latestStart) <= RCP_TRANSIENT_TRACE_WINDOW_HR;
+        if (!withinTraceWindow && !rcpCountChanged)
+            return;
+
+        float dHeat = rcpHeat - prevRcpHeatMw;
+        float dPressure = pressure - prevPressurePsia;
+        float dLevel = pzrLevel - prevPzrLevelPct;
+        float dTransport = noRcpTransportFactor - prevNoRcpTransport;
+        float dAlpha = alphaSmoothed - prevCouplingAlpha;
+
+        Debug.Log(
+            $"[RCP_TRANSIENT] t={simTime:F4}hr rcp={prevRcpCount}->{rcpCount} " +
+            $"heatTarget={effectiveRCPHeat:F3}MW heatApplied={rcpHeat:F3}MW dHeat={dHeat:F4}MW " +
+            $"dP={dPressure:F4}psi dPdt={pressureRate:F3}psi/hr " +
+            $"pzr={pzrLevel:F4}% dLevel={dLevel:F4}% " +
+            $"alphaRaw={alphaRaw:F5} alpha={alphaSmoothed:F5} dAlpha={dAlpha:F5} " +
+            $"transport={noRcpTransportFactor:F5} dTransport={dTransport:F5}");
+    }
+
     void ComputePrimaryBoundaryMassFlows(
         float dt_hr,
         float rho_rcs,
@@ -1902,6 +2282,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         out float sealReturn_gpm,
         out float chargingToPrimary_gpm,
         out float primaryOutflow_gpm,
+        out float rhoTransfer_lbm_ft3,
         out float massIn_lb,
         out float massOut_lb,
         out float netMass_lb)
@@ -1913,11 +2294,18 @@ public partial class HeatupSimEngine : MonoBehaviour
         // Seal return is handled as a primary outflow counterpart term.
         chargingToPrimary_gpm = Mathf.Max(0f, chargingFlow);
         primaryOutflow_gpm = Mathf.Max(0f, letdownFlow) + sealReturn_gpm;
-        // IP-0016 conservation closure: use auxiliary-side reference density for
-        // CVCS volumetric transfer so primary transfer mass basis matches VCT/BRS
-        // mass accounting in the plant-wide conservation equation.
-        float rhoTransfer = WaterProperties.WaterDensity(100f, 14.7f);
-        float massPerGpmStep = dt_sec * PlantConstants.GPM_TO_FT3_SEC * rhoTransfer;
+        // IP-0019 (CS-0061): use runtime state density for boundary transfer mass
+        // conversion; fixed 100F atmospheric density is no longer permitted.
+        if (rho_rcs > 1f && !float.IsNaN(rho_rcs) && !float.IsInfinity(rho_rcs))
+        {
+            rhoTransfer_lbm_ft3 = rho_rcs;
+        }
+        else
+        {
+            rhoTransfer_lbm_ft3 = WaterProperties.WaterDensity(T_rcs, pressure);
+        }
+
+        float massPerGpmStep = dt_sec * PlantConstants.GPM_TO_FT3_SEC * rhoTransfer_lbm_ft3;
 
         massIn_lb = chargingToPrimary_gpm * massPerGpmStep;
         massOut_lb = primaryOutflow_gpm * massPerGpmStep;
@@ -1937,6 +2325,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             out float sealReturn_gpm,
             out float chargingToPrimary_gpm,
             out float primaryOutflow_gpm,
+            out float rhoTransfer_lbm_ft3,
             out float massIn_lb,
             out float massOut_lb,
             out float netMass_lb);
@@ -1955,7 +2344,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             ChargingToPrimary_gpm = chargingToPrimary_gpm,
             PrimaryOutflow_gpm = primaryOutflow_gpm,
             RhoRcs_lbm_ft3 = rho_rcs,
-            RhoAux_lbm_ft3 = WaterProperties.WaterDensity(100f, 14.7f),
+            RhoAux_lbm_ft3 = rhoTransfer_lbm_ft3,
             MassIn_lbm = massIn_lb,
             MassOut_lbm = massOut_lb,
             dm_RCS_lbm = netMass_lb,

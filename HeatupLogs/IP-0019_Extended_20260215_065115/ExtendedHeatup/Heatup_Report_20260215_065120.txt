@@ -1,0 +1,120 @@
+HEATUP VALIDATION REPORT
+========================
+Time: 15/02/2026 6:51:20 a.m.
+Simulation Duration: 14.59 hours (14:35:21)
+Wall-Clock Duration: 00:00:00
+Effective Speed: 1.0x average
+
+Final T_avg: 230.6°F
+Final Pressure: 533 psia
+Final Subcooling: 243.5°F
+Final PZR Level: 33.9%
+Grid Energy: 445 MWh
+
+VALIDATION:
+  Subcooling ≥30°F: PASS
+  Rate ≤50°F/hr: FAIL
+  Temp target: FAIL
+  Mass conservation ≤500 lbm: FAIL (827.2 lbm)
+  RTCC telemetry present: PASS
+  RTCC assertion failures: PASS (0)
+  PBOC events recorded: PASS (5252)
+  PBOC pairing assertion failures: PASS (0)
+
+v4.4.0 PRESSURE/LEVEL CONTROL FINAL VALIDATION:
+  PZR Level within +/-10%:  PASS (level=33.9%, SP=28.0%)
+  Final P at target (+/-50): PASS (533 psia, target 2250 +/- 50)
+  Heater Mode = PID:        N/A (mode=PRESSURIZE_AUTO)
+  Spray system functional:  PASS (enabled=True)
+  Final spray flow:         1.5 gpm
+  Final heater power:       1.800 MW
+
+INVENTORY AUDIT SUMMARY (v1.1.0):
+  Initial Total Mass:   924156 lbm
+  Final Total Mass:     923493 lbm
+  Expected Total Mass:  922666 lbm
+  Conservation Error:   827.2 lbm (0.090%)
+  Conservation Status:  ALARM
+  Plant External In:    0.0 gal
+  Plant External Out:   180.2 gal
+  Plant External Net:   -180.2 gal
+
+  Cumulative Flows:
+    Total Charging:     54590 gal
+    Total Letdown:      66955 gal
+    Total Seal Inj:     4325 gal
+    Total Seal Return:  1622 gal
+    Total Surge In:     3559 gal
+    Total Surge Out:    0 gal
+    Total Makeup:       0 gal
+    Total CBO Losses:   180 gal
+
+  Mass Distribution:
+    RCS:                676036 lbm
+    PZR (water):        30809 lbm
+    PZR (steam):        1521 lbm
+    VCT:                25625 lbm
+    BRS:                189502 lbm
+
+SG SECONDARY SIDE SUMMARY (v5.0.0):
+  Initial Mass:         1660000 lb (wet layup, 4 SGs)
+  Final Mass:           1660000 lb
+  Mass Drained:         0 lb
+  Steam Produced:       0 lb
+  Draining Status:      PRE-DRAIN
+  Wide Range Level:     100.0%
+  Narrow Range Level:   181.8%
+  SG Regime:            Subcooled
+  Secondary Pressure:   17.3 psia
+  SG Boundary Mode:     ISOLATED
+  Pressure Source:      inventory-derived
+  Steam Inventory:      0.0 lb
+  Startup State:        PRESSURIZE
+  State Ticks:          67
+  State Time:           0.186 hr
+  Hold Target Pressure: 0.00 psia
+  Hold Pressure Dev:    0.000 %
+  Hold Net Leakage:     0.000 %
+  PressWindow Active:   NO
+  PressWindow Start:    0.000 hr
+  PressWindow Rise:     0.00 psia
+  PressWindow Tsat Δ:   0.00 F
+  P Rise Streak:        0
+  Tsat Rise Streak:     0
+  PreBoil |T-Tsat|:     0.00 F
+  Dynamic Active Intv:  6
+  Dynamic P Rise Chk:   5
+  Dynamic P Rise PASS:  5
+  Dynamic P Rise FAIL:  0
+  Dynamic Last dP:      0.055 psia
+  Dynamic dT3 Windows:  4
+  Dynamic dT3 Last:     14.63 F
+  Dynamic dT3 Min:      7.14 F
+  Dynamic dT3 Max:      14.63 F
+  Dynamic dT3 >5F:      4
+  Dynamic dT3 <2F:      0
+  Dynamic Flatline3:    0
+  Dynamic Clamp Hits:   0
+  Dynamic Top-Tsat:     86.40 F
+  Net Plant Heat:       17.99 MW
+  IP-0018 Energy Artifact:
+    TotalPrimaryEnergy_MJ:   3244.966
+    TotalSGEnergyRemoved_MJ: 3244.966
+    PercentMismatch:         0.000 %
+    Window Active:           YES
+    Last SG Heat Removal:    4.980 MW
+    Negative Violations:     0
+    OverPrimary Violations:  0
+    Max OverPrimary Percent: 0.000 %
+
+RTCC SUMMARY (IP-0016):
+  Telemetry Present:    YES
+  Transition Count:     1
+  Assertion Failures:   0
+  Last Transition:      SOLID_TO_TWO_PHASE
+  Last Authority Path:  CANONICAL_SOLID -> CANONICAL_TWO_PHASE
+  Last Raw Delta:       -17506.000 lbm
+  Last Assert Delta:    0.000 lbm
+  Max Raw |Delta|:      17506.000 lbm
+  Epsilon:              50.0 lbm
+

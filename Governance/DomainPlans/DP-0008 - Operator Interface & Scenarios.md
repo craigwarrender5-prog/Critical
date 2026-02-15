@@ -2,7 +2,7 @@
 Identifier: DP-0008
 Domain (Canonical): Operator Interface & Scenarios
 Status: Open
-Linked Issues: CS-0042, CS-0037
+Linked Issues: CS-0037, CS-0042
 Last Reviewed: 2026-02-14
 Authorization Status: NOT AUTHORIZED
 Mode: SPEC/DRAFT
@@ -26,8 +26,8 @@ Mode: SPEC/DRAFT
 ## C) Ordered Issue Backlog
 | CS ID | Title | Severity | Status | Blocking Dependency | Validation Outcome |
 |---|---|---|---|---|---|
-| CS-0042 | Professional interactive dashboard visualization upgrade (uGUI modernization) | Medium | Assigned | - | Not Tested |
-| CS-0037 | Surge line flow direction and net inventory display enhancement | Low | Assigned | - | Not Tested |
+| CS-0042 | Professional interactive dashboard visualization upgrade (uGUI modernization) | Medium | READY_FOR_FIX | - | Pending (active issue) |
+| CS-0037 | Surge line flow direction and net inventory display enhancement | Low | READY_FOR_FIX | - | Pending (active issue) |
 
 ## D) Execution Readiness Indicator
 **READY FOR AUTHORIZATION**
@@ -35,6 +35,4 @@ Mode: SPEC/DRAFT
 No blocking Critical issues unresolved outside domain.
 
 ## E) Notes / Investigation Links
-- Prior IP references:
-  - IP-0013 â€” Operator and Scenario Framework
-  - IP-0013 â€” Operator and Scenario Framework (subsumed by CS-0042)
+- Registry consistency synchronized against Governance/IssueRegister/issue_index.json and Governance/IssueRegister/issue_register.json on 2026-02-14.
