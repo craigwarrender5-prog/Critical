@@ -43,6 +43,7 @@
 
 using UnityEngine;
 using Critical.Physics;
+using Critical.Simulation.Modular.Transfer;
 
 public partial class HeatupValidationVisual
 {
@@ -167,6 +168,23 @@ public partial class HeatupValidationVisual
         DrawCheckRowThreeState(ref y, x, w, "Primary Mass Conservation",
             engine.massError_lbm, 100f, 500f,
             $"Error: {engine.massError_lbm:F1} lbm");
+
+        // Stage C migrated ledger-backed check (no physics mutation):
+        // Compare direct heater power authority against finalized per-step ledger signal.
+        var stepSnapshot = engine.GetStepSnapshot();
+        float ledgerHeaterMw = stepSnapshot.TransferLedger.SumBySignal(
+            "PZR_HEATER_POWER_MW",
+            TransferQuantityType.EnergyMw);
+        bool heaterLedgerAligned = Mathf.Abs(ledgerHeaterMw - engine.pzrHeaterPower) <= 1e-4f;
+        DrawCheckRow(ref y, x, w, "Ledger Heater Transfer Fidelity",
+            heaterLedgerAligned,
+            $"Legacy={engine.pzrHeaterPower:F4} MW, Ledger={ledgerHeaterMw:F4} MW");
+
+        DrawCheckRow(ref y, x, w, "Unledgered Mutation Detector",
+            !stepSnapshot.TransferLedger.UnledgeredMutationDetected,
+            stepSnapshot.TransferLedger.UnledgeredMutationDetected
+                ? stepSnapshot.TransferLedger.UnledgeredMutationReason
+                : "No unledgered mutation detected");
 
         // VCT cumulative flow imbalance — CVCS loop-level diagnostic, not primary conservation
         // This tracks VCT gallon-based flow accounting and may drift due to density approximations.

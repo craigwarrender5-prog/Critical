@@ -7,6 +7,7 @@ using System.Text;
 using Critical.Physics;
 using Critical.Simulation.Modular;
 using Critical.Simulation.Modular.State;
+using Critical.Simulation.Modular.Transfer;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -215,11 +216,10 @@ namespace Critical.Validation
                 Mathf.Abs(beforeState.PzrLevelPct - beforePzr) <= FloatTolerance &&
                 Mathf.Abs(beforeState.PrimaryMassLedgerLb - beforeMass) <= FloatTolerance;
 
-            bool transferReadOnly = true;
-            if (before.TransferLedgerPlaceholders is ICollection<string> collection)
-                transferReadOnly = collection.IsReadOnly;
-
-            result.SnapshotNoMutableRuntimeContainers = transferReadOnly;
+            result.SnapshotNoMutableRuntimeContainers =
+                before.TransferLedger != null &&
+                before.TransferLedger.Events is ICollection<TransferEvent> eventsCollection &&
+                eventsCollection.IsReadOnly;
         }
 
         private static bool HasNoPublicWritableProperties(Type type)

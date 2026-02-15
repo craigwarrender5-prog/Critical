@@ -7,6 +7,7 @@ using System.Text;
 using System.Threading;
 using Critical.Simulation.Modular;
 using Critical.Simulation.Modular.State;
+using Critical.Simulation.Modular.Transfer;
 
 public partial class HeatupSimEngine
 {
@@ -225,12 +226,15 @@ public partial class HeatupSimEngine
     {
         // Stage B single-writer rule: projection is emitted only through LegacyStateBridge.
         PlantState projected = LegacyStateBridge.Export(this, dt);
+        TransferLedger transferLedger = modularCoordinatorPathLastStepUsed && _plantSimulationCoordinator != null
+            ? _plantSimulationCoordinator.LatestTransferLedger
+            : TransferLedger.Empty;
         _latestStepSnapshot = new StepSnapshot(
             simTime,
             dt,
             projected,
             _latestSnapshot,
-            Array.Empty<string>());
+            transferLedger);
     }
 
     void WriteTextFileRuntime(string filePath, StringBuilder contentBuilder, bool preferAsync, string source)
