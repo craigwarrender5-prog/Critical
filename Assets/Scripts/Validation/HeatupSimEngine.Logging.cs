@@ -1049,6 +1049,11 @@ public partial class HeatupSimEngine
         sb.AppendLine($"  Bubble Phase:     {bubblePhase,10}");
         sb.AppendLine($"  CCP Started:      {(ccpStarted ? "YES" : "NO"),10}");
         sb.AppendLine($"  Aux Spray Tested: {(auxSprayTestPassed ? "YES" : "NO"),10}");
+        sb.AppendLine($"  Closure Conv:     {(pzrClosureConverged ? "YES" : "NO"),10}");
+        sb.AppendLine($"  Closure V Res:    {pzrClosureVolumeResidual_ft3,10:F3} ft^3");
+        sb.AppendLine($"  Closure E Res:    {pzrClosureEnergyResidual_BTU,10:F1} BTU");
+        sb.AppendLine($"  Closure Hit Rate: {pzrClosureConvergencePct,10:F1} % ({pzrClosureSolveConverged}/{pzrClosureSolveAttempts})");
+        sb.AppendLine($"  PZR H Total:      {pzrTotalEnthalpy_BTU,10:F1} BTU");
         sb.AppendLine();
         sb.AppendLine("RCP (Reactor Coolant Pump) STATE:");
         sb.AppendLine($"  RCPs Running:     {rcpCount,10} / 4");
@@ -1331,7 +1336,7 @@ public partial class HeatupSimEngine
         sb.AppendLine();
         sb.AppendLine(new string('=', 70));
 
-        File.WriteAllText(file, sb.ToString());
+        WriteTextFileRuntime(file, sb, preferAsync: true, source: "interval");
     }
 
     // ========================================================================
@@ -1473,7 +1478,8 @@ public partial class HeatupSimEngine
         sb.AppendLine($"  Epsilon:              {PlantConstants.RTCC_EPSILON_MASS_LBM:F1} lbm");
         sb.AppendLine();
         
-        File.WriteAllText(file, sb.ToString());
+        // Report is terminal artifact; keep synchronous write for immediate availability.
+        WriteTextFileRuntime(file, sb, preferAsync: false, source: "report");
         Debug.Log($"Report saved: {file}");
     }
 }

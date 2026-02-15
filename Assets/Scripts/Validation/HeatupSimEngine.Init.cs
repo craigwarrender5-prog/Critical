@@ -107,6 +107,10 @@ public partial class HeatupSimEngine
         stageE_PercentMismatch = 0f;
         stageE_EnergySampleCount = 0;
 
+        pzrOrificeDiagTickCounter = 0;
+        pzrOrificeDiagLast75Count = -1;
+        pzrOrificeDiagLast45Open = false;
+
         // IP-0016 RTCC/session-scoped telemetry reset
         rtccTransitionCount = 0;
         rtccAssertionFailureCount = 0;
@@ -267,6 +271,10 @@ public partial class HeatupSimEngine
         physicsState.PZRSteamVolume = 0f;
         physicsState.PZRWaterMass = pzrWaterMass;
         physicsState.PZRSteamMass = 0f;
+        physicsState.PZRTotalEnthalpy_BTU = pzrWaterMass * WaterProperties.WaterEnthalpy(T_pzr, pressure);
+        physicsState.PZRClosureConverged = true;
+        physicsState.PZRClosureVolumeResidual_ft3 = 0f;
+        physicsState.PZRClosureEnergyResidual_BTU = 0f;
 
         // v5.4.1 Audit Fix Stage 0: Populate SOLID canonical fields at init.
         // These are read by UpdateInventoryAudit() solid branch (Logging.cs:303-310)
@@ -284,6 +292,12 @@ public partial class HeatupSimEngine
 
         vctState = VCTPhysics.InitializeColdShutdown(PlantConstants.BORON_COLD_SHUTDOWN_BOL_PPM);
         rcsBoronConcentration = PlantConstants.BORON_COLD_SHUTDOWN_BOL_PPM;
+
+        pzrTotalEnthalpy_BTU = physicsState.PZRTotalEnthalpy_BTU;
+        pzrSpecificEnthalpy_BTU_lb = physicsState.PZRWaterMass > 0f ? physicsState.PZRTotalEnthalpy_BTU / physicsState.PZRWaterMass : 0f;
+        pzrClosureVolumeResidual_ft3 = 0f;
+        pzrClosureEnergyResidual_BTU = 0f;
+        pzrClosureConverged = true;
 
         // v0.6.0: Initialize BRS
         // v0.9.6 FIX: Pre-load BRS with distillate inventory from prior operating cycle.
@@ -337,6 +351,12 @@ public partial class HeatupSimEngine
         physicsState.PZRSteamVolume = PlantConstants.PZR_TOTAL_VOLUME - physicsState.PZRWaterVolume;
         physicsState.PZRWaterMass = physicsState.PZRWaterVolume * pzrRhoWater;
         physicsState.PZRSteamMass = physicsState.PZRSteamVolume * pzrRhoSteam;
+        physicsState.PZRTotalEnthalpy_BTU =
+            physicsState.PZRWaterMass * WaterProperties.SaturatedLiquidEnthalpy(pressure) +
+            physicsState.PZRSteamMass * WaterProperties.SaturatedSteamEnthalpy(pressure);
+        physicsState.PZRClosureConverged = true;
+        physicsState.PZRClosureVolumeResidual_ft3 = 0f;
+        physicsState.PZRClosureEnergyResidual_BTU = 0f;
 
         totalSystemMass = physicsState.RCSWaterMass + physicsState.PZRWaterMass + physicsState.PZRSteamMass;
 
@@ -354,6 +374,14 @@ public partial class HeatupSimEngine
         pzrWaterVolume = physicsState.PZRWaterVolume;
         pzrSteamVolume = physicsState.PZRSteamVolume;
         pzrLevel = physicsState.PZRLevel;
+        pzrTotalEnthalpy_BTU = physicsState.PZRTotalEnthalpy_BTU;
+        pzrSpecificEnthalpy_BTU_lb =
+            (physicsState.PZRWaterMass + physicsState.PZRSteamMass) > 0f
+                ? physicsState.PZRTotalEnthalpy_BTU / (physicsState.PZRWaterMass + physicsState.PZRSteamMass)
+                : 0f;
+        pzrClosureVolumeResidual_ft3 = 0f;
+        pzrClosureEnergyResidual_BTU = 0f;
+        pzrClosureConverged = true;
 
         vctState = VCTPhysics.InitializeNormal(55f, 1000f);
         rcsBoronConcentration = 1000f;
@@ -393,6 +421,23 @@ public partial class HeatupSimEngine
         pressureRate = 0f;
         pzrHeatRate = 0f;
         rcsHeatRate = 0f;
+        pzrClosureSolveAttempts = 0;
+        pzrClosureSolveConverged = 0;
+        pzrClosureConvergencePct = 0f;
+        drainSteamDisplacement_lbm = 0f;
+        drainCvcsTransfer_lbm = 0f;
+        drainDuration_hr = 0f;
+        drainExitPressure_psia = 0f;
+        drainExitLevel_pct = 0f;
+        drainHardGateTriggered = false;
+        drainPressureBandMaintained = true;
+        drainTransitionReason = "NONE";
+        drainCvcsPolicyMode = "LEGACY_FIXED";
+        drainLetdownFlow_gpm = 0f;
+        drainChargingFlow_gpm = 0f;
+        drainNetOutflowFlow_gpm = 0f;
+        cvcsThermalMixing_MW = 0f;
+        cvcsThermalMixingDeltaF = 0f;
 
         rvlisDynamic = 40f;
         rvlisFull = 100f;

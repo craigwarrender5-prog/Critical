@@ -160,6 +160,18 @@ namespace Critical.Physics
         /// Net outflow = LETDOWN - CHARGING = 75 - 44 = 31 gpm.
         /// </summary>
         public const float BUBBLE_DRAIN_CHARGING_CCP_GPM = 44f;
+
+        /// <summary>
+        /// Procedure-aligned DRAIN policy upper letdown target (gpm).
+        /// Uses declared ion-exchanger bounded lineup authority.
+        /// </summary>
+        public const float BUBBLE_DRAIN_PROCEDURE_MAX_LETDOWN_GPM = LETDOWN_ION_EXCHANGER_MAX_GPM;
+
+        /// <summary>
+        /// Procedure-aligned DRAIN policy minimum letdown target (gpm).
+        /// Preserves the legacy 75 gpm floor near DRAIN completion.
+        /// </summary>
+        public const float BUBBLE_DRAIN_PROCEDURE_MIN_LETDOWN_GPM = BUBBLE_DRAIN_LETDOWN_GPM;
         
         #endregion
         

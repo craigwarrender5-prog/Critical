@@ -80,6 +80,9 @@ public partial class HeatupValidationVisual : MonoBehaviour
     [Tooltip("Show dashboard on start")]
     public bool showOnStart = true;
 
+    [Tooltip("Enable periodic frame-time diagnostic logs in Console.")]
+    public bool enableFrameTimeDiagnosticsLogs = false;
+
     // ========================================================================
     // PUBLIC STATE — Toggling, visibility
     // ========================================================================
@@ -157,6 +160,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
     private int _cachedSpeedIndex = -1;
     private int _cachedPlantMode = -1;
     private string _cachedPhaseDesc;
+    private HeatupSimEngine.RuntimeTelemetrySnapshot _telemetrySnapshot;
 
     // v0.3.0.0 Phase A (CS-0032): Frame time diagnostic — lightweight probe
     private float _frameTimeAccum;
@@ -182,6 +186,8 @@ public partial class HeatupValidationVisual : MonoBehaviour
 
         if (engine == null)
             Debug.LogError("[HeatupValidationVisual] No HeatupSimEngine found in scene!");
+        else
+            _telemetrySnapshot = engine.GetTelemetrySnapshot();
 
         // Note: Styles are initialized lazily in OnGUI (GUI.skin requires OnGUI context)
     }
@@ -249,6 +255,9 @@ public partial class HeatupValidationVisual : MonoBehaviour
 
     void Update()
     {
+        if (engine != null)
+            _telemetrySnapshot = engine.GetTelemetrySnapshot();
+
         // ============================================================
         // v0.3.0.0 Phase A (CS-0032): Frame time diagnostic probe.
         // Logs average and max frame time every 5 seconds to Unity console.
@@ -261,7 +270,9 @@ public partial class HeatupValidationVisual : MonoBehaviour
             if (frameDelta > _frameTimeMax) _frameTimeMax = frameDelta;
 
             float now = Time.realtimeSinceStartup;
-            if (now - _lastFrameTimeDiag >= FRAME_DIAG_INTERVAL && _frameTimeCount > 0)
+            if (enableFrameTimeDiagnosticsLogs &&
+                now - _lastFrameTimeDiag >= FRAME_DIAG_INTERVAL &&
+                _frameTimeCount > 0)
             {
                 float avg = _frameTimeAccum / _frameTimeCount;
                 Debug.Log($"[PERF] Frame time: avg={avg:F1}ms, max={_frameTimeMax:F1}ms, " +
@@ -408,6 +419,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
 
     void DrawHeaderBar(Rect area)
     {
+        var snap = _telemetrySnapshot;
         GUI.Box(area, GUIContent.none, _headerBgStyle);
 
         float pad = 6f;
@@ -424,17 +436,17 @@ public partial class HeatupValidationVisual : MonoBehaviour
         // ============================================================
 
         // MODE indicator — changes with plant mode transitions
-        int currentPlantMode = engine.plantMode;
+        int currentPlantMode = snap.PlantMode;
         if (currentPlantMode != _cachedPlantMode)
         {
             _cachedPlantMode = currentPlantMode;
-            _cachedModeColor = engine.GetModeColor();
-            _cachedModeStr = engine.GetModeString().Replace("\n", " ");
+            _cachedModeColor = GetModeColorFromPlantMode(currentPlantMode);
+            _cachedModeStr = GetModeStringFromPlantMode(currentPlantMode);
         }
         DrawHeaderCell(ref x, y, 140f, cellH, _cachedModeStr ?? "---", _cachedModeColor);
 
         // Phase description — changes with heatup phase transitions
-        string currentPhaseDesc = engine.heatupPhaseDesc;
+        string currentPhaseDesc = snap.HeatupPhaseDesc;
         if (currentPhaseDesc != _cachedPhaseDesc)
         {
             _cachedPhaseDesc = currentPhaseDesc;
@@ -443,30 +455,30 @@ public partial class HeatupValidationVisual : MonoBehaviour
         DrawHeaderCell(ref x, y, 260f, cellH, _cachedPhaseStr ?? "INITIALIZING", _cNormalGreen);
 
         // Sim time — changes every physics step, but display only needs ~1s resolution
-        float simTimeTrunc = Mathf.Floor(engine.simTime * 3600f);  // Truncate to 1 sim-second
+        float simTimeTrunc = Mathf.Floor(snap.SimTime * 3600f);  // Truncate to 1 sim-second
         if (simTimeTrunc != _cachedSimTime)
         {
             _cachedSimTime = simTimeTrunc;
-            _cachedSimTimeStr = $"SIM: {FormatHours(engine.simTime)}";
+            _cachedSimTimeStr = $"SIM: {FormatHours(snap.SimTime)}";
         }
         DrawHeaderCell(ref x, y, 140f, cellH, _cachedSimTimeStr ?? "SIM: 0:00:00", _cTextPrimary);
 
         // Wall time — changes every real second
-        float wallTimeTrunc = Mathf.Floor(engine.wallClockTime * 3600f);
+        float wallTimeTrunc = Mathf.Floor(snap.WallClockTime * 3600f);
         if (wallTimeTrunc != _cachedWallTime)
         {
             _cachedWallTime = wallTimeTrunc;
-            _cachedWallTimeStr = $"WALL: {FormatHours(engine.wallClockTime)}";
+            _cachedWallTimeStr = $"WALL: {FormatHours(snap.WallClockTime)}";
         }
         DrawHeaderCell(ref x, y, 140f, cellH, _cachedWallTimeStr ?? "WALL: 0:00:00", _cTextPrimary);
 
         // Time acceleration — changes only on hotkey press
-        if (engine.currentSpeedIndex != _cachedSpeedIndex)
+        if (snap.CurrentSpeedIndex != _cachedSpeedIndex)
         {
-            _cachedSpeedIndex = engine.currentSpeedIndex;
-            string speedLabel = TimeAcceleration.SpeedLabelsShort[engine.currentSpeedIndex];
+            _cachedSpeedIndex = snap.CurrentSpeedIndex;
+            string speedLabel = TimeAcceleration.SpeedLabelsShort[Mathf.Clamp(snap.CurrentSpeedIndex, 0, TimeAcceleration.SpeedLabelsShort.Length - 1)];
             _cachedAccelStr = $"SPEED: {speedLabel}";
-            _cachedAccelColor = engine.isAccelerated ? _cWarningAmber : _cTextPrimary;
+            _cachedAccelColor = snap.IsAccelerated ? _cWarningAmber : _cTextPrimary;
         }
         DrawHeaderCell(ref x, y, 100f, cellH, _cachedAccelStr ?? "SPEED: 1x", _cachedAccelColor);
 
@@ -487,6 +499,28 @@ public partial class HeatupValidationVisual : MonoBehaviour
         GUI.Label(new Rect(x, y, w, h), text, _headerLabelStyle);
         GUI.contentColor = prev;
         x += w + 6f;
+    }
+
+    private static string GetModeStringFromPlantMode(int mode)
+    {
+        switch (mode)
+        {
+            case 5: return "MODE 5 Cold Shutdown";
+            case 4: return "MODE 4 Hot Shutdown";
+            case 3: return "MODE 3 Hot Standby";
+            default: return "UNKNOWN";
+        }
+    }
+
+    private Color GetModeColorFromPlantMode(int mode)
+    {
+        switch (mode)
+        {
+            case 5: return _cNormalGreen;
+            case 4: return _cWarningAmber;
+            case 3: return _cAlarmRed;
+            default: return _cTextSecondary;
+        }
     }
 
     // ========================================================================

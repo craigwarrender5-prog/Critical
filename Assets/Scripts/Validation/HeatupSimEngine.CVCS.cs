@@ -156,6 +156,7 @@ public partial class HeatupSimEngine
         // VCT PHYSICS UPDATE — Per NRC HRTD Section 4.1
         // ================================================================
         UpdateVCT(dt, bubbleDrainActive, sealReturnToVCT);
+        ApplyCvcsThermalMixing(dt, sealInjection);
 
         // ================================================================
         // LETDOWN PATH STATE — For display
@@ -311,12 +312,17 @@ public partial class HeatupSimEngine
 
         rcsBoronConcentration = vctState.BoronConcentration_ppm;
 
-        // Original CVCS-loop mass conservation cross-check (retained)
+        // CS-0039: keep the verifier on a single accounting basis by
+        // reconciling internal VCT<->BRS transfers explicitly.
+        // Plant boundary terms remain makeup/CBO, while BRS divert/return
+        // are mirrored as auxiliary boundary exchanges for this loop check.
+        float cvcsVerifierExternalIn_gal = plantExternalIn_gal + brsState.CumulativeReturned_gal;
+        float cvcsVerifierExternalOut_gal = plantExternalOut_gal + brsState.CumulativeIn_gal;
         massConservationError = VCTPhysics.VerifyMassConservation(
             vctState,
             vctState.CumulativeRCSChange_gal,
-            plantExternalIn_gal,
-            plantExternalOut_gal);
+            cvcsVerifierExternalIn_gal,
+            cvcsVerifierExternalOut_gal);
 
         // VCT annunciators
         vctLevelLow = vctState.LowLevelAlarm;
@@ -433,5 +439,126 @@ public partial class HeatupSimEngine
         orificeLetdownFlow = letdownViaOrifice ? letdownFlow : 0f;
         rhrLetdownFlow = letdownViaRHR ? letdownFlow : 0f;
         divertFraction = vctState.DivertActive ? vctState.DivertFlow_gpm / Mathf.Max(1f, letdownFlow) : 0f;
+    }
+
+    void ApplyCvcsThermalMixing(float dt_hr, float sealInjection_gpm)
+    {
+        // Use charging that actually enters primary inventory (exclude seal injection).
+        float chargingToPrimary_gpm = Mathf.Max(0f, chargingFlow - sealInjection_gpm);
+        if (chargingToPrimary_gpm <= 0.01f)
+        {
+            cvcsThermalMixing_MW = 0f;
+            cvcsThermalMixingDeltaF = 0f;
+            return;
+        }
+
+        // CS-0035: first-order CVCS enthalpy transport from VCT-temperature charging water.
+        const float chargingTempF = 100f;
+        float rhoCharge = WaterProperties.WaterDensity(chargingTempF, 14.7f);
+        float dt_sec = dt_hr * 3600f;
+
+        // cp_water ~ 1 BTU/(lbm-F) in startup envelope.
+        float mdot_lbm_sec = chargingToPrimary_gpm * PlantConstants.GPM_TO_FT3_SEC * rhoCharge;
+        float qdot_BTU_sec = mdot_lbm_sec * (chargingTempF - T_rcs);
+        cvcsThermalMixing_MW = qdot_BTU_sec / PlantConstants.MW_TO_BTU_SEC;
+
+        float rcsHeatCap = ThermalMass.RCSHeatCapacity(
+            PlantConstants.RCS_METAL_MASS,
+            Mathf.Max(1f, physicsState.RCSWaterMass),
+            T_rcs,
+            pressure);
+
+        float deltaTF = rcsHeatCap > 1f ? (qdot_BTU_sec * dt_sec) / rcsHeatCap : 0f;
+        cvcsThermalMixingDeltaF = Mathf.Clamp(deltaTF, -1.5f, 1.5f);
+        T_rcs += cvcsThermalMixingDeltaF;
+    }
+
+    bool IsPzrOrificeDiagnosticPhase()
+    {
+        return bubblePhase == BubbleFormationPhase.DRAIN ||
+               bubblePhase == BubbleFormationPhase.STABILIZE ||
+               bubblePhase == BubbleFormationPhase.PRESSURIZE ||
+               bubblePhase == BubbleFormationPhase.COMPLETE;
+    }
+
+    void ComputeAppliedOrificeContributions(
+        float appliedLetdown_gpm,
+        out bool orifice1Open,
+        out bool orifice2Open,
+        out bool orifice3Open,
+        out float orifice1_gpm,
+        out float orifice2_gpm,
+        out float orifice3_gpm)
+    {
+        orifice1Open = orifice75Count >= 1;
+        orifice2Open = orifice75Count >= 2;
+        orifice3Open = orifice45Open;
+
+        float pressure_psig = pressure - 14.7f;
+        float raw1 = orifice1Open ? PlantConstants.CalculateOrificeLetdownFlow(pressure_psig) : 0f;
+        float raw2 = orifice2Open ? PlantConstants.CalculateOrificeLetdownFlow(pressure_psig) : 0f;
+        float raw3 = orifice3Open ? PlantConstants.CalculateOrifice45LetdownFlow(pressure_psig) : 0f;
+        float rawTotal = raw1 + raw2 + raw3;
+
+        float safeAppliedLetdown_gpm = Mathf.Max(0f, appliedLetdown_gpm);
+        if (rawTotal > 1e-5f)
+        {
+            float scale = safeAppliedLetdown_gpm / rawTotal;
+            orifice1_gpm = raw1 * scale;
+            orifice2_gpm = raw2 * scale;
+            orifice3_gpm = raw3 * scale;
+        }
+        else
+        {
+            orifice1_gpm = 0f;
+            orifice2_gpm = 0f;
+            orifice3_gpm = 0f;
+        }
+    }
+
+    void TryLogPzrOrificeDiagnostics(
+        string applySource,
+        float letdownTotal_gpm,
+        float charging_gpm,
+        float pzrLevelBefore_pct,
+        float pzrLevelAfter_pct,
+        float pzrMassBefore_lbm,
+        float pzrMassAfter_lbm)
+    {
+        if (!enablePzrOrificeDiagnostics || !IsPzrOrificeDiagnosticPhase())
+            return;
+
+        bool stateChanged = (orifice75Count != pzrOrificeDiagLast75Count) ||
+                            (orifice45Open != pzrOrificeDiagLast45Open);
+        pzrOrificeDiagTickCounter++;
+        int stride = Mathf.Max(1, pzrOrificeDiagnosticsSampleStrideTicks);
+        bool sampleHit = (pzrOrificeDiagTickCounter % stride) == 0;
+        if (!stateChanged && !sampleHit)
+            return;
+
+        pzrOrificeDiagLast75Count = orifice75Count;
+        pzrOrificeDiagLast45Open = orifice45Open;
+
+        ComputeAppliedOrificeContributions(
+            letdownTotal_gpm,
+            out bool orifice1Open,
+            out bool orifice2Open,
+            out bool orifice3Open,
+            out float orifice1_gpm,
+            out float orifice2_gpm,
+            out float orifice3_gpm);
+
+        int openCount = (orifice1Open ? 1 : 0) + (orifice2Open ? 1 : 0) + (orifice3Open ? 1 : 0);
+        float netCvcsToRcs_gpm = charging_gpm - letdownTotal_gpm;
+
+        Debug.Log(
+            $"[PZR_ORIFICE_DIAG] source={applySource} sim_hr={simTime:F4} phase={bubblePhase} " +
+            $"orifice1_state={orifice1Open} orifice2_state={orifice2Open} orifice3_state={orifice3Open} " +
+            $"open_orifice_count={openCount} " +
+            $"orifice1_gpm={orifice1_gpm:F3} orifice2_gpm={orifice2_gpm:F3} orifice3_gpm={orifice3_gpm:F3} " +
+            $"letdown_total_gpm={letdownTotal_gpm:F3} charging_gpm={charging_gpm:F3} net_CVCS_gpm={netCvcsToRcs_gpm:F3} " +
+            $"pzr_level_before_pct={pzrLevelBefore_pct:F3} pzr_level_after_pct={pzrLevelAfter_pct:F3} " +
+            $"pzr_mass_before_lbm={pzrMassBefore_lbm:F3} pzr_mass_after_lbm={pzrMassAfter_lbm:F3} " +
+            $"lineup_desc={orificeLineupDesc} stride={stride} reason={(stateChanged ? "ORIFICE_CHANGE" : "SAMPLED")}");
     }
 }

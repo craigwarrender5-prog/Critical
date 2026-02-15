@@ -155,6 +155,7 @@ public partial class HeatupSimEngine
                 assertDelta_lbm,
                 assertPass);
             AssertRtccPassOrThrow("SOLID_TO_TWO_PHASE", assertDelta_lbm);
+            SeedPzrEnergyStateFromCurrentMasses("SOLID_TO_TWO_PHASE_HANDOFF");
 
             // v1.3.1.0: Reset solid plant state's BubbleFormed flag so the
             // SolidPlantPressure module continues updating during DETECTION
@@ -246,6 +247,10 @@ public partial class HeatupSimEngine
             // STABILIZE (~10 min): CVCS rebalanced, auto level control
             // ============================================================
             case BubbleFormationPhase.STABILIZE:
+                ApplyTwoPhasePressurizerHeating(
+                    dt,
+                    "BUBBLE_STABILIZE_MASS_CLOSURE",
+                    PlantConstants.PZR_LEVEL_AFTER_BUBBLE);
                 if (phaseElapsed >= PlantConstants.BUBBLE_PHASE_STABILIZE_HR)
                 {
                     bubblePhase = BubbleFormationPhase.PRESSURIZE;
@@ -266,7 +271,7 @@ public partial class HeatupSimEngine
             // PRESSURIZE: Heaters raise pressure to >=320 psig for RCP NPSH
             // ============================================================
             case BubbleFormationPhase.PRESSURIZE:
-                UpdatePressurizePhase();
+                UpdatePressurizePhase(dt);
                 break;
         }
 
@@ -321,15 +326,31 @@ public partial class HeatupSimEngine
             bubbleDrainStartLevel = pzrLevel;
             bubblePreDrainPhase = false;  // v1.3.1.0: Solid-plant CVCS control ends
             ccpStarted = false;  // v0.2.0: CCP not yet started
+            drainSteamDisplacement_lbm = 0f;
+            drainCvcsTransfer_lbm = 0f;
+            drainDuration_hr = 0f;
+            drainExitPressure_psia = 0f;
+            drainExitLevel_pct = 0f;
+            drainHardGateTriggered = false;
+            drainPressureBandMaintained = true;
+            drainTransitionReason = "IN_PROGRESS";
+            drainCvcsPolicyMode = "PROCEDURE_ALIGNED_DYNAMIC";
+            drainLetdownFlow_gpm = 0f;
+            drainChargingFlow_gpm = 0f;
+            drainNetOutflowFlow_gpm = 0f;
+            SeedPzrEnergyStateFromCurrentMasses("BUBBLE_DRAIN_ENTRY");
 
             // v0.2.0: Transition heater mode to auto pressure-rate feedback
             currentHeaterMode = HeaterMode.BUBBLE_FORMATION_AUTO;
 
             LogEvent(EventSeverity.ACTION, $"Bubble verified - beginning thermodynamic drain from {pzrLevel:F0}% to {PlantConstants.PZR_LEVEL_AFTER_BUBBLE:F0}%");
-            LogEvent(EventSeverity.INFO, $"Letdown={PlantConstants.BUBBLE_DRAIN_LETDOWN_GPM:F0} gpm, Charging=0 gpm (CCP not started), Heaters=AUTO");
+            LogEvent(EventSeverity.INFO,
+                $"DRAIN policy={drainCvcsPolicyMode}, letdown envelope " +
+                $"{PlantConstants.BUBBLE_DRAIN_PROCEDURE_MIN_LETDOWN_GPM:F0}-" +
+                $"{PlantConstants.BUBBLE_DRAIN_PROCEDURE_MAX_LETDOWN_GPM:F0} gpm, CCP charging ramp enabled");
             Debug.Log($"[T+{simTime:F2}hr] Bubble VERIFIED, entering DRAIN phase (thermodynamic)");
             Debug.Log($"  Steam displacement primary, CVCS trim secondary");
-            Debug.Log($"  Letdown={PlantConstants.BUBBLE_DRAIN_LETDOWN_GPM:F0} gpm, Charging=0 (CCP at <{PlantConstants.CCP_START_LEVEL:F0}%)");
+            Debug.Log($"  CVCS policy={drainCvcsPolicyMode}, CCP starts below {PlantConstants.CCP_START_LEVEL:F0}%");
         }
 
         heatupPhaseDesc = "BUBBLE FORMATION - VERIFICATION";
@@ -354,39 +375,24 @@ public partial class HeatupSimEngine
         float pzrWaterMass_before = physicsState.PZRWaterMass;
         float pzrSteamMass_before = physicsState.PZRSteamMass;
         float pzrTotalMass_before = pzrWaterMass_before + pzrSteamMass_before;
+        float pzrLevel_before = pzrLevel;
         float rcsMass_before = physicsState.RCSWaterMass;
         float systemMass_before = rcsMass_before + pzrTotalMass_before;
 
-        // Water properties at PZR saturation conditions
+        // Water properties at current PZR conditions
         float rhoWater = WaterProperties.WaterDensity(T_pzr, pressure);
-        float rhoSteam = WaterProperties.SaturatedSteamDensity(pressure);
-        float h_fg = WaterProperties.LatentHeat(pressure);  // BTU/lb
+        float hLiquidOut_BTU_lb = WaterProperties.SaturatedLiquidEnthalpy(Mathf.Max(20f, pressure));
 
         // ============================================================
-        // MECHANISM 1 (PRIMARY): Thermodynamic steam displacement
-        // Heater power converts liquid water to steam at T_sat.
-        // v5.4.1 Stage 1: Mass-based transfer — steam generated from
-        // water is a mass-conserving phase change, NOT volume recalc.
-        // dm_steam_gen = Q_heater / h_fg (lbm created from water)
-        // dm_water_loss = dm_steam_gen (same mass, different phase)
-        //
-        // v0.3.2.0 CS-0043 FIX: Net heater power for steam generation.
-        // Heater energy available for boiling = gross heater power minus
-        // PZR conduction loss (surge line) and PZR insulation loss.
-        // These losses are computed by IsolatedHeatingStep and stored
-        // as engine fields. This is the SOLE consumer of heater energy
-        // during two-phase — IsolatedHeatingStep bypasses PZR dT.
+        // MECHANISM 1 (PRIMARY): PZR energy update.
+        // Two-phase closure now solves pressure and phase split from:
+        //   - total PZR mass after net flows
+        //   - persistent total PZR enthalpy after this timestep's energy terms
         // ============================================================
         float grossHeaterPower_MW = pzrHeaterPower;
-        float netHeaterPower_MW = grossHeaterPower_MW - pzrConductionLoss_MW - pzrInsulationLoss_MW;
-        if (netHeaterPower_MW < 0f) netHeaterPower_MW = 0f;
-        float heaterPower_BTU_sec = netHeaterPower_MW * PlantConstants.MW_TO_BTU_SEC;
-
-        float steamGenRate_lb_sec = 0f;
-        if (h_fg > 0f)
-            steamGenRate_lb_sec = heaterPower_BTU_sec / h_fg;
-
-        float dm_steamGen_lbm = steamGenRate_lb_sec * dt_sec_drain;
+        float grossHeaterEnergy_BTU = Mathf.Max(0f, grossHeaterPower_MW) * PlantConstants.MW_TO_BTU_SEC * dt_sec_drain;
+        float conductionLoss_BTU = Mathf.Max(0f, pzrConductionLoss_MW) * PlantConstants.MW_TO_BTU_SEC * dt_sec_drain;
+        float insulationLoss_BTU = Mathf.Max(0f, pzrInsulationLoss_MW) * PlantConstants.MW_TO_BTU_SEC * dt_sec_drain;
 
         // ============================================================
         // MECHANISM 2 (SECONDARY): CVCS trim
@@ -394,73 +400,52 @@ public partial class HeatupSimEngine
         // v5.4.1 Stage 1: CVCS drain is mass LEAVING the PZR into RCS.
         // dm_out_of_PZR == dm_into_RCS in the same timestep.
         // ============================================================
-        float currentCharging_gpm = PlantConstants.BUBBLE_DRAIN_CHARGING_INITIAL_GPM;
-
-        // CCP start check: level drops below threshold
-        if (!ccpStarted && pzrLevel < PlantConstants.CCP_START_LEVEL)
-        {
-            ccpStarted = true;
-            ccpStartTime = simTime;
-            ccpStartLevel = pzrLevel;
-            LogEvent(EventSeverity.ACTION, $"CCP STARTED at PZR level {pzrLevel:F1}% (< {PlantConstants.CCP_START_LEVEL:F0}%)");
-            LogEvent(EventSeverity.INFO, $"Charging flow: 0 -> {PlantConstants.BUBBLE_DRAIN_CHARGING_CCP_GPM:F0} gpm, Net outflow: {PlantConstants.BUBBLE_DRAIN_LETDOWN_GPM:F0} -> {PlantConstants.BUBBLE_DRAIN_LETDOWN_GPM - PlantConstants.BUBBLE_DRAIN_CHARGING_CCP_GPM:F0} gpm");
-            Debug.Log($"[T+{simTime:F2}hr] === CCP STARTED === Level={pzrLevel:F1}%, Charging=0->{PlantConstants.BUBBLE_DRAIN_CHARGING_CCP_GPM:F0} gpm");
-        }
-
-        if (ccpStarted)
-            currentCharging_gpm = PlantConstants.BUBBLE_DRAIN_CHARGING_CCP_GPM;
-
-        float netOutflow_gpm = PlantConstants.BUBBLE_DRAIN_LETDOWN_GPM - currentCharging_gpm;
+        ResolveDrainCvcsPolicy(
+            out float currentLetdown_gpm,
+            out float currentCharging_gpm,
+            out float netOutflow_gpm);
 
         // v5.4.1 Stage 1: Compute CVCS drain as MASS transfer, not volume
         float dm_cvcsDrain_lbm = netOutflow_gpm * PlantConstants.GPM_TO_FT3_SEC * dt_sec_drain * rhoWater;
 
         // ============================================================
-        // v5.4.1 Stage 1: MASS-BASED TRANSFER SEMANTICS
-        // Conservation law: total PZR mass changes only by CVCS net outflow.
-        // Phase change (water→steam) is internal to PZR, conserves mass.
-        //
-        // Step 1: Phase change — transfer dm_steamGen from water to steam
-        //         (PZR total mass unchanged)
-        // Step 2: CVCS drain — remove dm_cvcsDrain from PZR water,
-        //         add same mass to RCS (system total unchanged)
-        // Step 3: Derive volumes from masses (not the other way around)
+        // MASS + ENERGY LEDGER TERMS THIS STEP
+        //   Mass: PZR total mass changes only by net CVCS outflow.
+        //   Energy: +heater input - thermal losses - enthalpy carried by outflow.
         // ============================================================
+        float dm_cvcsActual = Mathf.Min(dm_cvcsDrain_lbm, Mathf.Max(0f, pzrWaterMass_before));
+        float targetPzrMass_lbm = Mathf.Max(1f, pzrTotalMass_before - dm_cvcsActual);
+        float netPzrEnergyDelta_BTU = grossHeaterEnergy_BTU - conductionLoss_BTU - insulationLoss_BTU
+                                      - dm_cvcsActual * hLiquidOut_BTU_lb;
 
-        // Clamp steam generation to available water mass
-        float availableWaterForSteam = physicsState.PZRWaterMass - dm_cvcsDrain_lbm;
-        float dm_steamActual = Mathf.Min(dm_steamGen_lbm, Mathf.Max(0f, availableWaterForSteam));
+        bool closureConverged = UpdateTwoPhaseStateFromMassClosure(
+            "BUBBLE_DRAIN_MASS_CLOSURE",
+            dt,
+            PlantConstants.PZR_LEVEL_AFTER_BUBBLE,
+            targetPzrMass_lbm,
+            netPzrEnergyDelta_BTU);
 
-        // Step 1: Phase change (water → steam), mass-conserving within PZR
-        physicsState.PZRWaterMass -= dm_steamActual;
-        physicsState.PZRSteamMass += dm_steamActual;
-
-        // Step 2: CVCS drain — water leaves PZR, enters RCS (mass-conserving system-wide)
-        float dm_cvcsActual = Mathf.Min(dm_cvcsDrain_lbm, Mathf.Max(0f, physicsState.PZRWaterMass));
-        physicsState.PZRWaterMass -= dm_cvcsActual;
-        physicsState.RCSWaterMass += dm_cvcsActual;
-
-        // v5.4.1 Stage 2: Feed CVCS drain to VCT mass conservation tracking.
-        // UpdateRCSInventory() is now skipped during DRAIN (double-count guard),
-        // so we must accumulate VCT tracking here to keep the audit correct.
-        if (rhoWater > 0.1f)
+        if (closureConverged)
         {
-            float rcsChange_gal_drain = (dm_cvcsActual / rhoWater) * PlantConstants.FT3_TO_GAL;
-            VCTPhysics.AccumulateRCSChange(ref vctState, rcsChange_gal_drain);
+            // Commit externalized transfer only after closure converges.
+            physicsState.RCSWaterMass += dm_cvcsActual;
+            drainCvcsTransfer_lbm += dm_cvcsActual;
+            float dm_steamActual = Mathf.Max(0f, physicsState.PZRSteamMass - pzrSteamMass_before);
+            drainSteamDisplacement_lbm += dm_steamActual;
+        }
+        else
+        {
+            dm_cvcsActual = 0f;
         }
 
-        // Step 3: Derive volumes from masses (canonical direction: mass → volume)
-        float targetWaterVol = PlantConstants.PZR_TOTAL_VOLUME * PlantConstants.PZR_LEVEL_AFTER_BUBBLE / 100f;
+        drainDuration_hr = phaseElapsed;
+        if (pressure < PlantConstants.BUBBLE_DRAIN_MIN_PRESSURE_PSIA)
+            drainPressureBandMaintained = false;
 
-        if (rhoWater > 0.1f)
-            physicsState.PZRWaterVolume = Mathf.Max(targetWaterVol, physicsState.PZRWaterMass / rhoWater);
-        physicsState.PZRSteamVolume = PlantConstants.PZR_TOTAL_VOLUME - physicsState.PZRWaterVolume;
+        // IP-0022 CS-0039: DRAIN CVCS transfer is an internal PZR↔RCS movement.
+        // Do not mutate VCT RCS-change accumulator here; PBOC owns boundary tracking.
 
-        // v5.4.2.0 FF-05 Fix #3: Do NOT overwrite steam mass from V×ρ.
-        // Steam mass is set by the mass-conserving phase change at Step 1 (line 392).
-        // The canonical direction is mass → volume, not volume → mass.
-        // The previous V×ρ reconciliation here destroyed conservation and caused
-        // the ~3,755 lbm DRAIN spike flagged by the forensic audit.
+        float dm_steamActual_step = physicsState.PZRSteamMass - pzrSteamMass_before;
 
         // Update display variables
         pzrWaterVolume = physicsState.PZRWaterVolume;
@@ -468,8 +453,11 @@ public partial class HeatupSimEngine
         pzrLevel = physicsState.PZRLevel;
 
         // Update CVCS display flows for this phase
-        letdownFlow = PlantConstants.BUBBLE_DRAIN_LETDOWN_GPM;
+        letdownFlow = currentLetdown_gpm;
         chargingFlow = currentCharging_gpm;
+        drainLetdownFlow_gpm = currentLetdown_gpm;
+        drainChargingFlow_gpm = currentCharging_gpm;
+        drainNetOutflowFlow_gpm = netOutflow_gpm;
 
         // Recalculate total system mass
         totalSystemMass = physicsState.RCSWaterMass + physicsState.PZRWaterMass + physicsState.PZRSteamMass;
@@ -483,6 +471,15 @@ public partial class HeatupSimEngine
         float dm_pzr = pzrTotalMass_after - pzrTotalMass_before;
         float dm_system = systemMass_after - systemMass_before;
 
+        TryLogPzrOrificeDiagnostics(
+            "DRAIN_INTERNAL_TRANSFER",
+            currentLetdown_gpm,
+            currentCharging_gpm,
+            pzrLevel_before,
+            pzrLevel,
+            pzrTotalMass_before,
+            pzrTotalMass_after);
+
         // Flag if mass created/destroyed beyond numerical tolerance (0.1 lbm)
         bool massViolation = Mathf.Abs(dm_system) > 0.1f;
 
@@ -490,7 +487,7 @@ public partial class HeatupSimEngine
         if (phaseElapsed < dt || (simTime % (5f / 60f) < dt))
         {
             Debug.Log($"[T+{simTime:F2}hr] DRAIN AUDIT: Level={pzrLevel:F1}%, " +
-                $"dm_steam={dm_steamActual:F1}lbm, dm_cvcs={dm_cvcsActual:F1}lbm, " +
+                $"dm_steam={dm_steamActual_step:F1}lbm, dm_cvcs={dm_cvcsActual:F1}lbm, " +
                 $"Δm_PZR={dm_pzr:F1}lbm, Δm_sys={dm_system:F1}lbm{(massViolation ? " *** VIOLATION ***" : "")}");
             Debug.Log($"  PZR: water={physicsState.PZRWaterMass:F1}lbm, steam={physicsState.PZRSteamMass:F1}lbm, " +
                 $"total={pzrTotalMass_after:F1}lbm | RCS={physicsState.RCSWaterMass:F0}lbm | " +
@@ -510,7 +507,10 @@ public partial class HeatupSimEngine
         // but still transition (prevents infinite DRAIN).
         // ============================================================
         bool levelReached = pzrLevel <= PlantConstants.PZR_LEVEL_AFTER_BUBBLE + 0.5f;
-        if (levelReached)
+        bool pressureInBand = pressure >= PlantConstants.BUBBLE_DRAIN_MIN_PRESSURE_PSIA;
+        bool hardDurationExceeded = phaseElapsed >= 60f / 60f;
+        bool readyByLevelAndPressure = levelReached && pressureInBand;
+        if (readyByLevelAndPressure || hardDurationExceeded)
         {
             // Advisory pressure stability check (not blocking)
             bool pressureStable = Mathf.Abs(pressureRate) < PlantConstants.MAX_DRAIN_EXIT_PRESSURE_RATE;
@@ -523,29 +523,125 @@ public partial class HeatupSimEngine
                     $"(advisory limit {PlantConstants.MAX_DRAIN_EXIT_PRESSURE_RATE:F0} psi/hr)");
             }
 
+            if (hardDurationExceeded && !readyByLevelAndPressure)
+            {
+                drainHardGateTriggered = true;
+                LogEvent(EventSeverity.ALERT,
+                    $"DRAIN hard duration gate reached at {phaseElapsed * 60f:F1} min; forcing transition.");
+            }
+
+            drainDuration_hr = phaseElapsed;
+            drainExitPressure_psia = pressure;
+            drainExitLevel_pct = pzrLevel;
+            drainTransitionReason = hardDurationExceeded && !readyByLevelAndPressure
+                ? "HARD_TIMEOUT"
+                : "LEVEL_PRESSURE_READY";
+
+            float displacementTotal_lbm = drainSteamDisplacement_lbm + drainCvcsTransfer_lbm;
+            float steamFrac = displacementTotal_lbm > 1e-6f
+                ? drainSteamDisplacement_lbm / displacementTotal_lbm
+                : 0f;
+
             bubblePhase = BubbleFormationPhase.STABILIZE;
             bubblePhaseStartTime = simTime;
 
-            // Initialize CVCS Controller for two-phase operations
+            // DP-0002 Group 4 (CS-0059): do not invoke CVCSController.Initialize
+            // from UPDATE transition flow. Re-seed the pre-initialized state.
             float initialSetpoint = PlantConstants.GetPZRLevelSetpointUnified(T_avg);
-            cvcsControllerState = CVCSController.Initialize(
-                pzrLevel, initialSetpoint,
-                PlantConstants.LETDOWN_NORMAL_GPM,
-                PlantConstants.LETDOWN_NORMAL_GPM,
-                0f);  // No RCPs yet
+            ReSeedCvcsControllerForTwoPhase(initialSetpoint);
 
             LogEvent(EventSeverity.ACTION, $"PZR drain complete at {pzrLevel:F1}% - stabilizing CVCS");
             LogEvent(EventSeverity.INFO, $"CCP running: {(ccpStarted ? "YES" : "NO")}, Aux spray: {(auxSprayTestPassed ? "PASSED" : "N/A")}");
             LogEvent(EventSeverity.INFO, $"DRAIN final mass audit: Δm_sys={dm_system:F1}lbm, PZR_total={pzrTotalMass_after:F0}lbm");
             LogEvent(EventSeverity.INFO, $"DRAIN exit pressure rate: {pressureRate:F1} psi/hr ({(pressureStable ? "STABLE" : "ADVISORY")})");
+            LogEvent(EventSeverity.INFO,
+                $"DRAIN reconciliation: steam={drainSteamDisplacement_lbm:F1} lbm, cvcs={drainCvcsTransfer_lbm:F1} lbm, steam_frac={steamFrac:F2}");
+            LogEvent(EventSeverity.INFO,
+                $"DRAIN gates: duration={phaseElapsed * 60f:F1} min, pressureInBand={pressureInBand}, levelReached={levelReached}, transition={drainTransitionReason}");
+            LogEvent(EventSeverity.INFO,
+                $"DRAIN CVCS policy: mode={drainCvcsPolicyMode}, letdown={drainLetdownFlow_gpm:F1} gpm, charging={drainChargingFlow_gpm:F1} gpm, netOut={drainNetOutflowFlow_gpm:F1} gpm");
             Debug.Log($"[T+{simTime:F2}hr] DRAIN complete. Level={pzrLevel:F1}%, Steam={pzrSteamVolume:F0}ft³, dP/dt={pressureRate:F1} psi/hr");
         }
         else
         {
             float drainProgress = (bubbleDrainStartLevel - pzrLevel) / (bubbleDrainStartLevel - PlantConstants.PZR_LEVEL_AFTER_BUBBLE) * 100f;
             heatupPhaseDesc = $"BUBBLE FORMATION - DRAINING ({drainProgress:F0}%)";
-            statusMessage = $"PZR DRAIN: {pzrLevel:F1}% → {PlantConstants.PZR_LEVEL_AFTER_BUBBLE:F0}% | LD={PlantConstants.BUBBLE_DRAIN_LETDOWN_GPM:F0} CHG={currentCharging_gpm:F0} gpm{(ccpStarted ? " (CCP)" : "")}";
+            statusMessage =
+                $"PZR DRAIN: {pzrLevel:F1}% → {PlantConstants.PZR_LEVEL_AFTER_BUBBLE:F0}% | " +
+                $"LD={currentLetdown_gpm:F0} CHG={currentCharging_gpm:F0} NET={netOutflow_gpm:F0} gpm ({drainCvcsPolicyMode})";
         }
+    }
+
+    void ResolveDrainCvcsPolicy(
+        out float letdown_gpm,
+        out float charging_gpm,
+        out float netOutflow_gpm)
+    {
+        // CS-0076: Procedure-aligned envelope (max letdown, min charging early).
+        float levelSpan = Mathf.Max(1f, bubbleDrainStartLevel - PlantConstants.PZR_LEVEL_AFTER_BUBBLE);
+        float levelFraction = Mathf.Clamp01(
+            (pzrLevel - PlantConstants.PZR_LEVEL_AFTER_BUBBLE) / levelSpan);
+
+        float letdownMin = PlantConstants.BUBBLE_DRAIN_PROCEDURE_MIN_LETDOWN_GPM;
+        float letdownMax = PlantConstants.BUBBLE_DRAIN_PROCEDURE_MAX_LETDOWN_GPM;
+        letdown_gpm = Mathf.Lerp(letdownMin, letdownMax, levelFraction);
+
+        // Expose lineup authority in operator telemetry during DRAIN.
+        if (letdown_gpm >= 100f)
+        {
+            orifice75Count = 2;
+            orifice45Open = true;
+            orificeLineupDesc = "2x75 + 1x45 gpm (DRAIN)";
+        }
+        else if (letdown_gpm >= 85f)
+        {
+            orifice75Count = 1;
+            orifice45Open = true;
+            orificeLineupDesc = "1x75 + 1x45 gpm (DRAIN)";
+        }
+        else
+        {
+            orifice75Count = 1;
+            orifice45Open = false;
+            orificeLineupDesc = "1x75 gpm (DRAIN)";
+        }
+
+        charging_gpm = PlantConstants.BUBBLE_DRAIN_CHARGING_INITIAL_GPM;
+
+        if (!ccpStarted && pzrLevel < PlantConstants.CCP_START_LEVEL)
+        {
+            ccpStarted = true;
+            ccpStartTime = simTime;
+            ccpStartLevel = pzrLevel;
+            LogEvent(
+                EventSeverity.ACTION,
+                $"CCP STARTED at PZR level {pzrLevel:F1}% (< {PlantConstants.CCP_START_LEVEL:F0}%)");
+            Debug.Log(
+                $"[T+{simTime:F2}hr] === CCP STARTED === Level={pzrLevel:F1}%, policy={drainCvcsPolicyMode}");
+        }
+
+        if (ccpStarted)
+        {
+            // CS-0073: dynamic post-CCP charging (not fixed 44 gpm).
+            float toTargetFraction = Mathf.Clamp01(1f - levelFraction);
+            float chargingRamp = toTargetFraction;
+            charging_gpm = PlantConstants.BUBBLE_DRAIN_CHARGING_CCP_GPM * chargingRamp;
+        }
+
+        netOutflow_gpm = Mathf.Max(0f, letdown_gpm - charging_gpm);
+    }
+
+    void ReSeedCvcsControllerForTwoPhase(float levelSetpoint)
+    {
+        cvcsControllerState.IsActive = true;
+        cvcsControllerState.LevelSetpoint = levelSetpoint;
+        cvcsControllerState.LevelError = pzrLevel - levelSetpoint;
+        cvcsControllerState.LastLevelError = cvcsControllerState.LevelError;
+        cvcsControllerState.IntegralError = 0f;
+        cvcsControllerState.ChargingFlow = PlantConstants.LETDOWN_NORMAL_GPM;
+        cvcsControllerState.LetdownFlow = PlantConstants.LETDOWN_NORMAL_GPM;
+        cvcsControllerState.SealInjection = 0f;
+        cvcsControllerState.LetdownIsolated = false;
     }
 
     // ========================================================================
@@ -553,8 +649,13 @@ public partial class HeatupSimEngine
     // Per NRC HRTD 19.2.2
     // ========================================================================
 
-    void UpdatePressurizePhase()
+    void UpdatePressurizePhase(float dt)
     {
+        ApplyTwoPhasePressurizerHeating(
+            dt,
+            "BUBBLE_PRESSURIZE_MASS_CLOSURE",
+            PlantConstants.PZR_LEVEL_AFTER_BUBBLE - 2f);
+
         float pressure_psig = pressure - 14.7f;
         float minRcpP_psig = PlantConstants.MIN_RCP_PRESSURE_PSIG;
 
@@ -599,5 +700,393 @@ public partial class HeatupSimEngine
             heatupPhaseDesc = "BUBBLE FORMATION - PRESSURIZING";
             statusMessage = $"PRESSURIZING: {pressure_psig:F0}/{minRcpP_psig:F0} psig ({pProgress:F0}%) | Level={pzrLevel:F1}% | Heaters ON";
         }
+    }
+    void ApplyTwoPhasePressurizerHeating(
+        float dt,
+        string stateSource,
+        float minWaterLevelPercent = -1f)
+    {
+        float dtSec = dt * 3600f;
+        float grossHeaterEnergy_BTU = Mathf.Max(0f, pzrHeaterPower) * PlantConstants.MW_TO_BTU_SEC * dtSec;
+        float conductionLoss_BTU = Mathf.Max(0f, pzrConductionLoss_MW) * PlantConstants.MW_TO_BTU_SEC * dtSec;
+        float insulationLoss_BTU = Mathf.Max(0f, pzrInsulationLoss_MW) * PlantConstants.MW_TO_BTU_SEC * dtSec;
+        float netPzrEnergyDelta_BTU = grossHeaterEnergy_BTU - conductionLoss_BTU - insulationLoss_BTU;
+        float targetPzrMass_lbm = Mathf.Max(1f, physicsState.PZRWaterMass + physicsState.PZRSteamMass);
+
+        bool converged = UpdateTwoPhaseStateFromMassClosure(
+            stateSource,
+            dt,
+            minWaterLevelPercent,
+            targetPzrMass_lbm,
+            netPzrEnergyDelta_BTU);
+
+        if (!converged)
+        {
+            LogEvent(
+                EventSeverity.ALERT,
+                $"Two-phase closure failed in {stateSource}: state hold (Vres={pzrClosureVolumeResidual_ft3:F2}ft^3, Eres={pzrClosureEnergyResidual_BTU:F1}BTU)");
+        }
+    }
+
+    const float TWO_PHASE_CLOSURE_VOLUME_TOLERANCE_FT3 = 1f;
+    const float TWO_PHASE_CLOSURE_SPECIFIC_ENTHALPY_TOL_BTU_LB = 0.5f;
+    const int TWO_PHASE_CLOSURE_SCAN_POINTS = 48;
+    const int TWO_PHASE_CLOSURE_MAX_ITERATIONS = 48;
+
+    struct TwoPhaseClosurePoint
+    {
+        public float Pressure_psia;
+        public float QualityRaw;
+        public float QualityClamped;
+        public float WaterMass_lbm;
+        public float SteamMass_lbm;
+        public float WaterVolume_ft3;
+        public float SteamVolume_ft3;
+        public float VolumeResidual_ft3;
+        public float EnergyResidual_BTU;
+        public float EnthalpyTotal_BTU;
+    }
+
+    bool UpdateTwoPhaseStateFromMassClosure(
+        string stateSource,
+        float dt_hr,
+        float minWaterLevelPercent,
+        float targetTotalMass_lbm,
+        float deltaEnthalpy_BTU)
+    {
+        if (!EnsurePzrEnergyStateInitialized(stateSource))
+            return false;
+
+        float pressureFloor_psia = 20f;
+        if (bubblePhase == BubbleFormationPhase.DRAIN ||
+            bubblePhase == BubbleFormationPhase.STABILIZE ||
+            bubblePhase == BubbleFormationPhase.PRESSURIZE)
+        {
+            pressureFloor_psia = Mathf.Max(pressureFloor_psia, PlantConstants.BUBBLE_DRAIN_MIN_PRESSURE_PSIA);
+        }
+
+        targetTotalMass_lbm = Mathf.Max(1f, targetTotalMass_lbm);
+        float targetEnthalpy_BTU = Mathf.Max(0f, physicsState.PZRTotalEnthalpy_BTU + deltaEnthalpy_BTU);
+        float pressureGuess_psia = Mathf.Clamp(Mathf.Max(20f, pressure), pressureFloor_psia, 2500f);
+        float energyTolerance_BTU = Mathf.Max(50f, targetTotalMass_lbm * TWO_PHASE_CLOSURE_SPECIFIC_ENTHALPY_TOL_BTU_LB);
+
+        pzrClosureSolveAttempts++;
+
+        bool solved = TrySolveTwoPhaseMassEnergyClosure(
+            stateSource,
+            targetTotalMass_lbm,
+            targetEnthalpy_BTU,
+            pressureGuess_psia,
+            pressureFloor_psia,
+            2500f,
+            TWO_PHASE_CLOSURE_VOLUME_TOLERANCE_FT3,
+            energyTolerance_BTU,
+            out TwoPhaseClosurePoint solvedPoint,
+            out int iterationsUsed,
+            out string failReason);
+
+        if (solved && minWaterLevelPercent >= 0f)
+        {
+            float minWaterVolume_ft3 = PlantConstants.PZR_TOTAL_VOLUME * minWaterLevelPercent / 100f;
+            if (solvedPoint.WaterVolume_ft3 < minWaterVolume_ft3)
+            {
+                solved = false;
+                failReason = "MIN_WATER_CONSTRAINT";
+            }
+        }
+
+        if (!solved)
+        {
+            physicsState.PZRClosureConverged = false;
+            physicsState.PZRClosureVolumeResidual_ft3 = solvedPoint.VolumeResidual_ft3;
+            physicsState.PZRClosureEnergyResidual_BTU = solvedPoint.EnergyResidual_BTU;
+            SyncPzrEnergyDiagnosticsFromPhysicsState();
+
+            LogEvent(
+                EventSeverity.ALERT,
+                $"Two-phase closure failed in {stateSource}: reason={failReason}, Vres={solvedPoint.VolumeResidual_ft3:F2} ft^3, Eres={solvedPoint.EnergyResidual_BTU:F1} BTU");
+
+            if (enablePzrBubbleDiagnostics)
+            {
+                Debug.Log(
+                    $"[PZR_BUBBLE_DIAG][{pzrBubbleDiagnosticsLabel}] CLOSURE_FAIL source={stateSource} sim_hr={simTime:F4} " +
+                    $"phase={bubblePhase} reason={failReason} iterations={iterationsUsed} " +
+                    $"pressure_psia={solvedPoint.Pressure_psia:F3} quality_raw={solvedPoint.QualityRaw:F5} quality={solvedPoint.QualityClamped:F5} " +
+                    $"mass_total_lbm={targetTotalMass_lbm:F3} h_total_target_BTU={targetEnthalpy_BTU:F3} " +
+                    $"V_residual_ft3={solvedPoint.VolumeResidual_ft3:F3} E_residual_BTU={solvedPoint.EnergyResidual_BTU:F3}");
+            }
+
+            return false;
+        }
+
+        ApplyPressureWrite(solvedPoint.Pressure_psia, stateSource, stateDerived: true);
+        physicsState.Pressure = pressure;
+        physicsState.PZRWaterMass = solvedPoint.WaterMass_lbm;
+        physicsState.PZRSteamMass = solvedPoint.SteamMass_lbm;
+        physicsState.PZRWaterVolume = solvedPoint.WaterVolume_ft3;
+        physicsState.PZRSteamVolume = solvedPoint.SteamVolume_ft3;
+        physicsState.PZRTotalEnthalpy_BTU = solvedPoint.EnthalpyTotal_BTU;
+        physicsState.PZRClosureConverged = true;
+        physicsState.PZRClosureVolumeResidual_ft3 = solvedPoint.VolumeResidual_ft3;
+        physicsState.PZRClosureEnergyResidual_BTU = solvedPoint.EnergyResidual_BTU;
+        pzrClosureSolveConverged++;
+
+        T_sat = WaterProperties.SaturationTemperature(pressure);
+        T_pzr = T_sat;
+        pzrWaterVolume = physicsState.PZRWaterVolume;
+        pzrSteamVolume = physicsState.PZRSteamVolume;
+        pzrLevel = physicsState.PZRLevel;
+        SyncPzrEnergyDiagnosticsFromPhysicsState();
+
+        if (enablePzrBubbleDiagnostics)
+        {
+            Debug.Log(
+                $"[PZR_BUBBLE_DIAG][{pzrBubbleDiagnosticsLabel}] CLOSURE_OK source={stateSource} sim_hr={simTime:F4} " +
+                $"phase={bubblePhase} dt_hr={dt_hr:F6} iterations={iterationsUsed} pressure_psia={solvedPoint.Pressure_psia:F3} " +
+                $"quality_raw={solvedPoint.QualityRaw:F5} quality={solvedPoint.QualityClamped:F5} " +
+                $"m_water_lbm={solvedPoint.WaterMass_lbm:F3} m_steam_lbm={solvedPoint.SteamMass_lbm:F3} " +
+                $"V_water_ft3={solvedPoint.WaterVolume_ft3:F3} V_steam_ft3={solvedPoint.SteamVolume_ft3:F3} " +
+                $"V_residual_ft3={solvedPoint.VolumeResidual_ft3:F4} E_residual_BTU={solvedPoint.EnergyResidual_BTU:F4}");
+        }
+
+        return true;
+    }
+
+    bool EnsurePzrEnergyStateInitialized(string source)
+    {
+        bool invalid = float.IsNaN(physicsState.PZRTotalEnthalpy_BTU) ||
+                       float.IsInfinity(physicsState.PZRTotalEnthalpy_BTU) ||
+                       physicsState.PZRTotalEnthalpy_BTU <= 0f;
+        if (!invalid)
+            return true;
+
+        SeedPzrEnergyStateFromCurrentMasses($"{source}_AUTO_SEED");
+        return !(float.IsNaN(physicsState.PZRTotalEnthalpy_BTU) ||
+                 float.IsInfinity(physicsState.PZRTotalEnthalpy_BTU) ||
+                 physicsState.PZRTotalEnthalpy_BTU <= 0f);
+    }
+
+    void SeedPzrEnergyStateFromCurrentMasses(string source)
+    {
+        float safePressure_psia = Mathf.Max(20f, pressure);
+        float waterMass_lbm = Mathf.Max(0f, physicsState.PZRWaterMass);
+        float steamMass_lbm = Mathf.Max(0f, physicsState.PZRSteamMass);
+
+        float hWater_BTU_lb = (steamMass_lbm > 0.01f || !solidPressurizer)
+            ? WaterProperties.SaturatedLiquidEnthalpy(safePressure_psia)
+            : WaterProperties.WaterEnthalpy(T_pzr, safePressure_psia);
+        float hSteam_BTU_lb = WaterProperties.SaturatedSteamEnthalpy(safePressure_psia);
+
+        physicsState.PZRTotalEnthalpy_BTU = waterMass_lbm * hWater_BTU_lb + steamMass_lbm * hSteam_BTU_lb;
+        physicsState.PZRClosureConverged = true;
+        physicsState.PZRClosureVolumeResidual_ft3 = 0f;
+        physicsState.PZRClosureEnergyResidual_BTU = 0f;
+        SyncPzrEnergyDiagnosticsFromPhysicsState();
+
+        if (enablePzrBubbleDiagnostics)
+        {
+            Debug.Log(
+                $"[PZR_BUBBLE_DIAG][{pzrBubbleDiagnosticsLabel}] ENERGY_SEED source={source} sim_hr={simTime:F4} " +
+                $"pressure_psia={safePressure_psia:F3} m_water_lbm={waterMass_lbm:F3} m_steam_lbm={steamMass_lbm:F3} " +
+                $"H_total_BTU={physicsState.PZRTotalEnthalpy_BTU:F3}");
+        }
+    }
+
+    void SyncPzrEnergyDiagnosticsFromPhysicsState()
+    {
+        pzrTotalEnthalpy_BTU = physicsState.PZRTotalEnthalpy_BTU;
+        float totalPzrMass_lbm = Mathf.Max(1e-3f, physicsState.PZRWaterMass + physicsState.PZRSteamMass);
+        pzrSpecificEnthalpy_BTU_lb = pzrTotalEnthalpy_BTU / totalPzrMass_lbm;
+        pzrClosureVolumeResidual_ft3 = physicsState.PZRClosureVolumeResidual_ft3;
+        pzrClosureEnergyResidual_BTU = physicsState.PZRClosureEnergyResidual_BTU;
+        pzrClosureConverged = physicsState.PZRClosureConverged;
+        pzrClosureConvergencePct = pzrClosureSolveAttempts > 0
+            ? 100f * pzrClosureSolveConverged / pzrClosureSolveAttempts
+            : 0f;
+    }
+
+    bool TrySolveTwoPhaseMassEnergyClosure(
+        string stateSource,
+        float totalMass_lbm,
+        float targetEnthalpy_BTU,
+        float pressureGuess_psia,
+        float pressureFloor_psia,
+        float pressureCeiling_psia,
+        float volumeTolerance_ft3,
+        float energyTolerance_BTU,
+        out TwoPhaseClosurePoint solvedPoint,
+        out int iterationsUsed,
+        out string failReason)
+    {
+        solvedPoint = default;
+        iterationsUsed = 0;
+        failReason = "UNSET";
+
+        pressureFloor_psia = Mathf.Clamp(pressureFloor_psia, 20f, 2500f);
+        pressureCeiling_psia = Mathf.Clamp(pressureCeiling_psia, pressureFloor_psia + 1f, 2500f);
+        pressureGuess_psia = Mathf.Clamp(pressureGuess_psia, pressureFloor_psia, pressureCeiling_psia);
+
+        bool hasBest = false;
+        TwoPhaseClosurePoint bestPoint = default;
+        float bestAbsVolumeResidual = float.MaxValue;
+
+        float bracketScore = float.MaxValue;
+        bool hasBracket = false;
+        TwoPhaseClosurePoint bracketLow = default;
+        TwoPhaseClosurePoint bracketHigh = default;
+
+        TwoPhaseClosurePoint prevPoint = default;
+        bool hasPrev = false;
+
+        for (int i = 0; i <= TWO_PHASE_CLOSURE_SCAN_POINTS; i++)
+        {
+            float alpha = (float)i / TWO_PHASE_CLOSURE_SCAN_POINTS;
+            float probePressure_psia = Mathf.Lerp(pressureFloor_psia, pressureCeiling_psia, alpha);
+            if (!EvaluateTwoPhaseMassEnergyAtPressure(probePressure_psia, totalMass_lbm, targetEnthalpy_BTU, out TwoPhaseClosurePoint point))
+                continue;
+
+            float absVolumeResidual = Mathf.Abs(point.VolumeResidual_ft3);
+            if (!hasBest || absVolumeResidual < bestAbsVolumeResidual)
+            {
+                hasBest = true;
+                bestPoint = point;
+                bestAbsVolumeResidual = absVolumeResidual;
+            }
+
+            if (hasPrev)
+            {
+                bool signChange = Mathf.Sign(prevPoint.VolumeResidual_ft3) != Mathf.Sign(point.VolumeResidual_ft3);
+                if (signChange)
+                {
+                    float center = 0.5f * (prevPoint.Pressure_psia + point.Pressure_psia);
+                    float score = Mathf.Abs(center - pressureGuess_psia);
+                    if (!hasBracket || score < bracketScore)
+                    {
+                        hasBracket = true;
+                        bracketScore = score;
+                        bracketLow = prevPoint;
+                        bracketHigh = point;
+                    }
+                }
+            }
+
+            prevPoint = point;
+            hasPrev = true;
+        }
+
+        if (!hasBest)
+        {
+            failReason = "EVALUATION_FAILED";
+            return false;
+        }
+
+        if (Mathf.Abs(bestPoint.VolumeResidual_ft3) <= volumeTolerance_ft3 &&
+            Mathf.Abs(bestPoint.EnergyResidual_BTU) <= energyTolerance_BTU)
+        {
+            solvedPoint = bestPoint;
+            failReason = "SCAN_POINT_TOLERANCE";
+            return true;
+        }
+
+        if (!hasBracket)
+        {
+            solvedPoint = bestPoint;
+            failReason = "NO_VOLUME_BRACKET";
+            return false;
+        }
+
+        for (int iter = 0; iter < TWO_PHASE_CLOSURE_MAX_ITERATIONS; iter++)
+        {
+            iterationsUsed = iter + 1;
+            float midPressure_psia = 0.5f * (bracketLow.Pressure_psia + bracketHigh.Pressure_psia);
+            if (!EvaluateTwoPhaseMassEnergyAtPressure(midPressure_psia, totalMass_lbm, targetEnthalpy_BTU, out TwoPhaseClosurePoint midPoint))
+            {
+                failReason = "MIDPOINT_EVALUATION_FAILED";
+                solvedPoint = bestPoint;
+                return false;
+            }
+
+            float absMidResidual = Mathf.Abs(midPoint.VolumeResidual_ft3);
+            if (absMidResidual < bestAbsVolumeResidual)
+            {
+                bestAbsVolumeResidual = absMidResidual;
+                bestPoint = midPoint;
+            }
+
+            if (enablePzrBubbleDiagnostics)
+            {
+                Debug.Log(
+                    $"[PZR_BUBBLE_DIAG][{pzrBubbleDiagnosticsLabel}] ITER source={stateSource} sim_hr={simTime:F4} iter={iter} " +
+                    $"P_psia={midPoint.Pressure_psia:F4} q_raw={midPoint.QualityRaw:F6} q={midPoint.QualityClamped:F6} " +
+                    $"V_residual_ft3={midPoint.VolumeResidual_ft3:F6} E_residual_BTU={midPoint.EnergyResidual_BTU:F6}");
+            }
+
+            if (Mathf.Abs(midPoint.VolumeResidual_ft3) <= volumeTolerance_ft3 &&
+                Mathf.Abs(midPoint.EnergyResidual_BTU) <= energyTolerance_BTU)
+            {
+                solvedPoint = midPoint;
+                failReason = "RESIDUAL_WITHIN_TOLERANCE";
+                return true;
+            }
+
+            if (Mathf.Sign(midPoint.VolumeResidual_ft3) == Mathf.Sign(bracketLow.VolumeResidual_ft3))
+                bracketLow = midPoint;
+            else
+                bracketHigh = midPoint;
+        }
+
+        solvedPoint = bestPoint;
+        failReason = "MAX_ITERATIONS";
+        return Mathf.Abs(bestPoint.VolumeResidual_ft3) <= volumeTolerance_ft3 &&
+               Mathf.Abs(bestPoint.EnergyResidual_BTU) <= energyTolerance_BTU;
+    }
+
+    bool EvaluateTwoPhaseMassEnergyAtPressure(
+        float pressure_psia,
+        float totalMass_lbm,
+        float targetEnthalpy_BTU,
+        out TwoPhaseClosurePoint point)
+    {
+        point = default;
+        if (totalMass_lbm <= 0f)
+            return false;
+
+        pressure_psia = Mathf.Clamp(pressure_psia, 20f, 2500f);
+        float hf_BTU_lb = WaterProperties.SaturatedLiquidEnthalpy(pressure_psia);
+        float hg_BTU_lb = WaterProperties.SaturatedSteamEnthalpy(pressure_psia);
+        float hfg_BTU_lb = hg_BTU_lb - hf_BTU_lb;
+        if (hfg_BTU_lb <= 1e-4f)
+            return false;
+
+        float hSpecificTarget_BTU_lb = targetEnthalpy_BTU / totalMass_lbm;
+        float qualityRaw = (hSpecificTarget_BTU_lb - hf_BTU_lb) / hfg_BTU_lb;
+        float quality = Mathf.Clamp01(qualityRaw);
+
+        float waterMass_lbm = totalMass_lbm * (1f - quality);
+        float steamMass_lbm = totalMass_lbm * quality;
+
+        float tSat_F = WaterProperties.SaturationTemperature(pressure_psia);
+        float rhoWater_lbm_ft3 = Mathf.Max(0.1f, WaterProperties.WaterDensity(tSat_F, pressure_psia));
+        float rhoSteam_lbm_ft3 = Mathf.Max(0.01f, WaterProperties.SaturatedSteamDensity(pressure_psia));
+
+        float waterVolume_ft3 = waterMass_lbm / rhoWater_lbm_ft3;
+        float steamVolume_ft3 = steamMass_lbm / rhoSteam_lbm_ft3;
+        float totalVolume_ft3 = waterVolume_ft3 + steamVolume_ft3;
+        float volumeResidual_ft3 = totalVolume_ft3 - PlantConstants.PZR_TOTAL_VOLUME;
+
+        float enthalpyCalc_BTU = waterMass_lbm * hf_BTU_lb + steamMass_lbm * hg_BTU_lb;
+        float energyResidual_BTU = enthalpyCalc_BTU - targetEnthalpy_BTU;
+
+        point.Pressure_psia = pressure_psia;
+        point.QualityRaw = qualityRaw;
+        point.QualityClamped = quality;
+        point.WaterMass_lbm = waterMass_lbm;
+        point.SteamMass_lbm = steamMass_lbm;
+        point.WaterVolume_ft3 = waterVolume_ft3;
+        point.SteamVolume_ft3 = steamVolume_ft3;
+        point.VolumeResidual_ft3 = volumeResidual_ft3;
+        point.EnergyResidual_BTU = energyResidual_BTU;
+        point.EnthalpyTotal_BTU = enthalpyCalc_BTU;
+        return true;
     }
 }

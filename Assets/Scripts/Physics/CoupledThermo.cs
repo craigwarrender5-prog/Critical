@@ -790,6 +790,10 @@ namespace Critical.Physics
         public float PZRSteamVolume;    // ft³
         public float PZRWaterMass;      // lb
         public float PZRSteamMass;      // lb
+        public float PZRTotalEnthalpy_BTU; // BTU, persistent thermodynamic state for two-phase closure
+        public bool PZRClosureConverged;   // True when last two-phase closure satisfied tolerances
+        public float PZRClosureVolumeResidual_ft3; // Last closure volume residual
+        public float PZRClosureEnergyResidual_BTU; // Last closure energy residual
         
         // Solver diagnostics
         public int IterationsUsed;

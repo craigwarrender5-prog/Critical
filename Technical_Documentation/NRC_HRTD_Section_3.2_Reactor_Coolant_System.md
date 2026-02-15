@@ -1,256 +1,365 @@
-# NRC HRTD Section 3.2 — Reactor Coolant System
+# NRC HRTD Section 3.2 — Reactor Coolant System (Pressurizer Specifications)
 
 **Source:** https://www.nrc.gov/docs/ML1122/ML11223A213.pdf  
-**Retrieved:** 2026-02-14  
+**Retrieved:** 2026-02-15  
 **Revision:** Rev 1203
 
 ---
 
-## Overview
+## Pressurizer Design Parameters (Table 3.2-2)
 
-This document provides comprehensive technical details on the Westinghouse PWR Reactor Coolant System (RCS) including:
+### Physical Specifications — Westinghouse 4-Loop PWR
 
-- RCS design parameters and component descriptions
-- Pressurizer design, operation, and control  
-- Steam generator construction and thermal-hydraulic performance
-- Reactor coolant pump design including seal assembly, flywheel, and motor
-- System instrumentation (temperature, pressure, flow, level)
-- Heatup and cooldown pressure-temperature limits
-- Natural circulation capabilities
-- Leakage detection systems
+| Parameter | Value | Unit |
+|-----------|-------|------|
+| **Total Volume** | 1800 | ft³ |
+| **Overall Height** | 52 ft, 9 in (16.1 m) | |
+| **Diameter** | 7 ft, 8 in (2.3 m) | |
+| **Design Pressure** | 2500 | psig |
+| **Operating Pressure** | 2235 | psig |
+| **Design Temperature** | 680 | °F |
 
----
+### Heater Specifications
 
-## Key Technical Data for Simulator Development
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| **Total Heater Capacity** | 1794 kW | All heaters |
+| **Number of Heaters** | 78 | Replaceable, direct-immersion, tubular-sheath type |
+| **Proportional Heaters** | 18 heaters, 414 kW | Variable duty cycle (10-sec intervals) |
+| **Backup Heaters** | 60 heaters, 1380 kW | Bistable control (on/off) |
+| **Heatup Rate Capability** | ~55°F/hr | Pressurizer and contents |
 
-### RCS Design Parameters
+### Heater Breakdown by Bank
 
-**Piping:**
-- Hot leg ID: 29.0", wall thickness: 2.84"
-- Cold leg ID: 27.5", wall thickness: 2.69"  
-- RCP suction ID: 31.0", wall thickness: 2.99"
-- Design pressure: 2,485 psig
-- Design temperature: 650°F
+| Bank | Type | Capacity | Control Mode | Quantity |
+|------|------|----------|--------------|----------|
+| C | Proportional | 414 kW | Variable (% of 10-sec interval) | 18 heaters |
+| A | Backup | 460 kW | Bistable (on/off) | 20 heaters |
+| B | Backup | 460 kW | Bistable (on/off) | 20 heaters |
+| D | Backup | 460 kW | Bistable (on/off) | 20 heaters |
 
-**Pressurizer:**
-- Total volume: 1,800 ft³
-- Full power water volume: 1,080 ft³ (60%)
-- Full power steam volume: 720 ft³ (40%)
-- Shell ID: 84.0"
-- Heater capacity: 1,794 kW (78 heaters total)
-  - Proportional heaters: 18 @ 414 kW
-  - Backup heaters: 60 @ 1,380 kW
-- Surge line ID: 14.0", wall thickness: 1.40"
+### Spray System Specifications
 
-**Pressurizer Relief and Safety:**
-- Code safety valves: 3 @ 2,485 psig setpoint
-- Capacity per safety: 420,000 lb/hr
-- PORVs: 2 @ 210,000 lb/hr capacity each
-- Accumulation: 3%, Blowdown: 5%
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| **Maximum Spray Flow** | 840 gpm | Design maximum |
+| **Maximum Spray Flow (alternate source)** | 900 gpm | Some references cite 900 gpm |
+| **Continuous Bypass Flow** | 1 gpm | Thermal protection and chemistry control |
+| **Number of Spray Valves** | 2 | One from each of two cold legs |
+| **Spray Lines** | Loop 2 and Loop 3 | Cold leg connections |
 
-**Steam Generators (Model 51):**
-- Number: 4
-- Height: 67.75 ft
-- Shell OD: 175.75"
-- U-tubes: 3,388 tubes
-- Tube OD: 0.875", wall thickness: 0.050"
-- Design pressure primary: 2,485 psig
-- Design pressure secondary: 1,185 psig
-- Full load steam flow: 3.77×10⁶ lb/hr per SG
-- Full load steam pressure: 895 psig
-- Full load steam temp: 533.3°F
-- Moisture carryover: <0.25% by weight
+### Volume Distribution at Normal Operating Conditions
 
-**Reactor Coolant Pumps:**
-- Number: 4
-- Flow per pump: 88,500 gpm
-- Design pressure: 2,485 psig
-- Speed: 1,200 rpm
-- Discharge head: 277 ft
-- Motor: 6,000 HP @ 12,500 Vac
-- Power (cold RCS): 5,997 kW (~6 MW)
-- Power (hot RCS): 4,540 kW (~4.5 MW)
-- Flywheel weight: 13,200 lb
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| **Water Volume (at 60% level)** | ~1080 ft³ | Approximately 8075 gallons |
+| **Steam Volume (at 60% level)** | ~720 ft³ | Remaining volume |
+| **No-load Level Setpoint** | 25% | ~450 ft³ water |
+| **Full-power Level Setpoint** | 61.5% | ~1107 ft³ water |
 
----
+### Relief and Safety Valve Specifications (Table 3.2-4, 3.2-5)
 
-## RCP Seal Injection System
+#### Code Safety Valves (3 total)
 
-**Normal Seal Injection Flow:**
-- Total injection per RCP: 8 gpm
-- Downward through thermal barrier HX to RCS: 5 gpm
-- Upward through radial bearing and seals: 3 gpm
-- Seal #1 (film-riding): controlled leakage design, 2,200 psi ΔP
-- Seal #2 (backup): rubbing face, full RCS pressure capability
-- Seal #3 (leakage diversion): rubbing face, low pressure
-- Minimum RCS pressure for pump operation: 400 psig (275 psid across seal #1)
-- Seal #1 bypass valve opens when P_RCS < 1,500 psig
+| Parameter | Value |
+|-----------|-------|
+| Quantity | 3 |
+| Type | Spring-loaded, pop-open, self-actuating |
+| Set Pressure | 2485 psig |
+| Total Capacity | Sufficient for 110% of design heat load |
+| Design Accumulation | +10% (2750 psig maximum) |
 
-**Critical for Heatup Simulation:**
-- RCPs must not start until RCS pressure ≥ 400 psig
-- Seal injection from CVCS provides bearing cooling
-- RCP heat input during heatup: ~6 MW per pump (cold water)
-- Coast-down time extended 22-30 seconds by flywheel
+#### Power-Operated Relief Valves (2 total)
+
+| PORV | Set Pressure | Actuation Logic | Notes |
+|------|--------------|-----------------|-------|
+| PCV-456 | 2335 psig | Fixed bistable (Channel II or IV) + Interlock (Channel III) | |
+| PCV-455A | Controller output | Master controller (100 psi error) + Interlock (Channel IV) | ~2335 psig |
+
+### Pressurizer Relief Tank (PRT) — Table 3.2-6
+
+| Parameter | Value | Notes |
+|-----------|-------|-------|
+| **Design Pressure** | 100 psig | With rupture discs at 100 psig |
+| **Normal Operating Pressure** | ~3 psig | Nitrogen overpressure |
+| **Water Volume** | ~75% full | Near containment ambient temperature (~120°F) |
+| **Design Relief Volume** | 110% of volume above 25% level | Can absorb design discharge |
+| **Final Temperature After Design Discharge** | 200°F | From initial 120°F |
+| **Cooldown Time** | ~1 hour | 200°F → 120°F via spray |
+| **Cover Gas** | Nitrogen | Prevents hydrogen accumulation |
 
 ---
 
-## Pressurizer Operating Characteristics
+## Component Descriptions (from NRC HRTD 3.2.3.3)
 
-**Heaters:**
-- Can raise pressurizer temperature at ~55°F/hr
-- Submerged in lower portion of vessel
-- Hermetically sealed terminals retain full pressure if sheath fails
+### Pressurizer Construction
 
-**Spray:**
-- Two spray lines from cold legs (redundant)
-- Max spray flow: 840 gpm (both valves)
-- Design prevents PORV lift on 10% step load decrease
-- Bypass flow: 1 gpm continuous (chemistry control + thermal stress prevention)
-- Spray driving force: hot leg to cold leg ΔP + cold leg velocity head (scoop design)
-- Auxiliary spray connection for cooldown with RCPs off
+The pressurizer is a vertical, cylindrical vessel with:
+- Hemispherical top and bottom heads
+- Constructed of manganese-molybdenum alloy steel
+- All surfaces exposed to reactor coolant clad with austenitic stainless steel
+- Electrical heaters (78) installed through the bottom head
+- Spray nozzle, relief, and safety valve connections in the top head
 
-**Surge Line:**
-- Sized to limit ΔP during maximum insurge
-- Thermal sleeve at pressurizer end for thermal stress
-- Temperature sensor with low-temp alarm
+### Four Basic Functions
 
----
+1. **Pressurizing the RCS during plant heatup**
+   - Heaters raise temperature to saturation
+   - Steam formation increases pressure
 
-## Steam Generator Thermal-Hydraulic Performance
+2. **Maintaining normal RCS pressure during steady-state operations**
+   - Proportional heaters compensate for ambient heat losses
+   - Bypass spray flow (~1 gpm) for chemistry control
 
-**Heat Transfer:**
-Q̇ = U × A × ΔT
+3. **Limiting pressure changes during RCS transients**
+   - Spray valves for pressure increases
+   - Backup heaters for pressure decreases
+   - PORVs for overpressure protection
 
-Where:
-- Q̇ = heat transfer rate (determined by plant load)
-- U = heat transfer coefficient (material constant)
-- A = heat transfer area (constant if tubes remain covered)
-- ΔT ≈ T_avg (RCS) - T_sat (secondary)
+4. **Preventing RCS pressure from exceeding design pressure**
+   - PORVs open at 2335 psig
+   - Code safety valves open at 2485 psig
+   - Design pressure: 2500 psig
+   - Maximum allowable: 2750 psig (with 10% accumulation)
 
-**Steam Pressure vs Load:**
-- Steam pressure DECREASES with increasing load (~150 psi from zero to full load)
-- To increase Q̇, must increase ΔT
-- ΔT increase achieved partly by raising T_avg (rod withdrawal)
-- Additional ΔT from reducing T_sat → steam pressure decreases
+### Pressure Control Mechanism
 
-**Natural Circulation:**
-- Recirculation ratio: 3:1 to 5:1 at full power
-- Downcomer flow = feedwater + recirculation from moisture separators
-- Steam-water mixture rises through tube bundle
-- Primary separators (swirl vanes) remove bulk moisture
-- Secondary separators (chevrons) remove fine mist
-- Steam quality: 99.75% minimum (0.25% moisture max)
+At normal operating conditions:
+- ~60% of volume is saturated water
+- ~40% of volume is saturated steam
+- Maintained at saturation conditions by electrical heaters
+- Connected to loop hot leg via surge line
+- Since RCS is hydraulically solid, pressurizer pressure = RCS pressure
 
-**Level Characteristics:**
-- Mass in SG is HIGHER at no-load than at full power
-- Steam bubbles increase volume at higher power → level rises
-- Shrink: steam flow decrease → pressure rise → bubble collapse → level drops
-- Swell: steam flow increase → pressure drop → bubble formation → level rises
+**Volume Change Effect:**
+- Boiling 1 ft³ of water → 6 ft³ of steam (factor of 6 density change)
+- Condensing 6 ft³ of steam → 1 ft³ of water
+- Steam behaves like ideal gas: pressure ∝ density
 
-**Blowdown:**
-- Continuous operation during plant ops
-- Removes water from just above tubesheet
-- Monitored for radiation (primary-to-secondary leak detection)
+### Volume Requirements
 
----
+The 1800 ft³ volume satisfies all of the following:
 
-## Instrumentation
+1. **Steam + water volume** sufficient for pressure response to programmed system volume changes
+2. **Water volume** prevents heater uncovering during 10% step load increase
+3. **Steam volume** accommodates 50% load reduction insurge without reaching high level trip (92%)
+4. **Doesn't empty** after reactor trip + turbine trip
+5. **Prevents water relief** through safety valves after loss of load + high level trip
+6. **No SI actuation** following reactor trip + turbine trip
 
-**Temperature:**
-- Wide-range RTDs: 0-700°F (indication only)
-- Narrow-range RTDs: hot leg 530-650°F, cold leg 510-630°F
-- Narrow-range used for reactor control and protection
-- Hot leg: 3 taps 120° apart for representative mixing
-- Cold leg: single tap downstream of RCP (pump provides mixing)
+### Heater Details
 
-**Flow:**
-- Elbow taps on intermediate leg (no pressure drop)
-- ω/ω₀ = √(ΔP/ΔP₀)
-- Accuracy: ±10% absolute, ±1% repeatability
-- Low-flow reactor trip uses this signal
+**Electrical Heaters:**
+- Replaceable, direct-immersion, tubular-sheath type
+- Hermetically sealed terminals (retain full system pressure if sheath fails)
+- Located in lower portion of vessel
+- Maintain steam and water at equilibrium conditions
+- Ventilation via holes drilled in pressurizer support skirt
 
-**Pressurizer Pressure:**
-- Redundant detectors in steam space
-- Used for indication, control, and protection
+**Control Characteristics:**
+- **Proportional heaters (Bank C):** Energized for variable percentage of each 10-second interval
+  - At 2235 psig setpoint: Energized ~5-15% of time to compensate for losses
+  - Linear modulation between 2220 psig (100% on) and 2250 psig (0% on)
+  
+- **Backup heaters (Banks A, B, D):** Bistable control (fully on or fully off)
+  - Energize at 2210 psig (-25 psi from setpoint)
+  - De-energize at 2217 psig (-18 psi from setpoint)
+  - Hysteresis prevents chattering
 
-**Pressurizer Level:**
-- Differential pressure detectors (reference leg vs actual)
-- Redundant channels for indication, control, protection
-- Separate channel calibrated for cold shutdown conditions
-
----
-
-## P-T Limits (Heatup and Cooldown)
-
-**Physical Basis:**
-- Prevent brittle fracture of reactor vessel
-- Material NDT temperature determined by Charpy V-notch test (30 ft-lb min)
-- Radiation exposure increases transition temperature over plant life
-- Pressure stress = tensile on vessel wall
-- Heatup stress = compressive on inner wall → reduces total stress
-- Cooldown stress = tensile on inner wall → ADDS to pressure stress
-
-**Limit Curves:**
-- Maximum allowable pressure vs temperature for various rates
-- Permissible operation: below and right of curves
-- Criticality limit on heatup curve prevents low-temp critical operation
-- Typical max rates: 100°F/hr heatup, 100°F/hr cooldown
-
-**Design Cycles (200 each):**
-- Heatup/cooldown at <100°F/hr
-- Loss of load without trip: 80
-- Reactor trips from 100% power: 400
-- Leak test at >2,335 psig: 50
-- Hydrostatic test >3,107 psig: 5
-
----
-
-## Natural Circulation
-
-**Requirements:**
-1. Heat source (decay heat from shutdown reactor)
-2. Heat sink (steam generators with maintained level and steam removal)
-3. Elevation difference between heat sink and source
+### Spray System Details
 
 **Design:**
-- SG centerline ~35 ft above core centerline
-- Thermal driving head established by density difference
-- Flow sufficient for decay heat removal ONLY (not power operation)
-- Steam removal via PORVs or atmospheric relief valves
-- AFW maintains SG level
+- Spray water injected through nozzle in top of vessel
+- Two automatically controlled, air-operated valves with remote manual override
+- Manual throttle valve in parallel with each spray valve (bypass flow)
+- Temperature sensors with low temperature alarms on each spray line
+- Piping layout forms water seal to prevent steam buildup
+
+**Bypass Flow Purpose:**
+- Reduces thermal stresses when spray valves open
+- Maintains uniform water chemistry with RCS
+- Continuous 1 gpm through each bypass
+
+**Spray Flow Capacity:**
+- Maximum 840 gpm (420 gpm per valve)
+- Selected to prevent PORV actuation after 10% step load decrease
+- Uses ΔP between hot leg (surge line) and cold leg (spray line) as driving force
+- Scoop design adds velocity head to differential pressure
+
+**Spray Line Connections:**
+- Extend into cold leg piping as "scoop"
+- Velocity head of RCS flow adds to spray driving force
+- Redundant valves allow spray with one RCP not operating
+
+**Auxiliary Spray:**
+- CVCS connection to spray line
+- Provides spray during cooldown with RCPs not operating
+- Thermal sleeve designed for cold auxiliary spray water
+
+### Surge Line
+
+- Connects bottom of pressurizer to one RCS hot leg
+- Sized to limit pressure drop during maximum insurge
+- Ensures highest RCS pressure ≤ design pressure during safety valve discharge
+- Thermal sleeve at pressurizer end for thermal stress protection
+- Temperature sensor with low temperature alarm and indication
+
+### Water Seal Loop Seals
+
+**Code Safety Valves:**
+- 6-inch pipes connecting pressurizer nozzles to safety valves shaped as loop seals
+- Condensate from normal heat losses accumulates and floods valve seat
+- Water seal prevents steam/hydrogen leakage past valve seats
+- If pressure exceeds setpoint, water slug discharges during accumulation period
+- Slug diversion devices (SDDs) installed downstream to trap water slugs
+
+**Instrumentation:**
+- Temperature indicator in discharge manifold (alerts to steam passage)
+- Acoustic monitors on each valve (positive indication of leakage/operation)
+
+### PORV Details
+
+**Design:**
+- Two PORVs limit RCS pressure and minimize high pressure reactor trip actuation
+- Minimize code safety valve operation
+- Air operated, can be opened/closed automatically or by remote manual control
+- Backup air supply for 10 minutes following loss of instrument air
+
+**Control Logic:**
+- PCV-456: Fixed bistable at 2335 psig (Channel II or IV) + Interlock (Channel III)
+- PCV-455A: Master controller output (100 psi error) + Interlock (Channel IV)
+- Remotely operated block valves isolate PORVs if excessive leakage occurs
+
+**Performance:**
+- Designed to limit pressure below high pressure trip setpoint (2385 psig)
+- Handles design transients up to 50% step load decrease with full steam dump
+- Acoustic monitor detects leakage and/or valve opening
+- Also utilized for cold overpressure mitigation with additional actuation logic
 
 ---
 
-## Leakage Detection
+## Pressure Control Setpoints Summary
 
-**Methods:**
-1. Containment air particulate/gaseous monitors (most sensitive)
-2. Makeup rate to pressurizer (increased makeup = leak)
-3. Head-to-vessel closure joint leak-off temperature
-4. Containment pressure, temperature, humidity
-5. Containment sump level
-6. Visual and ultrasonic inspection
-7. Primary-to-secondary: air ejector and SG blowdown monitors
+| Function | Pressure (psig) | Error from 2235 psig | Coincidence | Notes |
+|----------|----------------|---------------------|-------------|-------|
+| **Proportional heaters 100% on** | 2220 | -15 | N/A | Continuously energized |
+| **Backup heaters energize** | 2210 | -25 | N/A | All three banks |
+| **Backup heaters de-energize** | 2217 | -18 | N/A | 7 psi hysteresis |
+| **Normal setpoint** | 2235 | 0 | N/A | Operator adjustable 1700-2500 |
+| **Proportional heaters 0% on** | 2250 | +15 | N/A | De-energized |
+| **Spray valves start opening** | 2260 | +25 | N/A | Linear modulation begins |
+| **Spray valves fully open** | 2310 | +75 | N/A | Maximum spray (840 gpm) |
+| **PORV PCV-456 opens** | 2335 | +100 | Channel II or IV + Interlock III | Fixed bistable |
+| **PORV PCV-455A opens** | ~2335 | +100 | Channel IV interlock + controller | Master controller output |
+| **High pressure reactor trip** | 2385 | +150 | 2/4 | RCPB protection |
+| **Code safety valves lift** | 2485 | +250 | N/A | 10% accumulation = 2750 psig max |
+| **Low pressure reactor trip** | 1865 | -370 | 2/4 | DNB protection, active > P-7 |
+| **P-11 block permissive** | 1915 | -320 | 2/3 | Allows normal cooldown |
+| **Low pressure SI actuation** | 1807 | -428 | 2/3 | LOCA protection |
+
+### Cold Overpressure Protection System (COPS) Setpoints
+
+| Function | Pressure (psig) | Transmitter | Notes |
+|----------|----------------|-------------|-------|
+| **Operator unblocks COPS** | < 375 | Per procedures | RCS T_cold < specified value |
+| **COPS alarm** | 400 | | Control room alarm |
+| **PCV-455A opens (COPS)** | 425 | PT-403 | Lower setpoint |
+| **PCV-456 opens (COPS)** | 475 | PT-405 | Higher setpoint |
 
 ---
 
-## Critical Notes for Simulator
+## Material and Construction Standards
 
-1. **RCP Heat:** Each RCP adds ~6 MW to RCS when running in cold water
-2. **Seal Pressure Limit:** Cannot run RCPs below 400 psig RCS pressure
-3. **Pressurizer Function:** Accommodates density changes via steam bubble compression/expansion
-4. **SG Thermal Lag:** Massive secondary inventory creates large thermal inertia
-5. **P-T Limits:** Must be enforced during heatup/cooldown simulations
-6. **Natural Circulation:** Only works with adequate SG level and steam removal path
+### Materials of Construction
+
+- **Vessel shell:** Manganese-molybdenum alloy steel
+- **Internal cladding:** Austenitic stainless steel (all surfaces in contact with coolant)
+- **Heaters:** Tubular-sheath with hermetically sealed terminals
+- **Spray line and thermal sleeves:** Austenitic stainless steel
+- **Surge line:** Austenitic stainless steel with thermal sleeve at pressurizer end
+
+### ASME Code Compliance
+
+- Designed per ASME Boiler and Pressure Vessel Code, Section III
+- Code safety valves prevent pressure > 110% of design pressure
+- Hydrostatic test pressure: 3125 psig (1.25 × design pressure)
+- Seismic Category I designation
+
+---
+
+## Thermal and Hydraulic Performance Data
+
+### Steady-State Heat Losses
+
+- Ambient heat losses compensated by proportional heaters
+- Typical steady-state heater duty: 5-15% of proportional capacity (~20-60 kW)
+- Continuous bypass spray: 1 gpm per line (2 gpm total) removes ~50 kW
+
+### Transient Response
+
+**Insurge (RCS temperature increase):**
+1. Coolant expands → Water surges into pressurizer
+2. Steam bubble compresses → Pressure increases
+3. If P > 2260 psig → Spray valves modulate open
+4. Cool spray water condenses steam → Pressure decrease
+
+**Outsurge (RCS temperature decrease):**
+1. Coolant contracts → Water surges out of pressurizer
+2. Steam bubble expands → Pressure decreases
+3. Saturated water flashes to steam (maintains some pressure)
+4. If P < 2210 psig → Backup heaters energize
+5. Heaters boil water → Steam generation → Pressure increase
+
+### Design Transients
+
+| Transient | Pressurizer Response | Control Action | Result |
+|-----------|---------------------|----------------|--------|
+| 10% step load increase | Outsurge, level drops | Backup heaters energize | Heaters prevent uncovering |
+| 10% step load decrease | Insurge, level rises | Spray valves modulate | Prevents PORV actuation |
+| 50% step load decrease | Large insurge | Full spray + automatic rod control | Level < 92% trip setpoint |
+| Reactor trip from 100% | Large outsurge | Heaters energize | Pressurizer doesn't empty |
+| Reactor + turbine trip | Moderate outsurge | Heaters energize | No SI actuation |
+| Loss of load from 100% | Large insurge | High level trip + spray | No water relief through safeties |
 
 ---
 
 ## References
 
-This document should be referenced for:
-- Detailed component design parameters
-- Operating characteristics and limits
-- Instrumentation design and setpoints
-- System interrelationships
-- Material construction requirements
-- PRA insights on critical components
+- NRC HRTD Section 10.2 — Pressurizer Pressure Control System (ML11223A287)
+- NRC HRTD Section 10.3 — Pressurizer Level Control System (ML11223A290)
+- NRC HRTD Section 12.2 — Reactor Protection System
+- ASME Boiler and Pressure Vessel Code, Section III
+- IEEE 279-1979 — Criteria for Protection Systems for Nuclear Power Generating Stations
+
+---
+
+## Simulator Implementation Notes
+
+### Critical Design Parameters for Simulator
+
+1. **Volume:** 1800 ft³ (50.96 m³)
+2. **Heater capacity:** 1794 kW total (414 kW proportional + 1380 kW backup)
+3. **Spray capacity:** 840 gpm maximum (420 gpm per valve)
+4. **Level range:** 25% (no-load) to 61.5% (full-power) programmed
+5. **Normal operating level:** 60% at full power
+6. **Pressure setpoint:** 2235 psig (adjustable 1700-2500 psig)
+
+### Control System Characteristics
+
+1. **Master pressure controller:** PID (Proportional + Integral + Derivative)
+2. **Master level controller:** PI (Proportional + Integral)
+3. **Heater control:** Proportional (variable duty cycle) + Backup (bistable)
+4. **Spray control:** Linear modulation between 2260-2310 psig
+5. **PORV control:** Bistable with interlocks + Master controller output
+
+### Instrumentation Requirements
+
+1. **Pressure transmitters:** 4 channels (Channels I, II, III, IV)
+2. **Level transmitters:** 3 hot-calibrated + 1 cold-calibrated
+3. **Temperature sensors:** Surge line, spray lines, discharge manifold
+4. **Position indicators:** PORV stem position switches
+5. **Acoustic monitors:** Safety valves and PORVs
+
+---
+
+*Document compiled 2026-02-15 from NRC HRTD Section 3.2, Rev 1203*

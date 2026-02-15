@@ -111,6 +111,34 @@ public partial class HeatupSimEngine : MonoBehaviour
     public float targetTemperature = 557f;
     public float targetPressure = 2235f;
 
+    [Header("Runtime Performance Controls (IP-0023)")]
+    [Tooltip("Enable async interval-log file writing while simulation is running.")]
+    public bool enableAsyncLogWriter = true;
+
+    [Tooltip("Enable high-frequency debug logs inside simulation substep paths.")]
+    public bool enableHighFrequencyPerfLogs = false;
+
+    [Tooltip("Enable worker-thread stepping mode for deterministic validation experiments.")]
+    public bool enableWorkerThreadStepping = false;
+
+    [Tooltip("Enable temporary deep diagnostics for PZR bubble two-phase closure investigations.")]
+    public bool enablePzrBubbleDiagnostics = false;
+
+    [Tooltip("Run label attached to PZR bubble diagnostic log lines.")]
+    public string pzrBubbleDiagnosticsLabel = "DEFAULT";
+
+    [Tooltip("Diagnostic-only residual tolerance (ft^3) for shadow closure convergence traces.")]
+    public float pzrBubbleDiagnosticsResidualTolerance_ft3 = 10f;
+
+    [Tooltip("Diagnostic-only max iterations for shadow closure convergence traces.")]
+    public int pzrBubbleDiagnosticsMaxIterations = 8;
+
+    [Tooltip("Enable temporary diagnostics for PZR letdown orifice aggregation investigation.")]
+    public bool enablePzrOrificeDiagnostics = false;
+
+    [Tooltip("PZR orifice diagnostics sample stride in simulation ticks.")]
+    public int pzrOrificeDiagnosticsSampleStrideTicks = 30;
+
     // ========================================================================
     // PUBLIC SIMULATION STATE — Read by the visual dashboard
     // All [HideInInspector] fields stay in this file for Unity serialization.
@@ -232,6 +260,14 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public string rhrModeString = "";     // RHR mode display string
     [HideInInspector] public float pzrWaterVolume;
     [HideInInspector] public float pzrSteamVolume;
+    [HideInInspector] public float pzrTotalEnthalpy_BTU;
+    [HideInInspector] public float pzrSpecificEnthalpy_BTU_lb;
+    [HideInInspector] public float pzrClosureVolumeResidual_ft3;
+    [HideInInspector] public float pzrClosureEnergyResidual_BTU;
+    [HideInInspector] public bool pzrClosureConverged;
+    [HideInInspector] public int pzrClosureSolveAttempts;
+    [HideInInspector] public int pzrClosureSolveConverged;
+    [HideInInspector] public float pzrClosureConvergencePct;
     [HideInInspector] public float rcsWaterMass;
     [HideInInspector] public float chargingFlow;
     [HideInInspector] public float letdownFlow;
@@ -394,6 +430,8 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public float chargingToRCS;
     [HideInInspector] public float totalCCPOutput;
     [HideInInspector] public float divertFraction;
+    [HideInInspector] public float cvcsThermalMixing_MW;
+    [HideInInspector] public float cvcsThermalMixingDeltaF;
 
     #endregion
 
@@ -451,6 +489,20 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public float auxSprayPressureBefore;
     [HideInInspector] public float auxSprayPressureDrop;
     [HideInInspector] public bool auxSprayTestPassed;
+
+    // DP-0002 Group 3: explicit DRAIN gate and reconciliation telemetry.
+    [HideInInspector] public float drainSteamDisplacement_lbm;
+    [HideInInspector] public float drainCvcsTransfer_lbm;
+    [HideInInspector] public float drainDuration_hr;
+    [HideInInspector] public float drainExitPressure_psia;
+    [HideInInspector] public float drainExitLevel_pct;
+    [HideInInspector] public bool drainHardGateTriggered;
+    [HideInInspector] public bool drainPressureBandMaintained;
+    [HideInInspector] public string drainTransitionReason = "NONE";
+    [HideInInspector] public string drainCvcsPolicyMode = "LEGACY_FIXED";
+    [HideInInspector] public float drainLetdownFlow_gpm;
+    [HideInInspector] public float drainChargingFlow_gpm;
+    [HideInInspector] public float drainNetOutflowFlow_gpm;
 
     // Pre-drain phase flag (DETECTION/VERIFICATION still use solid-plant CVCS)
     private bool bubblePreDrainPhase = false;
@@ -590,8 +642,9 @@ public partial class HeatupSimEngine : MonoBehaviour
     float sgPressurizationWindowStartTsat_F = 0f;
     float sgPressurizationLastPressure_psia = 0f;
     float sgPressurizationLastTsat_F = 0f;
-    readonly Queue<DynamicIntervalSample> stageEDynamicSamples =
-        new Queue<DynamicIntervalSample>(3);
+    readonly DynamicIntervalSample[] stageEDynamicWindow = new DynamicIntervalSample[3];
+    int stageEDynamicWindowCount = 0;
+    int stageEDynamicWindowHead = 0;
     bool stageEDynamicPrevIntervalValid = false;
     float stageEDynamicPrevPrimaryHeatInput_MW = 0f;
     float stageEDynamicPrevPressure_psia = 0f;
@@ -629,6 +682,9 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public int orifice75Count = 1;      // 75-gpm orifices open (1-2)
     [HideInInspector] public bool orifice45Open = false;   // 45-gpm orifice open
     [HideInInspector] public string orificeLineupDesc = "1×75 gpm";  // Display string
+    private int pzrOrificeDiagTickCounter = 0;
+    private int pzrOrificeDiagLast75Count = -1;
+    private bool pzrOrificeDiagLast45Open = false;
 
     // RCP startup sequence timing (hours)
     const float RCP1_START_TIME = 1.0f;
@@ -800,6 +856,8 @@ public partial class HeatupSimEngine : MonoBehaviour
         // Set flag FIRST so coroutine sees it immediately
         _shutdownRequested = true;
         isRunning = false;
+        // IP-0023: bounded best-effort flush avoids exit-time blocking spikes.
+        FlushAsyncLogWriter(500);
         // Then stop coroutines
         StopAllCoroutines();
     }
@@ -830,6 +888,7 @@ public partial class HeatupSimEngine : MonoBehaviour
 
         // Initialize — delegates to Init partial
         InitializeSimulation();
+        PublishTelemetrySnapshot();
 
         // ================================================================
         // FRAME-RATE DECOUPLED SIMULATION LOOP
@@ -879,7 +938,7 @@ public partial class HeatupSimEngine : MonoBehaviour
                 // v0.9.5: Check for shutdown at each physics step
                 if (_shutdownRequested) break;
 
-                StepSimulation(dt);
+                RunPhysicsStep(dt);
                 simTimeBudget -= dt;
                 stepsThisFrame++;
 
@@ -890,7 +949,7 @@ public partial class HeatupSimEngine : MonoBehaviour
                 {
                     startupBurstTimer += dt;
                     float burstInterval = 1f / 60f;  // 1 sim-minute
-                    if (startupBurstTimer >= burstInterval)
+                    if (enableHighFrequencyPerfLogs && startupBurstTimer >= burstInterval)
                     {
                         float simSec = simTime * 3600f;
                         float pSP = solidPlantState.PressureSetpoint;
@@ -940,7 +999,10 @@ public partial class HeatupSimEngine : MonoBehaviour
                     logCount++;
                     lastLogSimTime = simTime;
                     logTimer = 0f;
-                    Debug.Log($"[T+{simTime:F2}hr] T_avg={T_avg:F1}°F, P={pressure:F0}psia, Subcool={subcooling:F1}°F, PZR={pzrLevel:F1}%, RCPs={rcpCount}, Rate={heatupRate:F1}°F/hr");
+                    if (enableHighFrequencyPerfLogs)
+                    {
+                        Debug.Log($"[T+{simTime:F2}hr] T_avg={T_avg:F1}°F, P={pressure:F0}psia, Subcool={subcooling:F1}°F, PZR={pzrLevel:F1}%, RCPs={rcpCount}, Rate={heatupRate:F1}°F/hr");
+                    }
                 }
 
                 if (!isRunning || _shutdownRequested || T_rcs >= targetTemperature - 2f)
@@ -1416,7 +1478,7 @@ public partial class HeatupSimEngine : MonoBehaviour
                 }
 
                 // Debug heat balance periodically
-                if (simTime < 0.02f || (simTime % 0.25f < dt))
+                if (enableHighFrequencyPerfLogs && (simTime < 0.02f || (simTime % 0.25f < dt)))
                 {
                     float netHeat_MW = isoResult.ConductionHeat_MW - heatLoss_MW;
                     Debug.Log($"[Phase1 Heat Balance] T_pzr={T_pzr:F1}°F, T_rcs={T_rcs:F1}°F, DeltaT={T_pzr - T_rcs:F2}°F");
@@ -2159,7 +2221,8 @@ public partial class HeatupSimEngine : MonoBehaviour
         stageEDynamicPrevIntervalValid = false;
         stageEDynamicPrevPrimaryHeatInput_MW = 0f;
         stageEDynamicPrevPressure_psia = 0f;
-        stageEDynamicSamples.Clear();
+        stageEDynamicWindowCount = 0;
+        stageEDynamicWindowHead = 0;
     }
 
     bool ShouldBeginRhrIsolation(float currentRcsTempF)
@@ -2266,13 +2329,16 @@ public partial class HeatupSimEngine : MonoBehaviour
         float dTransport = noRcpTransportFactor - prevNoRcpTransport;
         float dAlpha = alphaSmoothed - prevCouplingAlpha;
 
-        Debug.Log(
-            $"[RCP_TRANSIENT] t={simTime:F4}hr rcp={prevRcpCount}->{rcpCount} " +
-            $"heatTarget={effectiveRCPHeat:F3}MW heatApplied={rcpHeat:F3}MW dHeat={dHeat:F4}MW " +
-            $"dP={dPressure:F4}psi dPdt={pressureRate:F3}psi/hr " +
-            $"pzr={pzrLevel:F4}% dLevel={dLevel:F4}% " +
-            $"alphaRaw={alphaRaw:F5} alpha={alphaSmoothed:F5} dAlpha={dAlpha:F5} " +
-            $"transport={noRcpTransportFactor:F5} dTransport={dTransport:F5}");
+        if (enableHighFrequencyPerfLogs)
+        {
+            Debug.Log(
+                $"[RCP_TRANSIENT] t={simTime:F4}hr rcp={prevRcpCount}->{rcpCount} " +
+                $"heatTarget={effectiveRCPHeat:F3}MW heatApplied={rcpHeat:F3}MW dHeat={dHeat:F4}MW " +
+                $"dP={dPressure:F4}psi dPdt={pressureRate:F3}psi/hr " +
+                $"pzr={pzrLevel:F4}% dLevel={dLevel:F4}% " +
+                $"alphaRaw={alphaRaw:F5} alpha={alphaSmoothed:F5} dAlpha={dAlpha:F5} " +
+                $"transport={noRcpTransportFactor:F5} dTransport={dTransport:F5}");
+        }
     }
 
     void ComputePrimaryBoundaryMassFlows(
@@ -2368,6 +2434,8 @@ public partial class HeatupSimEngine : MonoBehaviour
         PrimaryBoundaryFlowEvent evt = ComputePrimaryBoundaryFlowEvent(dt_hr, rho_rcs, regimeId, regimeLabel);
 
         float componentMassBefore = physicsState.RCSWaterMass + physicsState.PZRWaterMass + physicsState.PZRSteamMass;
+        float pzrMassBefore = physicsState.PZRWaterMass + physicsState.PZRSteamMass;
+        float pzrLevelBefore = physicsState.PZRLevel;
         float ledgerBefore = physicsState.TotalPrimaryMass_lb;
 
         // PBOC single-apply to primary component masses.
@@ -2390,6 +2458,8 @@ public partial class HeatupSimEngine : MonoBehaviour
         }
 
         float componentMassAfter = physicsState.RCSWaterMass + physicsState.PZRWaterMass + physicsState.PZRSteamMass;
+        float pzrMassAfter = physicsState.PZRWaterMass + physicsState.PZRSteamMass;
+        float pzrLevelAfter = physicsState.PZRLevel;
         float ledgerAfter = physicsState.TotalPrimaryMass_lb;
         float componentDelta = componentMassAfter - componentMassBefore;
         float ledgerDeltaApplied = ledgerAfter - ledgerBefore;
@@ -2403,6 +2473,18 @@ public partial class HeatupSimEngine : MonoBehaviour
         pbocCurrentEvent = evt;
         pbocEventActiveThisTick = true;
         regime3CVCSPreApplied = true;
+
+        if (bubblePhase != BubbleFormationPhase.DRAIN)
+        {
+            TryLogPzrOrificeDiagnostics(
+                "PBOC_BOUNDARY",
+                evt.LetdownFlow_gpm,
+                evt.ChargingFlow_gpm,
+                pzrLevelBefore,
+                pzrLevelAfter,
+                pzrMassBefore,
+                pzrMassAfter);
+        }
     }
 
     void FinalizePrimaryBoundaryFlowEventAux(
@@ -2454,7 +2536,8 @@ public partial class HeatupSimEngine : MonoBehaviour
         pbocLastEvent = evt;
         pbocEventCount++;
 
-        if (simTime < 0.02f || (simTime % 0.25f < evt.Dt_hr) || Mathf.Abs(evt.dm_RCS_lbm) > 25f)
+        if (enableHighFrequencyPerfLogs &&
+            (simTime < 0.02f || (simTime % 0.25f < evt.Dt_hr) || Mathf.Abs(evt.dm_RCS_lbm) > 25f))
         {
             Debug.Log($"[PBOC] tick={evt.TickIndex} t={evt.SimTime_hr:F4}hr regime={evt.RegimeLabel} " +
                       $"dm_RCS={evt.dm_RCS_lbm:+0.00;-0.00;0.00}lbm dm_VCT={evt.dm_VCT_lbm:+0.00;-0.00;0.00}lbm " +
@@ -2732,20 +2815,21 @@ public partial class HeatupSimEngine : MonoBehaviour
         stageEDynamicPrevPrimaryHeatInput_MW = sample.PrimaryHeatInput_MW;
         stageEDynamicPrevPressure_psia = sample.Pressure_psia;
 
-        if (stageEDynamicSamples.Count >= 3)
-            stageEDynamicSamples.Dequeue();
-        stageEDynamicSamples.Enqueue(sample);
+        stageEDynamicWindow[stageEDynamicWindowHead] = sample;
+        stageEDynamicWindowHead = (stageEDynamicWindowHead + 1) % 3;
+        if (stageEDynamicWindowCount < 3)
+            stageEDynamicWindowCount++;
 
-        if (stageEDynamicSamples.Count == 3)
+        if (stageEDynamicWindowCount == 3)
         {
-            DynamicIntervalSample[] window = stageEDynamicSamples.ToArray();
-            bool allActiveHeating = window[0].ActiveHeating
-                && window[1].ActiveHeating
-                && window[2].ActiveHeating;
+            DynamicIntervalSample a = stageEDynamicWindow[stageEDynamicWindowHead];
+            DynamicIntervalSample b = stageEDynamicWindow[(stageEDynamicWindowHead + 1) % 3];
+            DynamicIntervalSample c = stageEDynamicWindow[(stageEDynamicWindowHead + 2) % 3];
+            bool allActiveHeating = a.ActiveHeating && b.ActiveHeating && c.ActiveHeating;
 
             if (allActiveHeating)
             {
-                float tempDelta3_F = window[2].TopTemp_F - window[0].TopTemp_F;
+                float tempDelta3_F = c.TopTemp_F - a.TopTemp_F;
                 stageE_DynamicTempDelta3Last_F = tempDelta3_F;
                 if (stageE_DynamicTempDelta3WindowCount == 0)
                 {
@@ -2764,10 +2848,10 @@ public partial class HeatupSimEngine : MonoBehaviour
                 if (tempDelta3_F < 2f)
                     stageE_DynamicTempDelta3Below2Count++;
 
-                float pressureDelta3_psia = window[2].Pressure_psia - window[0].Pressure_psia;
-                bool pressureResponseWindow = window[0].IsIsolatedHeatupState
-                    && window[1].IsIsolatedHeatupState
-                    && window[2].IsIsolatedHeatupState;
+                float pressureDelta3_psia = c.Pressure_psia - a.Pressure_psia;
+                bool pressureResponseWindow = a.IsIsolatedHeatupState
+                    && b.IsIsolatedHeatupState
+                    && c.IsIsolatedHeatupState;
                 if (pressureResponseWindow && Mathf.Abs(pressureDelta3_psia) <= pressureFlatlineBand_psia)
                     stageE_DynamicPressureFlatline3Count++;
             }

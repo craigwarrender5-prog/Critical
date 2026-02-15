@@ -288,6 +288,12 @@ namespace Critical.Physics
         /// </summary>
         public float[] NodeRegimeBlend;
 
+        /// <summary>
+        /// IP-0023 (CS-0066): reusable scratch buffer for inter-node mixing heat.
+        /// Avoids per-update transient array allocations in hot path.
+        /// </summary>
+        public float[] NodeMixingHeatScratch;
+
         // ----- SG Draining & Level Model (v5.0.0 Stage 4) -----
 
         /// <summary>
@@ -769,6 +775,8 @@ namespace Critical.Physics
             for (int i = 0; i < N; i++)
                 state.NodeRegimeBlend[i] = 0f;
 
+            state.NodeMixingHeatScratch = new float[N];
+
             // Reset static delta clamp tracking
             _prevTotalQ_MW = 0f;
             _prevRCPCount = 0;
@@ -1094,7 +1102,16 @@ namespace Critical.Physics
             // connects adjacent nodes. If boiling is active in the upper node,
             // enhance mixing for nodes adjacent to the boiling zone.
             // Boiling-to-boiling: no conduction needed (both at T_sat).
-            float[] mixingHeat = new float[N];
+            float[] mixingHeat = state.NodeMixingHeatScratch;
+            if (mixingHeat == null || mixingHeat.Length != N)
+            {
+                mixingHeat = new float[N];
+                state.NodeMixingHeatScratch = mixingHeat;
+            }
+            else
+            {
+                Array.Clear(mixingHeat, 0, N);
+            }
             for (int i = 0; i < N - 1; i++)
             {
                 // Skip conduction between two boiling nodes (both at T_sat)

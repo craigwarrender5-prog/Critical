@@ -132,6 +132,12 @@ namespace Critical.Physics
     /// </summary>
     public static class SolidPlantPressure
     {
+        /// <summary>
+        /// Test-only override to bypass the atmospheric pressure floor clamp.
+        /// Default false preserves physical floor behavior in production runs.
+        /// </summary>
+        public static bool DisableAmbientPressureFloorForDiagnostics { get; set; } = false;
+
         #region Constants
         
         // CVCS Pressure Controller Tuning
@@ -723,9 +729,10 @@ namespace Critical.Physics
             
             state.Pressure += dP_psi;
             
-            // Hard physical floor: pressure cannot go below atmospheric
-            // (this is not a control clamp â€” it's a physical impossibility)
-            state.Pressure = Math.Max(state.Pressure, PlantConstants.P_ATM);
+            // Hard physical floor: pressure cannot go below atmospheric.
+            // Investigation-only override allows clamp bypass for bracket testing.
+            if (!DisableAmbientPressureFloorForDiagnostics)
+                state.Pressure = Math.Max(state.Pressure, PlantConstants.P_ATM);
             
             // ================================================================
             // 7. UPDATE DIAGNOSTIC RATES

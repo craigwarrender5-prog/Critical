@@ -25,8 +25,15 @@ namespace Critical.Physics
     /// Heat transfer calculations for steam generators, surge line, and condensation.
     /// Critical for understanding energy balance in pressurizer.
     /// </summary>
-    public static class HeatTransfer
-    {
+public static class HeatTransfer
+{
+        // Nusselt laminar film-condensation constants (vertical surface).
+        // Source: Incropera/DeWitt, Fundamentals of Heat and Mass Transfer.
+        private const float NUSSELT_FILM_COEFFICIENT = 0.943f;
+        private const float GRAVITY_FT_PER_HR2 = 32.174f * 3600f * 3600f;
+        private const float CONDENSING_HTC_MIN_BTU_HR_FT2_F = 75f;
+        private const float CONDENSING_HTC_MAX_BTU_HR_FT2_F = 2500f;
+
         #region Log Mean Temperature Difference (LMTD)
         
         /// <summary>
@@ -199,16 +206,32 @@ namespace Critical.Physics
         {
             float tSat = WaterProperties.SaturationTemperature(pressure_psia);
             float deltaT = tSat - wallTemp_F;
-            
-            if (deltaT <= 0f) return 0f;
-            if (height_ft < 0.1f) height_ft = 0.1f;
-            
-            float hfg = WaterProperties.LatentHeat(pressure_psia);
-            
-            float C = 50f;
-            float htc = C * (float)Math.Pow(hfg / (height_ft * deltaT), 0.25);
-            
-            return Math.Max(50f, Math.Min(htc, 500f));
+
+            if (deltaT <= 0f)
+                return 0f;
+            if (height_ft < 0.1f)
+                height_ft = 0.1f;
+
+            float filmTempF = 0.5f * (tSat + wallTemp_F);
+            float hfg = Math.Max(1f, WaterProperties.LatentHeat(pressure_psia)); // BTU/lb
+            float rhoL = Math.Max(1f, WaterProperties.WaterDensity(tSat, pressure_psia)); // lb/ft^3
+            float rhoV = Math.Max(0.01f, WaterProperties.SaturatedSteamDensity(pressure_psia)); // lb/ft^3
+            float muL = Math.Max(1e-4f, WaterProperties.DynamicViscosity(filmTempF)); // lb/(ft*hr)
+            float kL = Math.Max(1e-4f, WaterProperties.ThermalConductivity(filmTempF)); // BTU/(hr*ft*F)
+
+            float densityDelta = Math.Max(0.01f, rhoL - rhoV);
+            float numerator = rhoL * densityDelta * GRAVITY_FT_PER_HR2 * hfg * kL * kL * kL;
+            float denominator = muL * height_ft * deltaT;
+            if (denominator <= 1e-9f || numerator <= 1e-9f)
+                return CONDENSING_HTC_MIN_BTU_HR_FT2_F;
+
+            float htc = NUSSELT_FILM_COEFFICIENT * (float)Math.Pow(numerator / denominator, 0.25f);
+            if (float.IsNaN(htc) || float.IsInfinity(htc))
+                return CONDENSING_HTC_MIN_BTU_HR_FT2_F;
+
+            return Math.Max(
+                CONDENSING_HTC_MIN_BTU_HR_FT2_F,
+                Math.Min(htc, CONDENSING_HTC_MAX_BTU_HR_FT2_F));
         }
         
         /// <summary>

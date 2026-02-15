@@ -1,6 +1,6 @@
 # NRC HRTD Reference Sources — Master Index
 
-**Last Updated:** 2026-02-14  
+**Last Updated:** 2026-02-15  
 **Purpose:** Master tracking document for all NRC HRTD sections and technical references used in Critical: Master the Atom simulator development.
 
 ---
@@ -216,6 +216,81 @@
   - SG low-low level: 11.5%
   - All P-n permissives and C-n interlocks
 
+### 14. NRC HRTD Section 7.2 — Condensate and Feedwater System
+- **URL:** https://www.nrc.gov/docs/ML1122/ML11223A246.pdf
+- **Revision:** Rev 0403
+- **Retrieved:** 2026-02-15
+- **Status:** ✅ FULL TEXT RETRIEVED AND REVIEWED
+- **Local Document:** `NRC_HRTD_Section_7.2_Condensate_and_Feedwater_System.md`
+- **Content:** Condensate system, main feedwater pumps, heater drain system, SG chemistry control
+- **Critical data extracted:**
+  - Condensate pumps: 2 × 70%, 11,000 gpm each, 1100 ft head
+  - MFP: 2 × 70%, turbine-driven, 19,800 gpm each, 2020 ft head
+  - LP heaters (5 stages): 120°F → 360°F
+  - HP heaters (2 stages): 360°F → 440°F
+  - High SG level trip/isolation: 69%
+  - FW isolation on low T_avg (564°F) + P-4
+  - MFP low suction pressure trip: 195 psig
+  - CST minimum: 239,000 gallons
+
+### 15. NRC HRTD Section 10.2 — Pressurizer Pressure Control System (Full)
+- **URL:** https://www.nrc.gov/docs/ML1122/ML11223A287.pdf
+- **Revision:** Rev 1208
+- **Retrieved:** 2026-02-15
+- **Status:** ✅ FULL TEXT RETRIEVED AND REVIEWED
+- **Local Document:** `NRC_HRTD_Section_10.2_Pressurizer_Pressure_Control.md`
+- **Content:** Complete pressure control system with heater banks, spray valves, PORVs, COPS
+- **Critical data extracted:**
+  - Normal setpoint: 2235 psig (adjustable 1700-2500 psig)
+  - Proportional heaters: 0% at 2250 psig, 100% at 2220 psig
+  - Backup heaters: ON at 2210 psig, OFF at 2217 psig
+  - Spray start: 2260 psig, full open: 2310 psig
+  - PORV PCV-455A: Master controller at ~2335 psig
+  - PORV PCV-456: Fixed bistable at 2335 psig
+  - COPS PCV-455A: 425 psig (PT-403)
+  - COPS PCV-456: 475 psig (PT-405)
+  - COPS alarm: 400 psig
+  - Low pressure SI: 1807 psig (2/3)
+  - P-11 block: 1915 psig (2/3)
+
+### 16. NRC HRTD Section 10.3 — Pressurizer Level Control System (Full)
+- **URL:** https://www.nrc.gov/docs/ML1122/ML11223A290.pdf
+- **Revision:** Rev 0502
+- **Retrieved:** 2026-02-15
+- **Status:** ✅ FULL TEXT RETRIEVED AND REVIEWED
+- **Local Document:** `NRC_HRTD_Section_10.3_Pressurizer_Level_Control.md`
+- **Content:** Complete level control system with level program, charging flow control
+- **Critical data extracted:**
+  - Level program: 25% at 557°F to 61.5% at 584.7°F
+  - Program input: Auctioneered high T_avg
+  - Master controller: PI, varies charging flow
+  - Letdown constant at 75 gpm
+  - Low level isolation: 17%
+  - High level alarm: 70%
+  - High level trip: 92% (2/3, at-power only P-7)
+  - Backup heaters on at level > program + 5%
+  - 4 level transmitters: 3 hot-calibrated, 1 cold-calibrated
+
+### 17. NRC HRTD Section 12.3 — Engineered Safety Features Actuation
+- **URL:** https://www.nrc.gov/docs/ML1122/ML11223A310.pdf
+- **Revision:** Rev 0706
+- **Retrieved:** 2026-02-15
+- **Status:** ✅ FULL TEXT RETRIEVED AND REVIEWED
+- **Local Document:** `NRC_HRTD_Section_12.3_ESFAS.md`
+- **Content:** SI actuation, containment spray/isolation, steam line isolation, FW isolation, AFW actuation
+- **Critical data extracted:**
+  - Low PZR pressure SI: 1807 psig (2/3), blockable at P-11
+  - High containment pressure SI: 3.5 psig (2/3)
+  - High steam line ΔP SI: 100 psi (any line vs 2 others)
+  - High steam flow + low pressure/T_avg SI: Variable/600 psig/553°F, blockable at P-12
+  - Containment spray: 30 psig high-high (2/4)
+  - Phase A isolation: Any SI actuation
+  - Phase B isolation: 30 psig high-high (2/4)
+  - Steam line isolation: 30 psig OR high flow combo
+  - FW isolation: Low T_avg (564°F) + P-4, High SG level (69%), SI
+  - AFW actuation: SI, Low-low SG level (11.5%), ESF bus UV (2560 V)
+  - SI reset: 45-60 sec time delay + P-4 + manual
+
 ---
 
 ## Secondary Sources (Partially Reviewed)
@@ -266,13 +341,21 @@
 ### NRC HRTD Section Documents
 | File | Section |
 |------|---------|
+| `NRC_HRTD_Section_3.1_Reactor_Vessel_and_Internals.md` | 3.1 |
 | `NRC_HRTD_Section_3.2_Reactor_Coolant_System.md` | 3.2 |
+| `NRC_HRTD_Section_5.1_Residual_Heat_Removal_System.md` | 5.1 |
 | `NRC_HRTD_Section_5.7_Auxiliary_Feedwater_System.md` | 5.7 |
 | `NRC_HRTD_Section_7.1_Main_Auxiliary_Steam.md` | 7.1 |
 | `NRC_HRTD_Section_8.1_Rod_Control_System.md` | 8.1 |
 | `NRC_HRTD_Section_9.1_Excore_Nuclear_Instrumentation.md` | 9.1 |
+| `NRC_HRTD_Section_9.2_Incore_Instrumentation.md` | 9.2 |
+| `NRC_HRTD_Section_10.1_Reactor_Coolant_Instrumentation.md` | 10.1 |
 | `NRC_HRTD_Section_11.2_Steam_Dump_Control.md` | 11.2 |
 | `NRC_HRTD_Section_12.2_Reactor_Protection_System.md` | 12.2 |
+| `NRC_HRTD_Section_7.2_Condensate_and_Feedwater_System.md` | 7.2 |
+| `NRC_HRTD_Section_10.2_Pressurizer_Pressure_Control.md` | 10.2 |
+| `NRC_HRTD_Section_10.3_Pressurizer_Level_Control.md` | 10.3 |
+| `NRC_HRTD_Section_12.3_ESFAS.md` | 12.3 |
 
 ---
 
@@ -280,12 +363,12 @@
 
 ### High Priority
 - [ ] **Plant-Specific P-T Limit Curves** — Technical specifications for heatup/cooldown rate enforcement
-- [ ] **NRC HRTD Section 3.1** — Reactor Core and Vessel Construction (core physics, fuel assembly design)
 
 ### Medium Priority
-- [ ] **NRC HRTD Section 7.2** — Condensate and Feedwater System
-- [ ] **NRC HRTD Section 9.2** — Incore Nuclear Instrumentation
-- [ ] **NRC HRTD Section 12.3** — Engineered Safety Features Actuation System (ESFAS)
+- [x] ~~**NRC HRTD Section 7.2** — Condensate and Feedwater System~~ (Retrieved 2026-02-15)
+- [x] ~~**NRC HRTD Section 10.2** — Pressurizer Pressure Control System (full document)~~ (Retrieved 2026-02-15)
+- [x] ~~**NRC HRTD Section 10.3** — Pressurizer Level Control System (full document)~~ (Retrieved 2026-02-15)
+- [x] ~~**NRC HRTD Section 12.3** — Engineered Safety Features Actuation System (ESFAS)~~ (Retrieved 2026-02-15)
 
 ### Low Priority
 - [ ] **EPRI Steam Generator Reference Book** — Advanced tube bundle heat transfer data
