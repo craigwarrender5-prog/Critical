@@ -1,26 +1,26 @@
-HEATUP INTERVAL LOG
+﻿HEATUP INTERVAL LOG
 ======================================================================
 Log Entry:        #1
-Timestamp:        15/02/2026 12:28:20 p.m.
+Timestamp:        16/02/2026 6:49:52 p.m.
 Sim Time:         0.00 hours (00:00:00)
 Wall-Clock Time:  00:00:00
 Effective Speed:  1x (1x RT)
 
 VALIDATION BASELINE (IP-0018 / DP-0003):
   Profile:          IP-0018 deterministic startup profile
-  Baseline Sig:     T0=100.0F;P0=400.0psia;PZR0=25.0%;dt=0.002778hr;log=0.25hr
+  Baseline Sig:     T0=120.0F;P0=114.7psia;PZR0=100.0%;dt=0.002778hr;log=0.25hr
   Deterministic dt: 0.002778 hr
   Interval Log:     0.25 hr
 
 THERMAL STATE:
-  T_avg:                100.00 °F
-  T_hot:                100.00 °F
-  T_cold:               100.00 °F
-  T_rcs:                100.00 °F
-  T_pzr:                100.00 °F
+  T_avg:                120.00 °F
+  T_hot:                120.00 °F
+  T_cold:               120.00 °F
+  T_rcs:                120.00 °F
+  T_pzr:                120.00 °F
   T_sat:                337.33 °F
-  T_sg_secondary:       100.00 °F
-  Subcooling:           237.33 °F
+  T_sg_secondary:       120.00 °F
+  Subcooling:           217.33 °F
   Heatup Rate:            0.00 °F/hr
   PZR Heat Rate:          0.00 °F/hr
   RCS Heat Rate:          0.00 °F/hr
@@ -41,7 +41,7 @@ CVCS (Chemical & Volume Control):
   Letdown Flow:           75.0 gpm
   Letdown Path:     RHR CROSSCONNECT
   Letdown Isolated:         NO
-  Orifice Lineup:     1×75 gpm
+  Orifice Lineup:   1x75 gpm (PROFILE)
     75 gpm valves:           1 open
     45 gpm valve:       CLOSED
   Net CVCS:                0.0 gpm
@@ -49,8 +49,8 @@ CVCS (Chemical & Volume Control):
   Divert Fraction:        0.00
 
 PZR PRESSURE CONTROL (v4.4.0):
-  Heater Mode:      STARTUP_FULL_POWER
-  Heater Power:          1.800 MW
+  Heater Mode:             OFF
+  Heater Power:          0.000 MW
   Spray Enabled:            NO
   Spray Active:             NO
   Spray Valve Pos:         0.0 %
@@ -71,6 +71,11 @@ BUBBLE FORMATION STATUS:
   Bubble Phase:           NONE
   CCP Started:              NO
   Aux Spray Tested:         NO
+  Closure Conv:            YES
+  Closure V Res:         0.000 ft^3
+  Closure E Res:           0.0 BTU
+  Closure Hit Rate:        0.0 % (0/0)
+  PZR H Total:      10120390.0 BTU
 
 RCP (Reactor Coolant Pump) STATE:
   RCPs Running:              0 / 4
@@ -122,9 +127,9 @@ RCP (Reactor Coolant Pump) STATE:
   HEAT SOURCES:
     RCPs Running:              0 / 4
     RCP Heat Input:         0.00 MW
-    PZR Heaters:            1.80 MW
-    Gross Heat Input:       1.80 MW
-    Heat Losses:            0.06 MW (temp dependent)
+    PZR Heaters:            0.00 MW
+    Gross Heat Input:       0.00 MW
+    Heat Losses:            0.13 MW (temp dependent)
     SG Secondary Loss:       0.00 MW
     Net Plant Heat:         0.00 MW
     IP-0018 Energy Artifact:
@@ -141,15 +146,15 @@ RCP (Reactor Coolant Pump) STATE:
 
   ELECTRICAL:
     RCP Power:               0.0 MW
-    Heater Power:            1.8 MW
+    Heater Power:            0.0 MW
     Aux Loads:              25.0 MW
-    Total Grid Load:        26.8 MW
+    Total Grid Load:        25.0 MW
     Cumulative Energy:       0.0 MWh
 
   SG SECONDARY SIDE (v1.3.0 / v4.3.0 — Multi-Node Stratified Model):
-    Bulk Avg Temp:        100.00 °F
-    Top Node Temp:        100.00 °F
-    Bottom Node Temp:     100.00 °F
+    Bulk Avg Temp:        120.00 °F
+    Top Node Temp:        120.00 °F
+    Bottom Node Temp:     120.00 °F
     Stratification:         0.00 °F (top-bottom)
     T_RCS - T_SG_top:       0.00 °F
     T_RCS - T_SG_avg:       0.00 °F
@@ -198,28 +203,28 @@ RCP (Reactor Coolant Pump) STATE:
     Steam Produced:            0 lb (cumulative boiloff)
     Node Temps:       SG MultiNode [5 nodes] | Regime=SUBCOOLED | Q_total=0.00 MW | Thermocline=24.0 ft | ActiveArea=12.0% | t_heat=0.00 hr
   P_sec=2 psig | T_sat=219.4°F | Superheat=0.0°F | N₂ BLANKETED
-  v5.1.0: T_hottest=100.0°F | P_sat(T_hot)=-14 psig | ΔT_driving(T_rcs-T_sat)=-119.4°F
-  Wall: T_wall=100.0°F | ΔT_wall(Tw-Tsat)=-119.4°F
-  SteamLine: T=100.0°F | Q_cond=0.00 MW
+  v5.1.0: T_hottest=120.0°F | P_sat(T_hot)=-13 psig | ΔT_driving(T_rcs-T_sat)=-99.4°F
+  Wall: T_wall=120.0°F | ΔT_wall(Tw-Tsat)=-99.4°F
+  SteamLine: T=120.0°F | Q_cond=0.00 MW
   Steam: 0 lb/hr (0.00 MW) | Cumulative: 0 lb | Sec.Mass: 1660000 lb
   v5.4.0: Inventory=0 lb | Outflow=0 lb/hr | V_steam=1000 ft³ | P_inv=2 psig | OPEN | Psrc=floor
   Level: WR=100.0% NR=181.8% | PRE-DRAIN | Drained: 0 lb
-  TOP: T=100.0°F  ΔT=0.0°F  Q=0.000MW  h=0  Af=0.000  [TRANS]  B=0.00
-  N1: T=100.0°F  ΔT=0.0°F  Q=0.000MW  h=0  Af=0.000  [ABOVE]  B=0.00
-  N2: T=100.0°F  ΔT=0.0°F  Q=0.000MW  h=0  Af=0.000  [ABOVE]  B=0.00
-  N3: T=100.0°F  ΔT=0.0°F  Q=0.000MW  h=0  Af=0.000  [ABOVE]  B=0.00
-  BOT: T=100.0°F  ΔT=0.0°F  Q=0.000MW  h=0  Af=0.000  [ABOVE]  B=0.00
+  TOP: T=120.0°F  ΔT=0.0°F  Q=0.000MW  h=0  Af=0.000  [TRANS]  B=0.00
+  N1: T=120.0°F  ΔT=0.0°F  Q=0.000MW  h=0  Af=0.000  [ABOVE]  B=0.00
+  N2: T=120.0°F  ΔT=0.0°F  Q=0.000MW  h=0  Af=0.000  [ABOVE]  B=0.00
+  N3: T=120.0°F  ΔT=0.0°F  Q=0.000MW  h=0  Af=0.000  [ABOVE]  B=0.00
+  BOT: T=120.0°F  ΔT=0.0°F  Q=0.000MW  h=0  Af=0.000  [ABOVE]  B=0.00
 
 
   MASS INVENTORY:
-    RCS Water Mass:       711822 lb
-    PZR Water Mass:       111416 lb
+    RCS Water Mass:       706146 lb
+    PZR Water Mass:       110527 lb
 
   v5.0.2 MASS CONSERVATION (Solid Ops):
-    TotalPrimaryMass:     823238 lb (boundary-only)
-    PZR Mass (cons.):     111416 lb (surge-conserved)
-    Loops (derived):      711822 lb (Total - PZR)
-    PZR Density:           61.90 lbm/ft³
+    TotalPrimaryMass:     816673 lb (boundary-only)
+    PZR Mass (cons.):     110527 lb (surge-conserved)
+    Loops (derived):      706146 lb (Total - PZR)
+    PZR Density:           61.40 lbm/ft³
     PZR Vol Implied:      1800.0 ft³
     PZR Mass Rate:           0.0 lbm/hr
     Surge Transfer:        0.000 lb (this step)
@@ -230,7 +235,7 @@ RCP (Reactor Coolant Pump) STATE:
     Upper Range:           100.0 % (VALID - RCPs OFF)
 
   SMM (Subcooling Margin Monitor):
-    Subcooling Margin:     237.3 °F
+    Subcooling Margin:     217.3 °F
     Low Margin (<15°F):        OK
     No Margin (≤0°F):         OK
 
@@ -252,20 +257,20 @@ RCP (Reactor Coolant Pump) STATE:
   v4.4.0 PRESSURE/LEVEL CONTROL VALIDATION:
     PZR Level within ±10%:  FAIL (level=100.0%, SP=25.0%, err=75.0%)
     P Rate (HTR):         HTR_PRESS (0.0 psi/hr, dist_SP=250.3 psi)
-    Heater Mode at PID:   PASS (mode=STARTUP_FULL_POWER)
+    Heater Mode at PID:   PASS (mode=OFF)
     Spray if P>2275 psia: PASS (P=115, spray=False)
 
   INVENTORY AUDIT (v1.1.0 — Comprehensive Mass Balance):
-    RCS Mass:               711822 lbm
-    PZR Water Mass:         111416 lbm
+    RCS Mass:               706146 lbm
+    PZR Water Mass:         110527 lbm
     PZR Steam Mass:              0 lbm
     VCT Mass:                18198 lbm
     BRS Mass:                82720 lbm
     ------------------------------------
-    TOTAL MASS:             924156 lbm
+    TOTAL MASS:             917592 lbm
     Mass Source:        CANONICAL_SOLID
-    Initial Mass:           924156 lbm
-    Expected Mass:          924156 lbm
+    Initial Mass:           917592 lbm
+    Expected Mass:          917592 lbm
 
     CUMULATIVE FLOWS:
       Charging:                  0 gal
