@@ -129,6 +129,11 @@ public partial class HeatupSimEngine
         smoothedRegime2Alpha = 0f;
         previousPhysicsRegimeId = 0;
         previousPhysicsRegimeLabel = "UNSET";
+        nextRegime2ConvergenceWarnTime_hr = 0f;
+        nextRegime3ConvergenceWarnTime_hr = 0f;
+        nextR1MassAuditWarnTime_hr = 0f;
+        nextPbocPairingWarnTime_hr = 0f;
+        hotPathWarningSuppressedCount = 0;
         pbocTickIndex = 0;
         pbocEventActiveThisTick = false;
         pbocCurrentEvent = default;

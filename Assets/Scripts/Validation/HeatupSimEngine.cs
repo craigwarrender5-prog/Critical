@@ -762,6 +762,11 @@ public partial class HeatupSimEngine : MonoBehaviour
     private float smoothedRegime2Alpha = 0f;
     private int previousPhysicsRegimeId = 0;
     private string previousPhysicsRegimeLabel = "UNSET";
+    private float nextRegime2ConvergenceWarnTime_hr = 0f;
+    private float nextRegime3ConvergenceWarnTime_hr = 0f;
+    private float nextR1MassAuditWarnTime_hr = 0f;
+    private float nextPbocPairingWarnTime_hr = 0f;
+    [HideInInspector] public int hotPathWarningSuppressedCount = 0;
 
     // v4.4.0: Letdown orifice lineup state.
     // Per NRC HRTD 4.1: Three parallel orifices (2×75 + 1×45 gpm).
@@ -787,6 +792,7 @@ public partial class HeatupSimEngine : MonoBehaviour
     const float REGIME2_ALPHA_SMOOTH_TAU_HR = 0.03f;
     const float RCP_TRANSIENT_TRACE_WINDOW_HR = 0.35f;
     const float STRESS_FORCE_PRESSURE_MAX_STEP_PSI = 10f;
+    const float HOT_PATH_WARNING_MIN_INTERVAL_SEC = 60f;
 
     // v0.8.2: History cap: 1-minute samples, 240-minute (4-hour) rolling window
     const int MAX_HISTORY = 240;
@@ -1847,8 +1853,11 @@ public partial class HeatupSimEngine : MonoBehaviour
             // — automatically correct once PZRWaterVolume is set above
             rcsWaterMass = physicsState.RCSWaterMass;
 
-            if (!coupledResult.Converged)
+            if (!coupledResult.Converged &&
+                ShouldEmitHotPathWarning(ref nextRegime2ConvergenceWarnTime_hr))
+            {
                 Debug.LogWarning($"[T+{simTime:F2}hr] CoupledThermo did not converge during blended regime");
+            }
 
             // Status display for ramping regime
             if (rcpCount < 4)
@@ -2000,8 +2009,11 @@ public partial class HeatupSimEngine : MonoBehaviour
             T_sat = WaterProperties.SaturationTemperature(pressure);
             T_pzr = T_sat;
 
-            if (!heatupResult.Converged)
+            if (!heatupResult.Converged &&
+                ShouldEmitHotPathWarning(ref nextRegime3ConvergenceWarnTime_hr))
+            {
                 Debug.LogWarning($"[T+{simTime:F2}hr] CoupledThermo did not converge, using estimate");
+            }
 
             if (rcpCount < 4)
             {
@@ -2092,8 +2104,11 @@ public partial class HeatupSimEngine : MonoBehaviour
                 float ledgerDrift_r1 = componentSum_r1 - physicsState.TotalPrimaryMass_lb;
                 if (Mathf.Abs(ledgerDrift_r1) > 1.0f)
                 {
-                    Debug.LogWarning($"[T+{simTime:F2}hr] [R1 MASS AUDIT] Ledger drift = {ledgerDrift_r1:F1} lbm " +
-                        $"(components={componentSum_r1:F0}, ledger={physicsState.TotalPrimaryMass_lb:F0}, phase={bubblePhase})");
+                    if (ShouldEmitHotPathWarning(ref nextR1MassAuditWarnTime_hr))
+                    {
+                        Debug.LogWarning($"[T+{simTime:F2}hr] [R1 MASS AUDIT] Ledger drift = {ledgerDrift_r1:F1} lbm " +
+                            $"(components={componentSum_r1:F0}, ledger={physicsState.TotalPrimaryMass_lb:F0}, phase={bubblePhase})");
+                    }
                 }
             }
         }
@@ -2534,6 +2549,19 @@ public partial class HeatupSimEngine : MonoBehaviour
         previousPhysicsRegimeLabel = currentLabel;
     }
 
+    bool ShouldEmitHotPathWarning(ref float nextAllowedTime_hr)
+    {
+        float minInterval_hr = HOT_PATH_WARNING_MIN_INTERVAL_SEC / 3600f;
+        if (simTime + 1e-9f < nextAllowedTime_hr)
+        {
+            hotPathWarningSuppressedCount++;
+            return false;
+        }
+
+        nextAllowedTime_hr = simTime + minInterval_hr;
+        return true;
+    }
+
     void ResetSGBoundaryStartupState()
     {
         sgStartupStateMode = SGStartupBoundaryStateMode.OpenPreheat;
@@ -2886,9 +2914,12 @@ public partial class HeatupSimEngine : MonoBehaviour
                 EventSeverity.ALARM,
                 $"PBOC pairing check fail at tick {evt.TickIndex}: " +
                 $"dm_RCS={evt.dm_RCS_lbm:F3}lbm, paired={pairedBucketMagnitude:F3}lbm");
-            Debug.LogWarning(
-                $"[PBOC] Pairing check fail tick={evt.TickIndex} dm_RCS={evt.dm_RCS_lbm:F3}lbm " +
-                $"paired={pairedBucketMagnitude:F3}lbm");
+            if (ShouldEmitHotPathWarning(ref nextPbocPairingWarnTime_hr))
+            {
+                Debug.LogWarning(
+                    $"[PBOC] Pairing check fail tick={evt.TickIndex} dm_RCS={evt.dm_RCS_lbm:F3}lbm " +
+                    $"paired={pairedBucketMagnitude:F3}lbm");
+            }
         }
         else
         {

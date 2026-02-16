@@ -1,6 +1,6 @@
 {
   "version": "1.0.0",
-  "generated_at": "2026-02-16T21:05:00Z",
+  "generated_at": "2026-02-16T21:30:00Z",
   "entry_count": 98,
   "entries": [
     {
@@ -1457,13 +1457,13 @@
       "title": "Hot-path simulation code contains runtime logging patterns that can create avoidable overhead.",
       "domain": "Performance & Runtime",
       "severity": "MEDIUM",
-      "status": "READY_FOR_FIX",
-      "location": "ACTIVE",
+      "status": "CLOSED",
+      "location": "ARCHIVE",
       "assigned_dp": "DP-0009",
       "assigned_ip": "IP-0034",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "closed_at": null,
-      "resolution_type": null,
+      "updated_at": "2026-02-16T21:15:00Z",
+      "closed_at": "2026-02-16T21:15:00Z",
+      "resolution_type": "FIXED",
       "tags": [
         "NCR-Migration",
         "Audit-2026-02-15",

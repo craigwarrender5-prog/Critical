@@ -1,8 +1,8 @@
 {
   "version": "1.0.0",
-  "generated_at": "2026-02-16T21:05:00Z",
+  "generated_at": "2026-02-16T21:30:00Z",
   "source": "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-  "active_issue_count": 16,
+  "active_issue_count": 15,
   "issues": [
     {
       "id": "CS-0010",
@@ -565,50 +565,6 @@
         "NCR-Migration",
         "Audit-2026-02-15",
         "F-009",
-        "Constitution-Article-VI"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0088",
-      "title": "Hot-path simulation code contains runtime logging patterns that can create avoidable overhead.",
-      "domain": "Performance & Runtime",
-      "severity": "MEDIUM",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-15T16:50:47Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": "Audit-2026-02-15",
-      "assigned_dp": "DP-0009",
-      "assigned_ip": "IP-0034",
-      "observations": [
-        "Derived from Conformance Audit finding F-010.",
-        "Hot-path simulation code contains runtime logging patterns that can create avoidable overhead.",
-        "Requirement expectation: GOLD Unity performance guardrails prohibit per-frame/per-tick log spam/allocation in hot paths.",
-        "Current implementation mismatch: Simulation-step code contains runtime log calls in high-frequency paths.",
-        "Recommended action from audit: Fix."
-      ],
-      "evidence": [
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-010 reference expectation: GOLD Unity performance guardrails prohibit per-frame/per-tick log spam/allocation in hot paths."
-        },
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-010 implementation evidence: Simulation-step code contains runtime log calls in high-frequency paths."
-        }
-      ],
-      "hypotheses": [],
-      "root_cause": null,
-      "resolution_candidate": "Recommended action: Fix.",
-      "links": [
-        "Finding source: F-010 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-        "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-010.md"
-      ],
-      "tags": [
-        "NCR-Migration",
-        "Audit-2026-02-15",
-        "F-010",
         "Constitution-Article-VI"
       ],
       "closed_at": null,
