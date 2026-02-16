@@ -1,7 +1,7 @@
 {
     "version":  "1.0.0",
-    "generated_at":  "2026-02-15T17:43:27Z",
-    "entry_count":  94,
+    "generated_at":  "2026-02-16T07:54:23Z",
+    "entry_count":  95,
     "entries":  [
                     {
                         "id":  "CS-0001",
@@ -1584,6 +1584,29 @@
                                      "Cold-Start-Stabilization",
                                      "PZR-Heater-Control",
                                      "Operator-Realism",
+                                     "Constitution-Article-VI"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0095",
+                        "title":  "Modular architecture migration: coordinator + modular system extraction pipeline (PZR-first)",
+                        "domain":  "Project Governance",
+                        "severity":  "HIGH",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
+                        "assigned_dp":  "DP-0010",
+                        "assigned_ip":  "IP-0025",
+                        "updated_at":  "2026-02-16T07:54:23Z",
+                        "closed_at":  "2026-02-16T07:54:23Z",
+                        "resolution_type":  "FIXED",
+                        "tags":  [
+                                     "Architecture-Refactor",
+                                     "Modular-Simulator",
+                                     "Strangler-Fig-Migration",
+                                     "PZR-First",
+                                     "Coordinator-Module-Boundary",
+                                     "Feature-Flags",
+                                     "Comparator-Shadow-Mode",
                                      "Constitution-Article-VI"
                                  ]
                     }

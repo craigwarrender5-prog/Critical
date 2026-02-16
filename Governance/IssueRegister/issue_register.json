@@ -1,6 +1,6 @@
 ﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-15T19:22:54Z",
+    "generated_at":  "2026-02-16T07:54:23Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
     "active_issue_count":  25,
     "issues":  [
@@ -2624,6 +2624,74 @@
                        "closure_reference":  "IP-0024",
                        "closure_evidence_path":  "Governance/Issues/IP-0024_StageH_DeterministicEvidence_2026-02-15_201932.md",
                        "closure_runlog_path":  "HeatupLogs/Unity_IP0024_Closeout_20260215_201917.log"
+                   },
+                   {
+                       "id":  "CS-0095",
+                       "title":  "Modular architecture migration: coordinator + modular system extraction pipeline (PZR-first)",
+                       "domain":  "Project Governance",
+                       "severity":  "HIGH",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-15T19:42:05Z",
+                       "updated_at":  "2026-02-16T07:54:23Z",
+                       "stage_detected":  "Architecture-Refactor-2026-02-15",
+                       "assigned_dp":  "DP-0010",
+                       "assigned_ip":  "IP-0025",
+                       "observations":  [
+                                            "Simulator stepping and state ownership are tightly coupled in monolithic flow, increasing regression risk and slowing validation, UI evolution, and manual controls work.",
+                                            "Migration approach is strangler-fig incremental: introduce coordinator and module contract, wrap current simulator as legacy module, then extract systems one-by-one while keeping simulator runnable after each checkpoint.",
+                                            "Required scope: PlantSimulationCoordinator lifecycle and timestep sequencing only (no physics), IPlantModule contract (Initialize, Step, Shutdown), LegacySimulatorModule adapter, PlantState authoritative shared state, StepSnapshot publishing each step for validation/UI, and PlantBus or TransferLedger for explicit transfer events.",
+                                            "Required scope: per-module feature flags (for example UseModularPZR) with safe legacy bypass, extraction order PZR -> CVCS -> RHR -> RCP -> Reactor -> RCS, and optional comparator or shadow mode for tolerance-based legacy-vs-modular comparisons with single-output application.",
+                                            "Out of scope: do not change PZR remodel physics in this CS except packaging behind module boundary during PZR extraction.",
+                                            "Done criteria must include coordinator-driven baseline equivalence with LegacySimulatorModule, stable StepSnapshot (time, dt, PlantState, TransferLedger, telemetry hooks) consumption by validation without module internals, documented repeatable extraction pattern, and explicit support for PZR-first pilot extraction under feature flag."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/HeatupSimEngine.cs:1093",
+                                            "notes":  "Simulation step entry point discovered at StepSimulation(float dt); this is the legacy behavior seam for LegacySimulatorModule wrapping."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/HeatupSimEngine.RuntimePerf.cs:119",
+                                            "notes":  "Current per-timestep sequencing path RunPhysicsStep(dt) invokes StepSimulation(dt) then PublishTelemetrySnapshot()."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/HeatupSimEngine.RuntimePerf.cs:98",
+                                            "notes":  "PublishTelemetrySnapshot() is the current snapshot publication point to replace or align with StepSnapshot."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/HeatupValidationVisual.cs:259",
+                                            "notes":  "Validation/UI hook currently pulls engine snapshot each Update via GetTelemetrySnapshot(); StepSnapshot must support this boundary without internal state reach-in."
+                                        },
+                                        {
+                                            "ref":  "Governance/ImplementationPlans/Closed/IP-0024 - Unified PZR Implementation Plan (Authority-First).md",
+                                            "notes":  "Relevant prior PZR-focused plan for sequencing/context linkage."
+                                        }
+                                    ],
+                       "hypotheses":  [
+                                          "Coordinator-owned sequencing plus module boundaries will reduce regression blast radius and allow parallel system evolution with explicit validation gates."
+                                      ],
+                       "root_cause":  null,
+                       "resolution_candidate":  "Implement modular migration scaffold with coordinator, module contract, legacy adapter, authoritative PlantState plus StepSnapshot (time, dt, PlantState, TransferLedger, telemetry hooks), feature-flagged extraction pipeline (PZR first), comparator mode, and closure evidence package (build/compile confirmation, coordinator-path baseline run log, and module/snapshot contract notes).",
+                       "links":  [
+                                     "Related issue: CS-0064 (typed snapshot boundary for validation).",
+                                     "Related issue: CS-0093 (PZR-first extraction boundary alignment; no physics remodel changes in this CS).",
+                                     "Related plan: Governance/ImplementationPlans/Closed/IP-0024 - Unified PZR Implementation Plan (Authority-First).md",
+                                     "Assigned domain plan: Governance/DomainPlans/DP-0010 - Project Governance.md"
+                                 ],
+                       "closure_reason":  "PASS",
+                       "closure_reference":  "IP-0025",
+                       "closure_evidence_path":  "Governance/Issues/IP-0025_StageE_PZRPackaging_Equivalence_2026-02-16_075421.md",
+                       "closure_commit":  "988749b",
+                       "closure_tag":  "IP-0025-StageE",
+                       "tags":  [
+                                    "Architecture-Refactor",
+                                    "Modular-Simulator",
+                                    "Strangler-Fig-Migration",
+                                    "PZR-First",
+                                    "Coordinator-Module-Boundary",
+                                    "Feature-Flags",
+                                    "Comparator-Shadow-Mode",
+                                    "Constitution-Article-VI"
+                                ]
                    }
                ]
 }
