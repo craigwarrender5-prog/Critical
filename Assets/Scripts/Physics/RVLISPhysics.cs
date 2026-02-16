@@ -61,6 +61,11 @@ namespace Critical.Physics
         
         /// <summary>Dynamic range reference level at 40% when RCPs off</summary>
         public const float DYNAMIC_RANGE_NO_FLOW_REFERENCE = 40f;
+
+        /// <summary>
+        /// Upper display bound used to keep drain-time inventory trends visible.
+        /// </summary>
+        public const float LEVEL_OVER_RANGE_MAX = 120f;
         
         #endregion
         
@@ -125,9 +130,10 @@ namespace Critical.Physics
             float currentDensity = WaterProperties.WaterDensity(T_rcs, pressure);
             float currentVolume = (currentDensity > 0.1f) ? rcsWaterMass / currentDensity : 0f;
             
-            // Volume ratio relative to normal full volume
+            // Volume ratio relative to normal full volume.
+            // Keep bounded over-range so drain/fill trends do not pin at 100%.
             float volumeRatio = currentVolume / PlantConstants.RCS_WATER_VOLUME;
-            volumeRatio = Math.Max(0f, Math.Min(volumeRatio, 1.0f));
+            volumeRatio = Math.Max(0f, Math.Min(volumeRatio, LEVEL_OVER_RANGE_MAX / 100f));
             
             if (rcpCount > 0)
             {
@@ -137,7 +143,7 @@ namespace Critical.Physics
                 // At normal inventory, reads 100%
                 // ============================================================
                 state.DynamicRange = 100f * volumeRatio;
-                state.DynamicRange = Math.Max(0f, Math.Min(state.DynamicRange, 100f));
+                state.DynamicRange = Math.Max(0f, Math.Min(state.DynamicRange, LEVEL_OVER_RANGE_MAX));
                 
                 // Full and Upper ranges are invalid (reads low due to flow effects)
                 state.FullRange = 0f;
@@ -155,12 +161,12 @@ namespace Critical.Physics
                 
                 // Full Range: Bottom to top of vessel ΔP
                 state.FullRange = 100f * volumeRatio;
-                state.FullRange = Math.Max(0f, Math.Min(state.FullRange, 100f));
+                state.FullRange = Math.Max(0f, Math.Min(state.FullRange, LEVEL_OVER_RANGE_MAX));
                 
                 // Upper Range: Mid-vessel to top ΔP
                 // More sensitive to upper head voiding
                 state.UpperRange = 100f * volumeRatio;
-                state.UpperRange = Math.Max(0f, Math.Min(state.UpperRange, 100f));
+                state.UpperRange = Math.Max(0f, Math.Min(state.UpperRange, LEVEL_OVER_RANGE_MAX));
             }
             
             // Level low alarm based on valid indication

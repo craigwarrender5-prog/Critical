@@ -1011,6 +1011,21 @@ public partial class HeatupSimEngine
         // v4.4.0: Heater PID and Spray System Status
         sb.AppendLine("PZR PRESSURE CONTROL (v4.4.0):");
         sb.AppendLine($"  Heater Mode:      {currentHeaterMode,10}");
+        sb.AppendLine($"  Authority State:  {heaterAuthorityState,10}");
+        sb.AppendLine($"  Authority Reason: {heaterAuthorityReason,10}");
+        sb.AppendLine($"  Limiter Reason:   {heaterLimiterReason,10}");
+        sb.AppendLine($"  Limiter Detail:   {heaterLimiterDetail}");
+        sb.AppendLine($"  Auto Demand Supp: {(heaterAutoDemandComputeSuppressed ? "YES" : "NO"),10}");
+        sb.AppendLine($"  Hold Active:      {(startupHoldActive ? "YES" : "NO"),10}");
+        sb.AppendLine($"  Hold Elapsed:     {startupHoldElapsedTime_hr * 3600f,10:F1} s");
+        sb.AppendLine($"  Hold Release @:   {startupHoldReleaseTime_hr * 3600f,10:F1} s");
+        sb.AppendLine($"  Hold dP/dt |abs|: {startupHoldPressureRateAbs_psi_hr,10:F2} psi/hr");
+        sb.AppendLine($"  Hold Gate Time:   {(startupHoldTimeGatePassed ? "PASS" : "BLOCK"),10}");
+        sb.AppendLine($"  Hold Gate dP/dt:  {(startupHoldPressureRateGatePassed ? "PASS" : "BLOCK"),10}");
+        sb.AppendLine($"  Hold Gate State:  {(startupHoldStateQualityGatePassed ? "PASS" : "BLOCK"),10}");
+        sb.AppendLine($"  Hold Block Why:   {startupHoldReleaseBlockReason,10}");
+        sb.AppendLine($"  Htr dPdt Clamp:   {(heaterPressureRateClampActive ? "YES" : "NO"),10}");
+        sb.AppendLine($"  Htr Ramp Clamp:   {(heaterRampRateClampActive ? "YES" : "NO"),10}");
         if (heaterPIDActive)
         {
             sb.AppendLine($"  PID Output:       {heaterPIDOutput,10:F3} (0-1)");

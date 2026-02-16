@@ -1,8 +1,8 @@
 ﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-16T07:54:23Z",
+    "generated_at":  "2026-02-16T12:33:37Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-    "active_issue_count":  25,
+    "active_issue_count":  26,
     "issues":  [
                    {
                        "id":  "CS-0006",
@@ -583,9 +583,9 @@
                        "severity":  "HIGH",
                        "status":  "CLOSED",
                        "created_at":  "2026-02-13T00:00:00Z",
-                       "updated_at":  "2026-02-15T19:22:54Z",
+                       "updated_at":  "2026-02-16T10:42:40Z",
                        "stage_detected":  null,
-                       "assigned_dp":  "DP-0007",
+                       "assigned_dp":  "DP-0012",
                        "assigned_ip":  "IP-0003",
                        "observations":  [
                                             "`RCSWaterMass` is not updated during drain operations, causing the RVLIS (Reactor Vessel Level Indication System) indicator to read stale mass values (~88%). This creates a false indication of stable inventory when liquid is actively being displaced from the PZR into the RCS or removed via letdown. Operators see RVLIS holding steady while PZR level drops, which is misleading.",
@@ -1969,10 +1969,10 @@
                        "severity":  "MEDIUM",
                        "status":  "CLOSED",
                        "created_at":  "2026-02-15T16:50:47Z",
-                       "updated_at":  "2026-02-15T19:22:54Z",
+                       "updated_at":  "2026-02-16T12:33:37Z",
                        "stage_detected":  "Audit-2026-02-15",
-                       "assigned_dp":  "DP-0002",
-                       "assigned_ip":  null,
+                       "assigned_dp":  "DP-0012",
+                       "assigned_ip":  "IP-0028",
                        "observations":  [
                                             "Derived from Conformance Audit finding F-003.",
                                             "Solid-plant high pressure control band is configured above documented operating band.",
@@ -1988,27 +1988,35 @@
                                         {
                                             "ref":  "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
                                             "notes":  "F-003 implementation evidence: SOLID_PLANT_P_HIGH_PSIG is set to 450 psig and propagated into startup control/display paths."
+                                        },
+                                        {
+                                            "ref":  "Governance/Issues/DP-0012_Investigation_Completion_2026-02-16_115523.md",
+                                            "notes":  "Investigation completion disposition for DP-0012; transition recommendation READY_FOR_FIX."
                                         }
                                     ],
                        "hypotheses":  [
 
                                       ],
-                       "root_cause":  null,
+                       "root_cause":  "Confirmed: solid-plant pressure control high-band configuration/propagation remains mismatched versus documented 320-400 psig baseline expectation.",
                        "resolution_candidate":  "Recommended action: Investigate.",
                        "links":  [
                                      "Finding source: F-003 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-                                     "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-003.md"
+                                     "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-003.md",
+                                     "Investigation disposition: Governance/Issues/DP-0012_Investigation_Completion_2026-02-16_115523.md"
                                  ],
                        "tags":  [
                                     "NCR-Migration",
                                     "Audit-2026-02-15",
                                     "F-003",
-                                    "Constitution-Article-VI"
+                                    "Constitution-Article-VI",
+                                    "Investigation-Completed-2026-02-16"
                                 ],
                        "closure_reason":  "PASS",
-                       "closure_reference":  "IP-0024",
-                       "closure_evidence_path":  "Governance/Issues/IP-0024_StageH_DeterministicEvidence_2026-02-15_201932.md",
-                       "closure_runlog_path":  "HeatupLogs/Unity_IP0024_Closeout_20260215_201917.log"
+                       "closure_reference":  "IP-0028",
+                       "closure_evidence_path":  "Governance/Issues/IP-0028_StageE_SystemRegression_2026-02-16_131703.md",
+                       "closure_runlog_path":  "HeatupLogs/IP0028_StageDE_Unity.log",
+                       "closure_impact_class":  "Minor",
+                       "closure_changelog":  "Governance/Changelogs/CHANGELOG_v0.7.0.0.md"
                    },
                    {
                        "id":  "CS-0082",
@@ -2413,10 +2421,10 @@
                        "severity":  "HIGH",
                        "status":  "CLOSED",
                        "created_at":  "2026-02-15T16:55:16Z",
-                       "updated_at":  "2026-02-15T19:22:54Z",
+                       "updated_at":  "2026-02-16T12:33:37Z",
                        "stage_detected":  "Investigation-2026-02-15",
-                       "assigned_dp":  "DP-0002",
-                       "assigned_ip":  null,
+                       "assigned_dp":  "DP-0012",
+                       "assigned_ip":  "IP-0028",
                        "observations":  [
                                             "Derived from PZR bubble behavior investigation dated 2026-02-15.",
                                             "Bubble closure diagnostics show widespread non-convergence during STABILIZE and PRESSURIZE phases, with residuals remaining in the thousands of ft^3.",
@@ -2435,31 +2443,39 @@
                                         {
                                             "ref":  "Assets/Scripts/Validation/HeatupSimEngine.BubbleFormation.cs:836",
                                             "notes":  "Report-cited post-residual volume renormalization location implicated in masking closure error."
+                                        },
+                                        {
+                                            "ref":  "Governance/Issues/DP-0012_Investigation_Completion_2026-02-16_115523.md",
+                                            "notes":  "Investigation completion disposition for DP-0012; transition recommendation READY_FOR_FIX."
                                         }
                                     ],
                        "hypotheses":  [
                                           "Pressure-step cap is too restrictive relative to residual scale in bubble closure iterations.",
                                           "State is accepted despite unresolved residual due to renormalization path."
                                       ],
-                       "root_cause":  null,
+                       "root_cause":  "Confirmed: bubble closure path can carry unresolved residual states under non-converged conditions, with renormalization behavior masking closure error.",
                        "resolution_candidate":  "Recommended action: implement bounded iterative closure acceptance on residual tolerance, gate/remove renormalization on failed closure, and smooth/align stabilize vs pressurize level-floor transitions.",
                        "links":  [
                                      "Investigation source: Updates/Investigations/PZR_Bubble_Behaviour_Investigation_2026-02-15.md",
                                      "Run stamp: HeatupLogs/PZR_INVEST_20260215_173006",
                                      "Tracking model: Validation child under CS-0093 umbrella remodel.",
                                      "Closure gating: Keep CS-0091 active until CS-0093 evidence demonstrates convergence and continuity acceptance criteria are met.",
-                                     "Parent umbrella issue: CS-0093"
+                                     "Parent umbrella issue: CS-0093",
+                                     "Investigation disposition: Governance/Issues/DP-0012_Investigation_Completion_2026-02-16_115523.md"
                                  ],
                        "tags":  [
                                     "Investigation-2026-02-15",
                                     "PZR-Bubble",
                                     "Two-Phase-Closure",
-                                    "Constitution-Article-VI"
+                                    "Constitution-Article-VI",
+                                    "Investigation-Completed-2026-02-16"
                                 ],
                        "closure_reason":  "PASS",
-                       "closure_reference":  "IP-0024",
-                       "closure_evidence_path":  "Governance/Issues/IP-0024_StageH_DeterministicEvidence_2026-02-15_201932.md",
-                       "closure_runlog_path":  "HeatupLogs/Unity_IP0024_Closeout_20260215_201917.log"
+                       "closure_reference":  "IP-0028",
+                       "closure_evidence_path":  "Governance/Issues/IP-0028_StageE_SystemRegression_2026-02-16_131703.md",
+                       "closure_runlog_path":  "HeatupLogs/IP0028_StageDE_Unity.log",
+                       "closure_impact_class":  "Minor",
+                       "closure_changelog":  "Governance/Changelogs/CHANGELOG_v0.7.0.0.md"
                    },
                    {
                        "id":  "CS-0092",
@@ -2527,10 +2543,10 @@
                        "severity":  "HIGH",
                        "status":  "CLOSED",
                        "created_at":  "2026-02-15T17:16:00Z",
-                       "updated_at":  "2026-02-15T19:22:54Z",
+                       "updated_at":  "2026-02-16T12:33:37Z",
                        "stage_detected":  "Investigation-2026-02-15",
-                       "assigned_dp":  null,
-                       "assigned_ip":  null,
+                       "assigned_dp":  "DP-0012",
+                       "assigned_ip":  "IP-0028",
                        "observations":  [
                                             "Structural refactor request: replace legacy hybrid PZR bubble model (pressure/volume residual iteration + heuristic phase logic + post-failure renormalization) with a thermodynamically grounded subsystem.",
                                             "Current implementation concerns include persistent two-phase closure non-convergence, large residuals, missing persistent energy/enthalpy state, and nonphysical level/pressure discontinuities.",
@@ -2550,30 +2566,38 @@
                                         {
                                             "ref":  "Technical_Documentation/",
                                             "notes":  "Authoritative source set for remodel conformance; constants and behavioral assumptions must be traceable."
+                                        },
+                                        {
+                                            "ref":  "Governance/Issues/DP-0012_Investigation_Completion_2026-02-16_115523.md",
+                                            "notes":  "Investigation completion disposition for DP-0012; transition recommendation READY_FOR_FIX."
                                         }
                                     ],
                        "hypotheses":  [
                                           "Incremental patching of the existing heuristic closure path is unlikely to deliver robust convergence and continuity targets across all bubble phases.",
                                           "A control-volume energy-state formulation with coupled mass-volume-energy closure is required to remove structural discontinuities."
                                       ],
-                       "root_cause":  null,
+                       "root_cause":  "Confirmed: legacy heuristic PZR closure/control architecture lacks robust converged mass-volume-energy authority and consistent documentation-aligned behavior.",
                        "resolution_candidate":  "Recommended action: execute full PZR subsystem remodel with acceptance targets: \u003e95% solver convergence in bubble phases, bounded residuals for volume and energy, no post-failure renormalization masking, continuous phase transitions, and documented Technical_Documentation traceability for constants/behavior.",
                        "links":  [
                                      "Directive source: User-issued CS logging instruction (2026-02-15)",
                                      "Parent umbrella issue for related active issues: CS-0091, CS-0092",
-                                     "Tracking decision (accepted 2026-02-15): CS-0091 and CS-0092 remain active as validation children until CS-0093 acceptance evidence is complete."
+                                     "Tracking decision (accepted 2026-02-15): CS-0091 and CS-0092 remain active as validation children until CS-0093 acceptance evidence is complete.",
+                                     "Investigation disposition: Governance/Issues/DP-0012_Investigation_Completion_2026-02-16_115523.md"
                                  ],
                        "tags":  [
                                     "Investigation-2026-02-15",
                                     "PZR-Remodel",
                                     "Two-Phase-Closure",
                                     "Technical-Documentation-Alignment",
-                                    "Constitution-Article-VI"
+                                    "Constitution-Article-VI",
+                                    "Investigation-Completed-2026-02-16"
                                 ],
                        "closure_reason":  "PASS",
-                       "closure_reference":  "IP-0024",
-                       "closure_evidence_path":  "Governance/Issues/IP-0024_StageH_DeterministicEvidence_2026-02-15_201932.md",
-                       "closure_runlog_path":  "HeatupLogs/Unity_IP0024_Closeout_20260215_201917.log"
+                       "closure_reference":  "IP-0028",
+                       "closure_evidence_path":  "Governance/Issues/IP-0028_StageE_SystemRegression_2026-02-16_131703.md",
+                       "closure_runlog_path":  "HeatupLogs/IP0028_StageDE_Unity.log",
+                       "closure_impact_class":  "Minor",
+                       "closure_changelog":  "Governance/Changelogs/CHANGELOG_v0.7.0.0.md"
                    },
                    {
                        "id":  "CS-0094",
@@ -2582,10 +2606,10 @@
                        "severity":  "MEDIUM",
                        "status":  "CLOSED",
                        "created_at":  "2026-02-15T17:43:27Z",
-                       "updated_at":  "2026-02-15T19:22:54Z",
+                       "updated_at":  "2026-02-16T12:33:37Z",
                        "stage_detected":  "Investigation-2026-02-15",
-                       "assigned_dp":  null,
-                       "assigned_ip":  null,
+                       "assigned_dp":  "DP-0012",
+                       "assigned_ip":  "IP-0028",
                        "observations":  [
                                             "Startup currently allows immediate heater/pressurization engagement before post-init state settling, which can amplify nonphysical early transients and complicate diagnostics.",
                                             "Requested mitigation includes Option A baseline: deterministic startup stabilization hold (10-20 s) with heaters OFF and pressurization actions inhibited until release, with explicit hold-active/released logging.",
@@ -2600,30 +2624,38 @@
                                         {
                                             "ref":  "Updates/Investigations/Cold_Shutdown_Baseline_Deviation_Audit_2026-02-15.md",
                                             "notes":  "Cold-start baseline audit identifies immediate full-power heater startup and implicit startup gating concerns that support stabilization-hold/control-gating investigation."
+                                        },
+                                        {
+                                            "ref":  "Governance/Issues/DP-0012_Investigation_Completion_2026-02-16_115523.md",
+                                            "notes":  "Investigation completion disposition for DP-0012; transition recommendation READY_FOR_FIX."
                                         }
                                     ],
                        "hypotheses":  [
                                           "Immediate frame-1 heater/pressurization engagement injects artificial startup transient energy before control-volume states settle, increasing likelihood of downstream nonphysical behavior.",
                                           "Explicit startup hold and/or operator-gated heater mode will reduce artificial early cliffs and improve repeatability and diagnostic attribution."
                                       ],
-                       "root_cause":  null,
+                       "root_cause":  "Confirmed: startup sequence permits early heater authority without fully explicit startup governance gating, producing potential nonphysical transient behavior.",
                        "resolution_candidate":  "Recommended action: implement Option A as baseline (deterministic startup hold with inhibited heater/pressurization actions and explicit logs), then optionally add Option B heater OFF/AUTO/MANUAL-disabled control with UI/telemetry visibility; run startup-transient regression and escalate severity to HIGH if solver-instability linkage is confirmed.",
                        "links":  [
                                      "Directive source: User-issued CS logging instruction (2026-02-15)",
                                      "Related investigation: Updates/Investigations/PZR_Bubble_Behaviour_Investigation_2026-02-15.md",
-                                     "Related investigation: Updates/Investigations/Cold_Shutdown_Baseline_Deviation_Audit_2026-02-15.md"
+                                     "Related investigation: Updates/Investigations/Cold_Shutdown_Baseline_Deviation_Audit_2026-02-15.md",
+                                     "Investigation disposition: Governance/Issues/DP-0012_Investigation_Completion_2026-02-16_115523.md"
                                  ],
                        "tags":  [
                                     "Investigation-2026-02-15",
                                     "Cold-Start-Stabilization",
                                     "PZR-Heater-Control",
                                     "Operator-Realism",
-                                    "Constitution-Article-VI"
+                                    "Constitution-Article-VI",
+                                    "Investigation-Completed-2026-02-16"
                                 ],
                        "closure_reason":  "PASS",
-                       "closure_reference":  "IP-0024",
-                       "closure_evidence_path":  "Governance/Issues/IP-0024_StageH_DeterministicEvidence_2026-02-15_201932.md",
-                       "closure_runlog_path":  "HeatupLogs/Unity_IP0024_Closeout_20260215_201917.log"
+                       "closure_reference":  "IP-0028",
+                       "closure_evidence_path":  "Governance/Issues/IP-0028_StageE_SystemRegression_2026-02-16_131703.md",
+                       "closure_runlog_path":  "HeatupLogs/IP0028_StageDE_Unity.log",
+                       "closure_impact_class":  "Minor",
+                       "closure_changelog":  "Governance/Changelogs/CHANGELOG_v0.7.0.0.md"
                    },
                    {
                        "id":  "CS-0095",
@@ -2640,7 +2672,7 @@
                                             "Simulator stepping and state ownership are tightly coupled in monolithic flow, increasing regression risk and slowing validation, UI evolution, and manual controls work.",
                                             "Migration approach is strangler-fig incremental: introduce coordinator and module contract, wrap current simulator as legacy module, then extract systems one-by-one while keeping simulator runnable after each checkpoint.",
                                             "Required scope: PlantSimulationCoordinator lifecycle and timestep sequencing only (no physics), IPlantModule contract (Initialize, Step, Shutdown), LegacySimulatorModule adapter, PlantState authoritative shared state, StepSnapshot publishing each step for validation/UI, and PlantBus or TransferLedger for explicit transfer events.",
-                                            "Required scope: per-module feature flags (for example UseModularPZR) with safe legacy bypass, extraction order PZR -> CVCS -> RHR -> RCP -> Reactor -> RCS, and optional comparator or shadow mode for tolerance-based legacy-vs-modular comparisons with single-output application.",
+                                            "Required scope: per-module feature flags (for example UseModularPZR) with safe legacy bypass, extraction order PZR -\u003e CVCS -\u003e RHR -\u003e RCP -\u003e Reactor -\u003e RCS, and optional comparator or shadow mode for tolerance-based legacy-vs-modular comparisons with single-output application.",
                                             "Out of scope: do not change PZR remodel physics in this CS except packaging behind module boundary during PZR extraction.",
                                             "Done criteria must include coordinator-driven baseline equivalence with LegacySimulatorModule, stable StepSnapshot (time, dt, PlantState, TransferLedger, telemetry hooks) consumption by validation without module internals, documented repeatable extraction pattern, and explicit support for PZR-first pilot extraction under feature flag."
                                         ],
@@ -2691,6 +2723,113 @@
                                     "Feature-Flags",
                                     "Comparator-Shadow-Mode",
                                     "Constitution-Article-VI"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0096",
+                       "title":  "PZR heaters capped after reaching operating pressure hold band",
+                       "domain":  "Pressurizer \u0026 Two-Phase Physics",
+                       "severity":  "HIGH",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-16T10:31:02Z",
+                       "updated_at":  "2026-02-16T12:33:37Z",
+                       "stage_detected":  "Investigation-2026-02-16",
+                       "assigned_dp":  "DP-0012",
+                       "assigned_ip":  "IP-0028",
+                       "observations":  [
+                                            "During heatup runs, once the pressurizer enters operating pressure hold regime (HOLD_SOLID with solid pressure in band), heater output no longer ramps toward full power and remains materially below capacity.",
+                                            "Observed windows at 1.50 hr, 1.75 hr, and 2.00 hr show heater power constrained to approximately 0.35-0.69 MW while spray is disabled due to no running RCPs.",
+                                            "This behavior suggests active authority limiting by one or more controller gates (pressure band clamp, spray inhibit interaction, level-program inhibit, ramp limiter, or another control constraint).",
+                                            "Impact: heatup progression realism and pressurizer control behavior after operating pressure entry may diverge from intended baseline response."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Technical_Documentation/PZR_Baseline_Profile.md",
+                                            "notes":  "Primary baseline reference to compare intended startup/hold pressurizer behavior against observed heater authority behavior."
+                                        },
+                                        {
+                                            "ref":  "Technical_Documentation/NRC_HRTD_Section_10.2_Pressurizer_Pressure_Control.md",
+                                            "notes":  "Pressurizer pressure-control policy reference for documented limiter behavior and authority expectations."
+                                        },
+                                        {
+                                            "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md",
+                                            "notes":  "Startup pressurization behavioral intent reference for hold-band transitions and actuator use."
+                                        },
+                                        {
+                                            "ref":  "Governance/Issues/DP-0012_Investigation_Completion_2026-02-16_115523.md",
+                                            "notes":  "Investigation completion disposition for DP-0012; transition recommendation READY_FOR_FIX."
+                                        }
+                                    ],
+                       "hypotheses":  [
+                                          "Primary active limiter is pressure-rate/pressure-band authority clamp in HOLD_SOLID regime.",
+                                          "Observed low heater power may be intentional policy behavior; implementation-vs-document traceability is required to confirm."
+                                      ],
+                       "root_cause":  "Confirmed for implementation handoff: hold-band heater authority limiting behavior is active and requires explicit implementation-versus-document reconciliation.",
+                       "resolution_candidate":  "Determine documented design intent and active runtime limiter, then either align implementation to documentation or update documentation if current behavior is intended.",
+                       "links":  [
+                                     "Run evidence requested at heatup intervals 1.50 hr, 1.75 hr, and 2.00 hr.",
+                                     "Investigation scope includes identifying specific active limiter(s) and spec conformance status.",
+                                     "Investigation disposition: Governance/Issues/DP-0012_Investigation_Completion_2026-02-16_115523.md"
+                                 ],
+                       "tags":  [
+                                    "Pressurizer-Pressure-Control",
+                                    "HOLD_SOLID",
+                                    "Heater-Authority",
+                                    "Investigation-2026-02-16",
+                                    "Investigation-Completed-2026-02-16"
+                                ],
+                       "closure_reason":  "PASS",
+                       "closure_reference":  "IP-0028",
+                       "closure_evidence_path":  "Governance/Issues/IP-0028_StageE_SystemRegression_2026-02-16_131703.md",
+                       "closure_runlog_path":  "HeatupLogs/IP0028_StageDE_Unity.log",
+                       "closure_impact_class":  "Minor",
+                       "closure_changelog":  "Governance/Changelogs/CHANGELOG_v0.7.0.0.md"
+                   },
+                   {
+                       "id":  "CS-0097",
+                       "title":  "Remediate Legacy Governance Integrity Failures Identified by Global Gate Validation",
+                       "domain":  "Project Governance",
+                       "severity":  "HIGH",
+                       "status":  "INVESTIGATING",
+                       "created_at":  "2026-02-16T10:31:02Z",
+                       "updated_at":  "2026-02-16T10:31:02Z",
+                       "stage_detected":  "Global-Gate-Validation-2026-02-16",
+                       "assigned_dp":  "DP-0010",
+                       "assigned_ip":  null,
+                       "observations":  [
+                                            "Global gate-ip-closure validation identified non-existent historical IP references, closed-index entries missing corresponding archive records, and cross-register consistency mismatches.",
+                                            "These integrity defects pre-date IP-0026 and are not caused by IP-0026 scope work.",
+                                            "Scope is governance artifacts only: no simulator physics changes, no UI changes, and no DP-level feature expansion."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Governance/IssueRegister/issue_index.json",
+                                            "notes":  "Index parity and historical reference defects identified during closure gate audit."
+                                        },
+                                        {
+                                            "ref":  "Governance/IssueRegister/issue_archive.json",
+                                            "notes":  "Archive parity checks for closed entries and historical migration consistency."
+                                        },
+                                        {
+                                            "ref":  "Governance/IssueRegister/issue_register.json",
+                                            "notes":  "Active register cross-reference integrity checks against index/archive."
+                                        }
+                                    ],
+                       "hypotheses":  [
+                                          "Historical lifecycle migrations were applied without complete register-index-archive parity backfill.",
+                                          "Legacy assigned_ip references persisted after plan lifecycle changes or file relocations."
+                                      ],
+                       "root_cause":  null,
+                       "resolution_candidate":  "Perform governance-only remediation to restore cross-register parity, eliminate orphan references, and normalize historical integrity under constitutional gate rules.",
+                       "links":  [
+                                     "Gate source: governance closure integrity validation (global scope).",
+                                     "Scope guard: governance-only remediation; no simulator behavior changes."
+                                 ],
+                       "tags":  [
+                                    "Governance-Integrity",
+                                    "Legacy-Gate-Debt",
+                                    "Cross-Register-Parity",
+                                    "Pre-IP-0026"
                                 ]
                    }
                ]
