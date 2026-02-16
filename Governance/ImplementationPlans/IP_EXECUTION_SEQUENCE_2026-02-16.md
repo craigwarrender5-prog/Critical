@@ -4,7 +4,7 @@
 Execution ordering for newly created READY_FOR_FIX implementation plans.
 
 ## Ordered IP Queue
-1. `IP-0032` (`DP-0010`) - Wave 0 governance/authority preconditions. `IN_PROGRESS` (Stage A complete; Stage B next)
+1. `IP-0032` (`DP-0010`) - Wave 0 governance/authority preconditions. `CLOSED` (Stage A-E complete; closure approved)
 2. `IP-0033` (`DP-0007`) - Wave 1 diagnostics/evidence foundation.
 3. `IP-0034` (`DP-0009`) - Wave 1 performance logging cleanup (parallel-capable with `IP-0033`).
 4. `IP-0035` (`DP-0006`) - Wave 2 plant protection startup permissive/alarm alignment.

@@ -136,6 +136,7 @@ public partial class HeatupSimEngine
         pbocEventCount = 0;
         pbocPairingAssertionFailures = 0;
         CoupledThermo.ResetSessionFlags();
+        ResetHZPSystemsLifecycle();
 
         longHoldPressureAuditActive = false;
         longHoldPressureWriteCount = 0;

@@ -610,7 +610,7 @@ public partial class HeatupSimEngine
         int currentLineupIndex = GetDrainLineupIndex(orifice75Count, orifice45Open);
 
         float pressure_psig = pressure - PlantConstants.PSIG_TO_PSIA;
-        float hydraulicLetdown_gpm = PlantConstants.CalculateOrificeLineupFlow(
+        float hydraulicLetdown_gpm = CVCSFlowMath.CalculateOrificeLineupFlow(
             pressure_psig,
             orifice75Count,
             orifice45Open);

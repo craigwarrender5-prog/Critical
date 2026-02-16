@@ -343,9 +343,9 @@ namespace Critical.Physics
             else
             {
                 // v4.4.0: Calculate letdown based on orifice lineup
-                // PlantConstants.CalculateTotalLetdownFlow handles orifice sizing
+                // CVCSFlowMath.CalculateTotalLetdownFlow handles orifice sizing
                 // and ion exchanger limit for the new multi-orifice model.
-                state.LetdownFlow = PlantConstants.CalculateTotalLetdownFlow(
+                state.LetdownFlow = CVCSFlowMath.CalculateTotalLetdownFlow(
                     T_avg, pressure_psia, numOrificesOpen: 1,
                     num75Open: num75Open, open45: open45);
             }

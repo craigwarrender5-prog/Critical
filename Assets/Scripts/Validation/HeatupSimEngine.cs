@@ -2108,6 +2108,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         // Steam dump, heater PID, and HZP state machine
         // Only active when approaching HZP conditions
         // ================================================================
+        UpdateHZPLifecycle();
         UpdateHZPSystems(dt);
 
         // Diagnostic: signed startup net heat (no clipping).
