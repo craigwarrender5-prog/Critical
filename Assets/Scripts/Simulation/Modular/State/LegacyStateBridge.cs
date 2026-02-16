@@ -39,6 +39,7 @@ namespace Critical.Simulation.Modular.State
                 engine.rhrState.FlowRate_gpm,
                 engine.vctState.Level_percent,
                 engine.rcsBoronConcentration,
+                engine.rhrModeString,
                 engine.heatupPhaseDesc);
         }
 

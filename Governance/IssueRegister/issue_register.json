@@ -1,69 +1,9 @@
 {
   "version": "1.0.0",
-  "generated_at": "2026-02-16T20:10:00Z",
+  "generated_at": "2026-02-16T21:05:00Z",
   "source": "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-  "active_issue_count": 22,
+  "active_issue_count": 16,
   "issues": [
-    {
-      "id": "CS-0006",
-      "title": "UpdatePrimaryMassLedgerDiagnostics() never called (dead code)",
-      "domain": "Validation & Diagnostics",
-      "severity": "HIGH",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-13T00:00:00Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": null,
-      "assigned_dp": "DP-0007",
-      "assigned_ip": "IP-0033",
-      "observations": [
-        "The most sensitive conservation diagnostic (ledger vs component sum, 0.1%/1.0% thresholds) is silent. All display fields it would populate (`primaryMassStatus`, `primaryMassAlarm`, `primaryMassDrift_lb`, etc.) remain at defaults. UI appears \"OK\" when it should not. Init.cs:184 has a comment referencing it as if it runs â€” actively misleading.",
-        "High â€” False confidence. The diagnostic's existence in the codebase implies the system is monitored. It is not. Solver-vs-ledger divergence is undetectable at runtime."
-      ],
-      "evidence": [],
-      "hypotheses": [],
-      "root_cause": "Confirmed â€” Method added in v5.3.0 Stage 6 (Logging.cs:470, 114 lines, fully implemented). Call site in `StepSimulation()` was never added. Full codebase grep confirms zero call sites.",
-      "resolution_candidate": "Resolved v0.1.0.0 â€” Call site added at end of `StepSimulation()` after `UpdateInventoryAudit(dt)`. Default status changed from `\"OK\"` to `\"NOT_CHECKED\"`. Init reset added for all diagnostic state fields. Diagnostic executes every physics timestep.",
-      "links": [
-        "Blocked by: CS-0001, CS-0003. Blocks: CS-0007.",
-        "Blocked by: CS-0001, CS-0003. Blocks: CS-0007.",
-        "IP-0001 â€” Primary Mass Conservation â€” Phase C"
-      ],
-      "tags": [
-        "Diagnostic Enforcement"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0007",
-      "title": "No UI display for primary ledger drift",
-      "domain": "Validation & Diagnostics",
-      "severity": "MEDIUM",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-13T00:00:00Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": null,
-      "assigned_dp": "DP-0007",
-      "assigned_ip": "IP-0033",
-      "observations": [
-        "Even after CS-0006 resurrects the diagnostic, operator/developer has no visual indicator of ledger drift. The three existing mass checks (massError_lbm, VCT flow imbalance, inventory conservation) don't detect solver-vs-ledger divergence. Engine fields exist but are unused by UI.",
-        "Medium â€” Conservation errors at the primary level are invisible unless the developer reads log output. No at-a-glance indicator in the validation tab."
-      ],
-      "evidence": [],
-      "hypotheses": [],
-      "root_cause": "Confirmed â€” TabValidation.cs:158-242 has 12 PASS/FAIL checks; none reference `primaryMassDrift`. UI was not updated when the diagnostic method was added in v5.3.0.",
-      "resolution_candidate": "Resolved v0.1.0.0 â€” \"Primary Ledger Drift\" row added to TabValidation using `DrawCheckRowThreeState` (100 lb warn / 1000 lb error thresholds). Shows \"Not checked yet\" until first coupled step, then displays drift percentage.",
-      "links": [
-        "Blocked by: CS-0006",
-        "Blocked by: CS-0006",
-        "IP-0001 â€” Primary Mass Conservation â€” Phase C"
-      ],
-      "tags": [
-        "Diagnostic Enforcement â€” Observability"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
     {
       "id": "CS-0010",
       "title": "No SG secondary pressure alarm",
@@ -77,106 +17,18 @@
       "assigned_ip": "IP-0035",
       "observations": [
         "SG secondary pressure is computed and displayed but has no alarm. Real SG safety valves lift at ~1085 psia. During isolated boiling, SG pressure can rise without annunciation.",
-        "Low â€” Primarily an operational realism gap. No conservation impact. Becomes more relevant for abnormal scenarios and cooldown operations."
+        "Low Ã¢â‚¬â€ Primarily an operational realism gap. No conservation impact. Becomes more relevant for abnormal scenarios and cooldown operations."
       ],
       "evidence": [],
       "hypotheses": [],
-      "root_cause": "Confirmed â€” AlarmManager built for primary-side alarms. SG secondary alarms were not in scope.",
+      "root_cause": "Confirmed Ã¢â‚¬â€ AlarmManager built for primary-side alarms. SG secondary alarms were not in scope.",
       "resolution_candidate": "Not Tested",
       "links": [
         "Related: CS-0009",
-        "IP-0007 â€” SG Energy and Pressure Validation"
+        "IP-0007 Ã¢â‚¬â€ SG Energy and Pressure Validation"
       ],
       "tags": [
-        "Plant Protection â€” SG Boundary"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0011",
-      "title": "Acceptance tests are formula-only, not simulation-validated",
-      "domain": "Validation & Diagnostics",
-      "severity": "HIGH",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-13T00:00:00Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": null,
-      "assigned_dp": "DP-0007",
-      "assigned_ip": "IP-0033",
-      "observations": [
-        "All 10 acceptance tests pass by checking calculation correctness. Each contains \"REQUIRES SIMULATION\" note. `RunAllTests()` returns 10/10 PASSED without running any simulation. The quality gate is satisfied vacuously.",
-        "High â€” False confidence. Tests validate Rules R1-R8 mathematically but don't verify the rules are enforced at runtime (they aren't â€” CS-0001). Test suite suggests conservation architecture is validated when it is not."
-      ],
-      "evidence": [],
-      "hypotheses": [],
-      "root_cause": "Confirmed â€” Tests designed as architectural validation (correct formulas). Simulation validation deferred to manual observation. No end-to-end test harness exists.",
-      "resolution_candidate": "Not Tested",
-      "links": [
-        "Related: CS-0001 (tests validate rules that aren't enforced)",
-        "IP-0010 â€” Test Infrastructure"
-      ],
-      "tags": [
-        "Validation Infrastructure"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0012",
-      "title": "No regime transition logging",
-      "domain": "Validation & Diagnostics",
-      "severity": "LOW",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-13T00:00:00Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": null,
-      "assigned_dp": "DP-0007",
-      "assigned_ip": "IP-0033",
-      "observations": [
-        "When alpha crosses regime boundaries (0 to blended to 1), no event is logged. Plant mode transitions are logged (Alarms.cs:85-89) but regime transitions are not. Debugging mass issues across regime boundaries requires inferring regime from RCP count.",
-        "Low â€” Pure observability gap. No conservation or physics impact. Regime transitions are deterministic from RCP state."
-      ],
-      "evidence": [],
-      "hypotheses": [],
-      "root_cause": "Confirmed â€” Regime is an internal physics concept, not an operator-visible alarm. Logging was not prioritized.",
-      "resolution_candidate": "Not Tested",
-      "links": [
-        "None",
-        "IP-0012 â€” Observability"
-      ],
-      "tags": [
-        "Observability"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0041",
-      "title": "Inventory audit baseline type mismatch (geometric vs mass-derived gallons)",
-      "domain": "Validation & Diagnostics",
-      "severity": "MEDIUM",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-13T00:00:00Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": null,
-      "assigned_dp": "DP-0007",
-      "assigned_ip": "IP-0033",
-      "observations": [
-        "Dashboard \"SYSTEM TOTAL\" and \"INV ERROR\" displays compare `initialSystemInventory_gal` (geometric volume at t=0) against `totalSystemInventory_gal` (mass-derived volume at runtime). As water heats from 100Â°F to 550Â°F, density decreases ~15%, producing a phantom \"inventory error\" of ~13,000+ gallons that is purely thermal expansion â€” not an actual conservation failure. This is a display metric defect, not a physics defect.",
-        "Medium â€” The mass conservation architecture (canonical ledger, `TotalPrimaryMass_lb`) is unaffected. However, the misleading display undermines operator confidence in conservation and produces false FAIL indications in the validation tab. The metric compares thermodynamically incompatible quantities (geometric baseline vs mass-derived runtime)."
-      ],
-      "evidence": [],
-      "hypotheses": [],
-      "root_cause": "Confirmed â€” `initialSystemInventory_gal` is set at t=0 from `PlantConstants.RCS_WATER_VOLUME` (geometric, temperature-independent). `totalSystemInventory_gal` is computed at runtime from `RCSWaterMass / Ï(T,P)` (mass-derived, temperature-dependent). The difference grows with temperature as density decreases. At 400Â°F: phantom error â‰ˆ 13,474 gallons.",
-      "resolution_candidate": "Not Tested",
-      "links": [
-        "Related: CS-0007 (primary ledger drift UI â€” same observability domain). Related: CS-0039 (VCT conservation error â€” may share root cause in mass-derived vs geometric volume comparison).",
-        "FUTURE_ENHANCEMENTS_ROADMAP.md â€” v5.4.1 Part B, Technical Debt",
-        "IP-0011 â€” Validation and Diagnostic Display"
-      ],
-      "tags": [
-        "Validation / Diagnostic Display â€” Conservation Metric Integrity"
+        "Plant Protection Ã¢â‚¬â€ SG Boundary"
       ],
       "closed_at": null,
       "resolution_type": null
@@ -228,53 +80,6 @@
       "resolution_type": null
     },
     {
-      "id": "CS-0062",
-      "title": "Stage E primary-heat telemetry is aliased to SG removal, collapsing over-primary validation signal",
-      "domain": "Validation & Diagnostics",
-      "severity": "HIGH",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-14T19:55:32Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": "Audit-2026-02-14",
-      "assigned_dp": "DP-0007",
-      "assigned_ip": "IP-0033",
-      "observations": [
-        "stageE_PrimaryHeatInput_MW is assigned from sgHeatTransfer_MW, then over-primary checks compare SG removal against this aliased value.",
-        "This creates gross/net semantic ambiguity and weakens integrity of Stage E energy mismatch diagnostics."
-      ],
-      "evidence": [
-        {
-          "ref": "Assets/Scripts/Validation/HeatupSimEngine.cs:1801",
-          "notes": "sg_heat_removal_source"
-        },
-        {
-          "ref": "Assets/Scripts/Validation/HeatupSimEngine.cs:1802",
-          "notes": "primary_heat_alias_to_sg_heat"
-        },
-        {
-          "ref": "Assets/Scripts/Validation/HeatupSimEngine.cs:1813",
-          "notes": "over_primary_uses_aliased_denominator"
-        },
-        {
-          "ref": "Assets/Scripts/UI/Editor/IP0018StageERunner.cs:388",
-          "notes": "validation_relies_on_over_primary_violations"
-        }
-      ],
-      "hypotheses": [],
-      "root_cause": null,
-      "resolution_candidate": "NO REMEDIATION AUTHORIZED.",
-      "links": [
-        "Assigned DP: DP-0007 - Validation & Diagnostics",
-        "Related: CS-0054"
-      ],
-      "tags": [
-        "Logging/Telemetry Semantics",
-        "Validation Signal Integrity"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
       "id": "CS-0063",
       "title": "Simulation-facing files exceed GOLD hard size limits without documented waiver",
       "domain": "Project Governance",
@@ -320,52 +125,6 @@
       "tags": [
         "GOLD File Hygiene",
         "Oversized Modules"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0064",
-      "title": "Heatup engine state is exposed as ad-hoc mutable public fields without typed snapshot boundary",
-      "domain": "Validation & Diagnostics",
-      "severity": "HIGH",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-14T19:55:32Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": "Audit-2026-02-14",
-      "assigned_dp": "DP-0007",
-      "assigned_ip": "IP-0033",
-      "observations": [
-        "HeatupSimEngine publishes broad mutable public state surface; UI bridge reads fields directly rather than consuming a structured snapshot contract.",
-        "This increases hidden coupling and state ownership ambiguity across engine/UI boundaries."
-      ],
-      "evidence": [
-        {
-          "ref": "TechnicalDocumentation/GOLD_CONFORMANCE_CHECKLIST.md:33",
-          "notes": "c09_requires_structured_snapshot"
-        },
-        {
-          "ref": "Assets/Scripts/Validation/HeatupSimEngine.cs:121",
-          "notes": "public_mutable_state_surface"
-        },
-        {
-          "ref": "Assets/Scripts/UI/ScreenDataBridge.cs:603",
-          "notes": "direct_field_read_rhr_mode"
-        },
-        {
-          "ref": "Assets/Scripts/UI/ScreenDataBridge.cs:620",
-          "notes": "direct_field_read_rhr_net_heat"
-        }
-      ],
-      "hypotheses": [],
-      "root_cause": null,
-      "resolution_candidate": "NO REMEDIATION AUTHORIZED.",
-      "links": [
-        "Assigned DP: DP-0007 - Validation & Diagnostics"
-      ],
-      "tags": [
-        "State Ownership",
-        "Structured Snapshot Boundary"
       ],
       "closed_at": null,
       "resolution_type": null
@@ -938,6 +697,58 @@
         "NCR-Migration",
         "Audit-2026-02-15",
         "F-012",
+        "Constitution-Article-VI"
+      ],
+      "closed_at": null,
+      "resolution_type": null
+    },
+    {
+      "id": "CS-0098",
+      "title": "Heaters do not start after startup-hold release during cold-start sequence",
+      "domain": "Pressurizer & Startup Control",
+      "severity": "HIGH",
+      "status": "READY_FOR_FIX",
+      "created_at": "2026-02-16T21:45:00Z",
+      "updated_at": "2026-02-16T21:45:00Z",
+      "stage_detected": "Investigation-2026-02-16",
+      "assigned_dp": "DP-0012",
+      "assigned_ip": null,
+      "observations": [
+        "Startup hold release is expected to return heater authority to automatic startup pressurization, but field behavior can remain effectively de-energized (0 MW) after release.",
+        "Observed symptom signature: pressure remains near initial cold-start values while heater mode/authority path can remain in OFF-equivalent behavior.",
+        "Operational impact: startup progression stalls and downstream pressure-dependent actions are blocked."
+      ],
+      "evidence": [
+        {
+          "ref": "Governance/Issues/CS-0098_Investigation_Report_2026-02-16_214500.md",
+          "notes": "Investigation record with code-path trace and disposition."
+        },
+        {
+          "ref": "HeatupLogs/IP-0024_StageD_Hold_2026-02-15_194555/Heatup_Report_20260215_194556.txt",
+          "notes": "Report shows heater mode OFF and final heater power 0.000 MW in startup-hold scenario."
+        },
+        {
+          "ref": "Assets/Scripts/Validation/HeatupSimEngine.cs:2152",
+          "notes": "Authority resolver latches OFF when current heater mode is OFF."
+        },
+        {
+          "ref": "Assets/Scripts/Validation/HeatupSimEngine.cs:2198",
+          "notes": "Startup-hold release logic clears hold but does not explicitly re-arm startup heater mode if mode is OFF."
+        }
+      ],
+      "hypotheses": [
+        "Heater mode can enter OFF before or during hold and remains OFF after release because release clears only hold state, not requested heater mode."
+      ],
+      "root_cause": "Confirmed: startup-hold release removes HOLD_LOCKED authority but does not enforce a non-OFF heater mode. If currentHeaterMode is OFF at release boundary, ResolveHeaterAuthorityState() continues returning OFF and heater demand remains 0 MW.",
+      "resolution_candidate": "On startup-hold release, enforce deterministic mode re-arm to PRESSURIZE_AUTO when manual-disable is false, then add regression validation proving non-zero heater demand within the first post-release window.",
+      "links": [
+        "Investigation artifact: Governance/Issues/CS-0098_Investigation_Report_2026-02-16_214500.md",
+        "Related historical scope: CS-0094, CS-0096 (DP-0012 closeout lineage)"
+      ],
+      "tags": [
+        "Investigation-2026-02-16",
+        "Startup-Heater-Release",
+        "DP-0012",
         "Constitution-Article-VI"
       ],
       "closed_at": null,

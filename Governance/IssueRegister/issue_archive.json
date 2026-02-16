@@ -1,8 +1,8 @@
 {
   "version": "1.0.0",
-  "generated_at": "2026-02-16T20:10:00Z",
+  "generated_at": "2026-02-16T21:05:00Z",
   "source": "Governance/IssueRegister/issue_index.json (CLOSED projection)",
-  "archived_issue_count": 75,
+  "archived_issue_count": 82,
   "issues": [
     {
       "id": "CS-0001",
@@ -22,9 +22,9 @@
         "HeatupLogs/IP-0017_RunB_20260214_164459/Unity_StageE_IP0017_RunB_20260214_164445.log:163872",
         "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_034_8.25hr.txt:209"
       ],
-      "one_line_rca": "Confirmed â€” `BulkHeatupStep()` parameter `totalPrimaryMass_lb` defaults to `0f` (RCSHeatup.cs:114). Neither call site (HeatupSimEngine.cs:1214-1217, 1378-1381) passes the 10th argument. Gate at Coup",
+      "one_line_rca": "Confirmed Ã¢â‚¬â€ `BulkHeatupStep()` parameter `totalPrimaryMass_lb` defaults to `0f` (RCSHeatup.cs:114). Neither call site (HeatupSimEngine.cs:1214-1217, 1378-1381) passes the 10th argument. Gate at Coup",
       "tags": [
-        "Mass Conservation â€” Authority Enforcement"
+        "Mass Conservation Ã¢â‚¬â€ Authority Enforcement"
       ]
     },
     {
@@ -46,9 +46,9 @@
         "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_036_8.75hr.txt:35",
         "HeatupLogs/IP-0017_RunB_20260214_164459/Heatup_Interval_035_8.50hr.txt:35"
       ],
-      "one_line_rca": "Confirmed â€” Ledger was designed to be maintained by the solver in canonical mode. Canonical mode is never active (CS-0001), so no one updates the ledger after the initial rebase.",
+      "one_line_rca": "Confirmed Ã¢â‚¬â€ Ledger was designed to be maintained by the solver in canonical mode. Canonical mode is never active (CS-0001), so no one updates the ledger after the initial rebase.",
       "tags": [
-        "Mass Conservation â€” Ledger Integrity"
+        "Mass Conservation Ã¢â‚¬â€ Ledger Integrity"
       ]
     },
     {
@@ -70,9 +70,9 @@
         "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:45",
         "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:46"
       ],
-      "one_line_rca": "Confirmed â€” Fields declared in v5.3.0 as part of canonical architecture. Increment logic was never added to the CVCS flow paths in `StepSimulation()`. Full codebase grep confirms zero assignment sit",
+      "one_line_rca": "Confirmed Ã¢â‚¬â€ Fields declared in v5.3.0 as part of canonical architecture. Increment logic was never added to the CVCS flow paths in `StepSimulation()`. Full codebase grep confirms zero assignment sit",
       "tags": [
-        "Mass Conservation â€” Boundary Accounting"
+        "Mass Conservation Ã¢â‚¬â€ Boundary Accounting"
       ]
     },
     {
@@ -93,9 +93,9 @@
         "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_034_8.25hr.txt:234",
         "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_034_8.25hr.txt:239"
       ],
-      "one_line_rca": "Confirmed â€” v0.9.6 added pre-sync for solver input. In LEGACY mode, solver ignores PZR mass input and recomputes everything. Creates confusion about field ownership.",
+      "one_line_rca": "Confirmed Ã¢â‚¬â€ v0.9.6 added pre-sync for solver input. In LEGACY mode, solver ignores PZR mass input and recomputes everything. Creates confusion about field ownership.",
       "tags": [
-        "Mass Conservation â€” State Ownership"
+        "Mass Conservation Ã¢â‚¬â€ State Ownership"
       ]
     },
     {
@@ -116,9 +116,53 @@
         "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_035_8.50hr.txt:243",
         "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_035_8.50hr.txt:254"
       ],
-      "one_line_rca": "Confirmed â€” v4.4.0 fix applied CVCS before solver to fix PZR level. Guard prevents double-counting. Architecturally correct in LEGACY mode but semantically wrong for canonical mode.",
+      "one_line_rca": "Confirmed Ã¢â‚¬â€ v4.4.0 fix applied CVCS before solver to fix PZR level. Guard prevents double-counting. Architecturally correct in LEGACY mode but semantically wrong for canonical mode.",
       "tags": [
-        "Mass Conservation â€” Order of Operations"
+        "Mass Conservation Ã¢â‚¬â€ Order of Operations"
+      ]
+    },
+    {
+      "id": "CS-0006",
+      "title": "UpdatePrimaryMassLedgerDiagnostics() never called (dead code)",
+      "domain": "Validation & Diagnostics",
+      "severity": "HIGH",
+      "status": "CLOSED",
+      "created_at": "2026-02-13T00:00:00Z",
+      "closed_at": "2026-02-16T20:58:00Z",
+      "resolution_type": "FIXED",
+      "fix_refs": [
+        "IP-0033"
+      ],
+      "validation_refs": [
+        "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageD_DomainValidation_2026-02-16_215700.md",
+        "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageE_SystemRegression_2026-02-16_220200.md",
+        "Governance/ImplementationReports/IP-0033_Closure_Recommendation_2026-02-16.md"
+      ],
+      "one_line_rca": "Confirmed Ã¢â‚¬â€ Method added in v5.3.0 Stage 6 (Logging.cs:470, 114 lines, fully implemented). Call site in `StepSimulation()` was never added. Full codebase grep confirms zero call sites.",
+      "tags": [
+        "Diagnostic Enforcement"
+      ]
+    },
+    {
+      "id": "CS-0007",
+      "title": "No UI display for primary ledger drift",
+      "domain": "Validation & Diagnostics",
+      "severity": "MEDIUM",
+      "status": "CLOSED",
+      "created_at": "2026-02-13T00:00:00Z",
+      "closed_at": "2026-02-16T20:58:00Z",
+      "resolution_type": "FIXED",
+      "fix_refs": [
+        "IP-0033"
+      ],
+      "validation_refs": [
+        "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageD_DomainValidation_2026-02-16_215700.md",
+        "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageE_SystemRegression_2026-02-16_220200.md",
+        "Governance/ImplementationReports/IP-0033_Closure_Recommendation_2026-02-16.md"
+      ],
+      "one_line_rca": "Confirmed Ã¢â‚¬â€ TabValidation.cs:158-242 has 12 PASS/FAIL checks; none reference `primaryMassDrift`. UI was not updated when the diagnostic method was added in v5.3.0.",
+      "tags": [
+        "Diagnostic Enforcement Ã¢â‚¬â€ Observability"
       ]
     },
     {
@@ -139,9 +183,9 @@
         "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md:28",
         "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:18"
       ],
-      "one_line_rca": "Confirmed â€” DEBUG-only conservation check exists in canonical path (CoupledThermo.cs:264-272, dead code). Static `ValidateMassConservation()` test exists (CoupledThermo.cs:516-529, manual runner onl",
+      "one_line_rca": "Confirmed Ã¢â‚¬â€ DEBUG-only conservation check exists in canonical path (CoupledThermo.cs:264-272, dead code). Static `ValidateMassConservation()` test exists (CoupledThermo.cs:516-529, manual runner onl",
       "tags": [
-        "Mass Conservation â€” Runtime Validation"
+        "Mass Conservation Ã¢â‚¬â€ Runtime Validation"
       ]
     },
     {
@@ -157,6 +201,50 @@
       "validation_refs": [],
       "one_line_rca": "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
       "tags": []
+    },
+    {
+      "id": "CS-0011",
+      "title": "Acceptance tests are formula-only, not simulation-validated",
+      "domain": "Validation & Diagnostics",
+      "severity": "HIGH",
+      "status": "CLOSED",
+      "created_at": "2026-02-13T00:00:00Z",
+      "closed_at": "2026-02-16T20:58:00Z",
+      "resolution_type": "FIXED",
+      "fix_refs": [
+        "IP-0033"
+      ],
+      "validation_refs": [
+        "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageD_DomainValidation_2026-02-16_215700.md",
+        "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageE_SystemRegression_2026-02-16_220200.md",
+        "Governance/ImplementationReports/IP-0033_Closure_Recommendation_2026-02-16.md"
+      ],
+      "one_line_rca": "Confirmed Ã¢â‚¬â€ Tests designed as architectural validation (correct formulas). Simulation validation deferred to manual observation. No end-to-end test harness exists.",
+      "tags": [
+        "Validation Infrastructure"
+      ]
+    },
+    {
+      "id": "CS-0012",
+      "title": "No regime transition logging",
+      "domain": "Validation & Diagnostics",
+      "severity": "LOW",
+      "status": "CLOSED",
+      "created_at": "2026-02-13T00:00:00Z",
+      "closed_at": "2026-02-16T20:58:00Z",
+      "resolution_type": "FIXED",
+      "fix_refs": [
+        "IP-0033"
+      ],
+      "validation_refs": [
+        "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageD_DomainValidation_2026-02-16_215700.md",
+        "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageE_SystemRegression_2026-02-16_220200.md",
+        "Governance/ImplementationReports/IP-0033_Closure_Recommendation_2026-02-16.md"
+      ],
+      "one_line_rca": "Confirmed Ã¢â‚¬â€ Regime is an internal physics concept, not an operator-visible alarm. Logging was not prioritized.",
+      "tags": [
+        "Observability"
+      ]
     },
     {
       "id": "CS-0013",
@@ -181,7 +269,7 @@
       ],
       "one_line_rca": "Session reset path was previously fixed; strict same-process Run A/B evidence now confirms reset-state parity with no stale-session carryover.",
       "tags": [
-        "Mass Conservation â€” Session Integrity"
+        "Mass Conservation Ã¢â‚¬â€ Session Integrity"
       ]
     },
     {
@@ -203,7 +291,7 @@
       ],
       "one_line_rca": "Isolation boundary path now transitions correctly and no longer behaves as open inventory pressure boundary during startup.",
       "tags": [
-        "SG Secondary Physics â€” Pressure Boundary"
+        "SG Secondary Physics Ã¢â‚¬â€ Pressure Boundary"
       ]
     },
     {
@@ -225,7 +313,7 @@
       ],
       "one_line_rca": "Steam generation now accumulates inventory in isolated operation and contributes to physically consistent secondary pressurization.",
       "tags": [
-        "SG Secondary Physics â€” Compressible Volume"
+        "SG Secondary Physics Ã¢â‚¬â€ Compressible Volume"
       ]
     },
     {
@@ -247,7 +335,7 @@
       ],
       "one_line_rca": "SG sink behavior is bounded by corrected secondary-state physics, removing unrealistically dominant heat removal in startup.",
       "tags": [
-        "SG Secondary Physics â€” Heat Balance"
+        "SG Secondary Physics Ã¢â‚¬â€ Heat Balance"
       ]
     },
     {
@@ -266,7 +354,7 @@
     },
     {
       "id": "CS-0018",
-      "title": "Nâ‚‚ blanket treated as pressure clamp, not compressible cushion",
+      "title": "NÃ¢â€šâ€š blanket treated as pressure clamp, not compressible cushion",
       "domain": "Steam Generator Secondary Physics",
       "severity": "HIGH",
       "status": "CLOSED",
@@ -283,7 +371,7 @@
       ],
       "one_line_rca": "N2 blanket behavior is treated as compressible cushion response instead of rigid pressure clamp in startup conditions.",
       "tags": [
-        "SG Secondary Physics â€” Gas Volume Model"
+        "SG Secondary Physics Ã¢â‚¬â€ Gas Volume Model"
       ]
     },
     {
@@ -333,7 +421,7 @@
       ],
       "one_line_rca": "Solid hold pressure now follows physical state with bounded oscillation after isolated-branch and writer-governance corrections.",
       "tags": [
-        "Primary Thermodynamics â€” Solid Regime"
+        "Primary Thermodynamics Ã¢â‚¬â€ Solid Regime"
       ]
     },
     {
@@ -355,7 +443,7 @@
       ],
       "one_line_rca": "Pressurization coupling now tracks controller actuation coherently after transport and regime-coupling stabilization.",
       "tags": [
-        "Primary Thermodynamics â€” Controller Coupling"
+        "Primary Thermodynamics Ã¢â‚¬â€ Controller Coupling"
       ]
     },
     {
@@ -377,7 +465,7 @@
       ],
       "one_line_rca": "Surge and pressure trends are now consistently coupled through state-derived pressure evolution.",
       "tags": [
-        "Primary Thermodynamics â€” Solid Regime"
+        "Primary Thermodynamics Ã¢â‚¬â€ Solid Regime"
       ]
     },
     {
@@ -394,7 +482,7 @@
       ],
       "validation_refs": [],
       "tags": [
-        "Primary Thermodynamics â€” PZR State Machine"
+        "Primary Thermodynamics Ã¢â‚¬â€ PZR State Machine"
       ]
     },
     {
@@ -411,7 +499,7 @@
       ],
       "validation_refs": [],
       "tags": [
-        "Primary Thermodynamics â€” Bubble Detection"
+        "Primary Thermodynamics Ã¢â‚¬â€ Bubble Detection"
       ]
     },
     {
@@ -429,7 +517,7 @@
       "validation_refs": [],
       "one_line_rca": "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
       "tags": [
-        "Primary Thermodynamics â€” Two-Phase Energy Balance"
+        "Primary Thermodynamics Ã¢â‚¬â€ Two-Phase Energy Balance"
       ]
     },
     {
@@ -447,7 +535,7 @@
       "validation_refs": [],
       "one_line_rca": "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
       "tags": [
-        "Primary Thermodynamics â€” State Machine Logic"
+        "Primary Thermodynamics Ã¢â‚¬â€ State Machine Logic"
       ]
     },
     {
@@ -465,7 +553,7 @@
       "validation_refs": [],
       "one_line_rca": "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
       "tags": [
-        "Primary Thermodynamics â€” State Machine Timing"
+        "Primary Thermodynamics Ã¢â‚¬â€ State Machine Timing"
       ]
     },
     {
@@ -483,7 +571,7 @@
       "validation_refs": [],
       "one_line_rca": "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
       "tags": [
-        "Primary Thermodynamics â€” Two-Phase Energy Balance"
+        "Primary Thermodynamics Ã¢â‚¬â€ Two-Phase Energy Balance"
       ]
     },
     {
@@ -501,7 +589,7 @@
       "validation_refs": [],
       "one_line_rca": "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
       "tags": [
-        "Primary Thermodynamics â€” Mass-Pressure Coupling"
+        "Primary Thermodynamics Ã¢â‚¬â€ Mass-Pressure Coupling"
       ]
     },
     {
@@ -523,7 +611,7 @@
       ],
       "one_line_rca": "RCP start heat-rate and pressure-step behavior are now stress-window bounded with corrected transient measurement logic.",
       "tags": [
-        "Primary Thermodynamics â€” Thermal Inertia"
+        "Primary Thermodynamics Ã¢â‚¬â€ Thermal Inertia"
       ]
     },
     {
@@ -563,7 +651,7 @@
       ],
       "one_line_rca": "No-RCP isolated hold now preserves stable/non-rising thermal response with corrected no-energy transport handling.",
       "tags": [
-        "Core Physics â€” Primary Energy Balance"
+        "Core Physics Ã¢â‚¬â€ Primary Energy Balance"
       ]
     },
     {
@@ -585,7 +673,7 @@
       ],
       "one_line_rca": "Pre-RCP regime behavior now exhibits bounded ceiling behavior instead of unbounded drift.",
       "tags": [
-        "Core Physics â€” Primary Energy Balance"
+        "Core Physics Ã¢â‚¬â€ Primary Energy Balance"
       ]
     },
     {
@@ -603,12 +691,12 @@
       "validation_refs": [],
       "one_line_rca": "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
       "tags": [
-        "CVCS â€” Primary Energy Balance Boundary"
+        "CVCS Ã¢â‚¬â€ Primary Energy Balance Boundary"
       ]
     },
     {
       "id": "CS-0036",
-      "title": "DRAIN phase duration excessive â€” PZR requires ~4 hours to reach 25% level",
+      "title": "DRAIN phase duration excessive Ã¢â‚¬â€ PZR requires ~4 hours to reach 25% level",
       "domain": "Pressurizer & Two-Phase Physics",
       "severity": "HIGH",
       "status": "CLOSED",
@@ -621,7 +709,7 @@
       "validation_refs": [],
       "one_line_rca": "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
       "tags": [
-        "Bubble Formation â€” Phase Controller / CVCS Flow Balance"
+        "Bubble Formation Ã¢â‚¬â€ Phase Controller / CVCS Flow Balance"
       ]
     },
     {
@@ -636,7 +724,7 @@
       "fix_refs": [],
       "validation_refs": [],
       "tags": [
-        "Observability â€” Operator/Visual Enhancement"
+        "Observability Ã¢â‚¬â€ Operator/Visual Enhancement"
       ]
     },
     {
@@ -658,7 +746,7 @@
       ],
       "one_line_rca": "RCP start/stop transient forcing and coupling were smoothed, removing prior PZR envelope spikes.",
       "tags": [
-        "Primary Thermodynamics â€” Regime Transition Stability"
+        "Primary Thermodynamics Ã¢â‚¬â€ Regime Transition Stability"
       ]
     },
     {
@@ -676,7 +764,7 @@
       "validation_refs": [],
       "one_line_rca": "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
       "tags": [
-        "CVCS â€” VCT Flow Boundary Accounting"
+        "CVCS Ã¢â‚¬â€ VCT Flow Boundary Accounting"
       ]
     },
     {
@@ -694,7 +782,29 @@
       "validation_refs": [],
       "one_line_rca": "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
       "tags": [
-        "Mass Conservation â€” Indicator Integrity"
+        "Mass Conservation Ã¢â‚¬â€ Indicator Integrity"
+      ]
+    },
+    {
+      "id": "CS-0041",
+      "title": "Inventory audit baseline type mismatch (geometric vs mass-derived gallons)",
+      "domain": "Validation & Diagnostics",
+      "severity": "MEDIUM",
+      "status": "CLOSED",
+      "created_at": "2026-02-13T00:00:00Z",
+      "closed_at": "2026-02-16T20:58:00Z",
+      "resolution_type": "FIXED",
+      "fix_refs": [
+        "IP-0033"
+      ],
+      "validation_refs": [
+        "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageD_DomainValidation_2026-02-16_215700.md",
+        "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageE_SystemRegression_2026-02-16_220200.md",
+        "Governance/ImplementationReports/IP-0033_Closure_Recommendation_2026-02-16.md"
+      ],
+      "one_line_rca": "Confirmed Ã¢â‚¬â€ `initialSystemInventory_gal` is set at t=0 from `PlantConstants.RCS_WATER_VOLUME` (geometric, temperature-independent). `totalSystemInventory_gal` is computed at runtime from `RCSWaterMass / ÃÂ(T,P)` (mass-derived, temperature-dependent). The difference grows with temperature as density decreases. At 400Ã‚Â°F: phantom error Ã¢â€°Ë† 13,474 gallons.",
+      "tags": [
+        "Validation / Diagnostic Display Ã¢â‚¬â€ Conservation Metric Integrity"
       ]
     },
     {
@@ -712,7 +822,7 @@
     },
     {
       "id": "CS-0043",
-      "title": "Pressurizer pressure boundary failure during bubble formation â€” runaway depressurization spiral",
+      "title": "Pressurizer pressure boundary failure during bubble formation Ã¢â‚¬â€ runaway depressurization spiral",
       "domain": "Pressurizer & Two-Phase Physics",
       "severity": "CRITICAL",
       "status": "CLOSED",
@@ -725,12 +835,12 @@
       "validation_refs": [],
       "one_line_rca": "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
       "tags": [
-        "Core Physics â€” Two-Phase Pressurizer Energy Partition"
+        "Core Physics Ã¢â‚¬â€ Two-Phase Pressurizer Energy Partition"
       ]
     },
     {
       "id": "CS-0044",
-      "title": "Async log writer â€” move synchronous file I/O to background thread",
+      "title": "Async log writer Ã¢â‚¬â€ move synchronous file I/O to background thread",
       "domain": "Performance & Runtime",
       "severity": "LOW",
       "status": "CLOSED",
@@ -748,7 +858,7 @@
     },
     {
       "id": "CS-0045",
-      "title": "Physics snapshot boundary â€” decouple physics compute from UI rendering",
+      "title": "Physics snapshot boundary Ã¢â‚¬â€ decouple physics compute from UI rendering",
       "domain": "Performance & Runtime",
       "severity": "LOW",
       "status": "CLOSED",
@@ -766,7 +876,7 @@
     },
     {
       "id": "CS-0046",
-      "title": "Physics parallelization â€” move simulation step to worker thread or Unity Jobs",
+      "title": "Physics parallelization Ã¢â‚¬â€ move simulation step to worker thread or Unity Jobs",
       "domain": "Performance & Runtime",
       "severity": "LOW",
       "status": "CLOSED",
@@ -1094,6 +1204,52 @@
       "tags": [
         "Formula Integrity",
         "Unit/State Dependence"
+      ]
+    },
+    {
+      "id": "CS-0062",
+      "title": "Stage E primary-heat telemetry is aliased to SG removal, collapsing over-primary validation signal",
+      "domain": "Validation & Diagnostics",
+      "severity": "HIGH",
+      "status": "CLOSED",
+      "created_at": "2026-02-14T19:55:32Z",
+      "closed_at": "2026-02-16T20:58:00Z",
+      "resolution_type": "FIXED",
+      "fix_refs": [
+        "IP-0033"
+      ],
+      "validation_refs": [
+        "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageD_DomainValidation_2026-02-16_215700.md",
+        "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageE_SystemRegression_2026-02-16_220200.md",
+        "Governance/ImplementationReports/IP-0033_Closure_Recommendation_2026-02-16.md"
+      ],
+      "one_line_rca": "Closed by IP-0033 remediation and Stage D/E validation evidence.",
+      "tags": [
+        "Logging/Telemetry Semantics",
+        "Validation Signal Integrity"
+      ]
+    },
+    {
+      "id": "CS-0064",
+      "title": "Heatup engine state is exposed as ad-hoc mutable public fields without typed snapshot boundary",
+      "domain": "Validation & Diagnostics",
+      "severity": "HIGH",
+      "status": "CLOSED",
+      "created_at": "2026-02-14T19:55:32Z",
+      "closed_at": "2026-02-16T20:58:00Z",
+      "resolution_type": "FIXED",
+      "fix_refs": [
+        "IP-0033"
+      ],
+      "validation_refs": [
+        "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageD_DomainValidation_2026-02-16_215700.md",
+        "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageE_SystemRegression_2026-02-16_220200.md",
+        "Governance/ImplementationReports/IP-0033_Closure_Recommendation_2026-02-16.md"
+      ],
+      "one_line_rca": "Closed by IP-0033 remediation and Stage D/E validation evidence.",
+      "tags": [
+        "State Ownership",
+        "Structured Snapshot Boundary"
       ]
     },
     {

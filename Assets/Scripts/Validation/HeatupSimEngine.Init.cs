@@ -127,6 +127,8 @@ public partial class HeatupSimEngine
         noRcpTransportFactor = 1f;
         thermoStateWriter = "INIT";
         smoothedRegime2Alpha = 0f;
+        previousPhysicsRegimeId = 0;
+        previousPhysicsRegimeLabel = "UNSET";
         pbocTickIndex = 0;
         pbocEventActiveThisTick = false;
         pbocCurrentEvent = default;

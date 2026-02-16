@@ -41,6 +41,7 @@
 using UnityEngine;
 using Critical.Controllers;
 using Critical.Physics;
+using Critical.Simulation.Modular.State;
 
 namespace Critical.UI
 {
@@ -116,6 +117,20 @@ namespace Critical.UI
         #region Private Fields
 
         private bool _sourcesResolved = false;
+
+        private bool TryGetPlantStateSnapshot(out PlantState plantState)
+        {
+            plantState = null;
+            if (heatupEngine == null)
+                return false;
+
+            StepSnapshot snapshot = heatupEngine.GetStepSnapshot();
+            if (snapshot == null || snapshot.PlantState == null || snapshot.PlantState == PlantState.Empty)
+                return false;
+
+            plantState = snapshot.PlantState;
+            return true;
+        }
 
         #endregion
 
@@ -600,7 +615,8 @@ namespace Critical.UI
         /// <summary>RHR operating mode as display string.</summary>
         public string GetRHRMode()
         {
-            if (heatupEngine != null) return heatupEngine.rhrModeString;
+            if (TryGetPlantStateSnapshot(out PlantState plantState))
+                return string.IsNullOrWhiteSpace(plantState.RhrMode) ? "---" : plantState.RhrMode;
             return "---";
         }
 
@@ -617,7 +633,8 @@ namespace Critical.UI
         /// <summary>Net RHR thermal effect (MW). Positive = heating RCS.</summary>
         public float GetRHRNetHeat_MW()
         {
-            if (heatupEngine != null) return heatupEngine.rhrNetHeat_MW;
+            if (TryGetPlantStateSnapshot(out PlantState plantState))
+                return plantState.RhrNetHeatMw;
             return float.NaN;
         }
 
