@@ -1,7 +1,7 @@
 # IP-0030 - DP-0008 - Validation Dashboard Complete Redesign
 
 Date: 2026-02-16
-Status: DRAFT - Awaiting Authorization
+Status: FAILED
 Domain Plan: DP-0008 - Operator Interface and Scenarios
 Supersedes: IP-0025, IP-0029
 Changelog Required: Yes (required at closeout per constitutional closure workflow)
