@@ -5,6 +5,18 @@
 - Result: PASS
 - Steps compared: `360`
 
+## Feature Flags / Run Modes
+- Baseline run (`LEGACY_PZR`):
+  - `ModularFeatureFlags.EnableCoordinatorPath = true`
+  - `ModularFeatureFlags.UseModularPZR = false`
+  - `ModularFeatureFlags.BypassLegacyPZR = false`
+  - `ModularFeatureFlags.EnableComparatorPZR = false`
+- Modular authoritative run (`MODULAR_PZR`):
+  - `ModularFeatureFlags.EnableCoordinatorPath = true`
+  - `ModularFeatureFlags.UseModularPZR = true`
+  - `ModularFeatureFlags.BypassLegacyPZR = true`
+  - `ModularFeatureFlags.EnableComparatorPZR = false`
+
 ## Deterministic Controls
 - Fixed random seed: `250025`
 - Fixed timestep: `0.002778 hr`
