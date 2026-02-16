@@ -80,7 +80,10 @@ public struct ColdShutdownProfile
             Temperature_F = temperature_F,
             PzrLiquidMass_lbm = pzrLiquidMass_lbm,
             PzrVaporMass_lbm = 0f,
-            HeaterMode = HeaterMode.OFF,
+            // Default to automatic pressurization control after startup hold release.
+            // Until heater UI controls are implemented, this prevents hold-release
+            // from leaving heaters latched OFF.
+            HeaterMode = HeaterMode.PRESSURIZE_AUTO,
             StartupHoldEnabled = true,
             StartupHoldDuration_sec = 15f,
             CvcsLineup = new ColdShutdownCvcsLineupState
