@@ -1,10 +1,10 @@
 # CRITICAL SIMULATOR CONSTITUTION
 
-## Version 1.4.0.0
+## Version 1.5.0.0
 
 ### Binding Governance Framework
 
-**Effective Date: 2026-02-15**
+**Effective Date: 2026-02-16**
 
 ---
 
@@ -56,9 +56,10 @@ The following artifacts are mandatory and authoritative at these repository-rela
 
 3. **Implementation Plans (IP)**
 
-   * Active location: `Governance/ImplementationPlans/`
-   * Closed location: `Governance/ImplementationPlans/Closed/`
-   * Naming pattern (both active and closed): `IP-XXXX*.md`
+   * Active bundle location: `Governance/ImplementationPlans/IP-XXXX/`
+   * Closed bundle location: `Governance/ImplementationPlans/Closed/IP-XXXX/`
+   * Required plan file inside each bundle: `IP-XXXX.md`
+   * New IPs created under this constitution version MUST use bundle format; legacy single-file IPs are compatibility-only until migrated.
 
 4. **Changelogs**
 
@@ -76,10 +77,13 @@ Optional standalone investigation records MAY be maintained at:
 * Location: `Governance/Issues/`
 * Naming: `IR-XXXX - <Topic>.md` or `CS-XXXX_Investigation_Report.md`
 
-Closed DP records MUST be moved to `Governance/DomainPlans/Closed/`.
-Closed IP records MUST be moved to `Governance/ImplementationPlans/Closed/`.
+For pre-IP or cross-IP investigation work, `Governance/Issues/` remains valid.
+When an investigation, assessment, report, or run artifact is IP-scoped, the canonical copy MUST exist inside that IP bundle.
 
-Any plan discovery logic (scripts, audits, or indexes) SHALL search both active and closed plan locations.
+Closed DP records MUST be moved to `Governance/DomainPlans/Closed/`.
+Closed IP bundle records MUST be moved to `Governance/ImplementationPlans/Closed/IP-XXXX/`.
+
+Any plan discovery logic (scripts, audits, or indexes) SHALL search both active and closed plan locations recursively for `IP-XXXX.md`.
 
 No authoritative process record SHALL be maintained outside these locations.
 
@@ -94,7 +98,7 @@ The required lifecycle SHALL be:
 3. Register issue in `Governance/IssueRegister/issue_register.json` and update `Governance/IssueRegister/issue_index.json`
 4. Assign issue to a Domain Plan (`DP-XXXX`)
 5. Authorize DP for execution
-6. Create and execute an Implementation Plan (`IP-XXXX`) for that DP
+6. Create and execute an Implementation Plan bundle (`IP-XXXX`) for that DP
 7. Validate implementation outcomes
 8. Record deferred work in a **new DP** when required
 9. Write changelog
@@ -418,7 +422,36 @@ Allowed transitions:
 * `Validated -> Closed`
 * `Validated -> Authorized` (rework cycle if validation fails)
 
-### Section 3 - Closure Rule
+### Section 3 - IP Bundle Structure and Artifact Colocation
+
+For all IPs created under this constitution version:
+
+1. An IP MUST be created as a folder bundle at `Governance/ImplementationPlans/IP-XXXX/`.
+2. The controlling plan document MUST be `Governance/ImplementationPlans/IP-XXXX/IP-XXXX.md`.
+3. All IP-scoped artifacts SHALL be colocated under that same bundle, including:
+   - documentation notes,
+   - assessments,
+   - investigation records,
+   - stage evidence artifacts,
+   - reports and closeout drafts,
+   - run manifests/log indexes,
+   - batch commands/scripts and execution records.
+4. IP evidence SHALL NOT be scattered across unrelated global folders as the primary canonical record.
+5. Legacy single-file IPs from earlier constitution versions are allowed for compatibility, but if reopened or advanced, they MUST be migrated to bundle format before the next status transition.
+
+### Section 4 - First-Time IP Implementation Baseline Gate
+
+Before implementation begins for an IP for the first time (first transition into active implementation work), the following SHALL be completed:
+
+1. All pre-existing or unrelated working-tree changes MUST be committed in a baseline commit that is separate from the new IP implementation work.
+2. That baseline commit MUST be pushed to the project GitHub remote before implementation starts.
+3. The IP artifact MUST record the baseline commit hash and timestamp as the rollback anchor.
+4. Implementation work for the IP MUST begin from a clean working tree.
+5. If this gate is not satisfied, implementation SHALL NOT start and IP status MUST remain pre-implementation.
+
+This gate exists to ensure rollback actions are scoped to the current implementation and do not destroy unrelated prior work.
+
+### Section 5 - Closure Rule
 
 IP closure is independent of release versioning and SHALL follow the Formal Closure Procedure in Article XI.
 
@@ -484,14 +517,14 @@ Before any IP or DP is closed:
 
 When an IP is closed:
 
-1. The IP file MUST set `Status: CLOSED`.
-2. The IP file MUST include:
+1. The IP control file (`IP-XXXX.md`) MUST set `Status: CLOSED`.
+2. The IP control file MUST include:
    - `Closure Date: YYYY-MM-DD`
    - `Final Run Stamp: <deterministic run stamp>`
-   - `Final Stage E Report: Governance/ImplementationReports/IP-XXXX_*.md`
-   - `Final Closeout Report: Governance/ImplementationReports/IP-XXXX_Closeout_Report.md`
-3. The file MUST be moved to `Governance/ImplementationPlans/Closed/`.
-4. A closed IP is immutable; only clerical corrections (typos, broken links, formatting defects) are allowed after closure.
+   - `Final Stage E Report: Governance/ImplementationPlans/IP-XXXX/Reports/IP-XXXX_StageE_*.md`
+   - `Final Closeout Report: Governance/ImplementationPlans/IP-XXXX/Reports/IP-XXXX_Closeout_Report.md`
+3. The entire IP bundle folder MUST be moved to `Governance/ImplementationPlans/Closed/IP-XXXX/`.
+4. A closed IP bundle is immutable; only clerical corrections (typos, broken links, formatting defects) are allowed after closure.
 
 ### Section 3 - DP Closure Actions
 
@@ -560,7 +593,7 @@ Each closure changelog SHALL include:
 
 Each closing IP MUST produce:
 
-`Governance/ImplementationReports/IP-XXXX_Closeout_Report.md`
+`Governance/ImplementationPlans/IP-XXXX/Reports/IP-XXXX_Closeout_Report.md`
 
 The closeout report SHALL include:
 
@@ -605,7 +638,7 @@ Partial amendments are not permitted.
 
 ---
 
-## Migration Requirement (v1.4.0.0)
+## Migration Requirement (v1.5.0.0)
 
 Upon constitution upgrade:
 
@@ -615,6 +648,8 @@ Upon constitution upgrade:
 4. Standalone per-CS investigation files are optional; DP issue entries MAY carry investigation records.
 5. Closed IP/DP artifacts remaining in active folders MUST be moved to their `Closed/` folders.
 6. Missing canonical-domain OPEN DP templates MUST be created immediately to restore one-active-template continuity.
+7. New IPs created after this constitution upgrade MUST use bundle structure (`Governance/ImplementationPlans/IP-XXXX/IP-XXXX.md`).
+8. Any active legacy single-file IP that is advanced to a new status after this upgrade MUST be migrated to bundle format before that transition.
 
 ---
 
