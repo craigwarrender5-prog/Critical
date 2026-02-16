@@ -6,6 +6,7 @@ using System.IO;
 using System.Text;
 using System.Threading;
 using Critical.Simulation.Modular;
+using Critical.Simulation.Modular.Modules.PZR;
 using Critical.Simulation.Modular.State;
 using Critical.Simulation.Modular.Transfer;
 
@@ -106,6 +107,7 @@ public partial class HeatupSimEngine
     [HideInInspector] public bool modularCoordinatorPathLastStepUsed = false;
 
     private PlantSimulationCoordinator _plantSimulationCoordinator;
+    private bool _bypassLegacyPressurizerControlForCoordinatorStep;
 
     public object RuntimeSyncRoot => _runtimeSync;
 
@@ -217,15 +219,50 @@ public partial class HeatupSimEngine
         _plantSimulationCoordinator = new PlantSimulationCoordinator(this);
     }
 
-    internal void RunLegacySimulationStepForCoordinator(float dt)
+    internal void RunLegacySimulationStepForCoordinator(float dt, bool bypassLegacyPressurizerControl)
     {
-        StepSimulation(dt);
+        _bypassLegacyPressurizerControlForCoordinatorStep = bypassLegacyPressurizerControl;
+        try
+        {
+            StepSimulation(dt);
+        }
+        finally
+        {
+            _bypassLegacyPressurizerControlForCoordinatorStep = false;
+        }
+    }
+
+    internal bool IsLegacyPressurizerControlBypassedForCoordinatorStep()
+    {
+        return _bypassLegacyPressurizerControlForCoordinatorStep;
+    }
+
+    internal void ApplyModularPressurizerOutputs(in PressurizerOutputs outputs)
+    {
+        pzrHeaterPower = outputs.PzrHeaterPowerMw;
+        pzrHeatersOn = outputs.PzrHeatersOn;
+        heaterPIDOutput = outputs.HeaterPidOutput;
+        heaterPIDActive = outputs.HeaterPidActive;
+        heaterPIDState = outputs.HeaterPidState;
+
+        sprayState = outputs.SprayState;
+        sprayFlow_GPM = outputs.SprayFlowGpm;
+        sprayValvePosition = outputs.SprayValvePosition;
+        sprayActive = outputs.SprayActive;
+        spraySteamCondensed_lbm = outputs.SpraySteamCondensedLbm;
+
+        currentHeaterMode = outputs.CurrentHeaterMode;
+        bubbleHeaterSmoothedOutput = outputs.BubbleHeaterSmoothedOutput;
+        startupHoldActive = outputs.StartupHoldActive;
+        startupHoldReleaseLogged = outputs.StartupHoldReleaseLogged;
+        startupHoldActivationLogged = outputs.StartupHoldActivationLogged;
     }
 
     private void PublishStepSnapshot(float dt)
     {
         // Stage B single-writer rule: projection is emitted only through LegacyStateBridge.
         PlantState projected = LegacyStateBridge.Export(this, dt);
+        PressurizerSnapshot pressurizerSnapshot = LegacyStateBridge.ExportPressurizerSnapshot(this, dt);
         TransferLedger transferLedger = modularCoordinatorPathLastStepUsed && _plantSimulationCoordinator != null
             ? _plantSimulationCoordinator.LatestTransferLedger
             : TransferLedger.Empty;
@@ -233,6 +270,7 @@ public partial class HeatupSimEngine
             simTime,
             dt,
             projected,
+            pressurizerSnapshot,
             _latestSnapshot,
             transferLedger);
     }

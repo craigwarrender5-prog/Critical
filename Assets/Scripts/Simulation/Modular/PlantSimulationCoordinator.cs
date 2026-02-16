@@ -1,6 +1,8 @@
 using System;
 using System.Collections.Generic;
 using Critical.Simulation.Modular.Modules;
+using Critical.Simulation.Modular.Modules.PZR;
+using Critical.Simulation.Modular.State;
 using Critical.Simulation.Modular.Transfer;
 using Critical.Simulation.Modular.Validation;
 
@@ -77,13 +79,39 @@ namespace Critical.Simulation.Modular
             _plantBus.ClearStep();
             _lastComparatorResults.Clear();
 
-            // Authoritative mutable-state path (Stage A-D): legacy adapter only.
-            _legacyModule.Step(dt);
+            bool modularPzrEnabled = ModularFeatureFlags.UseModularPZR;
+            bool bypassLegacyPzr = modularPzrEnabled && ModularFeatureFlags.BypassLegacyPZR;
+            if (modularPzrEnabled && !bypassLegacyPzr)
+            {
+                throw new InvalidOperationException(
+                    "Single-writer rule violation: UseModularPZR requires BypassLegacyPZR=true.");
+            }
+
+            if (modularPzrEnabled)
+            {
+                PressurizerSnapshot inputSnapshot = GetPressurizerInputSnapshot(dt);
+                PressurizerOutputs pzrOutputs = _pressurizerModule.StepAuthoritative(
+                    dt,
+                    inputSnapshot,
+                    _plantBus,
+                    _stepIndex);
+                _engine.ApplyModularPressurizerOutputs(pzrOutputs);
+            }
+
+            // Authoritative mutable-state path: legacy solver with optional PZR control bypass.
+            _legacyModule.Step(dt, bypassLegacyPzr);
+
+            if (modularPzrEnabled)
+            {
+                PressurizerSnapshot postSnapshot = LegacyStateBridge.ExportPressurizerSnapshot(_engine, dt);
+                PlantState postPlantState = LegacyStateBridge.Export(_engine, dt);
+                _pressurizerModule.CapturePostStepSnapshot(postSnapshot, postPlantState, _plantBus, _stepIndex);
+            }
 
             // Stage D scaffolding: deterministic module slot order, no moved physics.
             if (ModularFeatureFlags.AnyModularExtractionEnabled())
             {
-                RunDeterministicStubOrder(dt);
+                RunDeterministicStubOrder(dt, skipPressurizerStep: modularPzrEnabled);
             }
 
             (bool unledgeredMutation, string reason) = DetectUnledgeredMutation();
@@ -105,7 +133,7 @@ namespace Critical.Simulation.Modular
             _initialized = false;
         }
 
-        private void RunDeterministicStubOrder(float dt)
+        private void RunDeterministicStubOrder(float dt, bool skipPressurizerStep)
         {
             // Provisional parity order for extraction scaffolding:
             // Reactor -> RCP -> RCS -> PZR -> CVCS -> RHR
@@ -127,10 +155,14 @@ namespace Critical.Simulation.Modular
                 RunComparatorIfEnabled("RCS", ModularFeatureFlags.EnableComparatorRCS, _rcsModule.CaptureShadowState);
             }
 
-            if (ModularFeatureFlags.UseModularPZR)
+            if (ModularFeatureFlags.UseModularPZR && !skipPressurizerStep)
             {
                 _pressurizerModule.Step(dt);
                 RunComparatorIfEnabled("PZR", ModularFeatureFlags.EnableComparatorPZR, _pressurizerModule.CaptureShadowState);
+            }
+            else if (ModularFeatureFlags.UseModularPZR && ModularFeatureFlags.EnableComparatorPZR)
+            {
+                RunComparatorIfEnabled("PZR", true, _pressurizerModule.CaptureShadowState);
             }
 
             if (ModularFeatureFlags.UseModularCVCS)
@@ -169,24 +201,33 @@ namespace Critical.Simulation.Modular
             return new ModuleShadowState(_engine.pressure, _engine.pzrLevel, _engine.primaryMassLedger_lb);
         }
 
+        private PressurizerSnapshot GetPressurizerInputSnapshot(float dt)
+        {
+            StepSnapshot snapshot = _engine.GetStepSnapshot();
+            if (snapshot?.PressurizerSnapshot != null && snapshot.PressurizerSnapshot != PressurizerSnapshot.Empty)
+                return snapshot.PressurizerSnapshot;
+
+            return LegacyStateBridge.ExportPressurizerSnapshot(_engine, dt);
+        }
+
         private (bool, string) DetectUnledgeredMutation()
         {
             if (Math.Abs(_engine.surgeFlow) > 1e-6f &&
-                !_plantBus.HasSignal("SURGE_FLOW_GPM", TransferQuantityType.FlowGpm))
+                !_plantBus.HasSignal(TransferIntentKinds.SignalSurgeFlowGpm, TransferQuantityType.FlowGpm))
             {
-                return (true, "SURGE_FLOW_GPM mutation observed without ledger event.");
+                return (true, $"{TransferIntentKinds.SignalSurgeFlowGpm} mutation observed without ledger event.");
             }
 
             if (Math.Abs(_engine.sprayFlow_GPM) > 1e-6f &&
-                !_plantBus.HasSignal("SPRAY_FLOW_GPM", TransferQuantityType.FlowGpm))
+                !_plantBus.HasSignal(TransferIntentKinds.SignalSprayFlowGpm, TransferQuantityType.FlowGpm))
             {
-                return (true, "SPRAY_FLOW_GPM mutation observed without ledger event.");
+                return (true, $"{TransferIntentKinds.SignalSprayFlowGpm} mutation observed without ledger event.");
             }
 
             if (Math.Abs(_engine.pzrHeaterPower) > 1e-6f &&
-                !_plantBus.HasSignal("PZR_HEATER_POWER_MW", TransferQuantityType.EnergyMw))
+                !_plantBus.HasSignal(TransferIntentKinds.SignalPzrHeaterPowerMw, TransferQuantityType.EnergyMw))
             {
-                return (true, "PZR_HEATER_POWER_MW mutation observed without ledger event.");
+                return (true, $"{TransferIntentKinds.SignalPzrHeaterPowerMw} mutation observed without ledger event.");
             }
 
             return (false, string.Empty);

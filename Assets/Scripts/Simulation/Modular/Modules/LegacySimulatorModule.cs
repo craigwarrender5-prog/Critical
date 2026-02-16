@@ -27,7 +27,12 @@ namespace Critical.Simulation.Modular.Modules
 
         public void Step(float dt)
         {
-            _engine.RunLegacySimulationStepForCoordinator(dt);
+            Step(dt, bypassLegacyPressurizerControl: false);
+        }
+
+        public void Step(float dt, bool bypassLegacyPressurizerControl)
+        {
+            _engine.RunLegacySimulationStepForCoordinator(dt, bypassLegacyPressurizerControl);
             EmitTransferIntents(dt);
         }
 
@@ -39,41 +44,42 @@ namespace Critical.Simulation.Modular.Modules
         private void EmitTransferIntents(float dt)
         {
             int stepIndex = (int)Math.Round(_engine.simTime / dt);
+            bool modularPzrAuthoritative = ModularFeatureFlags.UseModularPZR && ModularFeatureFlags.BypassLegacyPZR;
 
-            if (Math.Abs(_engine.surgeFlow) > 1e-6f)
+            if (!modularPzrAuthoritative && Math.Abs(_engine.surgeFlow) > 1e-6f)
             {
                 _plantBus.EmitFlowTransfer(
                     stepIndex,
-                    "SURGE_FLOW_GPM",
+                    TransferIntentKinds.SignalSurgeFlowGpm,
                     "RCS",
                     "PZR",
                     _engine.surgeFlow,
                     isBoundary: false,
-                    authorityPath: "LEGACY_STEP");
+                    authorityPath: TransferIntentKinds.AuthorityLegacyStep);
             }
 
-            if (Math.Abs(_engine.sprayFlow_GPM) > 1e-6f)
+            if (!modularPzrAuthoritative && Math.Abs(_engine.sprayFlow_GPM) > 1e-6f)
             {
                 _plantBus.EmitFlowTransfer(
                     stepIndex,
-                    "SPRAY_FLOW_GPM",
+                    TransferIntentKinds.SignalSprayFlowGpm,
                     "RCS",
                     "PZR",
                     _engine.sprayFlow_GPM,
                     isBoundary: false,
-                    authorityPath: "LEGACY_STEP");
+                    authorityPath: TransferIntentKinds.AuthorityLegacyStep);
             }
 
-            if (Math.Abs(_engine.pzrHeaterPower) > 1e-6f)
+            if (!modularPzrAuthoritative && Math.Abs(_engine.pzrHeaterPower) > 1e-6f)
             {
                 _plantBus.EmitEnergyTransfer(
                     stepIndex,
-                    "PZR_HEATER_POWER_MW",
+                    TransferIntentKinds.SignalPzrHeaterPowerMw,
                     "GRID",
                     "PZR",
                     _engine.pzrHeaterPower,
                     isBoundary: true,
-                    authorityPath: "LEGACY_STEP");
+                    authorityPath: TransferIntentKinds.AuthorityLegacyStep);
             }
 
             HeatupSimEngine.PrimaryBoundaryFlowEvent pboc = _engine.pbocLastEvent;
@@ -85,24 +91,24 @@ namespace Critical.Simulation.Modular.Modules
                 {
                     _plantBus.EmitMassTransfer(
                         stepIndex,
-                        "PRIMARY_BOUNDARY_IN_LB",
+                        TransferIntentKinds.SignalPrimaryBoundaryInLb,
                         "EXTERNAL",
                         "PRIMARY",
                         pboc.MassIn_lbm,
                         isBoundary: true,
-                        authorityPath: "PBOC_EVENT");
+                        authorityPath: TransferIntentKinds.AuthorityPbocEvent);
                 }
 
                 if (Math.Abs(pboc.MassOut_lbm) > 1e-6f)
                 {
                     _plantBus.EmitMassTransfer(
                         stepIndex,
-                        "PRIMARY_BOUNDARY_OUT_LB",
+                        TransferIntentKinds.SignalPrimaryBoundaryOutLb,
                         "PRIMARY",
                         "EXTERNAL",
                         pboc.MassOut_lbm,
                         isBoundary: true,
-                        authorityPath: "PBOC_EVENT");
+                        authorityPath: TransferIntentKinds.AuthorityPbocEvent);
                 }
             }
         }

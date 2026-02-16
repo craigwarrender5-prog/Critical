@@ -561,6 +561,7 @@ public partial class HeatupSimEngine : MonoBehaviour
 
     // Pre-drain phase flag (DETECTION/VERIFICATION still use solid-plant CVCS)
     private bool bubblePreDrainPhase = false;
+    internal bool BubblePreDrainPhaseActive => bubblePreDrainPhase;
 
     // v5.4.2.0 FF-05 Fix #4: One-time ledger re-baseline after first physics step
     private bool firstStepLedgerBaselined = false;
@@ -1161,6 +1162,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         //     floor is no longer appropriate. PID control takes over
         //     with proportional + backup heater staging at 2235 psig.
         // ================================================================
+        if (!IsLegacyPressurizerControlBypassedForCoordinatorStep())
         {
             UpdateStartupHoldState();
 
@@ -1561,6 +1563,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             }
         }
         else if (!rcpContribution.AllFullyRunning)
+        if (!IsLegacyPressurizerControlBypassedForCoordinatorStep())
         {
             // ============================================================
             // REGIME 2: RCPs Ramping — Blended isolated/coupled physics

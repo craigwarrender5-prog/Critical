@@ -41,5 +41,40 @@ namespace Critical.Simulation.Modular.State
                 engine.rcsBoronConcentration,
                 engine.heatupPhaseDesc);
         }
+
+        public static PressurizerSnapshot ExportPressurizerSnapshot(HeatupSimEngine engine, float dtHr)
+        {
+            if (engine == null)
+                throw new ArgumentNullException(nameof(engine));
+
+            return new PressurizerSnapshot(
+                engine.simTime,
+                dtHr,
+                engine.pressure,
+                engine.pressureRate,
+                engine.pzrLevel,
+                engine.T_avg,
+                engine.T_pzr,
+                engine.T_cold,
+                engine.pzrWaterVolume,
+                engine.pzrSteamVolume,
+                engine.rcpCount,
+                engine.solidPressurizer,
+                engine.BubblePreDrainPhaseActive,
+                engine.startupHoldActive,
+                engine.startupHoldReleaseTime_hr,
+                engine.startupHoldReleaseLogged,
+                engine.startupHoldActivationLogged,
+                engine.currentHeaterMode,
+                engine.bubbleHeaterSmoothedOutput,
+                engine.heaterPIDState,
+                engine.heaterPIDActive,
+                engine.heaterPIDOutput,
+                engine.sprayState,
+                engine.sprayActive,
+                engine.sprayFlow_GPM,
+                engine.sprayValvePosition,
+                engine.spraySteamCondensed_lbm);
+        }
     }
 }

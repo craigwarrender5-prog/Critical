@@ -13,12 +13,14 @@ namespace Critical.Simulation.Modular.State
             0f,
             0f,
             PlantState.Empty,
+            PressurizerSnapshot.Empty,
             HeatupSimEngine.RuntimeTelemetrySnapshot.Empty,
             TransferLedger.Empty);
 
         public float TimeHr { get; }
         public float DtHr { get; }
         public PlantState PlantState { get; }
+        public PressurizerSnapshot PressurizerSnapshot { get; }
         public HeatupSimEngine.RuntimeTelemetrySnapshot Telemetry { get; }
         public TransferLedger TransferLedger { get; }
 
@@ -26,12 +28,14 @@ namespace Critical.Simulation.Modular.State
             float timeHr,
             float dtHr,
             PlantState plantState,
+            PressurizerSnapshot pressurizerSnapshot,
             HeatupSimEngine.RuntimeTelemetrySnapshot telemetry,
             TransferLedger transferLedger)
         {
             TimeHr = timeHr;
             DtHr = dtHr;
             PlantState = plantState ?? PlantState.Empty;
+            PressurizerSnapshot = pressurizerSnapshot ?? PressurizerSnapshot.Empty;
             Telemetry = telemetry;
             TransferLedger = transferLedger ?? TransferLedger.Empty;
         }
