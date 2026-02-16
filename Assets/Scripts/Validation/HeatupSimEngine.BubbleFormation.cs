@@ -850,6 +850,9 @@ public partial class HeatupSimEngine
     const int TWO_PHASE_BRACKET_MAX_WINDOWS_PER_BAND = 8;
     const float TWO_PHASE_CLOSURE_HARD_MIN_PRESSURE_PSIA = 20f;
     const float TWO_PHASE_CLOSURE_HARD_MAX_PRESSURE_PSIA = 2800f;
+    const float TWO_PHASE_STARTUP_CONTROL_CEILING_PSIA = 425f + PlantConstants.PSIG_TO_PSIA;
+    const float TWO_PHASE_PHASE_TRANSITION_MAX_STEP_DELTA_PSIA = 25f;
+    const float TWO_PHASE_STARTUP_FALLBACK_VOLUME_RESIDUAL_FT3 = 5f;
 
     enum TwoPhaseEvalStatus
     {
@@ -910,17 +913,18 @@ public partial class HeatupSimEngine
         if (!EnsurePzrEnergyStateInitialized(stateSource))
             return false;
 
+        bool startupBubbleControlPhase = IsStartupBubbleControlPhase();
         float pressureFloor_psia = 20f;
-        if (bubblePhase == BubbleFormationPhase.DRAIN ||
-            bubblePhase == BubbleFormationPhase.STABILIZE ||
-            bubblePhase == BubbleFormationPhase.PRESSURIZE)
+        if (startupBubbleControlPhase)
         {
             pressureFloor_psia = Mathf.Max(pressureFloor_psia, PlantConstants.BUBBLE_DRAIN_MIN_PRESSURE_PSIA);
         }
 
         targetTotalMass_lbm = Mathf.Max(1f, targetTotalMass_lbm);
         float targetEnthalpy_BTU = Mathf.Max(0f, physicsState.PZRTotalEnthalpy_BTU + deltaEnthalpy_BTU);
-        float operatingCeiling_psia = PlantConstants.PZR_BASELINE_PORV_OPEN_PSIG + PlantConstants.PSIG_TO_PSIA;
+        float operatingCeiling_psia = startupBubbleControlPhase
+            ? TWO_PHASE_STARTUP_CONTROL_CEILING_PSIA
+            : PlantConstants.PZR_BASELINE_PORV_OPEN_PSIG + PlantConstants.PSIG_TO_PSIA;
         operatingCeiling_psia = Mathf.Clamp(
             operatingCeiling_psia,
             pressureFloor_psia + 1f,
@@ -937,6 +941,7 @@ public partial class HeatupSimEngine
             pressureGuess_psia,
             pressureFloor_psia,
             operatingCeiling_psia,
+            !startupBubbleControlPhase,
             TWO_PHASE_CLOSURE_VOLUME_TOLERANCE_FT3,
             energyTolerance_BTU,
             out TwoPhaseClosurePoint solvedPoint,
@@ -946,6 +951,76 @@ public partial class HeatupSimEngine
 
         if (!solved)
         {
+            TwoPhaseClosurePoint fallbackPoint = solvedPoint;
+            if (startupBubbleControlPhase && IsFinitePoint(solvedPoint))
+            {
+                float projectedPressure_psia = solvedPoint.Pressure_psia;
+                float stepDelta_psia = solvedPoint.Pressure_psia - pressure;
+                if (Mathf.Abs(stepDelta_psia) > TWO_PHASE_PHASE_TRANSITION_MAX_STEP_DELTA_PSIA)
+                {
+                    projectedPressure_psia = pressure + Mathf.Sign(stepDelta_psia) * TWO_PHASE_PHASE_TRANSITION_MAX_STEP_DELTA_PSIA;
+                }
+
+                if (!Mathf.Approximately(projectedPressure_psia, solvedPoint.Pressure_psia))
+                {
+                    TwoPhaseEvalStatus projectedStatus = EvaluateTwoPhaseMassEnergyAtPressure(
+                        projectedPressure_psia,
+                        targetTotalMass_lbm,
+                        targetEnthalpy_BTU,
+                        out TwoPhaseClosurePoint projectedPoint);
+                    if (projectedStatus == TwoPhaseEvalStatus.OK && IsFinitePoint(projectedPoint))
+                        fallbackPoint = projectedPoint;
+                }
+            }
+
+            bool allowStartupFallback =
+                startupBubbleControlPhase &&
+                IsFinitePoint(fallbackPoint) &&
+                fallbackPoint.Pressure_psia <= operatingCeiling_psia + 1e-3f &&
+                Mathf.Abs(fallbackPoint.VolumeResidual_ft3) <= TWO_PHASE_STARTUP_FALLBACK_VOLUME_RESIDUAL_FT3 &&
+                Mathf.Abs(fallbackPoint.EnergyResidual_BTU) <= energyTolerance_BTU;
+
+            if (allowStartupFallback)
+            {
+                ApplyPressureWrite(fallbackPoint.Pressure_psia, stateSource, stateDerived: true);
+                physicsState.Pressure = pressure;
+                physicsState.PZRWaterMass = fallbackPoint.WaterMass_lbm;
+                physicsState.PZRSteamMass = fallbackPoint.SteamMass_lbm;
+                physicsState.PZRWaterVolume = fallbackPoint.WaterVolume_ft3;
+                physicsState.PZRSteamVolume = fallbackPoint.SteamVolume_ft3;
+                physicsState.PZRTotalEnthalpy_BTU = fallbackPoint.EnthalpyTotal_BTU;
+                physicsState.PZRClosureConverged = true;
+                physicsState.PZRClosureVolumeResidual_ft3 = fallbackPoint.VolumeResidual_ft3;
+                physicsState.PZRClosureEnergyResidual_BTU = fallbackPoint.EnergyResidual_BTU;
+                pzrClosureSolveConverged++;
+                pzrClosureLastIterationCount = iterationsUsed;
+                pzrClosureLastFailureReason = "BOUNDED_STARTUP_FALLBACK";
+                pzrClosureLastConvergencePattern = "BOUNDARY_PROJECTED";
+                pzrClosureLastPhaseFraction = fallbackPoint.QualityClamped;
+                T_sat = WaterProperties.SaturationTemperature(pressure);
+                T_pzr = T_sat;
+                pzrWaterVolume = physicsState.PZRWaterVolume;
+                pzrSteamVolume = physicsState.PZRSteamVolume;
+                pzrLevel = physicsState.PZRLevel;
+                SyncPzrEnergyDiagnosticsFromPhysicsState();
+
+                LogEvent(
+                    EventSeverity.ALERT,
+                    $"Two-phase closure fallback in {stateSource}: reason={failReason}, " +
+                    $"Vres={fallbackPoint.VolumeResidual_ft3:F2}ft^3 bounded<= {TWO_PHASE_STARTUP_FALLBACK_VOLUME_RESIDUAL_FT3:F1}ft^3");
+
+                if (enablePzrBubbleDiagnostics)
+                {
+                    Debug.Log(
+                        $"[PZR_BUBBLE_DIAG][{pzrBubbleDiagnosticsLabel}] CLOSURE_FALLBACK source={stateSource} sim_hr={simTime:F4} " +
+                        $"phase={bubblePhase} reason={failReason} pattern={convergencePattern} iterations={iterationsUsed} " +
+                        $"pressure_psia={fallbackPoint.Pressure_psia:F3} V_residual_ft3={fallbackPoint.VolumeResidual_ft3:F3} " +
+                        $"E_residual_BTU={fallbackPoint.EnergyResidual_BTU:F3}");
+                }
+
+                return true;
+            }
+
             physicsState.PZRClosureConverged = false;
             physicsState.PZRClosureVolumeResidual_ft3 = solvedPoint.VolumeResidual_ft3;
             physicsState.PZRClosureEnergyResidual_BTU = solvedPoint.EnergyResidual_BTU;
@@ -974,6 +1049,79 @@ public partial class HeatupSimEngine
             }
 
             return false;
+        }
+
+        if (startupBubbleControlPhase)
+        {
+            float pressureStep_psia = Mathf.Abs(solvedPoint.Pressure_psia - pressure);
+            if (pressureStep_psia > TWO_PHASE_PHASE_TRANSITION_MAX_STEP_DELTA_PSIA)
+            {
+                float projectedPressure_psia = pressure +
+                    Mathf.Sign(solvedPoint.Pressure_psia - pressure) * TWO_PHASE_PHASE_TRANSITION_MAX_STEP_DELTA_PSIA;
+                TwoPhaseEvalStatus projectedStatus = EvaluateTwoPhaseMassEnergyAtPressure(
+                    projectedPressure_psia,
+                    targetTotalMass_lbm,
+                    targetEnthalpy_BTU,
+                    out TwoPhaseClosurePoint projectedPoint);
+                bool allowProjectedStepCommit =
+                    projectedStatus == TwoPhaseEvalStatus.OK &&
+                    IsFinitePoint(projectedPoint) &&
+                    Mathf.Abs(projectedPoint.VolumeResidual_ft3) <= TWO_PHASE_STARTUP_FALLBACK_VOLUME_RESIDUAL_FT3 &&
+                    Mathf.Abs(projectedPoint.EnergyResidual_BTU) <= energyTolerance_BTU;
+                if (allowProjectedStepCommit)
+                {
+                    ApplyPressureWrite(projectedPoint.Pressure_psia, stateSource, stateDerived: true);
+                    physicsState.Pressure = pressure;
+                    physicsState.PZRWaterMass = projectedPoint.WaterMass_lbm;
+                    physicsState.PZRSteamMass = projectedPoint.SteamMass_lbm;
+                    physicsState.PZRWaterVolume = projectedPoint.WaterVolume_ft3;
+                    physicsState.PZRSteamVolume = projectedPoint.SteamVolume_ft3;
+                    physicsState.PZRTotalEnthalpy_BTU = projectedPoint.EnthalpyTotal_BTU;
+                    physicsState.PZRClosureConverged = true;
+                    physicsState.PZRClosureVolumeResidual_ft3 = projectedPoint.VolumeResidual_ft3;
+                    physicsState.PZRClosureEnergyResidual_BTU = projectedPoint.EnergyResidual_BTU;
+                    pzrClosureSolveConverged++;
+                    pzrClosureLastIterationCount = iterationsUsed;
+                    pzrClosureLastFailureReason = "PHASE_TRANSITION_PROJECTED_STEP";
+                    pzrClosureLastConvergencePattern = convergencePattern;
+                    pzrClosureLastPhaseFraction = projectedPoint.QualityClamped;
+                    T_sat = WaterProperties.SaturationTemperature(pressure);
+                    T_pzr = T_sat;
+                    pzrWaterVolume = physicsState.PZRWaterVolume;
+                    pzrSteamVolume = physicsState.PZRSteamVolume;
+                    pzrLevel = physicsState.PZRLevel;
+                    SyncPzrEnergyDiagnosticsFromPhysicsState();
+
+                    LogEvent(
+                        EventSeverity.ALERT,
+                        $"Two-phase closure projected step in {stateSource}: jump {pressureStep_psia:F2} psia bounded to " +
+                        $"{TWO_PHASE_PHASE_TRANSITION_MAX_STEP_DELTA_PSIA:F1} psia, Vres={projectedPoint.VolumeResidual_ft3:F2}ft^3");
+
+                    if (enablePzrBubbleDiagnostics)
+                    {
+                        Debug.Log(
+                            $"[PZR_BUBBLE_DIAG][{pzrBubbleDiagnosticsLabel}] CLOSURE_PROJECTED_STEP source={stateSource} sim_hr={simTime:F4} " +
+                            $"phase={bubblePhase} jump_psia={pressureStep_psia:F3} projected_psia={projectedPoint.Pressure_psia:F3} " +
+                            $"V_residual_ft3={projectedPoint.VolumeResidual_ft3:F3} E_residual_BTU={projectedPoint.EnergyResidual_BTU:F3}");
+                    }
+
+                    return true;
+                }
+
+                physicsState.PZRClosureConverged = false;
+                physicsState.PZRClosureVolumeResidual_ft3 = solvedPoint.VolumeResidual_ft3;
+                physicsState.PZRClosureEnergyResidual_BTU = solvedPoint.EnergyResidual_BTU;
+                pzrClosureLastIterationCount = iterationsUsed;
+                pzrClosureLastFailureReason = "PHASE_TRANSITION_PRESSURE_JUMP";
+                pzrClosureLastConvergencePattern = convergencePattern;
+                pzrClosureLastPhaseFraction = solvedPoint.QualityClamped;
+                SyncPzrEnergyDiagnosticsFromPhysicsState();
+                LogEvent(
+                    EventSeverity.ALERT,
+                    $"Two-phase closure blocked in {stateSource}: pressure jump {pressureStep_psia:F2} psia exceeds " +
+                    $"{TWO_PHASE_PHASE_TRANSITION_MAX_STEP_DELTA_PSIA:F1} psia continuity bound");
+                return false;
+            }
         }
 
         // Stage D state contract: closure-committed mass/volume/energy must match target state.
@@ -1082,6 +1230,13 @@ public partial class HeatupSimEngine
             : 0f;
     }
 
+    bool IsStartupBubbleControlPhase()
+    {
+        return bubblePhase == BubbleFormationPhase.DRAIN ||
+               bubblePhase == BubbleFormationPhase.STABILIZE ||
+               bubblePhase == BubbleFormationPhase.PRESSURIZE;
+    }
+
     bool RunTwoPhaseBracketOnlyProbe(
         string probeSource,
         out bool bracketFound,
@@ -1100,15 +1255,16 @@ public partial class HeatupSimEngine
             return false;
         }
 
+        bool startupBubbleControlPhase = IsStartupBubbleControlPhase();
         float pressureFloor_psia = 20f;
-        if (bubblePhase == BubbleFormationPhase.DRAIN ||
-            bubblePhase == BubbleFormationPhase.STABILIZE ||
-            bubblePhase == BubbleFormationPhase.PRESSURIZE)
+        if (startupBubbleControlPhase)
         {
             pressureFloor_psia = Mathf.Max(pressureFloor_psia, PlantConstants.BUBBLE_DRAIN_MIN_PRESSURE_PSIA);
         }
 
-        float operatingCeiling_psia = PlantConstants.PZR_BASELINE_PORV_OPEN_PSIG + PlantConstants.PSIG_TO_PSIA;
+        float operatingCeiling_psia = startupBubbleControlPhase
+            ? TWO_PHASE_STARTUP_CONTROL_CEILING_PSIA
+            : PlantConstants.PZR_BASELINE_PORV_OPEN_PSIG + PlantConstants.PSIG_TO_PSIA;
         operatingCeiling_psia = Mathf.Clamp(
             operatingCeiling_psia,
             pressureFloor_psia + 1f,
@@ -1125,6 +1281,7 @@ public partial class HeatupSimEngine
             pressureGuess_psia,
             pressureFloor_psia,
             operatingCeiling_psia,
+            !startupBubbleControlPhase,
             TWO_PHASE_CLOSURE_VOLUME_TOLERANCE_FT3,
             out TwoPhaseBracketSearchResult search);
 
@@ -1142,6 +1299,7 @@ public partial class HeatupSimEngine
         float pressureGuess_psia,
         float pressureFloor_psia,
         float pressureCeiling_psia,
+        bool allowHardBandFallback,
         float volumeTolerance_ft3,
         float energyTolerance_BTU,
         out TwoPhaseClosurePoint solvedPoint,
@@ -1171,6 +1329,7 @@ public partial class HeatupSimEngine
             pressureGuess_psia,
             pressureFloor_psia,
             pressureCeiling_psia,
+            allowHardBandFallback,
             volumeTolerance_ft3,
             out TwoPhaseBracketSearchResult search);
 
@@ -1413,6 +1572,7 @@ public partial class HeatupSimEngine
         float pressureGuess_psia,
         float operatingMin_psia,
         float operatingMax_psia,
+        bool allowHardBandFallback,
         float volumeTolerance_ft3,
         out TwoPhaseBracketSearchResult result)
     {
@@ -1647,7 +1807,7 @@ public partial class HeatupSimEngine
         }
 
         bool found = SearchBand("OPERATING", operatingMin_psia, operatingMax_psia);
-        if (!found)
+        if (!found && allowHardBandFallback)
             found = SearchBand("HARD", hardMin_psia, hardMax_psia);
 
         if (!search.HasBestPoint)

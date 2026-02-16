@@ -1,4 +1,4 @@
-# DP Execution Recommendation
+﻿# DP Execution Recommendation
 Date: 2026-02-15
 Source of truth:
 - `Governance/IssueRegister/issue_index.json` (full lifecycle)
@@ -49,3 +49,8 @@ Source of truth:
 
 ## Recommendation
 Authorize **DP-0002** next, with DP-0007 prepared in parallel for evidence-hardening follow-up.
+## Roadmap Update - 2026-02-16
+- DP-0012 - Pressurizer & Startup Control: COMPLETE via IP-0028 closeout.
+- Closure evidence: Governance/Issues/IP-0028_StageE_SystemRegression_2026-02-16_131703.md, Governance/ImplementationReports/IP-0028_Closeout_Report.md
+- Closed artifacts: Governance/DomainPlans/Closed/DP-0012 - Pressurizer & Startup Control.md, Governance/ImplementationPlans/Closed/IP-0028 - DP-0012 - Pressurizer Startup and PZR Authority Governance.md
+- Domain continuity template recreated: Governance/DomainPlans/DP-0012 - Pressurizer & Startup Control.md

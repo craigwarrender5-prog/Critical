@@ -314,6 +314,15 @@ public partial class HeatupSimEngine
             : 0f;
         startupHoldReleaseLogged = false;
         startupHoldActivationLogged = false;
+        startupHoldStartTime_hr = 0f;
+        startupHoldElapsedTime_hr = 0f;
+        startupHoldPressureRateAbs_psi_hr = 0f;
+        startupHoldTimeGatePassed = false;
+        startupHoldPressureRateGatePassed = false;
+        startupHoldStateQualityGatePassed = false;
+        startupHoldReleaseBlockReason = startupHoldActive ? "MIN_TIME_NOT_REACHED" : "NONE";
+        startupHoldPressureRateStableAccum_sec = 0f;
+        startupHoldLastBlockedLogTime_hr = -1f;
 
         // v5.4.1 Audit Fix: Initialize at post-fill/vent pressure (100 psig).
         // CVCS PI controller will ramp pressure up to the 350 psig setpoint.
@@ -457,6 +466,15 @@ public partial class HeatupSimEngine
         startupHoldReleaseTime_hr = 0f;
         startupHoldReleaseLogged = true;
         startupHoldActivationLogged = true;
+        startupHoldStartTime_hr = 0f;
+        startupHoldElapsedTime_hr = 0f;
+        startupHoldPressureRateAbs_psi_hr = 0f;
+        startupHoldTimeGatePassed = true;
+        startupHoldPressureRateGatePassed = true;
+        startupHoldStateQualityGatePassed = true;
+        startupHoldReleaseBlockReason = "NONE";
+        startupHoldPressureRateStableAccum_sec = 0f;
+        startupHoldLastBlockedLogTime_hr = -1f;
         coldShutdownProfile = default;
 
         physicsState = new SystemState();
@@ -590,6 +608,16 @@ public partial class HeatupSimEngine
         pzrClosureLastFailureReason = "NONE";
         pzrClosureLastConvergencePattern = "UNSET";
         pzrClosureLastPhaseFraction = 0f;
+        heaterManualDisabled = false;
+        heaterAuthorityState = startupHoldActive ? "HOLD_LOCKED" : "AUTO";
+        heaterAuthorityReason = startupHoldActive ? "startup_hold_active" : "auto_authority";
+        heaterLimiterReason = startupHoldActive ? "HOLD_LOCKED" : "NONE";
+        heaterLimiterDetail = startupHoldActive ? "Startup hold authority active" : "No active limiter";
+        heaterPressureRateClampActive = false;
+        heaterRampRateClampActive = false;
+        heaterAutoDemandComputeSuppressed = startupHoldActive;
+        lastLoggedHeaterAuthorityState = "UNSET";
+        lastLoggedHeaterLimiterReason = "UNSET";
         drainSteamDisplacement_lbm = 0f;
         drainCvcsTransfer_lbm = 0f;
         drainDuration_hr = 0f;

@@ -1,10 +1,10 @@
----
+﻿---
 IP ID: IP-0028
 DP Reference: DP-0012
 Title: DP-0012 - Pressurizer Startup and PZR Authority Governance
-Status: Draft
+Status: CLOSED
 Date: 2026-02-16
-Mode: SPEC/DRAFT
+Mode: EXECUTED/CLOSEOUT
 Source of Scope Truth: Governance/IssueRegister/issue_index.json (active CS assigned to DP-0012)
 Constraint: Planning artifact only; no code changes in this step
 ---
@@ -175,10 +175,13 @@ Exit criteria:
 3. Issue register/index/archive updates follow constitution at closure time.
 4. Changelog/version classification occurs only during closure workflow (Article XI / XII).
 
-## 7) Initial Execution Status
+## 7) Closeout Status
 
-Current status: `Draft`
+Final status: `CLOSED`
 
-To move to `Authorized`:
-1. Baseline gate in Section 3 must be fully completed.
-2. DP execution authorization must be confirmed for DP-0012.
+- Closure date: `2026-02-16`
+- Final run stamp: `20260216_131255`
+- Final Stage E report: `Governance/Issues/IP-0028_StageE_SystemRegression_2026-02-16_131703.md`
+- Final closeout report: `Governance/ImplementationReports/IP-0028_Closeout_Report.md`
+- Version classification: `Minor`
+- Changelog: `Governance/Changelogs/CHANGELOG_v0.7.0.0.md`

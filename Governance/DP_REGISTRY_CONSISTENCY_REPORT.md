@@ -56,3 +56,8 @@ Scope: Governance artifacts only (active DP markdown + closed DP markdown + issu
 **DP_REGISTRY_CONSISTENT_FOR_ACTIVE_TEMPLATES**
 
 DP_REGISTRY_CONSISTENT_FOR_ACTIVE_TEMPLATES
+
+## Update - 2026-02-16
+- DP-0012 closeout completed under IP-0028.
+- Closed DP artifact archived and successor OPEN template restored for domain continuity.
+

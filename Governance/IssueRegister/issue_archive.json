@@ -1,8 +1,8 @@
 ﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-15T08:50:52Z",
+    "generated_at":  "2026-02-16T12:31:29Z",
     "source":  "Updates/IssueRegister_DEPRECATED.md",
-    "archived_issue_count":  28,
+    "archived_issue_count":  33,
     "issues":  [
                    {
                        "id":  "CS-0001",
@@ -656,6 +656,143 @@
                        "tags":  [
                                     "Lifecycle / State Ownership",
                                     "Multiple Writers"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0081",
+                       "title":  "Solid-plant high pressure control band is configured above documented operating band.",
+                       "domain":  "Pressurizer \u0026 Two-Phase Physics",
+                       "severity":  "MEDIUM",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-15T16:50:47Z",
+                       "closed_at":  "2026-02-16T12:31:29Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0028"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/Issues/IP-0028_StageC_StartupGovernance_2026-02-16_124518.md",
+                                               "Governance/Issues/IP-0028_StageD_PressurizerControlValidation_2026-02-16_131529.md",
+                                               "Governance/Issues/IP-0028_StageE_SystemRegression_2026-02-16_131703.md",
+                                               "HeatupLogs/IP0028_StageDE_Unity.log"
+                                           ],
+                       "one_line_rca":  "Closed via IP-0028 staged remediation and deterministic validation evidence.",
+                       "tags":  [
+                                    "NCR-Migration",
+                                    "Audit-2026-02-15",
+                                    "F-003",
+                                    "Constitution-Article-VI",
+                                    "Investigation-Completed-2026-02-16"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0091",
+                       "title":  "PZR bubble closure path shows persistent non-convergence with large residuals and post-residual renormalization masking.",
+                       "domain":  "Pressurizer \u0026 Two-Phase Physics",
+                       "severity":  "HIGH",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-15T16:55:16Z",
+                       "closed_at":  "2026-02-16T12:31:29Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0028"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/Issues/IP-0028_StageC_StartupGovernance_2026-02-16_124518.md",
+                                               "Governance/Issues/IP-0028_StageD_PressurizerControlValidation_2026-02-16_131529.md",
+                                               "Governance/Issues/IP-0028_StageE_SystemRegression_2026-02-16_131703.md",
+                                               "HeatupLogs/IP0028_StageDE_Unity.log"
+                                           ],
+                       "one_line_rca":  "Closed via IP-0028 staged remediation and deterministic validation evidence.",
+                       "tags":  [
+                                    "Investigation-2026-02-15",
+                                    "PZR-Bubble",
+                                    "Two-Phase-Closure",
+                                    "Constitution-Article-VI",
+                                    "Investigation-Completed-2026-02-16"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0093",
+                       "title":  "Complete Pressurizer (PZR) System Remodel to Align with Technical_Documentation and Replace Current Heuristic Bubble Model",
+                       "domain":  "Pressurizer \u0026 Two-Phase Physics",
+                       "severity":  "HIGH",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-15T17:16:00Z",
+                       "closed_at":  "2026-02-16T12:31:29Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0028"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/Issues/IP-0028_StageC_StartupGovernance_2026-02-16_124518.md",
+                                               "Governance/Issues/IP-0028_StageD_PressurizerControlValidation_2026-02-16_131529.md",
+                                               "Governance/Issues/IP-0028_StageE_SystemRegression_2026-02-16_131703.md",
+                                               "HeatupLogs/IP0028_StageDE_Unity.log"
+                                           ],
+                       "one_line_rca":  "Closed via IP-0028 staged remediation and deterministic validation evidence.",
+                       "tags":  [
+                                    "Investigation-2026-02-15",
+                                    "PZR-Remodel",
+                                    "Two-Phase-Closure",
+                                    "Technical-Documentation-Alignment",
+                                    "Constitution-Article-VI",
+                                    "Investigation-Completed-2026-02-16"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0094",
+                       "title":  "Add Cold-Start Stabilization Hold and PZR Heater Off/Auto/Manual Control to Prevent Immediate Pressurization and Improve Operator Realism",
+                       "domain":  "Pressurizer \u0026 Startup Control",
+                       "severity":  "MEDIUM",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-15T17:43:27Z",
+                       "closed_at":  "2026-02-16T12:31:29Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0028"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/Issues/IP-0028_StageC_StartupGovernance_2026-02-16_124518.md",
+                                               "Governance/Issues/IP-0028_StageD_PressurizerControlValidation_2026-02-16_131529.md",
+                                               "Governance/Issues/IP-0028_StageE_SystemRegression_2026-02-16_131703.md",
+                                               "HeatupLogs/IP0028_StageDE_Unity.log"
+                                           ],
+                       "one_line_rca":  "Closed via IP-0028 staged remediation and deterministic validation evidence.",
+                       "tags":  [
+                                    "Investigation-2026-02-15",
+                                    "Cold-Start-Stabilization",
+                                    "PZR-Heater-Control",
+                                    "Operator-Realism",
+                                    "Constitution-Article-VI",
+                                    "Investigation-Completed-2026-02-16"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0096",
+                       "title":  "PZR heaters capped after reaching operating pressure hold band",
+                       "domain":  "Pressurizer \u0026 Two-Phase Physics",
+                       "severity":  "HIGH",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-16T10:31:02Z",
+                       "closed_at":  "2026-02-16T12:31:29Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0028"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/Issues/IP-0028_StageC_StartupGovernance_2026-02-16_124518.md",
+                                               "Governance/Issues/IP-0028_StageD_PressurizerControlValidation_2026-02-16_131529.md",
+                                               "Governance/Issues/IP-0028_StageE_SystemRegression_2026-02-16_131703.md",
+                                               "HeatupLogs/IP0028_StageDE_Unity.log"
+                                           ],
+                       "one_line_rca":  "Closed via IP-0028 staged remediation and deterministic validation evidence.",
+                       "tags":  [
+                                    "Pressurizer-Pressure-Control",
+                                    "HOLD_SOLID",
+                                    "Heater-Authority",
+                                    "Investigation-2026-02-16",
+                                    "Investigation-Completed-2026-02-16"
                                 ]
                    }
                ]

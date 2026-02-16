@@ -1,8 +1,8 @@
 ﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-16T10:56:12Z",
+    "generated_at":  "2026-02-16T12:33:37Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-    "active_issue_count":  31,
+    "active_issue_count":  26,
     "issues":  [
                    {
                        "id":  "CS-0006",
@@ -1967,12 +1967,12 @@
                        "title":  "Solid-plant high pressure control band is configured above documented operating band.",
                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
                        "severity":  "MEDIUM",
-                       "status":  "READY_FOR_FIX",
+                       "status":  "CLOSED",
                        "created_at":  "2026-02-15T16:50:47Z",
-                       "updated_at":  "2026-02-16T10:56:12Z",
+                       "updated_at":  "2026-02-16T12:33:37Z",
                        "stage_detected":  "Audit-2026-02-15",
                        "assigned_dp":  "DP-0012",
-                       "assigned_ip":  null,
+                       "assigned_ip":  "IP-0028",
                        "observations":  [
                                             "Derived from Conformance Audit finding F-003.",
                                             "Solid-plant high pressure control band is configured above documented operating band.",
@@ -2010,7 +2010,13 @@
                                     "F-003",
                                     "Constitution-Article-VI",
                                     "Investigation-Completed-2026-02-16"
-                                ]
+                                ],
+                       "closure_reason":  "PASS",
+                       "closure_reference":  "IP-0028",
+                       "closure_evidence_path":  "Governance/Issues/IP-0028_StageE_SystemRegression_2026-02-16_131703.md",
+                       "closure_runlog_path":  "HeatupLogs/IP0028_StageDE_Unity.log",
+                       "closure_impact_class":  "Minor",
+                       "closure_changelog":  "Governance/Changelogs/CHANGELOG_v0.7.0.0.md"
                    },
                    {
                        "id":  "CS-0082",
@@ -2413,12 +2419,12 @@
                        "title":  "PZR bubble closure path shows persistent non-convergence with large residuals and post-residual renormalization masking.",
                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
                        "severity":  "HIGH",
-                       "status":  "READY_FOR_FIX",
+                       "status":  "CLOSED",
                        "created_at":  "2026-02-15T16:55:16Z",
-                       "updated_at":  "2026-02-16T10:56:12Z",
+                       "updated_at":  "2026-02-16T12:33:37Z",
                        "stage_detected":  "Investigation-2026-02-15",
                        "assigned_dp":  "DP-0012",
-                       "assigned_ip":  null,
+                       "assigned_ip":  "IP-0028",
                        "observations":  [
                                             "Derived from PZR bubble behavior investigation dated 2026-02-15.",
                                             "Bubble closure diagnostics show widespread non-convergence during STABILIZE and PRESSURIZE phases, with residuals remaining in the thousands of ft^3.",
@@ -2463,7 +2469,13 @@
                                     "Two-Phase-Closure",
                                     "Constitution-Article-VI",
                                     "Investigation-Completed-2026-02-16"
-                                ]
+                                ],
+                       "closure_reason":  "PASS",
+                       "closure_reference":  "IP-0028",
+                       "closure_evidence_path":  "Governance/Issues/IP-0028_StageE_SystemRegression_2026-02-16_131703.md",
+                       "closure_runlog_path":  "HeatupLogs/IP0028_StageDE_Unity.log",
+                       "closure_impact_class":  "Minor",
+                       "closure_changelog":  "Governance/Changelogs/CHANGELOG_v0.7.0.0.md"
                    },
                    {
                        "id":  "CS-0092",
@@ -2529,12 +2541,12 @@
                        "title":  "Complete Pressurizer (PZR) System Remodel to Align with Technical_Documentation and Replace Current Heuristic Bubble Model",
                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
                        "severity":  "HIGH",
-                       "status":  "READY_FOR_FIX",
+                       "status":  "CLOSED",
                        "created_at":  "2026-02-15T17:16:00Z",
-                       "updated_at":  "2026-02-16T10:56:12Z",
+                       "updated_at":  "2026-02-16T12:33:37Z",
                        "stage_detected":  "Investigation-2026-02-15",
                        "assigned_dp":  "DP-0012",
-                       "assigned_ip":  null,
+                       "assigned_ip":  "IP-0028",
                        "observations":  [
                                             "Structural refactor request: replace legacy hybrid PZR bubble model (pressure/volume residual iteration + heuristic phase logic + post-failure renormalization) with a thermodynamically grounded subsystem.",
                                             "Current implementation concerns include persistent two-phase closure non-convergence, large residuals, missing persistent energy/enthalpy state, and nonphysical level/pressure discontinuities.",
@@ -2579,19 +2591,25 @@
                                     "Technical-Documentation-Alignment",
                                     "Constitution-Article-VI",
                                     "Investigation-Completed-2026-02-16"
-                                ]
+                                ],
+                       "closure_reason":  "PASS",
+                       "closure_reference":  "IP-0028",
+                       "closure_evidence_path":  "Governance/Issues/IP-0028_StageE_SystemRegression_2026-02-16_131703.md",
+                       "closure_runlog_path":  "HeatupLogs/IP0028_StageDE_Unity.log",
+                       "closure_impact_class":  "Minor",
+                       "closure_changelog":  "Governance/Changelogs/CHANGELOG_v0.7.0.0.md"
                    },
                    {
                        "id":  "CS-0094",
                        "title":  "Add Cold-Start Stabilization Hold and PZR Heater Off/Auto/Manual Control to Prevent Immediate Pressurization and Improve Operator Realism",
                        "domain":  "Pressurizer \u0026 Startup Control",
                        "severity":  "MEDIUM",
-                       "status":  "READY_FOR_FIX",
+                       "status":  "CLOSED",
                        "created_at":  "2026-02-15T17:43:27Z",
-                       "updated_at":  "2026-02-16T10:56:12Z",
+                       "updated_at":  "2026-02-16T12:33:37Z",
                        "stage_detected":  "Investigation-2026-02-15",
                        "assigned_dp":  "DP-0012",
-                       "assigned_ip":  null,
+                       "assigned_ip":  "IP-0028",
                        "observations":  [
                                             "Startup currently allows immediate heater/pressurization engagement before post-init state settling, which can amplify nonphysical early transients and complicate diagnostics.",
                                             "Requested mitigation includes Option A baseline: deterministic startup stabilization hold (10-20 s) with heaters OFF and pressurization actions inhibited until release, with explicit hold-active/released logging.",
@@ -2631,7 +2649,13 @@
                                     "Operator-Realism",
                                     "Constitution-Article-VI",
                                     "Investigation-Completed-2026-02-16"
-                                ]
+                                ],
+                       "closure_reason":  "PASS",
+                       "closure_reference":  "IP-0028",
+                       "closure_evidence_path":  "Governance/Issues/IP-0028_StageE_SystemRegression_2026-02-16_131703.md",
+                       "closure_runlog_path":  "HeatupLogs/IP0028_StageDE_Unity.log",
+                       "closure_impact_class":  "Minor",
+                       "closure_changelog":  "Governance/Changelogs/CHANGELOG_v0.7.0.0.md"
                    },
                    {
                        "id":  "CS-0095",
@@ -2706,12 +2730,12 @@
                        "title":  "PZR heaters capped after reaching operating pressure hold band",
                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
                        "severity":  "HIGH",
-                       "status":  "READY_FOR_FIX",
+                       "status":  "CLOSED",
                        "created_at":  "2026-02-16T10:31:02Z",
-                       "updated_at":  "2026-02-16T10:56:12Z",
+                       "updated_at":  "2026-02-16T12:33:37Z",
                        "stage_detected":  "Investigation-2026-02-16",
                        "assigned_dp":  "DP-0012",
-                       "assigned_ip":  null,
+                       "assigned_ip":  "IP-0028",
                        "observations":  [
                                             "During heatup runs, once the pressurizer enters operating pressure hold regime (HOLD_SOLID with solid pressure in band), heater output no longer ramps toward full power and remains materially below capacity.",
                                             "Observed windows at 1.50 hr, 1.75 hr, and 2.00 hr show heater power constrained to approximately 0.35-0.69 MW while spray is disabled due to no running RCPs.",
@@ -2753,7 +2777,13 @@
                                     "Heater-Authority",
                                     "Investigation-2026-02-16",
                                     "Investigation-Completed-2026-02-16"
-                                ]
+                                ],
+                       "closure_reason":  "PASS",
+                       "closure_reference":  "IP-0028",
+                       "closure_evidence_path":  "Governance/Issues/IP-0028_StageE_SystemRegression_2026-02-16_131703.md",
+                       "closure_runlog_path":  "HeatupLogs/IP0028_StageDE_Unity.log",
+                       "closure_impact_class":  "Minor",
+                       "closure_changelog":  "Governance/Changelogs/CHANGELOG_v0.7.0.0.md"
                    },
                    {
                        "id":  "CS-0097",

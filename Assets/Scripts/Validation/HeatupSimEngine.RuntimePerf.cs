@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text;
 using System.Threading;
+using Critical.Physics;
 using Critical.Simulation.Modular;
 using Critical.Simulation.Modular.Modules.PZR;
 using Critical.Simulation.Modular.State;
@@ -256,6 +257,12 @@ public partial class HeatupSimEngine
         startupHoldActive = outputs.StartupHoldActive;
         startupHoldReleaseLogged = outputs.StartupHoldReleaseLogged;
         startupHoldActivationLogged = outputs.StartupHoldActivationLogged;
+        heaterAuthorityState = startupHoldActive
+            ? "HOLD_LOCKED"
+            : (currentHeaterMode == HeaterMode.OFF ? "OFF" : (heaterManualDisabled ? "MANUAL_DISABLED" : "AUTO"));
+        heaterAuthorityReason = startupHoldActive
+            ? "startup_hold_active"
+            : (currentHeaterMode == HeaterMode.OFF ? "mode_off" : (heaterManualDisabled ? "manual_disable_lockout" : "auto_authority"));
     }
 
     private void PublishStepSnapshot(float dt)

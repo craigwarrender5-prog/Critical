@@ -80,6 +80,14 @@ public partial class HeatupSimEngine : MonoBehaviour
         IsolatedHeatup
     }
 
+    enum HeaterAuthorityState
+    {
+        HOLD_LOCKED,
+        OFF,
+        MANUAL_DISABLED,
+        AUTO
+    }
+
     struct DynamicIntervalSample
     {
         public float PrimaryHeatInput_MW;
@@ -500,6 +508,21 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public float startupHoldReleaseTime_hr;
     [HideInInspector] public bool startupHoldReleaseLogged;
     [HideInInspector] public bool startupHoldActivationLogged;
+    [HideInInspector] public float startupHoldStartTime_hr;
+    [HideInInspector] public float startupHoldElapsedTime_hr;
+    [HideInInspector] public float startupHoldPressureRateAbs_psi_hr;
+    [HideInInspector] public bool startupHoldTimeGatePassed;
+    [HideInInspector] public bool startupHoldPressureRateGatePassed;
+    [HideInInspector] public bool startupHoldStateQualityGatePassed;
+    [HideInInspector] public string startupHoldReleaseBlockReason = "NONE";
+    [HideInInspector] public string heaterAuthorityState = "AUTO";
+    [HideInInspector] public string heaterAuthorityReason = "INIT";
+    [HideInInspector] public string heaterLimiterReason = "NONE";
+    [HideInInspector] public string heaterLimiterDetail = "NONE";
+    [HideInInspector] public bool heaterPressureRateClampActive;
+    [HideInInspector] public bool heaterRampRateClampActive;
+    [HideInInspector] public bool heaterManualDisabled;
+    [HideInInspector] public bool heaterAutoDemandComputeSuppressed;
 
     // Bubble formation state machine (see HeatupSimEngine.BubbleFormation.cs)
     [HideInInspector] public BubbleFormationPhase bubblePhase = BubbleFormationPhase.NONE;
@@ -558,6 +581,14 @@ public partial class HeatupSimEngine : MonoBehaviour
     private int drainLineupRequestedIndex = 1;
     private string drainLineupRequestedTrigger = "NONE";
     private string drainLineupRequestedReason = "NONE";
+    private const float STARTUP_HOLD_PRESSURE_RATE_GATE_PSI_HR = 200f;
+    private const float STARTUP_HOLD_STABILITY_WINDOW_SEC = 10f;
+    private const float STARTUP_HOLD_BLOCKED_LOG_INTERVAL_SEC = 30f;
+    private float startupHoldPressureRateStableAccum_sec;
+    private float startupHoldLastStepDt_hr = 1f / 360f;
+    private float startupHoldLastBlockedLogTime_hr = -1f;
+    private string lastLoggedHeaterAuthorityState = "UNSET";
+    private string lastLoggedHeaterLimiterReason = "UNSET";
 
     // Pre-drain phase flag (DETECTION/VERIFICATION still use solid-plant CVCS)
     private bool bubblePreDrainPhase = false;
@@ -1100,6 +1131,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         pbocTickIndex++;
         pbocEventActiveThisTick = false;
         regime3CVCSPreApplied = false;
+        startupHoldLastStepDt_hr = dt;
         int prevRcpCountStep = rcpCount;
         float prevRcpHeatStep = rcpHeat;
         float prevPzrLevelStep = pzrLevel;
@@ -1165,6 +1197,11 @@ public partial class HeatupSimEngine : MonoBehaviour
         if (!IsLegacyPressurizerControlBypassedForCoordinatorStep())
         {
             UpdateStartupHoldState();
+            heaterPressureRateClampActive = false;
+            heaterRampRateClampActive = false;
+            heaterAutoDemandComputeSuppressed = false;
+            heaterLimiterReason = "NONE";
+            heaterLimiterDetail = "NONE";
 
             float pzrLevelSetpointForHeater;
             if (solidPressurizer || bubblePreDrainPhase)
@@ -1173,6 +1210,8 @@ public partial class HeatupSimEngine : MonoBehaviour
                 pzrLevelSetpointForHeater = PlantConstants.GetPZRLevelSetpointUnified(T_avg);
 
             bool letdownIsolatedForHeater = (pzrLevel < PlantConstants.PZR_LOW_LEVEL_ISOLATION);
+            HeaterAuthorityState effectiveAuthority = ResolveHeaterAuthorityState();
+            string requestedMode = currentHeaterMode.ToString();
 
             // ==============================================================
             // v4.4.0: MODE TRANSITION — PRESSURIZE_AUTO → AUTOMATIC_PID
@@ -1180,14 +1219,8 @@ public partial class HeatupSimEngine : MonoBehaviour
             // proportional + backup heater groups at 2235 psig setpoint.
             // Transition occurs when pressure reaches operating band.
             // ==============================================================
-            if (startupHoldActive)
-            {
-                pzrHeaterPower = 0f;
-                pzrHeatersOn = false;
-                heaterPIDOutput = 0f;
-                heaterPIDActive = false;
-            }
-            else if (currentHeaterMode == HeaterMode.PRESSURIZE_AUTO &&
+            if (effectiveAuthority == HeaterAuthorityState.AUTO &&
+                currentHeaterMode == HeaterMode.PRESSURIZE_AUTO &&
                 pressure >= PlantConstants.HEATER_MODE_TRANSITION_PRESSURE_PSIA)
             {
                 currentHeaterMode = HeaterMode.AUTOMATIC_PID;
@@ -1209,12 +1242,35 @@ public partial class HeatupSimEngine : MonoBehaviour
             //   AUTOMATIC_PID: PID controller with prop/backup staging
             //   All others: CalculateHeaterState (rate-modulated or fixed)
             // ==============================================================
-            if (startupHoldActive)
+            if (effectiveAuthority == HeaterAuthorityState.HOLD_LOCKED)
             {
+                heaterAutoDemandComputeSuppressed = true;
                 pzrHeaterPower = 0f;
                 pzrHeatersOn = false;
                 heaterPIDOutput = 0f;
                 heaterPIDActive = false;
+                heaterLimiterReason = "HOLD_LOCKED";
+                heaterLimiterDetail = "Startup hold authority active";
+            }
+            else if (effectiveAuthority == HeaterAuthorityState.OFF)
+            {
+                heaterAutoDemandComputeSuppressed = true;
+                pzrHeaterPower = 0f;
+                pzrHeatersOn = false;
+                heaterPIDOutput = 0f;
+                heaterPIDActive = false;
+                heaterLimiterReason = "MODE_OFF";
+                heaterLimiterDetail = "Heater mode OFF";
+            }
+            else if (effectiveAuthority == HeaterAuthorityState.MANUAL_DISABLED)
+            {
+                heaterAutoDemandComputeSuppressed = true;
+                pzrHeaterPower = 0f;
+                pzrHeatersOn = false;
+                heaterPIDOutput = 0f;
+                heaterPIDActive = false;
+                heaterLimiterReason = "MANUAL_DISABLED";
+                heaterLimiterDetail = "Manual disable lockout";
             }
             else if (currentHeaterMode == HeaterMode.AUTOMATIC_PID)
             {
@@ -1225,6 +1281,8 @@ public partial class HeatupSimEngine : MonoBehaviour
                 pzrHeatersOn = (pzrHeaterPower > 0.001f);
                 heaterPIDOutput = heaterPIDState.SmoothedOutput;
                 heaterPIDActive = true;
+                heaterLimiterReason = "PID_CONTROL";
+                heaterLimiterDetail = "AUTOMATIC_PID active";
             }
             else
             {
@@ -1235,7 +1293,40 @@ public partial class HeatupSimEngine : MonoBehaviour
                     dt, bubbleHeaterSmoothedOutput);  // v2.0.10: pass dt and smoothed state
                 pzrHeaterPower = heaterState.HeaterPower_MW;
                 pzrHeatersOn = heaterState.HeatersEnabled;
-                
+                heaterPressureRateClampActive = heaterState.PressureRateLimited;
+                heaterRampRateClampActive = heaterState.RampRateLimited;
+
+                if (heaterState.TrippedByInterlock)
+                {
+                    heaterLimiterReason = "LOW_LEVEL_INTERLOCK";
+                    heaterLimiterDetail = heaterState.StatusReason;
+                }
+                else if (heaterState.PressureRateLimited)
+                {
+                    heaterLimiterReason = "PRESSURE_RATE_CLAMP";
+                    heaterLimiterDetail =
+                        $"abs_dPdt={heaterState.PressureRateAbsPsiHr:F1} psi/hr " +
+                        $"target={heaterState.TargetFraction * 100f:F1}% output={heaterState.HeaterFraction * 100f:F1}%";
+                }
+                else if (heaterState.RampRateLimited)
+                {
+                    heaterLimiterReason = "HEATER_RAMP_LIMIT";
+                    heaterLimiterDetail =
+                        $"target={heaterState.TargetFraction * 100f:F1}% output={heaterState.HeaterFraction * 100f:F1}%";
+                }
+                else if (solidPressurizer &&
+                    string.Equals(solidPlantState.ControlMode, "HOLD_SOLID", StringComparison.Ordinal) &&
+                    solidPlantPressureInBand)
+                {
+                    heaterLimiterReason = "SOLID_HOLD_BAND";
+                    heaterLimiterDetail = "Solid pressure control in HOLD_SOLID with in-band pressure";
+                }
+                else
+                {
+                    heaterLimiterReason = "NONE";
+                    heaterLimiterDetail = heaterState.StatusReason ?? "No active limiter";
+                }
+
                 // v2.0.10: Persist smoothed output for next timestep
                 if (currentHeaterMode == HeaterMode.BUBBLE_FORMATION_AUTO ||
                     currentHeaterMode == HeaterMode.PRESSURIZE_AUTO)
@@ -1243,6 +1334,8 @@ public partial class HeatupSimEngine : MonoBehaviour
                     bubbleHeaterSmoothedOutput = heaterState.SmoothedOutput;
                 }
             }
+
+            UpdateHeaterAuthorityTelemetry(requestedMode, effectiveAuthority);
         }
 
         // ================================================================
@@ -2055,25 +2148,129 @@ public partial class HeatupSimEngine : MonoBehaviour
     // HELPER METHODS
     // ========================================================================
 
+    HeaterAuthorityState ResolveHeaterAuthorityState()
+    {
+        if (startupHoldActive)
+            return HeaterAuthorityState.HOLD_LOCKED;
+        if (currentHeaterMode == HeaterMode.OFF)
+            return HeaterAuthorityState.OFF;
+        if (heaterManualDisabled)
+            return HeaterAuthorityState.MANUAL_DISABLED;
+        return HeaterAuthorityState.AUTO;
+    }
+
+    void UpdateHeaterAuthorityTelemetry(string requestedMode, HeaterAuthorityState effectiveAuthority)
+    {
+        heaterAuthorityState = effectiveAuthority.ToString();
+        switch (effectiveAuthority)
+        {
+            case HeaterAuthorityState.HOLD_LOCKED:
+                heaterAuthorityReason = "startup_hold_active";
+                break;
+            case HeaterAuthorityState.OFF:
+                heaterAuthorityReason = "mode_off";
+                break;
+            case HeaterAuthorityState.MANUAL_DISABLED:
+                heaterAuthorityReason = "manual_disable_lockout";
+                break;
+            default:
+                heaterAuthorityReason = "auto_authority";
+                break;
+        }
+
+        bool authorityChanged = !string.Equals(lastLoggedHeaterAuthorityState, heaterAuthorityState, StringComparison.Ordinal);
+        bool limiterChanged = !string.Equals(lastLoggedHeaterLimiterReason, heaterLimiterReason, StringComparison.Ordinal);
+        if (!authorityChanged && !limiterChanged)
+            return;
+
+        string overrideReason = heaterAuthorityState == "AUTO"
+            ? "none"
+            : $"resolved_{heaterAuthorityState.ToLowerInvariant()}";
+        LogEvent(
+            EventSeverity.INFO,
+            $"HEATER AUTHORITY RESOLVED requested={requestedMode} effective={heaterAuthorityState} " +
+            $"override={overrideReason} limiter={heaterLimiterReason} detail={heaterLimiterDetail}");
+        lastLoggedHeaterAuthorityState = heaterAuthorityState;
+        lastLoggedHeaterLimiterReason = heaterLimiterReason;
+    }
+
     void UpdateStartupHoldState()
     {
+        startupHoldElapsedTime_hr = Mathf.Max(0f, simTime - startupHoldStartTime_hr);
+        startupHoldPressureRateAbs_psi_hr = Mathf.Abs(pressureRate);
+
         if (!startupHoldActive)
+        {
+            startupHoldTimeGatePassed = true;
+            startupHoldPressureRateGatePassed = true;
+            startupHoldStateQualityGatePassed = true;
+            startupHoldReleaseBlockReason = "NONE";
             return;
+        }
 
         if (!startupHoldActivationLogged)
         {
             float holdSeconds = Mathf.Max(0f, startupHoldReleaseTime_hr * 3600f);
-            LogEvent(EventSeverity.INFO,
-                $"HEATER STARTUP HOLD ACTIVE for {holdSeconds:F0}s (mode={currentHeaterMode})");
+            LogEvent(
+                EventSeverity.INFO,
+                $"HEATER STARTUP HOLD ACTIVE for {holdSeconds:F0}s " +
+                $"(dP/dt gate <= {STARTUP_HOLD_PRESSURE_RATE_GATE_PSI_HR:F1} psi/hr for " +
+                $"{STARTUP_HOLD_STABILITY_WINDOW_SEC:F0}s, mode={currentHeaterMode})");
             startupHoldActivationLogged = true;
         }
 
-        if (!startupHoldReleaseLogged && simTime >= startupHoldReleaseTime_hr)
+        float dtSec = Mathf.Max(0f, startupHoldLastStepDt_hr * 3600f);
+        bool pressureRateWithinGate = startupHoldPressureRateAbs_psi_hr <= STARTUP_HOLD_PRESSURE_RATE_GATE_PSI_HR;
+        startupHoldPressureRateStableAccum_sec = pressureRateWithinGate
+            ? startupHoldPressureRateStableAccum_sec + dtSec
+            : 0f;
+
+        startupHoldTimeGatePassed = simTime >= startupHoldReleaseTime_hr;
+        startupHoldPressureRateGatePassed = startupHoldPressureRateStableAccum_sec >= STARTUP_HOLD_STABILITY_WINDOW_SEC;
+        startupHoldStateQualityGatePassed =
+            IsFinite(pressure) &&
+            IsFinite(T_rcs) &&
+            IsFinite(T_pzr) &&
+            !float.IsNaN(simTime) &&
+            !float.IsInfinity(simTime);
+
+        if (!startupHoldTimeGatePassed)
+        {
+            startupHoldReleaseBlockReason = "MIN_TIME_NOT_REACHED";
+            return;
+        }
+
+        if (startupHoldTimeGatePassed &&
+            startupHoldPressureRateGatePassed &&
+            startupHoldStateQualityGatePassed)
         {
             startupHoldActive = false;
             startupHoldReleaseLogged = true;
-            LogEvent(EventSeverity.ACTION,
-                $"HEATER STARTUP HOLD RELEASED at T+{simTime:F4} hr (mode={currentHeaterMode})");
+            startupHoldReleaseBlockReason = "NONE";
+            LogEvent(
+                EventSeverity.ACTION,
+                $"HEATER STARTUP HOLD RELEASED at T+{simTime:F4} hr " +
+                $"(dP/dt={startupHoldPressureRateAbs_psi_hr:F2} psi/hr, " +
+                $"stable_window={startupHoldPressureRateStableAccum_sec:F1}s, mode={currentHeaterMode})");
+            return;
+        }
+
+        startupHoldReleaseBlockReason = !startupHoldPressureRateGatePassed
+            ? "PRESSURE_RATE_UNSTABLE"
+            : "STATE_QUALITY_FAIL";
+
+        float holdElapsedSec = startupHoldElapsedTime_hr * 3600f;
+        bool shouldLogBlocked =
+            startupHoldLastBlockedLogTime_hr < 0f ||
+            (simTime - startupHoldLastBlockedLogTime_hr) * 3600f >= STARTUP_HOLD_BLOCKED_LOG_INTERVAL_SEC;
+        if (shouldLogBlocked)
+        {
+            startupHoldLastBlockedLogTime_hr = simTime;
+            LogEvent(
+                EventSeverity.ALERT,
+                $"HEATER STARTUP HOLD BLOCKED release reason={startupHoldReleaseBlockReason} " +
+                $"elapsed={holdElapsedSec:F1}s dP/dt={startupHoldPressureRateAbs_psi_hr:F2} psi/hr " +
+                $"stable_window={startupHoldPressureRateStableAccum_sec:F1}s");
         }
     }
 

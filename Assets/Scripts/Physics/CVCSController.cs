@@ -98,6 +98,10 @@ namespace Critical.Physics
         public bool TrippedByInterlock;  // True if tripped by low-level interlock
         public HeaterMode Mode;          // Current operating mode
         public string StatusReason;      // Human-readable status
+        public bool PressureRateLimited; // True when pressure-rate limiter is active
+        public bool RampRateLimited;     // True when output slew limiter is active
+        public float TargetFraction;     // Unsmoothed fraction before ramp limiting
+        public float PressureRateAbsPsiHr; // Absolute pressure rate used for limiter checks
         
         /// <summary>
         /// v2.0.10: Rate-limited smoothed output for bubble/pressurize modes.
@@ -582,6 +586,10 @@ namespace Critical.Physics
             state.HeaterFraction = 1.0f;
             state.HeatersEnabled = true;
             state.Mode = mode;
+            state.PressureRateLimited = false;
+            state.RampRateLimited = false;
+            state.TargetFraction = 1.0f;
+            state.PressureRateAbsPsiHr = Math.Abs(pressureRate_psi_hr);
             
             // ================================================================
             // PRIORITY 1: Low-level interlock trips ALL heaters (all modes)
@@ -597,6 +605,9 @@ namespace Critical.Physics
                 state.TrippedByInterlock = true;
                 state.Mode = HeaterMode.OFF;
                 state.StatusReason = "TRIPPED - Low level interlock";
+                state.TargetFraction = 0f;
+                state.PressureRateLimited = false;
+                state.RampRateLimited = false;
                 return state;
             }
             
@@ -614,6 +625,7 @@ namespace Critical.Physics
                     state.HeaterFraction = 1.0f;
                     state.ProportionalOn = true;
                     state.BackupOn = true;  // All groups energized
+                    state.TargetFraction = 1.0f;
                     state.StatusReason = solidPressurizer 
                         ? "Solid PZR - heating to Tsat (all groups)"
                         : "Startup - full power (all groups)";
@@ -633,12 +645,15 @@ namespace Critical.Physics
                     float minFraction = PlantConstants.HEATER_STARTUP_MIN_POWER_FRACTION;
                     
                     float absPressureRate = Math.Abs(pressureRate_psi_hr);
+                    state.PressureRateAbsPsiHr = absPressureRate;
                     
                     if (absPressureRate > maxRate && maxRate > 0f)
                     {
                         targetFraction = 1.0f - (absPressureRate - maxRate) / maxRate;
                         targetFraction = Math.Max(minFraction, Math.Min(targetFraction, 1.0f));
                     }
+                    state.TargetFraction = targetFraction;
+                    state.PressureRateLimited = absPressureRate > maxRate && maxRate > 0f;
                     
                     // v2.0.10: Rate-limit the output change per timestep.
                     // Max change of 6.0 per hour (matches HEATER_RATE_LIMIT_PER_HR).
@@ -650,6 +665,7 @@ namespace Critical.Physics
                         float maxChangePerHr = PlantConstants.HEATER_RATE_LIMIT_PER_HR;
                         float maxStep = maxChangePerHr * dt_hr;
                         float delta = targetFraction - currentSmoothed;
+                        state.RampRateLimited = Math.Abs(delta) > maxStep + 1e-6f;
                         delta = Math.Max(-maxStep, Math.Min(delta, maxStep));
                         currentSmoothed += delta;
                         currentSmoothed = Math.Max(minFraction, Math.Min(currentSmoothed, 1.0f));
@@ -683,12 +699,15 @@ namespace Critical.Physics
                     float minFraction = PlantConstants.HEATER_STARTUP_MIN_POWER_FRACTION;
                     
                     float absPressureRate = Math.Abs(pressureRate_psi_hr);
+                    state.PressureRateAbsPsiHr = absPressureRate;
                     
                     if (absPressureRate > maxRate && maxRate > 0f)
                     {
                         targetFraction = 1.0f - (absPressureRate - maxRate) / maxRate;
                         targetFraction = Math.Max(minFraction, Math.Min(targetFraction, 1.0f));
                     }
+                    state.TargetFraction = targetFraction;
+                    state.PressureRateLimited = absPressureRate > maxRate && maxRate > 0f;
                     
                     // v2.0.10: Rate-limit the output change per timestep
                     float currentSmoothed = smoothedOutput;
@@ -697,6 +716,7 @@ namespace Critical.Physics
                         float maxChangePerHr = PlantConstants.HEATER_RATE_LIMIT_PER_HR;
                         float maxStep = maxChangePerHr * dt_hr;
                         float delta = targetFraction - currentSmoothed;
+                        state.RampRateLimited = Math.Abs(delta) > maxStep + 1e-6f;
                         delta = Math.Max(-maxStep, Math.Min(delta, maxStep));
                         currentSmoothed += delta;
                         currentSmoothed = Math.Max(minFraction, Math.Min(currentSmoothed, 1.0f));
@@ -745,6 +765,7 @@ namespace Critical.Physics
                     {
                         state.StatusReason = "Auto PID - proportional only";
                     }
+                    state.TargetFraction = state.HeaterFraction;
                     break;
                 }
                 
@@ -757,6 +778,7 @@ namespace Critical.Physics
                     state.HeaterFraction = 0f;
                     state.ProportionalOn = false;
                     state.BackupOn = false;
+                    state.TargetFraction = 0f;
                     state.StatusReason = "Heaters OFF";
                     break;
             }
