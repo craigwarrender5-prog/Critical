@@ -1,10 +1,13 @@
-# Changelog — IP-0050
+# Changelog - v1.0.1.0
 
-**IP:** IP-0050  
+## Version 1.0.1.0 — PZR Saturation Monitoring
+
+**Date:** 2026-02-17  
+**Status:** COMPLETE  
+**Implementation Plan:** IP-0050  
 **Domain Plan:** DP-0008 — Operator Interface & Scenarios  
 **CS Resolved:** CS-0108  
-**Date:** 2026-02-17  
-**Version:** 1.0.0
+**Impact Classification:** PATCH (bounded behavioral fix — missing operator monitoring)
 
 ---
 

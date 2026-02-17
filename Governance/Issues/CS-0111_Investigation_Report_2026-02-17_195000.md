@@ -14,8 +14,10 @@ Despite T_pzr being a critical parameter during cold startup (pre-bubble PZR hea
 
 1. **No T_pzr arc gauge** — The Pressurizer column has arc gauges for PRESSURE and LEVEL, but not temperature
 2. **T_pzr readout is misplaced** — Currently displayed in RCS column, not Pressurizer column
-3. **No T_pzr sparkline trend** — Cannot observe heating rate or trajectory toward saturation
+3. **No T_pzr sparkline trend** — Cannot observe heating rate or trajectory toward saturation over time
 4. **No T_pzr vs T_sat comparative gauge** — Operators cannot visually see approach to saturation
+
+Per NRC HRTD 17.0: "When pressurizer temperature reaches saturation temperature for the pressure being maintained (450°F for 400 psig), a pressurizer bubble is established." This makes T_pzr trajectory monitoring essential during cold startup.
 
 The recently added "PZR ΔT_SAT" readout (IP-0050) shows subcooling, but operators need to see the *actual temperature* and its progression.
 
@@ -62,13 +64,13 @@ Temperature was treated as secondary, relegated to a small readout in the RCS co
 
 ### Option A: Minimal — Add T_pzr Arc Gauge to PZR Column
 - Add T_pzr arc gauge (range 50-600°F) as primary temperature visualization
-- Move T_pzr readout from RCS column to PZR column
-- Keep existing PZR ΔT_SAT readout below it
+- Remove T_pzr readout from RCS column (eliminate duplication)
+- Keep existing PZR ΔT_SAT readout
 
-### Option B: Comprehensive — Arc Gauge + Sparkline
+### Option B: Comprehensive — Arc Gauge + Sparkline (SELECTED)
 - Option A changes
-- Add T_pzr sparkline (replace one existing or add 9th sparkline)
-- Shows temperature trajectory toward saturation
+- Replace NET HEAT sparkline (slot 7) with T_PZR sparkline
+- Shows temperature trajectory toward saturation over ~1 hour
 
 ### Option C: Full Treatment — Dual-Scale Comparative Gauge
 - T_pzr arc gauge with T_sat marker overlay
@@ -79,20 +81,20 @@ Temperature was treated as secondary, relegated to a small readout in the RCS co
 
 ## 6. Recommended Fix
 
-**Option A: Minimal — Add T_pzr Arc Gauge to PZR Column**
+**Option B: Comprehensive — Arc Gauge + Sparkline**
 
 Rationale:
-- Provides primary visualization that's currently missing
+- Provides primary visualization that's currently missing (arc gauge)
 - Arc gauge is consistent with existing PRESSURE and LEVEL gauges
-- Moving T_pzr readout to PZR column improves logical grouping
-- Does not require sparkline system changes
-- Can be extended to Option B/C in future if needed
+- Sparkline provides trajectory history essential for monitoring bubble formation approach
+- NET HEAT is a calculated diagnostic value; T_PZR is a primary operational parameter
+- Color-coded gauge: green at saturation, cyan when subcooled
 
 Implementation scope:
 1. Add T_pzr arc gauge to Pressurizer column (after LEVEL gauge, before volumes)
 2. Remove T_pzr readout from RCS column
-3. Ensure PZR ΔT_SAT readout remains in PZR column (already there from IP-0050)
-4. Color-code gauge based on approach to saturation
+3. Replace NET HEAT sparkline (IDX_NET_HEAT = 7) with T_PZR sparkline
+4. Ensure PZR ΔT_SAT readout remains in PZR column (already there from IP-0050)
 
 ---
 
@@ -100,9 +102,11 @@ Implementation scope:
 
 1. T_pzr arc gauge visible in Pressurizer column
 2. Gauge range appropriate for startup (50-600°F)
-3. Color indication: normal (cyan) → approaching saturation (green) → at saturation (green)
-4. T_pzr readout in PZR column (not RCS)
-5. RCS column T_pzr readout removed (avoid duplication)
+3. Color indication: cyan (subcooled) → green (at saturation)
+4. T_pzr readout removed from RCS column (no duplication)
+5. T_pzr sparkline visible in Trends column (slot 7, replaces NET HEAT)
+6. Sparkline shows ~1 hour of history
+7. Existing PZR ΔT_SAT readout still visible in PZR column
 
 ---
 
@@ -110,11 +114,13 @@ Implementation scope:
 
 | Risk | Severity | Mitigation |
 |------|----------|------------|
-| PZR column crowding | MEDIUM | May need to reduce other element sizes or reorganize |
+| PZR column crowding | MEDIUM | Gauge radius matches existing; layout tested |
 | RCS column gap after T_pzr removal | LOW | Shift remaining readouts up |
+| Loss of NET HEAT diagnostic | LOW | Calculated value can be restored if needed |
 
 **Affected Systems:**
 - Tabs/OverviewTab.cs (DrawPressurizerColumn, DrawRCSColumn)
+- ValidationDashboard.Sparklines.cs (SparklineManager)
 
 **No physics module changes required.**
 

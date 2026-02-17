@@ -765,6 +765,7 @@ public partial class HeatupSimEngine : MonoBehaviour
     float sgPressurizationWindowStartTsat_F = 0f;
     float sgPressurizationLastPressure_psia = 0f;
     float sgPressurizationLastTsat_F = 0f;
+    bool sgStartupDrainCommanded = false;
     readonly DynamicIntervalSample[] stageEDynamicWindow = new DynamicIntervalSample[3];
     int stageEDynamicWindowCount = 0;
     int stageEDynamicWindowHead = 0;
@@ -1508,6 +1509,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         float alpha = ComputeRegime2CouplingAlpha(alphaRaw, dt);
         noRcpTransportFactor = 1f;
         LogPhysicsRegimeTransitionIfNeeded(alpha);
+        ApplyStartupSgDrainingTrigger();
 
         if (rcpCount == 0 || alpha < 0.001f)
         {
@@ -1719,7 +1721,6 @@ public partial class HeatupSimEngine : MonoBehaviour
             }
         }
         else if (!rcpContribution.AllFullyRunning)
-        if (!IsLegacyPressurizerControlBypassedForCoordinatorStep())
         {
             // ============================================================
             // REGIME 2: RCPs Ramping â€” Blended isolated/coupled physics
@@ -2656,6 +2657,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         sgPressurizationWindowStartTsat_F = 0f;
         sgPressurizationLastPressure_psia = 0f;
         sgPressurizationLastTsat_F = 0f;
+        sgStartupDrainCommanded = false;
         stageE_DynamicActiveHeatingIntervalCount = 0;
         stageE_DynamicPrimaryRiseCheckCount = 0;
         stageE_DynamicPrimaryRisePassCount = 0;
@@ -3060,13 +3062,31 @@ public partial class HeatupSimEngine : MonoBehaviour
         SGMultiNodeThermal.SetSteamIsolation(ref sgMultiNodeState, shouldIsolate);
     }
 
+    void ApplyStartupSgDrainingTrigger()
+    {
+        if (sgStartupDrainCommanded || sgMultiNodeState.DrainingActive || sgMultiNodeState.DrainingComplete)
+            return;
+
+        if (T_rcs + 1e-4f < PlantConstants.SG_DRAINING_START_TEMP_F)
+            return;
+
+        SGMultiNodeThermal.StartDraining(ref sgMultiNodeState, simTime);
+
+        if (!sgMultiNodeState.DrainingActive)
+            return;
+
+        sgStartupDrainCommanded = true;
+        LogEvent(
+            EventSeverity.ACTION,
+            $"SG DRAINING STARTED - T_rcs={T_rcs:F1}F reached startup threshold " +
+            $"{PlantConstants.SG_DRAINING_START_TEMP_F:F0}F");
+    }
+
     bool ShouldIsolateSGBoundary()
     {
-        if (sgStartupStateMode == SGStartupBoundaryStateMode.OpenPreheat)
-            return false;
-
-        // Re-open secondary boundary after SG reaches steam-dump control.
-        return sgMultiNodeState.CurrentRegime != SGThermalRegime.SteamDump;
+        // Startup references specify MSIV-open steam-line warming during heatup.
+        // Keep the secondary boundary open so SG startup follows open-path behavior.
+        return false;
     }
 
     void UpdateSGBoundaryDiagnostics(SGMultiNodeResult sgResult, float dt_hr)

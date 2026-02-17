@@ -1,6 +1,6 @@
 # Technical Documentation Index
 
-**Last Updated:** 2026-02-16  
+**Last Updated:** 2026-02-17  
 **Purpose:** Unified index of all technical documentation supporting Critical: Master the Atom simulator development.
 
 ---
@@ -9,7 +9,7 @@
 
 | Category | Document Count | Coverage |
 |----------|----------------|----------|
-| NRC HRTD Sections | 16 | Core systems, controls, protection, instrumentation, ESFAS, feedwater, pressurizer |
+| NRC HRTD Sections | 17 | Core systems, controls, protection, instrumentation, ESFAS, feedwater, pressurizer, condenser |
 | Research Documents | 4 | SG thermal physics, RHR system |
 | Reference Compilations | 4 | Startup/pressurization, PZR analysis, specifications, authority decisions |
 | Meta-Documentation | 3 | Indexes, summaries, analysis |
@@ -37,7 +37,10 @@
 | Document | Tags | Description | Priority |
 |----------|------|-------------|----------|
 | `NRC_HRTD_Section_7.1_Main_Auxiliary_Steam.md` | `[STEAM]` `[PORV]` `[MSIV]` `[AFW]` | Main steam design, PORVs, safety valves, flow restrictors | HIGH |
-| `NRC_HRTD_Section_7.2_Condensate_and_Feedwater_System.md` | `[FEEDWATER]` `[CONDENSATE]` `[MFP]` `[HEATERS]` | MFW pumps, heaters, condensate, isolation, chemistry control | MEDIUM |
+| `NRC_HRTD_Section_7.2_Condensate_and_Feedwater_System.md` | `[FEEDWATER]` `[CONDENSATE]` `[MFP]` `[HEATERS]` | Summary document - MFW pumps, heaters, condensate, isolation, chemistry control | MEDIUM |
+| `NRC_HRTD_Section_7.2_Condensate_and_Feedwater_System_Full.md` | `[FEEDWATER]` `[CONDENSATE]` `[MFP]` `[HEATERS]` `[CONDENSER]` | **NEW 2026-02-17** — Complete NRC HRTD 7.2 source with all tables, specifications, flow paths | **CRITICAL** |
+| `NRC_HRTD_Section_5.7_Auxiliary_Feedwater_System_Full.md` | `[AFW]` `[CST]` `[DECAY_HEAT]` `[SAFETY]` | **NEW 2026-02-17** — Complete NRC HRTD 5.7 source with design data, PRA insights, return paths | **CRITICAL** |
+| `NRC_HRTD_Condenser_System_Reference.md` | `[CONDENSER]` `[VACUUM]` `[CW]` `[HOTWELL]` `[C-9]` | **NEW 2026-02-17** — Condenser design, C-9 interlock, vacuum dynamics, heat rejection capacity, hotwell inventory, CW system | **CRITICAL** |
 
 ### Control Systems
 
@@ -269,6 +272,23 @@
 
 ### `[CONDENSATE]` — Condensate System
 - `NRC_HRTD_Section_7.2_Condensate_and_Feedwater_System.md`
+- `NRC_HRTD_Condenser_System_Reference.md` **NEW**
+
+### `[CONDENSER]` — Main Condenser
+- `NRC_HRTD_Condenser_System_Reference.md` **NEW**
+
+### `[VACUUM]` — Condenser Vacuum
+- `NRC_HRTD_Condenser_System_Reference.md` **NEW**
+
+### `[CW]` — Circulating Water
+- `NRC_HRTD_Condenser_System_Reference.md` **NEW**
+
+### `[HOTWELL]` — Condenser Hotwell
+- `NRC_HRTD_Condenser_System_Reference.md` **NEW**
+
+### `[C-9]` — Condenser Available Interlock
+- `NRC_HRTD_Condenser_System_Reference.md` **NEW**
+- `NRC_HRTD_Section_11.2_Steam_Dump_Control.md`
 
 ### `[MFP]` — Main Feedwater Pumps
 - `NRC_HRTD_Section_7.2_Condensate_and_Feedwater_System.md`
@@ -414,6 +434,43 @@
 ---
 
 ## Recent Updates
+
+### 2026-02-17
+**Added:**
+- `NRC_HRTD_Condenser_System_Reference.md` — Comprehensive condenser system reference for simulation development
+
+**Key Specifications Retrieved:**
+- Main condenser: 3-shell multipressure, ~900,000 ft² heat transfer area
+- C-9 interlock: Vacuum > 22 in. Hg AND ≥1 CW pump running
+- Condenser vacuum dynamics and response time constants
+- Steam dump capacity: 40% of full-power steam flow (12 valves)
+- Hotwell level control: 21-28 in. operating band, 8-40 in. full range
+- CST specifications: 450,000 gal total, 239,000 gal Tech Spec minimum
+- CW system configuration and heat rejection calculations
+- Mass conservation flowpaths (hotwell → CEP → feedwater → SG → condenser)
+- Return-path inventory links (AFW/CST/hotwell relationships)
+- Simulator implementation parameters and code examples
+
+**Full Source Documents Added:**
+- `NRC_HRTD_Section_7.2_Condensate_and_Feedwater_System_Full.md`
+  - Complete Section 7.2 with all component specifications
+  - Condensate pump specs: 11,000 gpm, 1,100 ft head, 3,950 hp motors
+  - MFP specs: 19,800 gpm, 2,020 ft head, turbine-driven
+  - All trip setpoints and interlock logic
+  - Demineralizer system details (8 vessels, 4,317 gpm each)
+  - LP/HP heater cascade configuration and extraction steam sources
+  - Startup sequence procedures
+  
+- `NRC_HRTD_Section_5.7_Auxiliary_Feedwater_System_Full.md`
+  - Complete Section 5.7 with design data tables
+  - Motor-driven pumps: 440 gpm each, 1,300 psig discharge
+  - Turbine-driven pump: 880 gpm, 1,200 psig discharge
+  - All automatic start signals and logic
+  - CST reserve protection methods
+  - ESW backup supply logic (2/3 low suction pressure)
+  - PRA insights and risk-important failure modes
+
+---
 
 ### 2026-02-15
 **Added:**

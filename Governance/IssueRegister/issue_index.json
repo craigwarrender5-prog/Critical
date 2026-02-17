@@ -1,7 +1,7 @@
 ﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-17T19:05:15Z",
-    "entry_count":  111,
+    "generated_at":  "2026-02-17T21:20:00Z",
+    "entry_count":  112,
     "entries":  [
                     {
                         "id":  "CS-0001",
@@ -1268,17 +1268,18 @@
                         "title":  "SG secondary pressure response does not begin at RCP circulation onset; rise is delayed until near-boiling",
                         "domain":  "Steam Generator Secondary Physics",
                         "severity":  "HIGH",
-                        "status":  "READY",
+                        "status":  "BLOCKED",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0011",
                         "assigned_ip":  "IP-0046",
-                        "updated_at":  "2026-02-17T14:59:27Z",
+                        "updated_at":  "2026-02-17T21:10:00Z",
                         "closed_at":  null,
                         "resolution_type":  null,
                         "tags":  [
                                      "SG Secondary Physics - Warmup Pressurization",
                                      "Pre-Boil Pressure Response",
-                                     "RCP Heatup Coupling"
+                                     "RCP Heatup Coupling",
+                                     "Blocked-By-CS-0115"
                                  ]
                     },
                     {
@@ -1911,14 +1912,39 @@
                         "status":  "READY",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0008",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-17T19:50:00Z",
+                        "assigned_ip":  "IP-0051",
+                        "updated_at":  "2026-02-17T20:00:00Z",
                         "closed_at":  null,
                         "resolution_type":  null,
                         "tags":  [
                                      "PZR-Temperature-Visualization",
                                      "Dashboard-Arc-Gauge",
+                                     "Dashboard-Sparkline",
                                      "Cold-Startup",
+                                     "User-Request-2026-02-17"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0115",
+                        "title":  "Missing condenser + feedwater return module and startup permissive boundary contract (C-9/P-12) for steam-dump integration",
+                        "domain":  "Steam Generator Secondary Physics",
+                        "severity":  "CRITICAL",
+                        "status":  "READY",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0011",
+                        "assigned_ip":  "IP-0046",
+                        "updated_at":  "2026-02-17T23:05:00Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "Condenser-Module",
+                                     "Steam-Dump-Permissives",
+                                     "C-9",
+                                     "P-12",
+                                     "Startup-Boundary",
+                                     "Feedwater-Return-Path",
+                                     "Blocking-Dependency",
+                                     "Disposition-INCONSISTENT",
                                      "User-Request-2026-02-17"
                                  ]
                     }
@@ -1926,6 +1952,6 @@
     "registry_role":  "AUTHORITATIVE_FULL_HISTORY",
     "registry_scope":  "Contains full lifecycle history (OPEN + CLOSED). Historical entries must remain in this file.",
     "active_working_set_file":  "Governance/IssueRegister/issue_register.json",
-    "closed_issue_count":  102,
+    "closed_issue_count":  103,
     "active_issue_count":  9
 }
