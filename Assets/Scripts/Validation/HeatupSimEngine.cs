@@ -488,6 +488,7 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public bool heatupInProgress;
     [HideInInspector] public bool pressureLow;
     [HideInInspector] public bool pressureHigh;
+    [HideInInspector] public bool sgSecondaryPressureHigh;
     [HideInInspector] public bool subcoolingLow;
     [HideInInspector] public bool modePermissive;
     [HideInInspector] public bool smmLowMargin;

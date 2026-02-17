@@ -74,7 +74,7 @@ namespace Critical.Physics
         /// <summary>Continuously variable with pressure-rate feedback. During bubble drain.</summary>
         BUBBLE_FORMATION_AUTO,
         
-        /// <summary>Same auto controller, target >= 320 psig for RCP NPSH.</summary>
+        /// <summary>Same auto controller, target >= 400 psig for RCP startup permissive.</summary>
         PRESSURIZE_AUTO,
         
         /// <summary>Future: Proportional + backup groups, automatic PID on pressure.</summary>
@@ -550,7 +550,7 @@ namespace Critical.Physics
         ///   Per design decision v0.2.0: automatic modulation, future adds manual.
         /// 
         /// Mode 3 (PRESSURIZE_AUTO): Same auto controller as Mode 2, but targeting
-        ///   >= 320 psig for RCP NPSH. Pressure-rate feedback active.
+        ///   >= 400 psig for RCP startup permissive. Pressure-rate feedback active.
         /// 
         /// Mode 4 (AUTOMATIC_PID): Future scope — proportional + backup groups
         ///   with automatic PID on pressure at 2235 psig setpoint.
@@ -689,7 +689,7 @@ namespace Critical.Physics
                 
                 // ============================================================
                 // PRESSURIZE: Same as bubble formation auto
-                // Target >= 320 psig for RCP NPSH
+                // Target >= 400 psig for RCP startup permissive
                 // ============================================================
                 case HeaterMode.PRESSURIZE_AUTO:
                 {

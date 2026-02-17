@@ -56,7 +56,7 @@ public partial class HeatupValidationVisual
 
     // v0.9.4: Reusable tile array to prevent per-frame allocation
     private AnnunciatorTile[] _cachedTiles;
-    private const int TILE_COUNT = 26;
+    private const int TILE_COUNT = 27;
 
     // ========================================================================
     // PARTIAL METHOD — Annunciator Tiles (left footer)
@@ -136,6 +136,7 @@ public partial class HeatupValidationVisual
             _cachedTiles[23].Label = "RCP #4\nRUN";       _cachedTiles[23].IsAlarm = false;
             _cachedTiles[24].Label = "SMM LOW\nMARGIN";   _cachedTiles[24].IsAlarm = false;
             _cachedTiles[25].Label = "SMM NO\nMARGIN";    _cachedTiles[25].IsAlarm = true;
+            _cachedTiles[26].Label = "SG PRESS\nHIGH";    _cachedTiles[26].IsAlarm = true;
         }
 
         // Update only the Active states (these change each frame)
@@ -165,6 +166,7 @@ public partial class HeatupValidationVisual
         _cachedTiles[23].Active = engine.rcpRunning[3];
         _cachedTiles[24].Active = engine.smmLowMargin;
         _cachedTiles[25].Active = engine.smmNoMargin;
+        _cachedTiles[26].Active = engine.sgSecondaryPressureHigh;
     }
 
     // ========================================================================

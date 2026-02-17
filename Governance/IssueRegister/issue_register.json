@@ -1,714 +1,663 @@
 {
-  "version": "1.0.0",
-  "generated_at": "2026-02-16T21:30:00Z",
-  "source": "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-  "active_issue_count": 15,
-  "issues": [
-    {
-      "id": "CS-0010",
-      "title": "No SG secondary pressure alarm",
-      "domain": "Plant Protection & Limits",
-      "severity": "LOW",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-13T00:00:00Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": null,
-      "assigned_dp": "DP-0006",
-      "assigned_ip": "IP-0035",
-      "observations": [
-        "SG secondary pressure is computed and displayed but has no alarm. Real SG safety valves lift at ~1085 psia. During isolated boiling, SG pressure can rise without annunciation.",
-        "Low Ã¢â‚¬â€ Primarily an operational realism gap. No conservation impact. Becomes more relevant for abnormal scenarios and cooldown operations."
-      ],
-      "evidence": [],
-      "hypotheses": [],
-      "root_cause": "Confirmed Ã¢â‚¬â€ AlarmManager built for primary-side alarms. SG secondary alarms were not in scope.",
-      "resolution_candidate": "Not Tested",
-      "links": [
-        "Related: CS-0009",
-        "IP-0007 Ã¢â‚¬â€ SG Energy and Pressure Validation"
-      ],
-      "tags": [
-        "Plant Protection Ã¢â‚¬â€ SG Boundary"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0057",
-      "title": "SG startup draining contract at ~200F is not wired into runtime execution path",
-      "domain": "Steam Generator Secondary Physics",
-      "severity": "HIGH",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-14T19:55:32Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": "Audit-2026-02-14",
-      "assigned_dp": "DP-0011",
-      "assigned_ip": "IP-0037",
-      "observations": [
-        "Technical documentation specifies SG draining at approximately 200F, but runtime scanning found only the StartDraining declaration and no invocation path.",
-        "Expected startup mass-state transition for SG secondary inventory appears unexecuted, risking mismatch between documented and simulated SG initial conditions."
-      ],
-      "evidence": [
-        {
-          "ref": "Technical_Documentation/SG_THERMAL_MODEL_RESEARCH_v3.0.0.md:127",
-          "notes": "sg_draining_expected_at_200f"
-        },
-        {
-          "ref": "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:173",
-          "notes": "startup_milestone_sg_drain"
-        },
-        {
-          "ref": "Assets/Scripts/Physics/SGMultiNodeThermal.cs:1544",
-          "notes": "startdraining_declared"
-        },
-        {
-          "ref": "Assets/Scripts/Physics/SGMultiNodeThermal.cs:1347",
-          "notes": "comment_states_triggered_externally_by_engine"
-        }
-      ],
-      "hypotheses": [],
-      "root_cause": null,
-      "resolution_candidate": "NO REMEDIATION AUTHORIZED.",
-      "links": [
-        "Assigned DP: DP-0011 - Steam Generator Secondary Physics (Audit Reopen)"
-      ],
-      "tags": [
-        "Technical Documentation Mismatch",
-        "Startup Procedure Wiring"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0063",
-      "title": "Simulation-facing files exceed GOLD hard size limits without documented waiver",
-      "domain": "Project Governance",
-      "severity": "MEDIUM",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-14T19:55:32Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": "Audit-2026-02-14",
-      "assigned_dp": "DP-0010",
-      "assigned_ip": "IP-0038",
-      "observations": [
-        "Multiple simulation-facing files exceed the >1400 hard-fail threshold, increasing audit and ownership risk.",
-        "No waiver evidence found in reviewed governance artifacts for these files."
-      ],
-      "evidence": [
-        {
-          "ref": "TechnicalDocumentation/GOLD_FILE_HYGIENE_LIMITS.md:12",
-          "notes": "hard_fail_threshold_gt_1400"
-        },
-        {
-          "ref": "Assets/Scripts/Validation/HeatupSimEngine.cs:1",
-          "notes": "2486_lines"
-        },
-        {
-          "ref": "Assets/Scripts/Validation/HeatupSimEngine.Logging.cs:1",
-          "notes": "1479_lines"
-        },
-        {
-          "ref": "Assets/Scripts/Physics/SGMultiNodeThermal.cs:1",
-          "notes": "2657_lines"
-        },
-        {
-          "ref": "Assets/Scripts/Physics/CVCSController.cs:1",
-          "notes": "1519_lines"
-        }
-      ],
-      "hypotheses": [],
-      "root_cause": null,
-      "resolution_candidate": "NO REMEDIATION AUTHORIZED.",
-      "links": [
-        "Assigned DP: DP-0010 - Project Governance"
-      ],
-      "tags": [
-        "GOLD File Hygiene",
-        "Oversized Modules"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0070",
-      "title": "HeatupSimEngine header lacks mandatory GOLD C01 sections (SOURCES and UNITS)",
-      "domain": "Project Governance",
-      "severity": "LOW",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-14T19:55:32Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": "Audit-2026-02-14",
-      "assigned_dp": "DP-0010",
-      "assigned_ip": "IP-0038",
-      "observations": [
-        "The core engine header includes PURPOSE/ARCH/GOLD but does not include explicit SOURCES and UNITS sections required by C01.",
-        "This is a mandatory GOLD conformance gate failure for header completeness."
-      ],
-      "evidence": [
-        {
-          "ref": "TechnicalDocumentation/GOLD_CONFORMANCE_CHECKLIST.md:14",
-          "notes": "c01_requires_purpose_sources_units_arch_gold"
-        },
-        {
-          "ref": "Assets/Scripts/Validation/HeatupSimEngine.cs:6",
-          "notes": "purpose_present"
-        },
-        {
-          "ref": "Assets/Scripts/Validation/HeatupSimEngine.cs:11",
-          "notes": "architecture_present"
-        },
-        {
-          "ref": "Assets/Scripts/Validation/HeatupSimEngine.cs:58",
-          "notes": "gold_standard_present_without_sources_units_sections"
-        }
-      ],
-      "hypotheses": [],
-      "root_cause": null,
-      "resolution_candidate": "NO REMEDIATION AUTHORIZED.",
-      "links": [
-        "Assigned DP: DP-0010 - Project Governance"
-      ],
-      "tags": [
-        "GOLD C01",
-        "Header Completeness"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0078",
-      "title": "SG secondary pressure response does not begin at RCP circulation onset; rise is delayed until near-boiling",
-      "domain": "Steam Generator Secondary Physics",
-      "severity": "HIGH",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-15T10:19:57Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": "Stage E",
-      "assigned_dp": "DP-0011",
-      "assigned_ip": "IP-0037",
-      "observations": [
-        "Technical documentation defines SG warmup as simultaneous heating and pressurization: as RCP heat input warms SG secondary, pressure should rise with temperature and later be regulated by steam dump control.",
-        "Current build logs show SG secondary pressure remains near blanket floor (~17 psia) from first non-zero RCP circulation through extended post-bubble RCP-driven warmup and temperature rise, then increases only near/after boiling onset, indicating delayed pressure response inconsistent with documented warmup behavior.",
-        "Scope note: this CS starts at first non-zero RCP circulation (ramp onset) after bubble precondition and does not require full pump ramp completion. Bubble formation/draining timing defects are tracked separately under existing bubble-phase CS items and are not duplicated here.",
-        "In latest build run, with RCPs at 4/4 and SG top node increasing from 109.53F to 216.90F (13.25hr -> 16.00hr), SG pressure remains only 17.1 -> 17.8 psia; pressure rise accelerates only near 234.95F/255.31F around boiling transition.",
-        "Acceptance criteria: SG secondary pressure response must begin at circulation onset (first non-zero RCP state) and continue directionally upward through warmup, even if initial increments are small, without remaining floor-clamped until near-boiling transition."
-      ],
-      "evidence": [
-        {
-          "ref": "Technical_Documentation/SG_Secondary_Pressurization_During_Heatup_Research.md:94",
-          "notes": "nrc_statement_rcp_heat_input_causes_steam_pressure_increase"
-        },
-        {
-          "ref": "Technical_Documentation/SG_Secondary_Pressurization_During_Heatup_Research.md:36",
-          "notes": "documented_pressure_continues_rising_with_heatup"
-        },
-        {
-          "ref": "Technical_Documentation/SG_THERMAL_MODEL_RESEARCH_v3.0.0.md:145",
-          "notes": "simultaneous_heating_and_pressurization_expected"
-        },
-        {
-          "ref": "build/HeatupLogs/Heatup_Interval_094_11.75hr.txt:72",
-          "notes": "first_nonzero_rcp_circulation_1_of_4"
-        },
-        {
-          "ref": "build/HeatupLogs/Heatup_Interval_094_11.75hr.txt:157",
-          "notes": "pressure_still_floor_at_rcp_circulation_onset"
-        },
-        {
-          "ref": "build/HeatupLogs/Heatup_Interval_106_13.25hr.txt:72",
-          "notes": "rcp_4_of_4_running"
-        },
-        {
-          "ref": "build/HeatupLogs/Heatup_Interval_106_13.25hr.txt:159",
-          "notes": "sg_top_temperature_109_53f"
-        },
-        {
-          "ref": "build/HeatupLogs/Heatup_Interval_106_13.25hr.txt:166",
-          "notes": "sg_pressure_17_1_psia"
-        },
-        {
-          "ref": "build/HeatupLogs/Heatup_Interval_128_16.00hr.txt:159",
-          "notes": "sg_top_temperature_216_90f"
-        },
-        {
-          "ref": "build/HeatupLogs/Heatup_Interval_128_16.00hr.txt:166",
-          "notes": "sg_pressure_17_8_psia_still_near_floor"
-        },
-        {
-          "ref": "build/HeatupLogs/Heatup_Interval_132_16.50hr.txt:166",
-          "notes": "pressure_rise_after_near_boiling_transition"
-        },
-        {
-          "ref": "build/HeatupLogs/Heatup_Interval_132_16.50hr.txt:199",
-          "notes": "boiling_active_yes_at_pressure_takeoff"
-        }
-      ],
-      "hypotheses": [
-        "Startup pressure source selection and/or floor-clamped boundary behavior in OPEN_PREHEAT and early ISOLATED_HEATUP is suppressing expected compressibility/thermal-expansion pressure rise.",
-        "Pressure evolution may be over-coupled to boiling activation thresholds, producing near-flat pre-boil pressure instead of gradual warmup pressurization."
-      ],
-      "root_cause": null,
-      "resolution_candidate": "Pending implementation of pre-boil pressurization coupling consistent with documented SG warmup process under DP-0011.",
-      "links": [
-        "Assigned DP: DP-0011 - Steam Generator Secondary Physics (Audit Reopen)",
-        "Related closed chain: CS-0017, CS-0019, CS-0020, CS-0054 (reopened symptom class under current build evidence).",
-        "Prerequisite dependency (separate scope): bubble formation/draining issue chain CS-0072, CS-0074, CS-0075, CS-0076."
-      ],
-      "tags": [
-        "SG Secondary Physics - Warmup Pressurization",
-        "Pre-Boil Pressure Response",
-        "RCP Heatup Coupling"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0079",
-      "title": "RCP startup permissive is configured below documented minimum startup pressure requirements.",
-      "domain": "Plant Protection & Limits",
-      "severity": "HIGH",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-15T16:50:47Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": "Audit-2026-02-15",
-      "assigned_dp": "DP-0006",
-      "assigned_ip": "IP-0035",
-      "observations": [
-        "Derived from Conformance Audit finding F-001.",
-        "RCP startup permissive is configured below documented minimum startup pressure requirements.",
-        "Requirement expectation: NRC HRTD Section 3.2 requires no RCP start below 400 psig.",
-        "Current implementation mismatch: PlantConstants.Pressure sets MIN_RCP_PRESSURE_PSIG = 320f and CanStartRCP uses that threshold.",
-        "Recommended action from audit: Fix."
-      ],
-      "evidence": [
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-001 reference expectation: NRC HRTD Section 3.2 requires no RCP start below 400 psig."
-        },
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-001 implementation evidence: PlantConstants.Pressure sets MIN_RCP_PRESSURE_PSIG = 320f and CanStartRCP uses that threshold."
-        }
-      ],
-      "hypotheses": [],
-      "root_cause": null,
-      "resolution_candidate": "Recommended action: Fix.",
-      "links": [
-        "Finding source: F-001 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-        "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-001.md"
-      ],
-      "tags": [
-        "NCR-Migration",
-        "Audit-2026-02-15",
-        "F-001",
-        "Constitution-Article-VI"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0080",
-      "title": "RCP heat-input constants do not align with the cited cold-water heatup reference basis.",
-      "domain": "Primary Thermodynamics",
-      "severity": "HIGH",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-15T16:50:47Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": "Audit-2026-02-15",
-      "assigned_dp": "DP-0001",
-      "assigned_ip": "IP-0036",
-      "observations": [
-        "Derived from Conformance Audit finding F-002.",
-        "RCP heat-input constants do not align with the cited cold-water heatup reference basis.",
-        "Requirement expectation: NRC HRTD Section 3.2 and reference sources cite about 6 MW per RCP in cold water.",
-        "Current implementation mismatch: Plant constants use 21 MW total / 5.25 MW each and feed RCS heatup paths.",
-        "Recommended action from audit: Investigate."
-      ],
-      "evidence": [
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-002 reference expectation: NRC HRTD Section 3.2 and reference sources cite about 6 MW per RCP in cold water."
-        },
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-002 implementation evidence: Plant constants use 21 MW total / 5.25 MW each and feed RCS heatup paths."
-        }
-      ],
-      "hypotheses": [],
-      "root_cause": null,
-      "resolution_candidate": "Recommended action: Fix.",
-      "links": [
-        "Finding source: F-002 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-        "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-002.md"
-      ],
-      "tags": [
-        "NCR-Migration",
-        "Audit-2026-02-15",
-        "F-002",
-        "Constitution-Article-VI"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0082",
-      "title": "SG startup boundary behavior is modeled isolated where references indicate steam-line warmup/open-path behavior.",
-      "domain": "Steam Generator Secondary Physics",
-      "severity": "HIGH",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-15T16:50:47Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": "Audit-2026-02-15",
-      "assigned_dp": "DP-0011",
-      "assigned_ip": "IP-0037",
-      "observations": [
-        "Derived from Conformance Audit finding F-004.",
-        "SG startup boundary behavior is modeled isolated where references indicate steam-line warmup/open-path behavior.",
-        "Requirement expectation: SG startup references describe MSIV-open steam-line warming during heatup.",
-        "Current implementation mismatch: ShouldIsolateSGBoundary enforces isolation outside OpenPreheat/SteamDump and SG thermal path zeros steam outflow when isolated.",
-        "Recommended action from audit: Instrument."
-      ],
-      "evidence": [
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-004 reference expectation: SG startup references describe MSIV-open steam-line warming during heatup."
-        },
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-004 implementation evidence: ShouldIsolateSGBoundary enforces isolation outside OpenPreheat/SteamDump and SG thermal path zeros steam outflow when isolated."
-        }
-      ],
-      "hypotheses": [],
-      "root_cause": null,
-      "resolution_candidate": "Recommended action: Instrument.",
-      "links": [
-        "Finding source: F-004 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-        "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-004.md"
-      ],
-      "tags": [
-        "NCR-Migration",
-        "Audit-2026-02-15",
-        "F-004",
-        "Constitution-Article-VI"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0084",
-      "title": "Project-owned C# files do not uniformly meet required GOLD header metadata fields.",
-      "domain": "Project Governance",
-      "severity": "HIGH",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-15T16:50:47Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": "Audit-2026-02-15",
-      "assigned_dp": "DP-0010",
-      "assigned_ip": "IP-0038",
-      "observations": [
-        "Derived from Conformance Audit finding F-006.",
-        "Project-owned C# files do not uniformly meet required GOLD header metadata fields.",
-        "Requirement expectation: GOLD header standard requires Version, Last Updated, and bounded Changes entries.",
-        "Current implementation mismatch: Audited files include legacy/version-only headers lacking Last Updated/Changes sections.",
-        "Recommended action from audit: Fix."
-      ],
-      "evidence": [
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-006 reference expectation: GOLD header standard requires Version, Last Updated, and bounded Changes entries."
-        },
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-006 implementation evidence: Audited files include legacy/version-only headers lacking Last Updated/Changes sections."
-        }
-      ],
-      "hypotheses": [],
-      "root_cause": null,
-      "resolution_candidate": "Recommended action: Fix.",
-      "links": [
-        "Finding source: F-006 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-        "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-006.md"
-      ],
-      "tags": [
-        "NCR-Migration",
-        "Audit-2026-02-15",
-        "F-006",
-        "Constitution-Article-VI"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0085",
-      "title": "File-level change history is incomplete or missing for audited modules.",
-      "domain": "Project Governance",
-      "severity": "MEDIUM",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-15T16:50:47Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": "Audit-2026-02-15",
-      "assigned_dp": "DP-0010",
-      "assigned_ip": "IP-0038",
-      "observations": [
-        "Derived from Conformance Audit finding F-007.",
-        "File-level change history is incomplete or missing for audited modules.",
-        "Requirement expectation: GOLD standard requires latest 5-10 Changes entries per file header.",
-        "Current implementation mismatch: Audited core files do not include bounded in-header change ledgers.",
-        "Recommended action from audit: Fix."
-      ],
-      "evidence": [
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-007 reference expectation: GOLD standard requires latest 5-10 Changes entries per file header."
-        },
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-007 implementation evidence: Audited core files do not include bounded in-header change ledgers."
-        }
-      ],
-      "hypotheses": [],
-      "root_cause": null,
-      "resolution_candidate": "Recommended action: Fix.",
-      "links": [
-        "Finding source: F-007 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-        "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-007.md"
-      ],
-      "tags": [
-        "NCR-Migration",
-        "Audit-2026-02-15",
-        "F-007",
-        "Constitution-Article-VI"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0086",
-      "title": "Public API surfaces lack consistent XML documentation coverage.",
-      "domain": "Project Governance",
-      "severity": "MEDIUM",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-15T16:50:47Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": "Audit-2026-02-15",
-      "assigned_dp": "DP-0010",
-      "assigned_ip": "IP-0038",
-      "observations": [
-        "Derived from Conformance Audit finding F-008.",
-        "Public API surfaces lack consistent XML documentation coverage.",
-        "Requirement expectation: GOLD standard requires XML docs for public APIs.",
-        "Current implementation mismatch: Public APIs in Physics/Validation modules have missing XML documentation.",
-        "Recommended action from audit: Fix."
-      ],
-      "evidence": [
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-008 reference expectation: GOLD standard requires XML docs for public APIs."
-        },
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-008 implementation evidence: Public APIs in Physics/Validation modules have missing XML documentation."
-        }
-      ],
-      "hypotheses": [],
-      "root_cause": null,
-      "resolution_candidate": "Recommended action: Fix.",
-      "links": [
-        "Finding source: F-008 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-        "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-008.md"
-      ],
-      "tags": [
-        "NCR-Migration",
-        "Audit-2026-02-15",
-        "F-008",
-        "Constitution-Article-VI"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0087",
-      "title": "Several modules exceed responsible file-size/separation-of-concerns limits, increasing coupling risk.",
-      "domain": "Project Governance",
-      "severity": "MEDIUM",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-15T16:50:47Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": "Audit-2026-02-15",
-      "assigned_dp": "DP-0010",
-      "assigned_ip": "IP-0038",
-      "observations": [
-        "Derived from Conformance Audit finding F-009.",
-        "Several modules exceed responsible file-size/separation-of-concerns limits, increasing coupling risk.",
-        "Requirement expectation: GOLD standard requires responsible file size and encourages partial decomposition.",
-        "Current implementation mismatch: Multiple audited files are large monoliths with high change coupling risk.",
-        "Recommended action from audit: Investigate."
-      ],
-      "evidence": [
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-009 reference expectation: GOLD standard requires responsible file size and encourages partial decomposition."
-        },
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-009 implementation evidence: Multiple audited files are large monoliths with high change coupling risk."
-        }
-      ],
-      "hypotheses": [],
-      "root_cause": null,
-      "resolution_candidate": "Recommended action: Fix.",
-      "links": [
-        "Finding source: F-009 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-        "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-009.md"
-      ],
-      "tags": [
-        "NCR-Migration",
-        "Audit-2026-02-15",
-        "F-009",
-        "Constitution-Article-VI"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0089",
-      "title": "Validation modules remain in global namespace, conflicting with namespace-folder convention standardization.",
-      "domain": "Project Governance",
-      "severity": "MEDIUM",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-15T16:50:47Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": "Audit-2026-02-15",
-      "assigned_dp": "DP-0010",
-      "assigned_ip": "IP-0038",
-      "observations": [
-        "Derived from Conformance Audit finding F-011.",
-        "Validation modules remain in global namespace, conflicting with namespace-folder convention standardization.",
-        "Requirement expectation: GOLD namespace/folder convention requires consistent namespace structure.",
-        "Current implementation mismatch: Validation core files remain in global namespace declarations.",
-        "Recommended action from audit: Investigate."
-      ],
-      "evidence": [
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-011 reference expectation: GOLD namespace/folder convention requires consistent namespace structure."
-        },
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-011 implementation evidence: Validation core files remain in global namespace declarations."
-        }
-      ],
-      "hypotheses": [],
-      "root_cause": null,
-      "resolution_candidate": "Recommended action: Fix.",
-      "links": [
-        "Finding source: F-011 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-        "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-011.md"
-      ],
-      "tags": [
-        "NCR-Migration",
-        "Audit-2026-02-15",
-        "F-011",
-        "Constitution-Article-VI"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0090",
-      "title": "Project-level changelog governance is missing, weakening traceability for module changes and deviations.",
-      "domain": "Project Governance",
-      "severity": "HIGH",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-15T16:50:47Z",
-      "updated_at": "2026-02-16T19:31:03Z",
-      "stage_detected": "Audit-2026-02-15",
-      "assigned_dp": "DP-0010",
-      "assigned_ip": "IP-0038",
-      "observations": [
-        "Derived from Conformance Audit finding F-012.",
-        "Project-level changelog governance is missing, weakening traceability for module changes and deviations.",
-        "Requirement expectation: GOLD versioning/changelog guidance requires project-level CHANGELOG plus file/API change records.",
-        "Current implementation mismatch: Repository-level CHANGELOG.md is absent and headers generally lack bounded change history.",
-        "Recommended action from audit: Fix."
-      ],
-      "evidence": [
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-012 reference expectation: GOLD versioning/changelog guidance requires project-level CHANGELOG plus file/API change records."
-        },
-        {
-          "ref": "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-          "notes": "F-012 implementation evidence: Repository-level CHANGELOG.md is absent and headers generally lack bounded change history."
-        }
-      ],
-      "hypotheses": [],
-      "root_cause": null,
-      "resolution_candidate": "Recommended action: Fix.",
-      "links": [
-        "Finding source: F-012 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
-        "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-012.md"
-      ],
-      "tags": [
-        "NCR-Migration",
-        "Audit-2026-02-15",
-        "F-012",
-        "Constitution-Article-VI"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    },
-    {
-      "id": "CS-0098",
-      "title": "Heaters do not start after startup-hold release during cold-start sequence",
-      "domain": "Pressurizer & Startup Control",
-      "severity": "HIGH",
-      "status": "READY_FOR_FIX",
-      "created_at": "2026-02-16T21:45:00Z",
-      "updated_at": "2026-02-16T21:45:00Z",
-      "stage_detected": "Investigation-2026-02-16",
-      "assigned_dp": "DP-0012",
-      "assigned_ip": null,
-      "observations": [
-        "Startup hold release is expected to return heater authority to automatic startup pressurization, but field behavior can remain effectively de-energized (0 MW) after release.",
-        "Observed symptom signature: pressure remains near initial cold-start values while heater mode/authority path can remain in OFF-equivalent behavior.",
-        "Operational impact: startup progression stalls and downstream pressure-dependent actions are blocked."
-      ],
-      "evidence": [
-        {
-          "ref": "Governance/Issues/CS-0098_Investigation_Report_2026-02-16_214500.md",
-          "notes": "Investigation record with code-path trace and disposition."
-        },
-        {
-          "ref": "HeatupLogs/IP-0024_StageD_Hold_2026-02-15_194555/Heatup_Report_20260215_194556.txt",
-          "notes": "Report shows heater mode OFF and final heater power 0.000 MW in startup-hold scenario."
-        },
-        {
-          "ref": "Assets/Scripts/Validation/HeatupSimEngine.cs:2152",
-          "notes": "Authority resolver latches OFF when current heater mode is OFF."
-        },
-        {
-          "ref": "Assets/Scripts/Validation/HeatupSimEngine.cs:2198",
-          "notes": "Startup-hold release logic clears hold but does not explicitly re-arm startup heater mode if mode is OFF."
-        }
-      ],
-      "hypotheses": [
-        "Heater mode can enter OFF before or during hold and remains OFF after release because release clears only hold state, not requested heater mode."
-      ],
-      "root_cause": "Confirmed: startup-hold release removes HOLD_LOCKED authority but does not enforce a non-OFF heater mode. If currentHeaterMode is OFF at release boundary, ResolveHeaterAuthorityState() continues returning OFF and heater demand remains 0 MW.",
-      "resolution_candidate": "On startup-hold release, enforce deterministic mode re-arm to PRESSURIZE_AUTO when manual-disable is false, then add regression validation proving non-zero heater demand within the first post-release window.",
-      "links": [
-        "Investigation artifact: Governance/Issues/CS-0098_Investigation_Report_2026-02-16_214500.md",
-        "Related historical scope: CS-0094, CS-0096 (DP-0012 closeout lineage)"
-      ],
-      "tags": [
-        "Investigation-2026-02-16",
-        "Startup-Heater-Release",
-        "DP-0012",
-        "Constitution-Article-VI"
-      ],
-      "closed_at": null,
-      "resolution_type": null
-    }
-  ]
+    "version":  "1.0.0",
+    "generated_at":  "2026-02-17T06:33:06Z",
+    "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
+    "active_issue_count":  13,
+    "issues":  [
+                   {
+                       "id":  "CS-0057",
+                       "title":  "SG startup draining contract at ~200F is not wired into runtime execution path",
+                       "domain":  "Steam Generator Secondary Physics",
+                       "severity":  "HIGH",
+                       "status":  "READY_FOR_FIX",
+                       "created_at":  "2026-02-14T19:55:32Z",
+                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "stage_detected":  "Audit-2026-02-14",
+                       "assigned_dp":  "DP-0011",
+                       "assigned_ip":  "IP-0037",
+                       "observations":  [
+                                            "Technical documentation specifies SG draining at approximately 200F, but runtime scanning found only the StartDraining declaration and no invocation path.",
+                                            "Expected startup mass-state transition for SG secondary inventory appears unexecuted, risking mismatch between documented and simulated SG initial conditions."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Technical_Documentation/SG_THERMAL_MODEL_RESEARCH_v3.0.0.md:127",
+                                            "notes":  "sg_draining_expected_at_200f"
+                                        },
+                                        {
+                                            "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:173",
+                                            "notes":  "startup_milestone_sg_drain"
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Physics/SGMultiNodeThermal.cs:1544",
+                                            "notes":  "startdraining_declared"
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Physics/SGMultiNodeThermal.cs:1347",
+                                            "notes":  "comment_states_triggered_externally_by_engine"
+                                        }
+                                    ],
+                       "hypotheses":  [
+
+                                      ],
+                       "root_cause":  null,
+                       "resolution_candidate":  "NO REMEDIATION AUTHORIZED.",
+                       "links":  [
+                                     "Assigned DP: DP-0011 - Steam Generator Secondary Physics (Audit Reopen)"
+                                 ],
+                       "tags":  [
+                                    "Technical Documentation Mismatch",
+                                    "Startup Procedure Wiring"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0063",
+                       "title":  "Simulation-facing files exceed GOLD hard size limits without documented waiver",
+                       "domain":  "Project Governance",
+                       "severity":  "MEDIUM",
+                       "status":  "READY_FOR_FIX",
+                       "created_at":  "2026-02-14T19:55:32Z",
+                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "stage_detected":  "Audit-2026-02-14",
+                       "assigned_dp":  "DP-0010",
+                       "assigned_ip":  "IP-0038",
+                       "observations":  [
+                                            "Multiple simulation-facing files exceed the \u003e1400 hard-fail threshold, increasing audit and ownership risk.",
+                                            "No waiver evidence found in reviewed governance artifacts for these files."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "TechnicalDocumentation/GOLD_FILE_HYGIENE_LIMITS.md:12",
+                                            "notes":  "hard_fail_threshold_gt_1400"
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/HeatupSimEngine.cs:1",
+                                            "notes":  "2486_lines"
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/HeatupSimEngine.Logging.cs:1",
+                                            "notes":  "1479_lines"
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Physics/SGMultiNodeThermal.cs:1",
+                                            "notes":  "2657_lines"
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Physics/CVCSController.cs:1",
+                                            "notes":  "1519_lines"
+                                        }
+                                    ],
+                       "hypotheses":  [
+
+                                      ],
+                       "root_cause":  null,
+                       "resolution_candidate":  "NO REMEDIATION AUTHORIZED.",
+                       "links":  [
+                                     "Assigned DP: DP-0010 - Project Governance"
+                                 ],
+                       "tags":  [
+                                    "GOLD File Hygiene",
+                                    "Oversized Modules"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0070",
+                       "title":  "HeatupSimEngine header lacks mandatory GOLD C01 sections (SOURCES and UNITS)",
+                       "domain":  "Project Governance",
+                       "severity":  "LOW",
+                       "status":  "READY_FOR_FIX",
+                       "created_at":  "2026-02-14T19:55:32Z",
+                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "stage_detected":  "Audit-2026-02-14",
+                       "assigned_dp":  "DP-0010",
+                       "assigned_ip":  "IP-0038",
+                       "observations":  [
+                                            "The core engine header includes PURPOSE/ARCH/GOLD but does not include explicit SOURCES and UNITS sections required by C01.",
+                                            "This is a mandatory GOLD conformance gate failure for header completeness."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "TechnicalDocumentation/GOLD_CONFORMANCE_CHECKLIST.md:14",
+                                            "notes":  "c01_requires_purpose_sources_units_arch_gold"
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/HeatupSimEngine.cs:6",
+                                            "notes":  "purpose_present"
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/HeatupSimEngine.cs:11",
+                                            "notes":  "architecture_present"
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/HeatupSimEngine.cs:58",
+                                            "notes":  "gold_standard_present_without_sources_units_sections"
+                                        }
+                                    ],
+                       "hypotheses":  [
+
+                                      ],
+                       "root_cause":  null,
+                       "resolution_candidate":  "NO REMEDIATION AUTHORIZED.",
+                       "links":  [
+                                     "Assigned DP: DP-0010 - Project Governance"
+                                 ],
+                       "tags":  [
+                                    "GOLD C01",
+                                    "Header Completeness"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0078",
+                       "title":  "SG secondary pressure response does not begin at RCP circulation onset; rise is delayed until near-boiling",
+                       "domain":  "Steam Generator Secondary Physics",
+                       "severity":  "HIGH",
+                       "status":  "READY_FOR_FIX",
+                       "created_at":  "2026-02-15T10:19:57Z",
+                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "stage_detected":  "Stage E",
+                       "assigned_dp":  "DP-0011",
+                       "assigned_ip":  "IP-0037",
+                       "observations":  [
+                                            "Technical documentation defines SG warmup as simultaneous heating and pressurization: as RCP heat input warms SG secondary, pressure should rise with temperature and later be regulated by steam dump control.",
+                                            "Current build logs show SG secondary pressure remains near blanket floor (~17 psia) from first non-zero RCP circulation through extended post-bubble RCP-driven warmup and temperature rise, then increases only near/after boiling onset, indicating delayed pressure response inconsistent with documented warmup behavior.",
+                                            "Scope note: this CS starts at first non-zero RCP circulation (ramp onset) after bubble precondition and does not require full pump ramp completion. Bubble formation/draining timing defects are tracked separately under existing bubble-phase CS items and are not duplicated here.",
+                                            "In latest build run, with RCPs at 4/4 and SG top node increasing from 109.53F to 216.90F (13.25hr -\u003e 16.00hr), SG pressure remains only 17.1 -\u003e 17.8 psia; pressure rise accelerates only near 234.95F/255.31F around boiling transition.",
+                                            "Acceptance criteria: SG secondary pressure response must begin at circulation onset (first non-zero RCP state) and continue directionally upward through warmup, even if initial increments are small, without remaining floor-clamped until near-boiling transition."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Technical_Documentation/SG_Secondary_Pressurization_During_Heatup_Research.md:94",
+                                            "notes":  "nrc_statement_rcp_heat_input_causes_steam_pressure_increase"
+                                        },
+                                        {
+                                            "ref":  "Technical_Documentation/SG_Secondary_Pressurization_During_Heatup_Research.md:36",
+                                            "notes":  "documented_pressure_continues_rising_with_heatup"
+                                        },
+                                        {
+                                            "ref":  "Technical_Documentation/SG_THERMAL_MODEL_RESEARCH_v3.0.0.md:145",
+                                            "notes":  "simultaneous_heating_and_pressurization_expected"
+                                        },
+                                        {
+                                            "ref":  "build/HeatupLogs/Heatup_Interval_094_11.75hr.txt:72",
+                                            "notes":  "first_nonzero_rcp_circulation_1_of_4"
+                                        },
+                                        {
+                                            "ref":  "build/HeatupLogs/Heatup_Interval_094_11.75hr.txt:157",
+                                            "notes":  "pressure_still_floor_at_rcp_circulation_onset"
+                                        },
+                                        {
+                                            "ref":  "build/HeatupLogs/Heatup_Interval_106_13.25hr.txt:72",
+                                            "notes":  "rcp_4_of_4_running"
+                                        },
+                                        {
+                                            "ref":  "build/HeatupLogs/Heatup_Interval_106_13.25hr.txt:159",
+                                            "notes":  "sg_top_temperature_109_53f"
+                                        },
+                                        {
+                                            "ref":  "build/HeatupLogs/Heatup_Interval_106_13.25hr.txt:166",
+                                            "notes":  "sg_pressure_17_1_psia"
+                                        },
+                                        {
+                                            "ref":  "build/HeatupLogs/Heatup_Interval_128_16.00hr.txt:159",
+                                            "notes":  "sg_top_temperature_216_90f"
+                                        },
+                                        {
+                                            "ref":  "build/HeatupLogs/Heatup_Interval_128_16.00hr.txt:166",
+                                            "notes":  "sg_pressure_17_8_psia_still_near_floor"
+                                        },
+                                        {
+                                            "ref":  "build/HeatupLogs/Heatup_Interval_132_16.50hr.txt:166",
+                                            "notes":  "pressure_rise_after_near_boiling_transition"
+                                        },
+                                        {
+                                            "ref":  "build/HeatupLogs/Heatup_Interval_132_16.50hr.txt:199",
+                                            "notes":  "boiling_active_yes_at_pressure_takeoff"
+                                        }
+                                    ],
+                       "hypotheses":  [
+                                          "Startup pressure source selection and/or floor-clamped boundary behavior in OPEN_PREHEAT and early ISOLATED_HEATUP is suppressing expected compressibility/thermal-expansion pressure rise.",
+                                          "Pressure evolution may be over-coupled to boiling activation thresholds, producing near-flat pre-boil pressure instead of gradual warmup pressurization."
+                                      ],
+                       "root_cause":  null,
+                       "resolution_candidate":  "Pending implementation of pre-boil pressurization coupling consistent with documented SG warmup process under DP-0011.",
+                       "links":  [
+                                     "Assigned DP: DP-0011 - Steam Generator Secondary Physics (Audit Reopen)",
+                                     "Related closed chain: CS-0017, CS-0019, CS-0020, CS-0054 (reopened symptom class under current build evidence).",
+                                     "Prerequisite dependency (separate scope): bubble formation/draining issue chain CS-0072, CS-0074, CS-0075, CS-0076."
+                                 ],
+                       "tags":  [
+                                    "SG Secondary Physics - Warmup Pressurization",
+                                    "Pre-Boil Pressure Response",
+                                    "RCP Heatup Coupling"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0080",
+                       "title":  "RCP heat-input constants do not align with the cited cold-water heatup reference basis.",
+                       "domain":  "Primary Thermodynamics",
+                       "severity":  "HIGH",
+                       "status":  "READY_FOR_FIX",
+                       "created_at":  "2026-02-15T16:50:47Z",
+                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "stage_detected":  "Audit-2026-02-15",
+                       "assigned_dp":  "DP-0001",
+                       "assigned_ip":  "IP-0036",
+                       "observations":  [
+                                            "Derived from Conformance Audit finding F-002.",
+                                            "RCP heat-input constants do not align with the cited cold-water heatup reference basis.",
+                                            "Requirement expectation: NRC HRTD Section 3.2 and reference sources cite about 6 MW per RCP in cold water.",
+                                            "Current implementation mismatch: Plant constants use 21 MW total / 5.25 MW each and feed RCS heatup paths.",
+                                            "Recommended action from audit: Investigate."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                            "notes":  "F-002 reference expectation: NRC HRTD Section 3.2 and reference sources cite about 6 MW per RCP in cold water."
+                                        },
+                                        {
+                                            "ref":  "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                            "notes":  "F-002 implementation evidence: Plant constants use 21 MW total / 5.25 MW each and feed RCS heatup paths."
+                                        }
+                                    ],
+                       "hypotheses":  [
+
+                                      ],
+                       "root_cause":  null,
+                       "resolution_candidate":  "Recommended action: Fix.",
+                       "links":  [
+                                     "Finding source: F-002 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                     "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-002.md"
+                                 ],
+                       "tags":  [
+                                    "NCR-Migration",
+                                    "Audit-2026-02-15",
+                                    "F-002",
+                                    "Constitution-Article-VI"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0082",
+                       "title":  "SG startup boundary behavior is modeled isolated where references indicate steam-line warmup/open-path behavior.",
+                       "domain":  "Steam Generator Secondary Physics",
+                       "severity":  "HIGH",
+                       "status":  "READY_FOR_FIX",
+                       "created_at":  "2026-02-15T16:50:47Z",
+                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "stage_detected":  "Audit-2026-02-15",
+                       "assigned_dp":  "DP-0011",
+                       "assigned_ip":  "IP-0037",
+                       "observations":  [
+                                            "Derived from Conformance Audit finding F-004.",
+                                            "SG startup boundary behavior is modeled isolated where references indicate steam-line warmup/open-path behavior.",
+                                            "Requirement expectation: SG startup references describe MSIV-open steam-line warming during heatup.",
+                                            "Current implementation mismatch: ShouldIsolateSGBoundary enforces isolation outside OpenPreheat/SteamDump and SG thermal path zeros steam outflow when isolated.",
+                                            "Recommended action from audit: Instrument."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                            "notes":  "F-004 reference expectation: SG startup references describe MSIV-open steam-line warming during heatup."
+                                        },
+                                        {
+                                            "ref":  "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                            "notes":  "F-004 implementation evidence: ShouldIsolateSGBoundary enforces isolation outside OpenPreheat/SteamDump and SG thermal path zeros steam outflow when isolated."
+                                        }
+                                    ],
+                       "hypotheses":  [
+
+                                      ],
+                       "root_cause":  null,
+                       "resolution_candidate":  "Recommended action: Instrument.",
+                       "links":  [
+                                     "Finding source: F-004 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                     "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-004.md"
+                                 ],
+                       "tags":  [
+                                    "NCR-Migration",
+                                    "Audit-2026-02-15",
+                                    "F-004",
+                                    "Constitution-Article-VI"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0084",
+                       "title":  "Project-owned C# files do not uniformly meet required GOLD header metadata fields.",
+                       "domain":  "Project Governance",
+                       "severity":  "HIGH",
+                       "status":  "READY_FOR_FIX",
+                       "created_at":  "2026-02-15T16:50:47Z",
+                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "stage_detected":  "Audit-2026-02-15",
+                       "assigned_dp":  "DP-0010",
+                       "assigned_ip":  "IP-0038",
+                       "observations":  [
+                                            "Derived from Conformance Audit finding F-006.",
+                                            "Project-owned C# files do not uniformly meet required GOLD header metadata fields.",
+                                            "Requirement expectation: GOLD header standard requires Version, Last Updated, and bounded Changes entries.",
+                                            "Current implementation mismatch: Audited files include legacy/version-only headers lacking Last Updated/Changes sections.",
+                                            "Recommended action from audit: Fix."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                            "notes":  "F-006 reference expectation: GOLD header standard requires Version, Last Updated, and bounded Changes entries."
+                                        },
+                                        {
+                                            "ref":  "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                            "notes":  "F-006 implementation evidence: Audited files include legacy/version-only headers lacking Last Updated/Changes sections."
+                                        }
+                                    ],
+                       "hypotheses":  [
+
+                                      ],
+                       "root_cause":  null,
+                       "resolution_candidate":  "Recommended action: Fix.",
+                       "links":  [
+                                     "Finding source: F-006 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                     "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-006.md"
+                                 ],
+                       "tags":  [
+                                    "NCR-Migration",
+                                    "Audit-2026-02-15",
+                                    "F-006",
+                                    "Constitution-Article-VI"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0085",
+                       "title":  "File-level change history is incomplete or missing for audited modules.",
+                       "domain":  "Project Governance",
+                       "severity":  "MEDIUM",
+                       "status":  "READY_FOR_FIX",
+                       "created_at":  "2026-02-15T16:50:47Z",
+                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "stage_detected":  "Audit-2026-02-15",
+                       "assigned_dp":  "DP-0010",
+                       "assigned_ip":  "IP-0038",
+                       "observations":  [
+                                            "Derived from Conformance Audit finding F-007.",
+                                            "File-level change history is incomplete or missing for audited modules.",
+                                            "Requirement expectation: GOLD standard requires latest 5-10 Changes entries per file header.",
+                                            "Current implementation mismatch: Audited core files do not include bounded in-header change ledgers.",
+                                            "Recommended action from audit: Fix."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                            "notes":  "F-007 reference expectation: GOLD standard requires latest 5-10 Changes entries per file header."
+                                        },
+                                        {
+                                            "ref":  "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                            "notes":  "F-007 implementation evidence: Audited core files do not include bounded in-header change ledgers."
+                                        }
+                                    ],
+                       "hypotheses":  [
+
+                                      ],
+                       "root_cause":  null,
+                       "resolution_candidate":  "Recommended action: Fix.",
+                       "links":  [
+                                     "Finding source: F-007 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                     "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-007.md"
+                                 ],
+                       "tags":  [
+                                    "NCR-Migration",
+                                    "Audit-2026-02-15",
+                                    "F-007",
+                                    "Constitution-Article-VI"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0086",
+                       "title":  "Public API surfaces lack consistent XML documentation coverage.",
+                       "domain":  "Project Governance",
+                       "severity":  "MEDIUM",
+                       "status":  "READY_FOR_FIX",
+                       "created_at":  "2026-02-15T16:50:47Z",
+                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "stage_detected":  "Audit-2026-02-15",
+                       "assigned_dp":  "DP-0010",
+                       "assigned_ip":  "IP-0038",
+                       "observations":  [
+                                            "Derived from Conformance Audit finding F-008.",
+                                            "Public API surfaces lack consistent XML documentation coverage.",
+                                            "Requirement expectation: GOLD standard requires XML docs for public APIs.",
+                                            "Current implementation mismatch: Public APIs in Physics/Validation modules have missing XML documentation.",
+                                            "Recommended action from audit: Fix."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                            "notes":  "F-008 reference expectation: GOLD standard requires XML docs for public APIs."
+                                        },
+                                        {
+                                            "ref":  "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                            "notes":  "F-008 implementation evidence: Public APIs in Physics/Validation modules have missing XML documentation."
+                                        }
+                                    ],
+                       "hypotheses":  [
+
+                                      ],
+                       "root_cause":  null,
+                       "resolution_candidate":  "Recommended action: Fix.",
+                       "links":  [
+                                     "Finding source: F-008 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                     "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-008.md"
+                                 ],
+                       "tags":  [
+                                    "NCR-Migration",
+                                    "Audit-2026-02-15",
+                                    "F-008",
+                                    "Constitution-Article-VI"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0087",
+                       "title":  "Several modules exceed responsible file-size/separation-of-concerns limits, increasing coupling risk.",
+                       "domain":  "Project Governance",
+                       "severity":  "MEDIUM",
+                       "status":  "READY_FOR_FIX",
+                       "created_at":  "2026-02-15T16:50:47Z",
+                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "stage_detected":  "Audit-2026-02-15",
+                       "assigned_dp":  "DP-0010",
+                       "assigned_ip":  "IP-0038",
+                       "observations":  [
+                                            "Derived from Conformance Audit finding F-009.",
+                                            "Several modules exceed responsible file-size/separation-of-concerns limits, increasing coupling risk.",
+                                            "Requirement expectation: GOLD standard requires responsible file size and encourages partial decomposition.",
+                                            "Current implementation mismatch: Multiple audited files are large monoliths with high change coupling risk.",
+                                            "Recommended action from audit: Investigate."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                            "notes":  "F-009 reference expectation: GOLD standard requires responsible file size and encourages partial decomposition."
+                                        },
+                                        {
+                                            "ref":  "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                            "notes":  "F-009 implementation evidence: Multiple audited files are large monoliths with high change coupling risk."
+                                        }
+                                    ],
+                       "hypotheses":  [
+
+                                      ],
+                       "root_cause":  null,
+                       "resolution_candidate":  "Recommended action: Fix.",
+                       "links":  [
+                                     "Finding source: F-009 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                     "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-009.md"
+                                 ],
+                       "tags":  [
+                                    "NCR-Migration",
+                                    "Audit-2026-02-15",
+                                    "F-009",
+                                    "Constitution-Article-VI"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0089",
+                       "title":  "Validation modules remain in global namespace, conflicting with namespace-folder convention standardization.",
+                       "domain":  "Project Governance",
+                       "severity":  "MEDIUM",
+                       "status":  "READY_FOR_FIX",
+                       "created_at":  "2026-02-15T16:50:47Z",
+                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "stage_detected":  "Audit-2026-02-15",
+                       "assigned_dp":  "DP-0010",
+                       "assigned_ip":  "IP-0038",
+                       "observations":  [
+                                            "Derived from Conformance Audit finding F-011.",
+                                            "Validation modules remain in global namespace, conflicting with namespace-folder convention standardization.",
+                                            "Requirement expectation: GOLD namespace/folder convention requires consistent namespace structure.",
+                                            "Current implementation mismatch: Validation core files remain in global namespace declarations.",
+                                            "Recommended action from audit: Investigate."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                            "notes":  "F-011 reference expectation: GOLD namespace/folder convention requires consistent namespace structure."
+                                        },
+                                        {
+                                            "ref":  "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                            "notes":  "F-011 implementation evidence: Validation core files remain in global namespace declarations."
+                                        }
+                                    ],
+                       "hypotheses":  [
+
+                                      ],
+                       "root_cause":  null,
+                       "resolution_candidate":  "Recommended action: Fix.",
+                       "links":  [
+                                     "Finding source: F-011 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                     "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-011.md"
+                                 ],
+                       "tags":  [
+                                    "NCR-Migration",
+                                    "Audit-2026-02-15",
+                                    "F-011",
+                                    "Constitution-Article-VI"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0090",
+                       "title":  "Project-level changelog governance is missing, weakening traceability for module changes and deviations.",
+                       "domain":  "Project Governance",
+                       "severity":  "HIGH",
+                       "status":  "READY_FOR_FIX",
+                       "created_at":  "2026-02-15T16:50:47Z",
+                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "stage_detected":  "Audit-2026-02-15",
+                       "assigned_dp":  "DP-0010",
+                       "assigned_ip":  "IP-0038",
+                       "observations":  [
+                                            "Derived from Conformance Audit finding F-012.",
+                                            "Project-level changelog governance is missing, weakening traceability for module changes and deviations.",
+                                            "Requirement expectation: GOLD versioning/changelog guidance requires project-level CHANGELOG plus file/API change records.",
+                                            "Current implementation mismatch: Repository-level CHANGELOG.md is absent and headers generally lack bounded change history.",
+                                            "Recommended action from audit: Fix."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                            "notes":  "F-012 reference expectation: GOLD versioning/changelog guidance requires project-level CHANGELOG plus file/API change records."
+                                        },
+                                        {
+                                            "ref":  "Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                            "notes":  "F-012 implementation evidence: Repository-level CHANGELOG.md is absent and headers generally lack bounded change history."
+                                        }
+                                    ],
+                       "hypotheses":  [
+
+                                      ],
+                       "root_cause":  null,
+                       "resolution_candidate":  "Recommended action: Fix.",
+                       "links":  [
+                                     "Finding source: F-012 in Technical_Documentation/Conformance_Audit_Report_2026-02-15.md",
+                                     "NCR source retired after migration: Governance/NCR/NCR_2026-02-15_F-012.md"
+                                 ],
+                       "tags":  [
+                                    "NCR-Migration",
+                                    "Audit-2026-02-15",
+                                    "F-012",
+                                    "Constitution-Article-VI"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0098",
+                       "title":  "Heaters do not start after startup-hold release during cold-start sequence",
+                       "domain":  "Pressurizer \u0026 Startup Control",
+                       "severity":  "HIGH",
+                       "status":  "READY_FOR_FIX",
+                       "created_at":  "2026-02-16T21:45:00Z",
+                       "updated_at":  "2026-02-16T21:45:00Z",
+                       "stage_detected":  "Investigation-2026-02-16",
+                       "assigned_dp":  "DP-0012",
+                       "assigned_ip":  null,
+                       "observations":  [
+                                            "Startup hold release is expected to return heater authority to automatic startup pressurization, but field behavior can remain effectively de-energized (0 MW) after release.",
+                                            "Observed symptom signature: pressure remains near initial cold-start values while heater mode/authority path can remain in OFF-equivalent behavior.",
+                                            "Operational impact: startup progression stalls and downstream pressure-dependent actions are blocked."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Governance/Issues/CS-0098_Investigation_Report_2026-02-16_214500.md",
+                                            "notes":  "Investigation record with code-path trace and disposition."
+                                        },
+                                        {
+                                            "ref":  "HeatupLogs/IP-0024_StageD_Hold_2026-02-15_194555/Heatup_Report_20260215_194556.txt",
+                                            "notes":  "Report shows heater mode OFF and final heater power 0.000 MW in startup-hold scenario."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/HeatupSimEngine.cs:2152",
+                                            "notes":  "Authority resolver latches OFF when current heater mode is OFF."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/HeatupSimEngine.cs:2198",
+                                            "notes":  "Startup-hold release logic clears hold but does not explicitly re-arm startup heater mode if mode is OFF."
+                                        }
+                                    ],
+                       "hypotheses":  [
+                                          "Heater mode can enter OFF before or during hold and remains OFF after release because release clears only hold state, not requested heater mode."
+                                      ],
+                       "root_cause":  "Confirmed: startup-hold release removes HOLD_LOCKED authority but does not enforce a non-OFF heater mode. If currentHeaterMode is OFF at release boundary, ResolveHeaterAuthorityState() continues returning OFF and heater demand remains 0 MW.",
+                       "resolution_candidate":  "On startup-hold release, enforce deterministic mode re-arm to PRESSURIZE_AUTO when manual-disable is false, then add regression validation proving non-zero heater demand within the first post-release window.",
+                       "links":  [
+                                     "Investigation artifact: Governance/Issues/CS-0098_Investigation_Report_2026-02-16_214500.md",
+                                     "Related historical scope: CS-0094, CS-0096 (DP-0012 closeout lineage)"
+                                 ],
+                       "tags":  [
+                                    "Investigation-2026-02-16",
+                                    "Startup-Heater-Release",
+                                    "DP-0012",
+                                    "Constitution-Article-VI"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   }
+               ]
 }

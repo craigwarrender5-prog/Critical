@@ -209,15 +209,15 @@ namespace Critical.Physics
         
         /// <summary>
         /// Minimum pressure for RCP operation in psig.
-        /// Source: NRC ML11223A342 Section 19.2.2 — "pressure must be at least 320 psig
-        /// to support running the RCPs"
+        /// Source: NRC HRTD Section 3.2 startup requirement
+        /// (minimum 400 psig before RCP start).
         /// Required for adequate NPSH margin and seal injection
         /// </summary>
         public const float MIN_RCP_PRESSURE_PSIG = 400f;
         
         /// <summary>
         /// Minimum pressure for RCP operation in psia.
-        /// = MIN_RCP_PRESSURE_PSIG + 14.7 = 334.7 psia
+        /// = MIN_RCP_PRESSURE_PSIG + 14.7 = 414.7 psia
         /// </summary>
         public const float MIN_RCP_PRESSURE_PSIA = MIN_RCP_PRESSURE_PSIG + PSIG_TO_PSIA;
         
@@ -510,7 +510,7 @@ namespace Critical.Physics
         
         /// <summary>
         /// Check if RCP can be started at current conditions.
-        /// Requires: bubble exists AND pressure >= 320 psig
+        /// Requires: bubble exists AND pressure >= 400 psig
         /// </summary>
         /// <param name="pressure_psig">Current pressure in psig</param>
         /// <param name="bubbleExists">True if pressurizer has steam bubble</param>

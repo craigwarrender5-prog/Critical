@@ -677,6 +677,7 @@ public partial class HeatupSimEngine
         sealInjectionOK = true;
         chargingActive = true;
         letdownActive = true;
+        sgSecondaryPressureHigh = false;
 
         // Clear history buffers and event log
         ClearHistoryAndEvents();
@@ -684,6 +685,7 @@ public partial class HeatupSimEngine
         // Reset alarm edge detection state
         prev_rcpCount = -1;
         prev_plantMode = -1;
+        prev_sgSecondaryPressureHigh = false;
 
         // Log initial state
         if (solidPressurizer)
