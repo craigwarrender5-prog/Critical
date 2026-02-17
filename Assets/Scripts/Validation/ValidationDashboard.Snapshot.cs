@@ -148,6 +148,12 @@ namespace Critical.Validation
         /// <summary>Bubble formation phase</summary>
         public string BubblePhase;
 
+        /// <summary>PZR subcooling to saturation (T_sat - T_pzr) in °F. Positive = subcooled, zero/negative = at/above saturation.</summary>
+        public float PzrSubcooling;
+
+        /// <summary>True when PZR is at or near saturation temperature (subcooling ≤ 5°F). Indicates bubble formation readiness.</summary>
+        public bool PzrAtSaturation;
+
         // ====================================================================
         // CVCS
         // ====================================================================
@@ -295,6 +301,11 @@ namespace Critical.Validation
             BubbleFormed = engine.bubbleFormed;
             SolidPressurizer = engine.solidPressurizer;
             BubblePhase = engine.bubblePhase.ToString();
+
+            // PZR subcooling for bubble formation readiness (T_sat - T_pzr)
+            // Positive = subcooled, zero/negative = at or above saturation
+            PzrSubcooling = T_sat - T_pzr;
+            PzrAtSaturation = PzrSubcooling <= 5f;
 
             // CVCS
             ChargingFlow = engine.chargingFlow;

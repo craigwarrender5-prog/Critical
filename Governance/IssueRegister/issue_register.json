@@ -1,8 +1,8 @@
 {
     "version":  "1.0.0",
-    "generated_at":  "2026-02-17T17:55:48Z",
+    "generated_at":  "2026-02-17T19:05:15Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-    "active_issue_count":  7,
+    "active_issue_count":  8,
     "issues":  [
                    {
                        "id":  "CS-0057",
@@ -319,12 +319,14 @@
                        "title":  "PZR temperature monitoring missing for bubble formation readiness during cold startup",
                        "domain":  "Operator Interface \u0026 Scenarios",
                        "severity":  "MEDIUM",
-                       "status":  "READY",
+                       "status":  "CLOSED",
                        "created_at":  "2026-02-17T18:15:00Z",
-                       "updated_at":  "2026-02-17T19:00:00Z",
+                       "updated_at":  "2026-02-17T19:30:00Z",
                        "stage_detected":  "User-Request-2026-02-17",
                        "assigned_dp":  "DP-0008",
                        "assigned_ip":  "IP-0050",
+                       "closed_at":  "2026-02-17T19:30:00Z",
+                       "resolution_type":  "FIXED",
                        "observations":  [
                                             "ValidationDashboard displays T_pzr as numeric readout but provides no comparison to T_sat.",
                                             "No annunciator exists for PZR approaching or reaching saturation temperature.",
@@ -369,6 +371,112 @@
                                     "Bubble-Formation",
                                     "Cold-Startup",
                                     "ValidationDashboard",
+                                    "User-Request-2026-02-17"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0109",
+                       "title":  "PZR Mode 5 pre-heater pressurization: validate net +1 gpm charging imbalance vs documented expectations",
+                       "domain":  "Pressurizer \u0026 Startup Control",
+                       "severity":  "HIGH",
+                       "status":  "READY",
+                       "created_at":  "2026-02-17T19:05:15Z",
+                       "updated_at":  "2026-02-17T19:05:15Z",
+                       "stage_detected":  "User-Request-2026-02-17",
+                       "assigned_dp":  "DP-0012",
+                       "assigned_ip":  null,
+                       "observations":  [
+                                            "Mode 5 solid startup pre-heater pressurization shows approximately +1 gpm charging/letdown net, not the larger imbalance documented in startup references.",
+                                            "Observed pressure ramp is around 176-184 psi/hr in early pre-heater window, above documented 50-100 psi/hr guidance.",
+                                            "Heater power is already active during early solid pre-heater period, so ramp is not purely CVCS-imbalance driven."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Governance/Issues/CS-0109_Investigation_Report_2026-02-17_190515.md",
+                                            "notes":  "Full diagnostic-to-resolution investigation and corrective scope."
+                                        },
+                                        {
+                                            "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:21",
+                                            "notes":  "Sequence: charging>letdown pressurization to 400-425 psig, then heater energization."
+                                        },
+                                        {
+                                            "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:25",
+                                            "notes":  "Documented net +20-40 gpm and approximately 50-100 psi/hr expectation."
+                                        },
+                                        {
+                                            "ref":  "Build/HeatupLogs/Heatup_Interval_002_0.25hr.txt:27,47,68",
+                                            "notes":  "Pressure rate 176.48 psi/hr, net CVCS +1.0 gpm, heater power already non-zero."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Physics/SolidPlantPressure.cs:238,628-631,683-685",
+                                            "notes":  "HEATER_PRESSURIZE trim clamped to +/-1 gpm around balanced 75/75 base flows."
+                                        }
+                                    ],
+                       "hypotheses":  [
+                                          "Startup pre-heater behavior is currently governed by a capped controller trim envelope that cannot realize the documented larger CVCS imbalance window."
+                                      ],
+                       "root_cause":  "Solid-plant HEATER_PRESSURIZE logic limits CVCS net trim to +/-1 gpm while early heater participation contributes to pressure rise, yielding a mechanism/rate mismatch versus documented startup expectations.",
+                       "resolution_candidate":  "Define explicit Mode 5 pre-heater policy boundary: parameterized CVCS imbalance/rate envelope aligned to documentation, heater-sequencing handoff at documented transition, and clear controller ownership separation.",
+                       "links":  [
+                                     "Assigned DP: DP-0012 - Pressurizer \u0026 Startup Control",
+                                     "No implementation under CS; create an IP before code changes."
+                                 ],
+                       "tags":  [
+                                    "PZR-Mode5-Pressurization",
+                                    "CVCS-Imbalance",
+                                    "Technical-Documentation-Alignment",
+                                    "Diagnostic-to-Resolution",
+                                    "User-Request-2026-02-17"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0110",
+                       "title":  "PZR temperature (T_pzr) lacks primary visualization — no arc gauge or trend display",
+                       "domain":  "Operator Interface & Scenarios",
+                       "severity":  "MEDIUM",
+                       "status":  "READY",
+                       "created_at":  "2026-02-17T19:45:00Z",
+                       "updated_at":  "2026-02-17T19:45:00Z",
+                       "stage_detected":  "User-Request-2026-02-17",
+                       "assigned_dp":  "DP-0008",
+                       "assigned_ip":  null,
+                       "observations":  [
+                                            "Pressurizer column has arc gauges for PRESSURE and LEVEL, but not T_pzr.",
+                                            "T_pzr readout is misplaced in RCS column instead of Pressurizer column.",
+                                            "No T_pzr sparkline trend exists.",
+                                            "Operators cannot visualize PZR heating trajectory toward saturation during cold startup."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Governance/Issues/CS-0110_Investigation_Report_2026-02-17_194500.md",
+                                            "notes":  "Full investigation report with root cause and fix options."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/Tabs/OverviewTab.cs:260-275",
+                                            "notes":  "PZR column has PRESSURE and LEVEL arc gauges, no T_pzr gauge."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/Tabs/OverviewTab.cs:205",
+                                            "notes":  "T_pzr displayed in RCS column, not PZR column."
+                                        }
+                                    ],
+                       "hypotheses":  [
+                                          "Dashboard was designed with post-bubble operations as primary focus; pre-bubble PZR heating visualization was deprioritized."
+                                      ],
+                       "root_cause":  "Missing primary T_pzr visualization (arc gauge) in Pressurizer column.",
+                       "resolution_candidate":  "Add T_pzr arc gauge to Pressurizer column, relocate T_pzr readout from RCS to PZR column.",
+                       "links":  [
+                                     "Assigned DP: DP-0008 - Operator Interface & Scenarios",
+                                     "Related: CS-0108 (closed) - PZR subcooling added but T_pzr visualization gap remains"
+                                 ],
+                       "tags":  [
+                                    "PZR-Temperature-Visualization",
+                                    "Dashboard-Arc-Gauge",
+                                    "Cold-Startup",
                                     "User-Request-2026-02-17"
                                 ],
                        "closed_at":  null,

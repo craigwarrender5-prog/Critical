@@ -301,6 +301,15 @@ namespace Critical.Validation
                 "SURGE", s.SurgeFlow, -50f, 50f);
             y += 26f;
 
+            // PZR Subcooling to saturation (for bubble formation readiness)
+            // Green when at/near saturation (≤5°F), cyan otherwise
+            Color pzrSubcoolColor = s.PzrAtSaturation 
+                ? ValidationDashboard._cNormalGreen 
+                : ValidationDashboard._cCyanInfo;
+            d.DrawDigitalReadout(new Rect(_pzrCol.x + 4f, y, readoutW, 16f),
+                "PZR ΔT_SAT", s.PzrSubcooling, "°F", "F1", pzrSubcoolColor);
+            y += 20f;
+
             // Bubble state
             d.DrawLED(new Rect(_pzrCol.x + 4f, y, colW - 8f, 18f), 
                 s.BubbleFormed ? "BUBBLE OK" : (s.SolidPressurizer ? "SOLID PZR" : s.BubblePhase),

@@ -1,7 +1,7 @@
 ﻿HEATUP INTERVAL LOG
 ======================================================================
 Log Entry:        #1
-Timestamp:        17/02/2026 5:21:55 p.m.
+Timestamp:        17/02/2026 7:15:23 p.m.
 Sim Time:         0.00 hours (00:00:00)
 Wall-Clock Time:  00:00:00
 Effective Speed:  1x (1x RT)
@@ -13,24 +13,24 @@ VALIDATION BASELINE (IP-0018 / DP-0003):
   Interval Log:     0.25 hr
 
 THERMAL STATE:
-  T_avg:                120.00 °F
-  T_hot:                120.00 °F
-  T_cold:               120.00 °F
-  T_rcs:                120.00 °F
-  T_pzr:                120.00 °F
-  T_sat:                337.33 °F
-  T_sg_secondary:       120.00 °F
-  Subcooling:           217.33 °F
-  Heatup Rate:            0.00 °F/hr
-  PZR Heat Rate:          0.00 °F/hr
-  RCS Heat Rate:          0.00 °F/hr
+  T_avg:                120.00 Â°F
+  T_hot:                120.00 Â°F
+  T_cold:               120.00 Â°F
+  T_rcs:                120.00 Â°F
+  T_pzr:                120.00 Â°F
+  T_sat:                337.33 Â°F
+  T_sg_secondary:       120.00 Â°F
+  Subcooling:           217.33 Â°F
+  Heatup Rate:            0.00 Â°F/hr
+  PZR Heat Rate:          0.00 Â°F/hr
+  RCS Heat Rate:          0.00 Â°F/hr
   Pressure Rate:          0.00 psi/hr
 
 PRESSURE / LEVEL:
   RCS Pressure:          114.7 psia (100.0 psig)
   PZR Level:             100.0 %
-  PZR Water Vol:        1800.0 ftÂ³
-  PZR Steam Vol:           0.0 ftÂ³
+  PZR Water Vol:        1800.0 ftÃ‚Â³
+  PZR Steam Vol:           0.0 ftÃ‚Â³
   Surge Flow:              0.0 gpm
   PZR Setpoint:           25.0 %
 
@@ -114,7 +114,7 @@ RCP (Reactor Coolant Pump) STATE:
     RWST Suction:             NO
     Makeup Source:          NONE
 
-  BRS (Boron Recycle System) — Per NRC HRTD 4.1 / Callaway FSAR Ch.11:
+  BRS (Boron Recycle System) â€” Per NRC HRTD 4.1 / Callaway FSAR Ch.11:
     Status:                 IDLE
     Holdup Volume:             0 / 44800 gal (0.0%)
     Holdup Boron:           2000 ppm
@@ -166,20 +166,20 @@ RCP (Reactor Coolant Pump) STATE:
     Total Grid Load:        25.0 MW
     Cumulative Energy:       0.0 MWh
 
-  SG SECONDARY SIDE (v1.3.0 / v4.3.0 — Multi-Node Stratified Model):
-    Bulk Avg Temp:        120.00 °F
-    Top Node Temp:        120.00 °F
-    Bottom Node Temp:     120.00 °F
-    Stratification:         0.00 °F (top-bottom)
-    T_RCS - T_SG_top:       0.00 °F
-    T_RCS - T_SG_avg:       0.00 °F
+  SG SECONDARY SIDE (v1.3.0 / v4.3.0 â€” Multi-Node Stratified Model):
+    Bulk Avg Temp:        120.00 Â°F
+    Top Node Temp:        120.00 Â°F
+    Bottom Node Temp:     120.00 Â°F
+    Stratification:         0.00 Â°F (top-bottom)
+    T_RCS - T_SG_top:       0.00 Â°F
+    T_RCS - T_SG_avg:       0.00 Â°F
     Heat to SG Sec:         0.00 MW
     Heat to SG Sec:         0.00 MBTU/hr
     SG Sec Pressure:         0.0 psia (-14.7 psig)
-    SG T_sat:                0.0 °F
-    SG Max Superheat:         0.0 °F
+    SG T_sat:                0.0 Â°F
+    SG Max Superheat:         0.0 Â°F
     Boiling Intensity:      0.000 (0=subcooled, 1=full boil)
-    N₂ Blanket:        BLANKETED
+    Nâ‚‚ Blanket:        BLANKETED
     SG Boundary Mode:       OPEN
     Pressure Source:       floor
     SteamInventory:          0.0 lb
@@ -250,9 +250,9 @@ RCP (Reactor Coolant Pump) STATE:
     Upper Range:           100.0 % (VALID - RCPs OFF)
 
   SMM (Subcooling Margin Monitor):
-    Subcooling Margin:     217.3 °F
-    Low Margin (<15°F):        OK
-    No Margin (≤0°F):         OK
+    Subcooling Margin:     217.3 Â°F
+    Low Margin (<15Â°F):        OK
+    No Margin (â‰¤0Â°F):         OK
 
   VALIDATION STATUS:
     Subcooling >=30F: PASS
@@ -275,7 +275,7 @@ RCP (Reactor Coolant Pump) STATE:
     Heater Mode at PID:   PASS (mode=PRESSURIZE_AUTO)
     Spray if P>2275 psia: PASS (P=115, spray=False)
 
-  INVENTORY AUDIT (v1.1.0 — Comprehensive Mass Balance):
+  INVENTORY AUDIT (v1.1.0 â€” Comprehensive Mass Balance):
     RCS Mass:               706146 lbm
     PZR Water Mass:         110527 lbm
     PZR Steam Mass:              0 lbm

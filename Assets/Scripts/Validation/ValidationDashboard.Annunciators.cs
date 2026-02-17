@@ -300,8 +300,8 @@ namespace Critical.Validation
             _tiles[25] = new AnnunciatorTile(25, "HZP", "HZP Conditions Ready",
                 AlarmSeverity.Info, s => s.HzpStable);
 
-            _tiles[26] = new AnnunciatorTile(26, "PERM", "Mode Change Permissive",
-                AlarmSeverity.Info, s => s.ModePermissive);
+            _tiles[26] = new AnnunciatorTile(26, "PZR SAT", "PZR At Saturation Temperature",
+                AlarmSeverity.Info, s => s.PzrAtSaturation);
 
             _initialized = true;
         }

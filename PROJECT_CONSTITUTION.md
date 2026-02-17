@@ -1,6 +1,6 @@
 ﻿# CRITICAL SIMULATOR CONSTITUTION
 
-## Version 1.6.0.0
+## Version 1.7.0.0
 
 ### Binding Governance Framework
 
@@ -324,10 +324,48 @@ Schema validation MUST pass for active/archive JSON artifacts.
 
 ## Article XII - Validation, Closure, and Release
 
+### Section 1 - Validation and Closure Preconditions
+
 1. Validation evidence is mandatory before CS closure.
 2. CS closure requires migration from active register to archive snapshot.
 3. IP closure does not change Domain Plan persistence requirements in Article VII.
+
+### Section 2 - Mandatory Changelog Initiation at IP Closure
+
+1. Every IP closure SHALL initiate a changelog entry immediately.
+2. The changelog entry MUST capture the sum total of implemented change in that IP closure.
+3. The changelog entry MUST include:
+   * IP ID,
+   * included CS IDs and final dispositions,
+   * scope summary,
+   * impact classification rationale (`MAJOR`, `MINOR`, `PATCH`, or `REVISION`).
 4. Release/versioning occurs only after validated closure and changelog update.
+
+### Section 3 - Version Increment Classification Rules
+
+The project version SHALL use a four-part format:
+
+`MAJOR.MINOR.PATCH.REVISION`
+
+Classification SHALL be based on total impact of the closed IP change set:
+
+1. `MAJOR`:
+   * Breaking architecture or governance framework reset,
+   * backward-incompatible behavior contracts,
+   * structural platform-level replacement.
+   * Increment rule: `MAJOR +1`, set `MINOR=0`, `PATCH=0`, `REVISION=0`.
+2. `MINOR`:
+   * Material new capability or cross-system feature expansion without platform break,
+   * substantial behavior extension across one or more domains.
+   * Increment rule: `MINOR +1`, set `PATCH=0`, `REVISION=0`.
+3. `PATCH`:
+   * Defect remediation, tuning correction, bounded behavioral fix, or non-breaking implementation hardening.
+   * Increment rule: `PATCH +1`, set `REVISION=0`.
+4. `REVISION`:
+   * Governance/reporting/documentation-only updates with no intended runtime behavior change.
+   * Increment rule: `REVISION +1`.
+
+Classification precedence MUST be deterministic: choose the highest-impact class present in the total closed-IP change set.
 
 ---
 
@@ -338,7 +376,7 @@ Partial amendments are not permitted.
 
 ---
 
-## Migration Requirement (v1.6.0.0)
+## Migration Requirement (v1.7.0.0)
 
 Upon constitution upgrade:
 
@@ -347,6 +385,8 @@ Upon constitution upgrade:
 3. Domain Plans MUST be treated as persistent architecture units, not auto-archived execution containers.
 4. Every active and future IP MUST include dependency hierarchy and revision-history sections.
 5. Cross-domain execution MUST use explicit inclusion request and approval artifacts.
+6. IP closure workflow MUST initiate a changelog entry in the same closure transaction.
+7. Version increment selection MUST follow Article XII Section 3 with explicit rationale.
 
 ---
 
