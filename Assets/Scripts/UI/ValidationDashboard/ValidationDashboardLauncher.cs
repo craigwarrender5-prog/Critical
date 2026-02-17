@@ -11,8 +11,13 @@
 // USAGE:
 //   1. Attach to a DontDestroyOnLoad GameObject (recommended: SceneBridge)
 //   2. The dashboard will be built on Start() if buildOnStart is true
-//   3. Press F1 at runtime to toggle dashboard visibility
-//   4. Use Ctrl+1-7 to switch tabs while dashboard is visible
+//   3. Use Ctrl+1-7 to switch tabs while dashboard is visible
+//
+// NOTE:
+//   This is an ALTERNATIVE launch path for standalone testing.
+//   In the production flow, ValidationDashboardSceneSetup (in the
+//   Validator scene) is responsible for building the dashboard when
+//   SceneBridge loads the scene via V key.
 //
 // NOTE:
 //   This launcher creates the dashboard programmatically without prefabs.

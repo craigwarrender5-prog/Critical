@@ -16,10 +16,11 @@
 //   - All gauge animations interpolate between data updates
 //
 // KEYBOARD:
-//   F1         → Toggle dashboard visibility
-//   Ctrl+1-8   → Switch tabs (when visible)
+//   Ctrl+1-7   → Switch tabs (when visible)
 //   F5-F9      → Time acceleration
 //   +/-        → Increment/decrement time acceleration
+//   NOTE: F1 is reserved for future help feature — NOT used here.
+//   Dashboard visibility is managed by SceneBridge (V key).
 //
 // RELATIONSHIP TO EXISTING SYSTEM:
 //   - HeatupValidationVisual.cs remains for backward compatibility
@@ -194,6 +195,12 @@ namespace Critical.UI.ValidationDashboard
         {
             if (Instance == this)
                 Instance = null;
+
+            // Clear event subscribers to prevent dangling references
+            OnDataRefresh = null;
+            OnVisualRefresh = null;
+            OnTabChanged = null;
+            OnVisibilityChanged = null;
         }
 
         // ====================================================================
@@ -383,19 +390,19 @@ namespace Critical.UI.ValidationDashboard
 
         private void HandleInput()
         {
+            // NOTE: F1 is reserved for future help feature — NOT used here.
+            // Dashboard visibility is managed by SceneBridge (V key loads/unloads
+            // the Validator scene). This controller only handles tab switching
+            // and time acceleration while the dashboard is visible.
+
             var kb = Keyboard.current;
             if (kb == null) return;
 
-            // F1 - Toggle dashboard visibility
-            if (kb.f1Key.wasPressedThisFrame)
-            {
-                ToggleVisibility();
-            }
-
-            // Only handle other keys if visible
+            // Only handle keys if visible
             if (!IsVisible) return;
 
-            // Ctrl+1-7 - Tab switching
+            // Ctrl+1-7 - Tab switching (Ctrl modifier prevents conflict with
+            // SceneBridge digit-key detection which returns to operator screens)
             bool ctrl = kb.leftCtrlKey.isPressed || kb.rightCtrlKey.isPressed;
             if (ctrl)
             {

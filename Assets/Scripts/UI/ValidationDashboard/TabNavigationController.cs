@@ -316,7 +316,9 @@ namespace Critical.UI.ValidationDashboard
                 btn.OnTabClicked += navController.HandleTabClicked;
             }
 
-            // Create active indicator (underline)
+            // Create active indicator (underline).
+            // Must be excluded from the HorizontalLayoutGroup so it can be
+            // positioned independently underneath the active tab button.
             GameObject indicatorGO = new GameObject("ActiveIndicator");
             indicatorGO.transform.SetParent(navGO.transform, false);
 
@@ -326,6 +328,10 @@ namespace Critical.UI.ValidationDashboard
             indicatorRT.pivot = new Vector2(0.5f, 0);
             indicatorRT.sizeDelta = new Vector2(100f, 3f);
             indicatorRT.anchoredPosition = new Vector2(50f + ValidationDashboardTheme.PaddingStandard, 0);
+
+            // Exclude from layout so HorizontalLayoutGroup doesn't position it
+            LayoutElement indicatorLE = indicatorGO.AddComponent<LayoutElement>();
+            indicatorLE.ignoreLayout = true;
 
             Image indicatorImg = indicatorGO.AddComponent<Image>();
             indicatorImg.color = ValidationDashboardTheme.AccentBlue;

@@ -177,6 +177,13 @@ namespace Critical.UI.ValidationDashboard
                 ApplyVisibility(_targetAlpha);
             }
 
+            // When becoming visible, force an immediate data update so the
+            // panel doesn't show stale/empty values for one refresh cycle.
+            if (visible && IsInitialized && Engine != null)
+            {
+                OnUpdateData();
+            }
+
             // Call derived class handler
             OnVisibilityChanged(visible);
         }

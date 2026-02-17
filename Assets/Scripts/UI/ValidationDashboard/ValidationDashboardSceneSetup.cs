@@ -27,6 +27,8 @@
 // ============================================================================
 
 using UnityEngine;
+using UnityEngine.SceneManagement;
+using UnityEngine.EventSystems;
 using Critical.UI.ValidationDashboard;
 
 namespace Critical.Validation
@@ -77,8 +79,14 @@ namespace Critical.Validation
 
         void OnEnable()
         {
-            // Re-show dashboard when scene becomes active
-            if (_initialized && useNewDashboard && _newDashboard != null)
+            // If re-enabled after a previous disable (scene reload cycle),
+            // re-initialize since the dashboard was destroyed with the scene.
+            if (_initialized && useNewDashboard && _newDashboard == null)
+            {
+                _initialized = false;
+                Initialize();
+            }
+            else if (_initialized && useNewDashboard && _newDashboard != null)
             {
                 _newDashboard.SetVisibility(true);
             }
@@ -86,11 +94,10 @@ namespace Critical.Validation
 
         void OnDisable()
         {
-            // Hide when scene is being unloaded
-            if (_newDashboard != null)
-            {
-                _newDashboard.SetVisibility(false);
-            }
+            // When the Validator scene is unloaded, the dashboard canvas is
+            // destroyed with it (we moved it into this scene in SetupNewDashboard).
+            // Clear our reference so we rebuild fresh on next scene load.
+            _newDashboard = null;
         }
 
         // ====================================================================
@@ -142,11 +149,29 @@ namespace Critical.Validation
                     Debug.Log("[ValidationDashboardSceneSetup] Legacy dashboard disabled");
             }
 
+            // Ensure an EventSystem exists (required for uGUI pointer events).
+            // The MainScene EventSystem may be on the hidden operator canvas.
+            EnsureEventSystem();
+
             // Build new dashboard
             _newDashboard = ValidationDashboardBuilder.Build(_engine);
 
             if (_newDashboard != null)
             {
+                // Move the runtime-created canvas into the Validator scene so it
+                // is destroyed automatically when SceneBridge unloads the scene.
+                // Without this, the canvas becomes an orphan root object that
+                // persists in DontDestroyOnLoad territory.
+                Scene validatorScene = gameObject.scene;
+                if (validatorScene.IsValid() && validatorScene.isLoaded)
+                {
+                    SceneManager.MoveGameObjectToScene(
+                        _newDashboard.gameObject, validatorScene);
+
+                    if (debugLogging)
+                        Debug.Log($"[ValidationDashboardSceneSetup] Dashboard canvas moved to scene '{validatorScene.name}'");
+                }
+
                 // Show immediately (we're in the Validator scene)
                 _newDashboard.SetVisibility(true);
 
@@ -165,6 +190,34 @@ namespace Critical.Validation
                     Debug.Log("[ValidationDashboardSceneSetup] Falling back to legacy dashboard");
                 }
             }
+        }
+
+        /// <summary>
+        /// Ensure an EventSystem exists so uGUI pointer events (tab clicks,
+        /// tooltips, etc.) function correctly. The MainScene's EventSystem
+        /// may be on the operator canvas which is hidden when Validator loads.
+        /// </summary>
+        private void EnsureEventSystem()
+        {
+            if (EventSystem.current != null) return;
+
+            // Check if one exists but is inactive
+            EventSystem existing = FindObjectOfType<EventSystem>(true);
+            if (existing != null)
+            {
+                existing.gameObject.SetActive(true);
+                if (debugLogging)
+                    Debug.Log("[ValidationDashboardSceneSetup] Reactivated existing EventSystem");
+                return;
+            }
+
+            // Create a new one in our scene
+            GameObject esGO = new GameObject("EventSystem_Validator");
+            esGO.AddComponent<EventSystem>();
+            esGO.AddComponent<UnityEngine.InputSystem.UI.InputSystemUIInputModule>();
+
+            if (debugLogging)
+                Debug.Log("[ValidationDashboardSceneSetup] Created EventSystem for Validator scene");
         }
 
         private void SetupLegacyDashboard()
