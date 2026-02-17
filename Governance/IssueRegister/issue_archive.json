@@ -1,8 +1,8 @@
 {
     "version":  "1.0.0",
-    "generated_at":  "2026-02-17T06:33:06Z",
+    "generated_at":  "2026-02-17T07:09:37Z",
     "source":  "Governance/IssueRegister/issue_index.json (CLOSED projection)",
-    "archived_issue_count":  85,
+    "archived_issue_count":  86,
     "issues":  [
                    {
                        "id":  "CS-0001",
@@ -1889,6 +1889,31 @@
                                     "Legacy-Gate-Debt",
                                     "Cross-Register-Parity",
                                     "Pre-IP-0026"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0080",
+                       "title":  "RCP heat-input constants do not align with the cited cold-water heatup reference basis.",
+                       "domain":  "Primary Thermodynamics",
+                       "severity":  "HIGH",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-15T16:50:47Z",
+                       "closed_at":  "2026-02-17T07:09:37Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0036"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/ImplementationPlans/IP-0036/Reports/IP-0036_StageD_DomainValidation_2026-02-17_072000.md",
+                                               "Governance/ImplementationPlans/IP-0036/Reports/IP-0036_StageE_SystemRegression_2026-02-17_072500.md",
+                                               "Governance/ImplementationReports/IP-0036_Closure_Recommendation_2026-02-17.md"
+                                           ],
+                       "one_line_rca":  "Runtime RCP heat authority constants and consuming paths were aligned to the frozen baseline (6 MW each / 24 MW total).",
+                       "tags":  [
+                                    "NCR-Migration",
+                                    "Audit-2026-02-15",
+                                    "F-002",
+                                    "Constitution-Article-VI"
                                 ]
                    }
                ]

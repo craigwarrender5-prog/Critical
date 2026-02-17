@@ -194,15 +194,15 @@ namespace Critical.Physics
         
         /// <summary>
         /// Total heat from all RCPs in MW.
-        /// Source: Industry data — 4 RCPs × ~5.25 MW each = 21 MW total
+        /// Source: NRC HRTD Section 3.2 authority — ~6 MW each = ~24 MW total
         /// </summary>
-        public const float RCP_HEAT_MW = 21f;
+        public const float RCP_HEAT_MW = 24f;
         
         /// <summary>
         /// Heat added by each RCP in MW.
-        /// = RCP_HEAT_MW / RCP_COUNT = 21 / 4 = 5.25 MW per pump
+        /// = RCP_HEAT_MW / RCP_COUNT = 24 / 4 = 6 MW per pump
         /// </summary>
-        public const float RCP_HEAT_MW_EACH = 5.25f;
+        public const float RCP_HEAT_MW_EACH = 6f;
         
         /// <summary>Low flow trip setpoint (fraction of normal)</summary>
         public const float LOW_FLOW_TRIP = 0.87f;
@@ -535,3 +535,5 @@ namespace Critical.Physics
         #endregion
     }
 }
+
+

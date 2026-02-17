@@ -370,7 +370,7 @@ namespace Critical.Physics
         /// each pump's ramp state and aggregates the results.
         /// 
         /// Example: Pump 1 at Stage 3 (70% heat) + Pump 2 at Stage 1 (5% heat)
-        ///   → EffectiveHeat = (0.70 + 0.05) × 5.25 MW = 3.94 MW
+        ///   → EffectiveHeat = (0.70 + 0.05) × 6.0 MW = 4.50 MW
         /// 
         /// Source: NRC HRTD 3.2 / 19.2.2
         /// </summary>
@@ -479,7 +479,7 @@ namespace Critical.Physics
             
             // Test 8: RCP heat calculation
             float heat4 = GetRCPHeat_MW(4);
-            if (Math.Abs(heat4 - 21f) > 0.1f) valid = false;
+            if (Math.Abs(heat4 - PlantConstants.RCP_HEAT_MW) > 0.1f) valid = false;
             
             return valid;
         }
@@ -487,3 +487,4 @@ namespace Critical.Physics
         #endregion
     }
 }
+

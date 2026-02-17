@@ -267,7 +267,7 @@ namespace Critical.Physics
             bool valid = true;
             
             // Test 1: With RCPs, T_hot > T_cold
-            var result1 = CalculateLoopTemperatures(400f, 800f, 4, 21f);
+            var result1 = CalculateLoopTemperatures(400f, 800f, 4, PlantConstants.RCP_HEAT_MW);
             if (result1.T_hot <= result1.T_cold) valid = false;
             if (!result1.IsForcedFlow) valid = false;
             
@@ -280,12 +280,12 @@ namespace Critical.Physics
             if (Math.Abs(result1.T_avg - 400f) > 0.1f) valid = false;
             
             // Test 4: ΔT at HZP with 4 RCPs should be 5-15°F (not 61°F like at power)
-            var result3 = CalculateLoopTemperatures(557f, 2250f, 4, 21f);
+            var result3 = CalculateLoopTemperatures(557f, 2250f, 4, PlantConstants.RCP_HEAT_MW);
             if (result3.DeltaT < 3f || result3.DeltaT > 20f) valid = false;
             
             // Test 5: More RCPs = smaller ΔT (same heat, more flow)
-            var result4a = CalculateLoopTemperatures(400f, 800f, 2, 10.5f);
-            var result4b = CalculateLoopTemperatures(400f, 800f, 4, 21f);
+            var result4a = CalculateLoopTemperatures(400f, 800f, 2, 2f * PlantConstants.RCP_HEAT_MW_EACH);
+            var result4b = CalculateLoopTemperatures(400f, 800f, 4, PlantConstants.RCP_HEAT_MW);
             // 4 RCPs has 2x flow and 2x heat, so ΔT should be similar
             // But 2 RCPs with half the heat should have similar ΔT
             
@@ -300,3 +300,4 @@ namespace Critical.Physics
         #endregion
     }
 }
+

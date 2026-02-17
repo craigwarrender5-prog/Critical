@@ -1871,7 +1871,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             else
             {
                 statusMessage = $"ALL 4 RCPs RAMPING (α={alpha:F2}, {rcpContribution.PumpsFullyRunning}/4 at rated)";
-                heatupPhaseDesc = $"HEATUP - 4 RCPs RAMPING ({effectiveRCPHeat:F1}/21 MW)";
+                heatupPhaseDesc = $"HEATUP - 4 RCPs RAMPING ({effectiveRCPHeat:F1}/{PlantConstants.RCP_HEAT_MW:F0} MW)";
             }
 
             if (heatupRate > 0.5f)
@@ -2026,7 +2026,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             else
             {
                 statusMessage = "ALL 4 RCPs RUNNING - FULL HEATUP";
-                heatupPhaseDesc = "FULL HEATUP - 4 RCPs (21 MW)";
+                heatupPhaseDesc = $"FULL HEATUP - 4 RCPs ({PlantConstants.RCP_HEAT_MW:F0} MW)";
             }
 
             if (heatupRate > 0.5f)

@@ -8,7 +8,7 @@
 //
 // PURPOSE:
 //   During Hot Zero Power (HZP) operations, the reactor coolant pumps add
-//   ~21 MW of heat to the RCS with no reactor power or turbine load.
+//   ~24 MW of heat to the RCS with no reactor power or turbine load.
 //   The steam dump system removes this excess heat by dumping steam from
 //   the SG secondary side to the main condenser, maintaining RCS T_avg
 //   at the no-load setpoint (557°F).
@@ -90,9 +90,9 @@ namespace Critical.Physics
             /// <summary>
             /// Maximum steam dump heat removal capacity in MW thermal.
             /// 
-            /// At HZP with 4 RCPs running, the system must reject ~21 MW from
+            /// At HZP with 4 RCPs running, the system must reject ~24 MW from
             /// RCP heat plus ~0.5 MW from proportional heaters minus ~1.5 MW
-            /// insulation losses = ~20 MW net.
+            /// insulation losses = ~23 MW net.
             /// 
             /// Each SG can dump ~6-7 MW of steam to condenser at no-load conditions,
             /// giving a total capacity of ~25-28 MW with all 4 SGs.
@@ -235,3 +235,4 @@ namespace Critical.Physics
         }
     }
 }
+

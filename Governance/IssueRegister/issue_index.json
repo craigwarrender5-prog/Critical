@@ -1,6 +1,6 @@
 {
     "version":  "1.0.0",
-    "generated_at":  "2026-02-17T06:33:06Z",
+    "generated_at":  "2026-02-17T07:09:37Z",
     "entry_count":  98,
     "entries":  [
                     {
@@ -1305,13 +1305,13 @@
                         "title":  "RCP heat-input constants do not align with the cited cold-water heatup reference basis.",
                         "domain":  "Primary Thermodynamics",
                         "severity":  "HIGH",
-                        "status":  "READY_FOR_FIX",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0001",
                         "assigned_ip":  "IP-0036",
-                        "updated_at":  "2026-02-16T19:31:03Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "updated_at":  "2026-02-17T07:09:37Z",
+                        "closed_at":  "2026-02-17T07:09:37Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "NCR-Migration",
                                      "Audit-2026-02-15",
@@ -1671,6 +1671,6 @@
     "registry_role":  "AUTHORITATIVE_FULL_HISTORY",
     "registry_scope":  "Contains full lifecycle history (OPEN + CLOSED). Historical entries must remain in this file.",
     "active_working_set_file":  "Governance/IssueRegister/issue_register.json",
-    "closed_issue_count":  85,
-    "active_issue_count":  13
+    "closed_issue_count":  86,
+    "active_issue_count":  12
 }

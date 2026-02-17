@@ -5,7 +5,7 @@
 //
 // PURPOSE:
 //   Controls steam dump to main condenser for Hot Zero Power (HZP) temperature
-//   stabilization. During HZP, the RCPs add ~21 MW of heat with no reactor
+//   stabilization. During HZP, the RCPs add ~24 MW of heat with no reactor
 //   power or turbine load. The steam dump system removes this excess heat
 //   by dumping steam from SG secondary side to condenser, maintaining
 //   RCS T_avg at 557°F.
@@ -18,9 +18,9 @@
 //   - Heat removal: Q_dump = valve_position × Q_max
 //
 //   Heat Balance at HZP:
-//   - Heat input: 21 MW (4 RCPs) + 0.5 MW (heaters) = 21.5 MW
+//   - Heat input: 24 MW (4 RCPs) + 0.5 MW (heaters) = 24.5 MW
 //   - Heat output: Q_dump (steam dump) + 1.5 MW (insulation losses)
-//   - At equilibrium: Q_dump ≈ 20 MW
+//   - At equilibrium: Q_dump ≈ 23 MW
 //
 // OPERATING MODES:
 //   OFF           - Steam dump inactive (during heatup)
@@ -524,3 +524,4 @@ namespace Critical.Physics
         }
     }
 }
+
