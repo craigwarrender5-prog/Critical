@@ -1,0 +1,271 @@
+/* ============================================================================
+ * CRITICAL: Master the Atom — UI Toolkit Theme
+ * NuclearInstrument.uss — Nuclear Control Room Aesthetic
+ * ============================================================================
+ *
+ * PURPOSE:
+ *   Defines the visual style for the Validation Dashboard, inspired by
+ *   nuclear power plant control room instrumentation aesthetics.
+ *
+ * COLOR PALETTE:
+ *   Background:  #0a0a12 (very dark blue-black)
+ *   Panel:       #141420 (dark panel)
+ *   Normal:      #00FF88 (bright green)
+ *   Warning:     #FFAA00 (amber)
+ *   Alarm:       #FF4444 (red)
+ *   Info:        #66CCFF (cyan)
+ *   Text:        #CCCCCC (light gray)
+ *   Dim:         #666666 (dim gray)
+ *
+ * IP-0042 Stage 0: Proof of Concept
+ * ============================================================================
+ */
+
+/* ============================================================================
+ * ROOT CONTAINER
+ * ============================================================================
+ */
+
+.dashboard-root {
+    flex-grow: 1;
+    background-color: #0a0a12;
+    padding: 8px;
+}
+
+/* ============================================================================
+ * ARC GAUGE
+ * ============================================================================
+ */
+
+.arc-gauge {
+    min-width: 120px;
+    min-height: 100px;
+    margin: 4px;
+    padding: 4px;
+    background-color: #141420;
+    border-radius: 4px;
+}
+
+.arc-gauge__label {
+    font-size: 12px;
+    color: #999999;
+    -unity-text-align: upper-center;
+    margin-top: 4px;
+}
+
+.arc-gauge__value {
+    font-size: 20px;
+    color: #00FF88;
+    -unity-text-align: lower-center;
+    -unity-font-style: bold;
+}
+
+.arc-gauge__unit {
+    font-size: 10px;
+    color: #666666;
+    -unity-text-align: lower-center;
+}
+
+/* Value color states */
+.arc-gauge--normal .arc-gauge__value {
+    color: #00FF88;
+}
+
+.arc-gauge--warning .arc-gauge__value {
+    color: #FFAA00;
+}
+
+.arc-gauge--alarm .arc-gauge__value {
+    color: #FF4444;
+}
+
+/* ============================================================================
+ * STRIP CHART
+ * ============================================================================
+ */
+
+.strip-chart {
+    min-width: 200px;
+    min-height: 100px;
+    margin: 4px;
+    background-color: #0c0c14;
+    border-radius: 4px;
+    border-width: 1px;
+    border-color: #2a2a35;
+}
+
+.strip-chart__title {
+    font-size: 11px;
+    color: #888888;
+    -unity-text-align: upper-center;
+    padding: 4px;
+    background-color: #141420;
+    border-bottom-width: 1px;
+    border-bottom-color: #2a2a35;
+}
+
+.strip-chart__legend {
+    flex-direction: row;
+    flex-wrap: wrap;
+    padding: 4px;
+    background-color: #101018;
+}
+
+.strip-chart__legend-item {
+    flex-direction: row;
+    align-items: center;
+    margin-right: 12px;
+    margin-bottom: 2px;
+}
+
+.strip-chart__legend-color {
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 4px;
+}
+
+.strip-chart__legend-text {
+    font-size: 10px;
+    color: #AAAAAA;
+}
+
+.strip-chart__legend-value {
+    font-size: 10px;
+    color: #00FF88;
+    margin-left: 4px;
+    -unity-font-style: bold;
+}
+
+/* ============================================================================
+ * TEST CONTAINER
+ * ============================================================================
+ */
+
+.test-container {
+    flex-direction: column;
+    flex-grow: 1;
+    padding: 16px;
+    background-color: #0a0a12;
+}
+
+.test-row {
+    flex-direction: row;
+    margin-bottom: 16px;
+}
+
+.test-section {
+    flex-direction: column;
+    margin-right: 16px;
+    padding: 8px;
+    background-color: #141420;
+    border-radius: 8px;
+}
+
+.test-section__title {
+    font-size: 14px;
+    color: #00FF88;
+    margin-bottom: 8px;
+    -unity-font-style: bold;
+}
+
+/* ============================================================================
+ * GENERAL TYPOGRAPHY
+ * ============================================================================
+ */
+
+.label-primary {
+    font-size: 14px;
+    color: #00FF88;
+}
+
+.label-secondary {
+    font-size: 12px;
+    color: #AAAAAA;
+}
+
+.label-dim {
+    font-size: 11px;
+    color: #666666;
+}
+
+.value-large {
+    font-size: 24px;
+    color: #00FF88;
+    -unity-font-style: bold;
+}
+
+.value-normal {
+    font-size: 16px;
+    color: #00FF88;
+}
+
+.value-warning {
+    color: #FFAA00;
+}
+
+.value-alarm {
+    color: #FF4444;
+}
+
+/* ============================================================================
+ * HEADER BAR
+ * ============================================================================
+ */
+
+.header-bar {
+    flex-direction: row;
+    height: 40px;
+    background-color: #101018;
+    border-bottom-width: 2px;
+    border-bottom-color: #00FF88;
+    padding: 4px 12px;
+    align-items: center;
+}
+
+.header-bar__mode {
+    font-size: 14px;
+    color: #00FF88;
+    -unity-font-style: bold;
+    margin-right: 20px;
+}
+
+.header-bar__phase {
+    font-size: 12px;
+    color: #AAAAAA;
+    flex-grow: 1;
+}
+
+.header-bar__time {
+    font-size: 14px;
+    color: #66CCFF;
+    margin-left: 20px;
+}
+
+/* ============================================================================
+ * SPEED BUTTONS
+ * ============================================================================
+ */
+
+.speed-button {
+    min-width: 36px;
+    height: 24px;
+    margin: 0 2px;
+    background-color: #1a1a25;
+    border-width: 1px;
+    border-color: #333340;
+    border-radius: 4px;
+    color: #888888;
+    font-size: 11px;
+}
+
+.speed-button:hover {
+    background-color: #252530;
+    border-color: #00FF88;
+}
+
+.speed-button--active {
+    background-color: #00442a;
+    border-color: #00FF88;
+    color: #00FF88;
+}

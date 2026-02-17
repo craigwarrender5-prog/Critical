@@ -1,0 +1,85 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" xsi="http://www.w3.org/2001/XMLSchema-instance" engine="UnityEngine.UIElements" editor="UnityEditor.UIElements" noNamespaceSchemaLocation="../../UIElementsSchema/UIElements.xsd" editor-extension-mode="False">
+    <ui:VisualElement name="root" style="flex-grow: 1; background-color: rgb(10, 10, 18); padding: 8px;">
+        
+        <!-- Header -->
+        <ui:VisualElement name="header" style="flex-direction: row; height: 40px; background-color: rgb(16, 16, 24); border-bottom-width: 2px; border-bottom-color: rgb(0, 255, 136); padding: 4px 12px; align-items: center;">
+            <ui:Label name="mode-label" text="MODE 5 Cold Shutdown" style="font-size: 14px; color: rgb(0, 255, 136); -unity-font-style: bold; margin-right: 20px;" />
+            <ui:Label name="phase-label" text="SOLID PZR - HEATING TO TSAT" style="font-size: 12px; color: rgb(170, 170, 170); flex-grow: 1;" />
+            <ui:Label name="sim-time" text="SIM: 0:00:00" style="font-size: 14px; color: rgb(102, 204, 255); margin-left: 20px;" />
+            <ui:Label name="wall-time" text="WALL: 0:00:00" style="font-size: 14px; color: rgb(102, 204, 255); margin-left: 20px;" />
+        </ui:VisualElement>
+        
+        <!-- Main Container -->
+        <ui:VisualElement name="main-container" style="flex-grow: 1; padding: 16px;">
+            
+            <!-- Gauges Section -->
+            <ui:VisualElement name="gauges-section" style="background-color: rgb(20, 20, 32); border-radius: 8px; padding: 8px; margin-bottom: 16px;">
+                <ui:Label text="ARC GAUGES — Live Engine Data" style="font-size: 14px; color: rgb(0, 255, 136); margin-bottom: 8px; -unity-font-style: bold;" />
+                <ui:VisualElement name="gauges-row" style="flex-direction: row; justify-content: space-around;">
+                    
+                    <!-- T_avg -->
+                    <ui:VisualElement name="gauge-container-tavg" style="align-items: center; width: 150px;">
+                        <ui:VisualElement name="gauge-tavg" style="width: 150px; height: 120px; background-color: rgb(20, 20, 32);" />
+                        <ui:Label text="T_AVG" style="font-size: 12px; color: rgb(153, 153, 153); margin-top: 4px;" />
+                        <ui:Label name="label-tavg" text="--- °F" style="font-size: 24px; color: rgb(0, 255, 136); -unity-font-style: bold;" />
+                    </ui:VisualElement>
+                    
+                    <!-- Pressure -->
+                    <ui:VisualElement name="gauge-container-pressure" style="align-items: center; width: 150px;">
+                        <ui:VisualElement name="gauge-pressure" style="width: 150px; height: 120px; background-color: rgb(20, 20, 32);" />
+                        <ui:Label text="PRESSURE" style="font-size: 12px; color: rgb(153, 153, 153); margin-top: 4px;" />
+                        <ui:Label name="label-pressure" text="--- psia" style="font-size: 24px; color: rgb(0, 255, 136); -unity-font-style: bold;" />
+                    </ui:VisualElement>
+                    
+                    <!-- PZR Level -->
+                    <ui:VisualElement name="gauge-container-pzrlevel" style="align-items: center; width: 150px;">
+                        <ui:VisualElement name="gauge-pzrlevel" style="width: 150px; height: 120px; background-color: rgb(20, 20, 32);" />
+                        <ui:Label text="PZR LEVEL" style="font-size: 12px; color: rgb(153, 153, 153); margin-top: 4px;" />
+                        <ui:Label name="label-pzrlevel" text="--- %" style="font-size: 24px; color: rgb(0, 255, 136); -unity-font-style: bold;" />
+                    </ui:VisualElement>
+                    
+                    <!-- Subcooling -->
+                    <ui:VisualElement name="gauge-container-subcool" style="align-items: center; width: 150px;">
+                        <ui:VisualElement name="gauge-subcool" style="width: 150px; height: 120px; background-color: rgb(20, 20, 32);" />
+                        <ui:Label text="SUBCOOL" style="font-size: 12px; color: rgb(153, 153, 153); margin-top: 4px;" />
+                        <ui:Label name="label-subcool" text="--- °F" style="font-size: 24px; color: rgb(0, 255, 136); -unity-font-style: bold;" />
+                    </ui:VisualElement>
+                    
+                </ui:VisualElement>
+            </ui:VisualElement>
+            
+            <!-- Charts Section -->
+            <ui:VisualElement name="charts-section" style="flex-grow: 1; background-color: rgb(20, 20, 32); border-radius: 8px; padding: 8px; margin-bottom: 16px;">
+                <ui:Label text="STRIP CHARTS — 4-Hour Rolling History" style="font-size: 14px; color: rgb(0, 255, 136); margin-bottom: 8px; -unity-font-style: bold;" />
+                <ui:VisualElement style="flex-direction: row; flex-grow: 1;">
+                    
+                    <!-- Temperature Chart -->
+                    <ui:VisualElement style="flex-grow: 1; margin-right: 8px;">
+                        <ui:Label text="TEMPERATURES" style="font-size: 11px; color: rgb(136, 136, 136); margin-bottom: 4px;" />
+                        <ui:VisualElement name="chart-temps" style="flex-grow: 1; min-height: 150px; background-color: rgb(12, 12, 20); border-radius: 4px;" />
+                    </ui:VisualElement>
+                    
+                    <!-- Pressure Chart -->
+                    <ui:VisualElement style="flex-grow: 1;">
+                        <ui:Label text="PRESSURE / LEVEL" style="font-size: 11px; color: rgb(136, 136, 136); margin-bottom: 4px;" />
+                        <ui:VisualElement name="chart-pressure" style="flex-grow: 1; min-height: 150px; background-color: rgb(12, 12, 20); border-radius: 4px;" />
+                    </ui:VisualElement>
+                    
+                </ui:VisualElement>
+            </ui:VisualElement>
+            
+            <!-- Performance Section -->
+            <ui:VisualElement name="perf-section" style="background-color: rgb(20, 20, 32); border-radius: 8px; padding: 8px;">
+                <ui:Label text="PERFORMANCE METRICS" style="font-size: 14px; color: rgb(0, 255, 136); margin-bottom: 8px; -unity-font-style: bold;" />
+                <ui:VisualElement style="flex-direction: row;">
+                    <ui:Label name="perf-frametime" text="Frame Time: -- ms" style="font-size: 12px; color: rgb(170, 170, 170); margin-right: 30px;" />
+                    <ui:Label name="perf-updatetime" text="UI Update: -- ms" style="font-size: 12px; color: rgb(170, 170, 170); margin-right: 30px;" />
+                    <ui:Label name="perf-gaugecount" text="Gauges: 4" style="font-size: 12px; color: rgb(170, 170, 170); margin-right: 30px;" />
+                    <ui:Label name="perf-tracecount" text="Chart Traces: 0" style="font-size: 12px; color: rgb(170, 170, 170);" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+            
+        </ui:VisualElement>
+        
+    </ui:VisualElement>
+</ui:UXML>
