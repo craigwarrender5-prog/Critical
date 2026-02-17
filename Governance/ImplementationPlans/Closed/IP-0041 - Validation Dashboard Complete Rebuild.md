@@ -3,7 +3,9 @@
 **Date:** 2026-02-17
 **Domain Plan:** DP-0008 (Operator Interface & Scenarios)
 **Predecessors:** IP-0025 (CLOSED), IP-0029 (CLOSED), IP-0030 (FAILED), IP-0031 (CLOSED), IP-0040 (FAILED)
-**Status:** SUPERSEDED by IP-0042 (UI Toolkit Rebuild)
+**Status:** SUPERSEDED — Closed in favor of IP-0042 (later redirected to IP-0043)
+**Closed Date:** 2026-02-17
+**Superseded By:** IP-0042, IP-0043
 **Priority:** Critical
 **Changelog Required:** Yes
 

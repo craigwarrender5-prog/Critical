@@ -18,7 +18,7 @@
 
 ## 2) Reproduction Steps
 
-1. Open `Governance/ImplementationPlans/IP-0042 - Validation Dashboard UI Toolkit Rebuild.md`.
+1. Open `Governance/ImplementationPlans/Closed/IP-0042 - Validation Dashboard UI Toolkit Rebuild.md`.
 2. Search for CS references, dependency hierarchy, critical-path, and revision history sections.
 3. Compare findings against Constitution v1.6.0.0 Article VIII and Article IX requirements.
 4. Confirm structural mismatch with required IP bundle format under Article III.
@@ -82,13 +82,13 @@ Governance remediation of `IP-0042` planning artifact compliance only (no featur
 
 ## 9) Likely Impacted Areas/Files (best-effort)
 
-- `Governance/ImplementationPlans/IP-0042 - Validation Dashboard UI Toolkit Rebuild.md`
+- `Governance/ImplementationPlans/Closed/IP-0042 - Validation Dashboard UI Toolkit Rebuild.md`
 - `Governance/ImplementationPlans/IP-0042/IP-0042.md` (target control-file location if migrated)
 - `Governance/IssueRegister/issue_register.json`
 - `Governance/IssueRegister/issue_index.json`
 
 ## 10) Evidence References
 
-- `Governance/ImplementationPlans/IP-0042 - Validation Dashboard UI Toolkit Rebuild.md`
+- `Governance/ImplementationPlans/Closed/IP-0042 - Validation Dashboard UI Toolkit Rebuild.md`
 - `PROJECT_CONSTITUTION.md`
 - `Governance/Issues/CS-0107_Investigation_Report_2026-02-17_125246.md`

@@ -3,7 +3,9 @@
 **Date:** 2026-02-17  
 **Domain Plan:** DP-0008 (Operator Interface & Scenarios)  
 **Parent IP:** IP-0031 (Validation Dashboard Visual Redesign)  
-**Status:** IMPLEMENTED  
+**Status:** FAILED — Closed as superseded by later dashboard recovery plans  
+**Closed Date:** 2026-02-17  
+**Superseded By:** IP-0041, IP-0042, IP-0043  
 **Priority:** High  
 **Changelog Required:** Yes  
 

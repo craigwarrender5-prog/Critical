@@ -196,18 +196,19 @@ Each detail tab expands on its system with:
 
 **Tasks:**
 1. Create `ValidationDashboard.cs` — MonoBehaviour shell
-2. Create `ValidationDashboard.Layout.cs` — Screen region calculations
-3. Create `ValidationDashboard.Styles.cs` — Color palette, GUIStyle factory
+2. Create `ValidationDashboard.Layout.cs` — Screen region calculations with caching
+3. Create `ValidationDashboard.Styles.cs` — Color palette, GUIStyle factory (all cached)
 4. Create `ValidationDashboard.Gauges.cs` — Arc gauge, bar gauge, LED, digital readout
 5. Create `ValidationDashboard.Panels.cs` — Section headers, bordered panels
 6. Create `DashboardTab.cs` — Abstract base class
 7. Test: Render a test pattern with each gauge type
+8. **Performance gate:** Gauge rendering < 0.5ms for 10 gauges
 
 **Deliverables:**
 - Core partial classes
 - Working gauge rendering
 
-**Exit Criteria:** Can draw arc gauge, bar gauge, LED, and digital readout on screen.
+**Exit Criteria:** Can draw arc gauge, bar gauge, LED, and digital readout on screen. Performance gate passed.
 
 ---
 
@@ -220,6 +221,7 @@ Each detail tab expands on its system with:
 3. Implement footer split (annunciators left, log right)
 4. Add placeholder content in each section
 5. Verify layout at 1920×1080 and 2560×1440
+6. Implement resolution-change detection and rect recalculation
 
 **Deliverables:**
 - `OverviewTab.cs` with complete layout
@@ -236,6 +238,7 @@ Each detail tab expands on its system with:
 2. PZR Column: Pressure arc, level arc, heater bar, spray bar, surge bar, bubble LED
 3. Wire all parameters to engine
 4. Implement threshold coloring
+5. Implement string preformatting in Update() (not OnGUI)
 
 **Deliverables:**
 - Complete RCS column
@@ -251,15 +254,16 @@ Each detail tab expands on its system with:
 **Tasks:**
 1. CVCS Column: VCT arc, charging/letdown bars, net CVCS bar, LEDs, mass error
 2. SG/RHR Column: SG pressure arc, HZP bar, RHR status, LEDs
-3. Trends Column: 8 mini sparklines from engine history buffers
+3. Trends Column: 8 mini sparklines using cached Texture2D approach
 4. Wire all parameters to engine
+5. **Performance gate:** Sparklines < 0.3ms for 8 charts
 
 **Deliverables:**
 - Complete CVCS column
 - Complete SG/RHR column
 - Complete Trends column
 
-**Exit Criteria:** All 5 columns populated with live data.
+**Exit Criteria:** All 5 columns populated with live data. Sparkline performance gate passed.
 
 ---
 
@@ -269,15 +273,18 @@ Each detail tab expands on its system with:
 **Tasks:**
 1. Implement 27-tile annunciator grid (3 rows × 9 columns)
 2. Implement annunciator state machine (ISA-18.1)
-3. Implement ACK and RESET buttons
-4. Implement event log panel (last 8 entries)
-5. Implement severity filtering buttons
+3. Implement click-to-acknowledge on individual ALERTING tiles
+4. Implement ACK button (batch acknowledge all alerting)
+5. Implement RESET button (clear all acknowledged that returned to normal)
+6. Implement event log panel (last 8 entries)
+7. Implement severity filtering buttons
+8. **Performance gate:** Full Overview < 1.5ms
 
 **Deliverables:**
-- Complete annunciator panel
+- Complete annunciator panel with click-to-acknowledge
 - Complete event log
 
-**Exit Criteria:** Annunciators flash correctly, ACK works, log scrolls.
+**Exit Criteria:** Annunciators flash correctly, individual tile click acknowledges that tile, ACK button acknowledges all, log scrolls. Overview performance gate passed.
 
 ---
 
@@ -323,14 +330,15 @@ Each detail tab expands on its system with:
 3. Performance optimization pass
 4. Test at multiple resolutions
 5. Add toggle in ScreenManager to switch between old/new dashboard
-6. Write changelog
+6. **Final performance gate:** Full dashboard < 2.0ms
+7. Write changelog
 
 **Deliverables:**
 - Complete, polished dashboard
 - ScreenManager integration
 - CHANGELOG_v0.8.0.0.md
 
-**Exit Criteria:** Dashboard is production-ready, can replace legacy system.
+**Exit Criteria:** Dashboard is production-ready, can replace legacy system. Final performance gate passed.
 
 ---
 
@@ -383,7 +391,195 @@ Each detail tab expands on its system with:
 
 - Update rate: 10 Hz
 - Frame budget: < 2ms for OnGUI
-- Memory: No per-frame allocations (cached styles, pre-formatted strings)
+- Memory: No per-frame allocations
+
+### 7.4 Performance Architecture (Critical)
+
+**Risk:** 60+ parameters at 10 Hz with < 2ms budget is aggressive. The following mitigations are **mandatory**.
+
+#### 7.4.1 GUIStyle Caching
+
+All GUIStyles created **once** in Awake(), never in OnGUI():
+
+```csharp
+// ValidationDashboard.Styles.cs
+private static GUIStyle _labelNormal;
+private static GUIStyle _labelWarning;
+private static GUIStyle _labelAlarm;
+private static GUIStyle _boxPanel;
+private static bool _stylesInitialized = false;
+
+public static void InitializeStyles()
+{
+    if (_stylesInitialized) return;
+    _labelNormal = new GUIStyle(GUI.skin.label) { ... };
+    // ... all styles
+    _stylesInitialized = true;
+}
+```
+
+#### 7.4.2 Rect Precomputation
+
+Rects computed **once** per resolution change, not per frame:
+
+```csharp
+// ValidationDashboard.Layout.cs
+private static Rect[] _columnRects = new Rect[5];
+private static Rect[] _gaugeRects = new Rect[20];
+private static Rect[] _annunciatorRects = new Rect[27];
+private static int _lastScreenWidth;
+private static int _lastScreenHeight;
+
+public static void UpdateLayoutIfNeeded()
+{
+    if (Screen.width == _lastScreenWidth && Screen.height == _lastScreenHeight)
+        return; // No recalculation needed
+    
+    _lastScreenWidth = Screen.width;
+    _lastScreenHeight = Screen.height;
+    // ... compute all rects once
+}
+```
+
+#### 7.4.3 String Preformatting (Zero Allocation)
+
+Strings formatted in `Update()`, not in `OnGUI()`. Use preallocated char buffers:
+
+```csharp
+// Per-parameter cached strings
+private string _tavgDisplay;
+private string _pressureDisplay;
+// ... etc
+
+void Update()
+{
+    // Format once per update cycle using cached StringBuilder
+    _tavgDisplay = FormatValue(engine.T_avg, "F1", " °F");
+    _pressureDisplay = FormatValue(engine.pressure, "F0", " psia");
+}
+
+void OnGUI()
+{
+    // Just draw the pre-formatted string — no allocation
+    GUI.Label(rect, _tavgDisplay, style);
+}
+```
+
+#### 7.4.4 Sparkline Architecture
+
+Sparklines use **fixed-size circular buffers** and **cached Texture2D**:
+
+```csharp
+public class SparklineRenderer
+{
+    private float[] _buffer;        // Fixed size (e.g., 256 points)
+    private int _head;              // Circular write position
+    private int _count;             // Valid entries
+    private Texture2D _texture;     // Created once, updated in place
+    private Color32[] _pixels;      // Preallocated pixel buffer
+    
+    public SparklineRenderer(int width, int height, int bufferSize)
+    {
+        _buffer = new float[bufferSize];
+        _texture = new Texture2D(width, height, TextureFormat.RGBA32, false);
+        _pixels = new Color32[width * height];
+    }
+    
+    public void Push(float value)
+    {
+        _buffer[_head] = value;
+        _head = (_head + 1) % _buffer.Length;
+        if (_count < _buffer.Length) _count++;
+    }
+    
+    public void UpdateTexture()
+    {
+        // Clear pixels (use Array.Clear or manual loop)
+        // Draw line into _pixels array
+        // Single SetPixels32 + Apply call
+        _texture.SetPixels32(_pixels);
+        _texture.Apply(false); // false = don't rebuild mipmaps
+    }
+    
+    public void Draw(Rect rect)
+    {
+        GUI.DrawTexture(rect, _texture);
+    }
+}
+```
+
+**Key constraints:**
+- **Never** allocate new Texture2D during OnGUI
+- **Never** use GL.Begin/GL.End per point
+- **Never** allocate new lists or arrays during rendering
+- Use `SetPixels32` + `Apply(false)` for fastest texture updates
+
+#### 7.4.5 Snapshot Isolation Rule
+
+**The dashboard reads from a data snapshot updated at 10 Hz. The UI never queries live engine values during OnGUI.**
+
+```csharp
+// ValidationDashboard.cs
+public class DashboardSnapshot
+{
+    // RCS
+    public float T_avg;
+    public float T_hot;
+    public float T_cold;
+    public float pressure;
+    public float subcooling;
+    // ... all parameters copied here
+    
+    public void CaptureFrom(HeatupSimEngine engine)
+    {
+        T_avg = engine.T_avg;
+        T_hot = engine.T_hot;
+        // ... single point-in-time capture
+    }
+}
+
+private DashboardSnapshot _snapshot = new DashboardSnapshot();
+private float _lastSnapshotTime;
+
+void Update()
+{
+    if (Time.time - _lastSnapshotTime < 0.1f) return; // 10 Hz
+    _lastSnapshotTime = Time.time;
+    
+    _snapshot.CaptureFrom(engine);  // Atomic snapshot
+    PreformatAllStrings();          // Format from snapshot
+}
+
+void OnGUI()
+{
+    // ONLY reads from _snapshot, NEVER from engine directly
+    DrawGauge(rect, _snapshot.T_avg, ...);
+}
+```
+
+**This prevents:**
+- Race conditions between simulation and rendering
+- Partial-frame data inconsistencies (e.g., T_avg from frame N, pressure from frame N+1)
+- UI logic accidentally influencing simulation timing
+- Difficult-to-debug visual glitches
+
+**This enables:**
+- Clean profiling (simulation vs. rendering clearly separated)
+- Future threading if needed (snapshot is thread-safe copy)
+- Deterministic UI behavior for testing
+
+#### 7.4.6 Performance Validation Gates
+
+Each stage has a mandatory performance gate:
+
+| Stage | Gate | Budget |
+|-------|------|--------|
+| 1 | 10 gauges rendering | < 0.5ms |
+| 4 | 8 sparklines rendering | < 0.3ms |
+| 5 | Full Overview tab | < 1.5ms |
+| 8 | Full dashboard (any tab) | < 2.0ms |
+
+**If any gate fails, stop and optimize before proceeding.**
 
 ---
 
@@ -421,17 +617,30 @@ Each detail tab expands on its system with:
 - [ ] Overview tab displays 60+ parameters without scrolling
 - [ ] All 8 tabs accessible and functional
 - [ ] 27 annunciator tiles with correct ISA-18.1 behavior
+- [ ] Click-to-acknowledge on individual ALERTING tiles
 - [ ] 8 sparkline trends on Overview
 - [ ] Full strip charts on Graphs tab
 - [ ] Event log with severity filtering
 - [ ] All keyboard shortcuts working
-- [ ] Performance < 2ms per frame
+- [ ] Performance < 2ms per frame (all gates passed)
 - [ ] Works at 1080p and 1440p
 - [ ] Can toggle between old/new dashboard
 
 ---
 
-## 10. Approval
+## 10. Risk Assessment
+
+| Risk | Likelihood | Mitigation |
+|------|------------|------------|
+| Performance exceeds 2ms | Medium | Mandatory performance gates at each stage; stop and optimize if failed |
+| Sparkline texture updates too slow | Medium | Use SetPixels32 + Apply(false); pre-allocated buffers |
+| String allocation spikes | Low | All strings preformatted in Update(); no concatenation in OnGUI |
+| Layout breaks at different resolutions | Low | Rect caching with resolution-change detection |
+| GUIStyle creation in hot path | Low | Static initialization with guard flag |
+
+---
+
+## 11. Approval
 
 - [ ] **IP-0043 approved to begin** — Craig
 - [ ] **Stage 1 complete (Core Infrastructure)** — Craig

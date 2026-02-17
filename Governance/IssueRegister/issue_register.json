@@ -620,10 +620,10 @@
                        "severity":  "CRITICAL",
                        "status":  "READY",
                        "created_at":  "2026-02-17T12:47:00Z",
-                       "updated_at":  "2026-02-17T12:47:00Z",
+                       "updated_at":  "2026-02-17T14:00:45Z",
                        "stage_detected":  "Governance-Directive-2026-02-17",
                        "assigned_dp":  "DP-0010",
-                       "assigned_ip":  null,
+                       "assigned_ip":  "IP-0038",
                        "observations":  [
                                             "Constitution v1.5.0.0 permits governance ambiguity across CS gating, lifecycle transitions, and cross-domain execution controls.",
                                             "Domain closure procedures allow archival patterns that are incompatible with persistent architectural boundaries.",
@@ -668,9 +668,9 @@
                        "severity":  "MEDIUM",
                        "status":  "INVESTIGATING",
                        "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T12:47:30Z",
+                       "updated_at":  "2026-02-17T14:00:45Z",
                        "stage_detected":  "User-Request-2026-02-17",
-                       "assigned_dp":  null,
+                       "assigned_dp":  "DP-0010",
                        "assigned_ip":  null,
                        "observations":  [
                                             "Authoritative project structure documentation does not yet include the intended Scenario System and Modular RCS target layout.",
@@ -711,9 +711,9 @@
                        "severity":  "HIGH",
                        "status":  "INVESTIGATING",
                        "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T12:47:30Z",
+                       "updated_at":  "2026-02-17T14:00:45Z",
                        "stage_detected":  "User-Request-2026-02-17",
-                       "assigned_dp":  null,
+                       "assigned_dp":  "DP-0012",
                        "assigned_ip":  null,
                        "observations":  [
                                             "Startup currently enters validation-run oriented behavior rather than a deterministic plant baseline.",
@@ -758,9 +758,9 @@
                        "severity":  "HIGH",
                        "status":  "INVESTIGATING",
                        "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T12:47:30Z",
+                       "updated_at":  "2026-02-17T14:00:45Z",
                        "stage_detected":  "User-Request-2026-02-17",
-                       "assigned_dp":  null,
+                       "assigned_dp":  "DP-0008",
                        "assigned_ip":  null,
                        "observations":  [
                                             "Validation path is hardwired and not scenario-driven.",
@@ -801,9 +801,9 @@
                        "severity":  "MEDIUM",
                        "status":  "INVESTIGATING",
                        "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T12:47:30Z",
+                       "updated_at":  "2026-02-17T14:00:45Z",
                        "stage_detected":  "User-Request-2026-02-17",
-                       "assigned_dp":  null,
+                       "assigned_dp":  "DP-0008",
                        "assigned_ip":  null,
                        "observations":  [
                                             "No in-simulator UI exists for scenario selection.",
@@ -844,9 +844,9 @@
                        "severity":  "HIGH",
                        "status":  "INVESTIGATING",
                        "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T12:47:30Z",
+                       "updated_at":  "2026-02-17T14:00:45Z",
                        "stage_detected":  "User-Request-2026-02-17",
-                       "assigned_dp":  null,
+                       "assigned_dp":  "DP-0013",
                        "assigned_ip":  null,
                        "observations":  [
                                             "Existing validation entrypoint is not scenario-selectable.",
@@ -887,9 +887,9 @@
                        "severity":  "HIGH",
                        "status":  "INVESTIGATING",
                        "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T12:47:30Z",
+                       "updated_at":  "2026-02-17T14:00:45Z",
                        "stage_detected":  "User-Request-2026-02-17",
-                       "assigned_dp":  null,
+                       "assigned_dp":  "DP-0001",
                        "assigned_ip":  null,
                        "observations":  [
                                             "Current RCS execution is effectively single-loop oriented.",
@@ -930,9 +930,9 @@
                        "severity":  "HIGH",
                        "status":  "INVESTIGATING",
                        "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T12:47:30Z",
+                       "updated_at":  "2026-02-17T14:00:45Z",
                        "stage_detected":  "User-Request-2026-02-17",
-                       "assigned_dp":  null,
+                       "assigned_dp":  "DP-0001",
                        "assigned_ip":  null,
                        "observations":  [
                                             "Downstream consumers currently bind to single-loop assumptions.",
@@ -984,7 +984,7 @@
                                         ],
                        "evidence":  [
                                         {
-                                            "ref":  "Governance/ImplementationPlans/IP-0042 - Validation Dashboard UI Toolkit Rebuild.md",
+                                            "ref":  "Governance/ImplementationPlans/Closed/IP-0042 - Validation Dashboard UI Toolkit Rebuild.md",
                                             "notes":  "Plan artifact reviewed; mandatory compliance sections missing."
                                         },
                                         {
