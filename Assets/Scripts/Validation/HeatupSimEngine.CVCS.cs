@@ -84,7 +84,7 @@ public partial class HeatupSimEngine
         else
         {
             // v4.4.0: Use orifice lineup model for letdown flow calculation
-            letdownFlow = PlantConstants.CalculateTotalLetdownFlow(
+            letdownFlow = CVCSFlowMath.CalculateTotalLetdownFlow(
                 T_rcs, pressure, numOrificesOpen: 1,
                 num75Open: orifice75Count, open45: orifice45Open);
         }
@@ -495,9 +495,9 @@ public partial class HeatupSimEngine
         orifice3Open = orifice45Open;
 
         float pressure_psig = pressure - 14.7f;
-        float raw1 = orifice1Open ? PlantConstants.CalculateOrificeLetdownFlow(pressure_psig) : 0f;
-        float raw2 = orifice2Open ? PlantConstants.CalculateOrificeLetdownFlow(pressure_psig) : 0f;
-        float raw3 = orifice3Open ? PlantConstants.CalculateOrifice45LetdownFlow(pressure_psig) : 0f;
+        float raw1 = orifice1Open ? CVCSFlowMath.CalculateOrificeLetdownFlow(pressure_psig) : 0f;
+        float raw2 = orifice2Open ? CVCSFlowMath.CalculateOrificeLetdownFlow(pressure_psig) : 0f;
+        float raw3 = orifice3Open ? CVCSFlowMath.CalculateOrifice45LetdownFlow(pressure_psig) : 0f;
         float rawTotal = raw1 + raw2 + raw3;
 
         float safeAppliedLetdown_gpm = Mathf.Max(0f, appliedLetdown_gpm);

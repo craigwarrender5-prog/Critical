@@ -1,6 +1,6 @@
 # Technical Documentation Index
 
-**Last Updated:** 2026-02-15  
+**Last Updated:** 2026-02-16  
 **Purpose:** Unified index of all technical documentation supporting Critical: Master the Atom simulator development.
 
 ---
@@ -11,7 +11,7 @@
 |----------|----------------|----------|
 | NRC HRTD Sections | 16 | Core systems, controls, protection, instrumentation, ESFAS, feedwater, pressurizer |
 | Research Documents | 4 | SG thermal physics, RHR system |
-| Reference Compilations | 3 | Startup/pressurization, PZR analysis, specifications |
+| Reference Compilations | 4 | Startup/pressurization, PZR analysis, specifications, authority decisions |
 | Meta-Documentation | 3 | Indexes, summaries, analysis |
 
 ---
@@ -84,6 +84,7 @@
 | `NRC_HRTD_Startup_Pressurization_Reference.md` | `[PZR]` `[CVCS]` `[STARTUP]` | Consolidated reference from multiple NRC sections on solid plant pressurization, bubble formation, and pressure/level control |
 | `PZR_Level_Pressure_Deficit_Analysis_v4.4.0.md` | `[PZR]` `[IMPLEMENTATION]` | Implementation-specific analysis for v4.4.0 |
 | `Westinghouse_4Loop_Pressurizer_Specifications_Summary.md` | `[PZR]` `[SPECS]` | **NEW 2026-02-15** — Quick reference: 1800 ft³ volume, 1794 kW heaters (414 kW proportional + 1380 kW backup), 840 gpm spray, level program equations, all control setpoints |
+| `RCP_Heat_Authority_Decision_2026-02-16.md` | `[RCP]` `[AUTHORITY]` `[GOVERNANCE]` | **NEW 2026-02-16** - Declares authoritative RCP heat precedence for Baseline A (`CS-0083`) |
 
 ---
 

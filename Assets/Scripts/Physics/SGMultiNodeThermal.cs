@@ -40,8 +40,8 @@
 //     Primary temperature stabilizes at 557°F (Hot Standby / HZP).
 //
 //   Energy balance validation:
-//     Q_rcp = 21 MW | Q_primary_heatup = 14.3 MW (at 50°F/hr)
-//     Q_losses = 1.5 MW | Q_steam_exit = 5.2 MW
+//     Q_rcp = 24 MW | Q_primary_heatup = 14.3 MW (at 50�F/hr)
+//     Q_losses = 1.5 MW | Q_steam_exit = 8.2 MW
 //     Total heatup time: ~9.1 hours (consistent with NRC HRTD)
 //
 // HISTORY:
@@ -2672,3 +2672,4 @@ namespace Critical.Physics
         #endregion
     }
 }
+

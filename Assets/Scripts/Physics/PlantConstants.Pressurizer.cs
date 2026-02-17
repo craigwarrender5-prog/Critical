@@ -234,7 +234,7 @@ namespace Critical.Physics
         //
         // Startup: All groups manually energized at full power.
         // Bubble formation: Automatically modulated with pressure-rate feedback.
-        // Pressurization: Same auto controller, target >= 320 psig for RCP NPSH.
+        // Pressurization: Same auto controller, target >= 400 psig for RCP startup permissive.
         // Normal ops: Proportional + backup groups, automatic PID on pressure.
         //
         // Design Decision (v0.2.0): Heaters modeled as continuously variable

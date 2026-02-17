@@ -36,6 +36,7 @@ public partial class HeatupSimEngine
 
     private bool prev_pzrLevelLow, prev_pzrLevelHigh;
     private bool prev_pressureLow, prev_pressureHigh;
+    private bool prev_sgSecondaryPressureHigh;
     private bool prev_subcoolingLow, prev_smmLowMargin, prev_smmNoMargin;
     private bool prev_vctLevelLow, prev_vctLevelHigh;
     private bool prev_vctMakeupActive, prev_vctRWSTSuction;
@@ -114,6 +115,12 @@ public partial class HeatupSimEngine
                 RisingSeverity = EventSeverity.ALARM,
                 RisingMessage = $"PRESSURE HIGH  ({pressure:F0} psia)",
                 FallingMessage = "Pressure high CLEARED"
+            },
+            new AlarmEdgeDescriptor {
+                CurrentValue = sgSecondaryPressureHigh, PreviousValue = prev_sgSecondaryPressureHigh,
+                RisingSeverity = EventSeverity.ALARM,
+                RisingMessage = $"SG SECONDARY PRESSURE HIGH  ({sgSecondaryPressure_psig:F0} psig)",
+                FallingMessage = "SG secondary pressure high CLEARED"
             },
             new AlarmEdgeDescriptor {
                 CurrentValue = subcoolingLow, PreviousValue = prev_subcoolingLow,
@@ -196,6 +203,7 @@ public partial class HeatupSimEngine
         prev_pzrLevelHigh = pzrLevelHigh;
         prev_pressureLow = pressureLow;
         prev_pressureHigh = pressureHigh;
+        prev_sgSecondaryPressureHigh = sgSecondaryPressureHigh;
         prev_subcoolingLow = subcoolingLow;
         prev_smmLowMargin = smmLowMargin;
         prev_smmNoMargin = smmNoMargin;
@@ -244,6 +252,7 @@ public partial class HeatupSimEngine
         {
             PZRLevel = pzrLevel,
             Pressure = pressure,
+            SGSecondaryPressure_psia = sgSecondaryPressure_psia,
             Subcooling = subcooling,
             HeatupRate = heatupRate,
             RVLISFull = rvlisFull,
@@ -265,6 +274,7 @@ public partial class HeatupSimEngine
         rcsFlowLow = alarms.RCSFlowLow;
         pressureLow = alarms.PressureLow;
         pressureHigh = alarms.PressureHigh;
+        sgSecondaryPressureHigh = alarms.SGSecondaryPressureHigh;
         subcoolingLow = alarms.SubcoolingLow;
         smmLowMargin = alarms.SMMLowMargin;
         smmNoMargin = alarms.SMMNoMargin;

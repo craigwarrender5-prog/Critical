@@ -64,7 +64,7 @@ public partial class HeatupSimEngine
         DRAIN,
         /// <summary>CVCS rebalanced, level control to auto, PI initialized</summary>
         STABILIZE,
-        /// <summary>Heaters raising pressure to >=320 psig for RCP NPSH</summary>
+        /// <summary>Heaters raising pressure to >=400 psig for RCP startup permissive</summary>
         PRESSURIZE,
         /// <summary>Bubble formation complete, ready for RCP startup</summary>
         COMPLETE
@@ -267,7 +267,7 @@ public partial class HeatupSimEngine
                 break;
 
             // ============================================================
-            // PRESSURIZE: Heaters raise pressure to >=320 psig for RCP NPSH
+            // PRESSURIZE: Heaters raise pressure to >=400 psig for RCP startup permissive
             // ============================================================
             case BubbleFormationPhase.PRESSURIZE:
                 UpdatePressurizePhase(dt);
@@ -610,7 +610,7 @@ public partial class HeatupSimEngine
         int currentLineupIndex = GetDrainLineupIndex(orifice75Count, orifice45Open);
 
         float pressure_psig = pressure - PlantConstants.PSIG_TO_PSIA;
-        float hydraulicLetdown_gpm = PlantConstants.CalculateOrificeLineupFlow(
+        float hydraulicLetdown_gpm = CVCSFlowMath.CalculateOrificeLineupFlow(
             pressure_psig,
             orifice75Count,
             orifice45Open);

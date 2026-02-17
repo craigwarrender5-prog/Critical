@@ -47,6 +47,8 @@ namespace Critical.Physics.Tests
         const float DT_SEC = 10f;
         const float WATER_DENSITY_LB_PER_GAL = 8.34f;
 
+        static AcceptanceSimulationEvidence RuntimeEvidence => AcceptanceSimulationEvidenceStore.Latest;
+
         // ====================================================================
         // AT-1: Two-Phase CVCS Step Test
         // ====================================================================
@@ -122,16 +124,21 @@ namespace Critical.Physics.Tests
 
                 result.ExpectedValue = $"Mass drift < {maxAllowedDrift_percent}% " +
                     $"(< {maxAllowedDrift_lb:F0} lb for {typicalSystemMass_lb:F0} lb system)";
-                result.ActualValue = "Test validates canonical ledger integrity over extended operation";
-                
-                // This test validates architectural compliance
-                // The canonical ledger should only change via boundary flows
-                // With balanced CVCS and no relief, drift should be ~0
-                result.Passed = true;  // Architectural rule validated
-                result.Notes = "REQUIRES SIMULATION: Run 4 hr in two-phase with " +
-                    "charging=letdown=60 gpm, relief closed. " +
-                    "Measure initial and final TotalPrimaryMass_lb. " +
-                    "Architectural Rule R1/R3 compliance required for pass.";
+                At02Evidence evidence = RuntimeEvidence.AT02 ?? new At02Evidence();
+                if (!evidence.Observed)
+                {
+                    result.Passed = false;
+                    result.ActualValue = "No live simulation evidence recorded for AT-02.";
+                    result.Notes = "SIMULATION EVIDENCE REQUIRED: run the IP-0033 acceptance evidence runner " +
+                                   "to populate AT-02 runtime measurements before this test can pass.";
+                    return result;
+                }
+
+                result.Passed = evidence.Passed;
+                result.ActualValue =
+                    $"Window={evidence.WindowHours:F2} hr, start={evidence.StartMassLb:F1} lb, end={evidence.EndMassLb:F1} lb, " +
+                    $"|drift|={evidence.AbsoluteDriftLb:F2} lb ({evidence.AbsoluteDriftPercent:F5}%)";
+                result.Notes = $"Simulation evidence source: {RuntimeEvidence.Source}";
             }
             catch (Exception ex)
             {
@@ -162,14 +169,19 @@ namespace Critical.Physics.Tests
                 float maxDiscontinuity_lb = 1f;
 
                 result.ExpectedValue = $"TotalPrimaryMass_lb = TotalPrimaryMassSolid ± {maxDiscontinuity_lb} lb at transition";
-                result.ActualValue = "Validates regime handoff preserves canonical mass";
-                
-                // This validates Stage 3 implementation:
-                // state.TotalPrimaryMass_lb = state.TotalPrimaryMassSolid at bubble formation
-                result.Passed = true;  // Architectural rule validated
-                result.Notes = "REQUIRES SIMULATION: Run from cold shutdown through bubble formation. " +
-                    "At exact moment bubble forms, compare TotalPrimaryMass_lb vs TotalPrimaryMassSolid. " +
-                    "Maximum allowed discontinuity = 1 lb.";
+                At03Evidence evidence = RuntimeEvidence.AT03 ?? new At03Evidence();
+                if (!evidence.Observed)
+                {
+                    result.Passed = false;
+                    result.ActualValue = "No live simulation transition record captured for AT-03.";
+                    result.Notes = "SIMULATION EVIDENCE REQUIRED: run the IP-0033 acceptance evidence runner " +
+                                   "to capture solid-to-two-phase handoff continuity.";
+                    return result;
+                }
+
+                result.Passed = evidence.Passed;
+                result.ActualValue = $"Observed transition discontinuity = {evidence.TransitionDiscontinuityLb:F3} lb";
+                result.Notes = $"Simulation evidence source: {RuntimeEvidence.Source}";
             }
             catch (Exception ex)
             {
@@ -360,16 +372,20 @@ namespace Critical.Physics.Tests
                 float maxAllowedSpikePerTimestep_percent = 0.5f;
 
                 result.ExpectedValue = $"Max PZR level change < {maxAllowedSpikePerTimestep_percent}% per timestep";
-                result.ActualValue = "Validates no canonical overwrite, density ordering, or expansion double-counting";
-                
-                // This validates Stage 4 implementation:
-                // - No V×ρ overwrite of canonical ledger
-                // - Consistent density/volume state
-                // - Single application of thermal expansion
-                result.Passed = true;  // Architectural rule validated
-                result.Notes = "REQUIRES SIMULATION: From stable two-phase state, start RCPs. " +
-                    "Record PZR level each timestep. Maximum frame-to-frame change " +
-                    "must be < 0.5%. The sharp spike bug is fixed.";
+                At08Evidence evidence = RuntimeEvidence.AT08 ?? new At08Evidence();
+                if (!evidence.Observed)
+                {
+                    result.Passed = false;
+                    result.ActualValue = "No live simulation RCP-start window captured for AT-08.";
+                    result.Notes = "SIMULATION EVIDENCE REQUIRED: run the IP-0033 acceptance evidence runner " +
+                                   "to capture frame-to-frame PZR level deltas across RCP startup.";
+                    return result;
+                }
+
+                result.Passed = evidence.Passed;
+                result.ActualValue =
+                    $"Window steps={evidence.WindowStepsEvaluated}, max delta={evidence.MaxPzrLevelStepDeltaPercent:F4}% per step";
+                result.Notes = $"Simulation evidence source: {RuntimeEvidence.Source}";
             }
             catch (Exception ex)
             {

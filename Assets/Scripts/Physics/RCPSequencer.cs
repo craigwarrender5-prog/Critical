@@ -10,7 +10,7 @@
 //   
 //   RCP Startup Requirements:
 //     1. Steam bubble must exist in pressurizer
-//     2. Pressure must be at least 320 psig for adequate NPSH
+//     2. Pressure must be at least 400 psig for adequate NPSH
 //     3. Sequential start to limit electrical inrush
 //   
 //   Startup Sequence:
@@ -107,7 +107,7 @@ namespace Critical.Physics
         
         /// <summary>
         /// Delay from bubble formation complete to first RCP start (hours).
-        /// Per NRC HRTD 19.2.2: RCPs can start once bubble exists and P ≥ 320 psig.
+        /// Per startup permissive policy: RCPs can start once bubble exists and P >= 400 psig.
         /// No mandated wait. 10-minute delay models operator verification activities
         /// (checking seal injection, aligning breakers, verifying prerequisites).
         /// v2.0.10: Changed from 1.0 hr (no procedural basis) to 10 min.
@@ -130,7 +130,7 @@ namespace Critical.Physics
         /// This is the main entry point for the sequencer. It determines
         /// how many RCPs should be running based on:
         ///   - Whether a steam bubble exists
-        ///   - System pressure (must be >= 320 psig)
+        ///   - System pressure (must be >= 400 psig)
         ///   - Time elapsed since bubble formation
         /// </summary>
         /// <param name="bubbleFormed">True if steam bubble exists in PZR</param>
@@ -198,7 +198,7 @@ namespace Critical.Physics
             {
                 state.TargetRCPCount = 0;
                 state.TimeToNextStart = float.MaxValue;
-                state.StatusMessage = $"LOW PRESSURE ({pressure_psia - 14.7f:F0} psig < 320 psig)";
+                state.StatusMessage = $"LOW PRESSURE ({pressure_psia - 14.7f:F0} psig < {PlantConstants.MIN_RCP_PRESSURE_PSIG:F0} psig)";
                 return state;
             }
             
@@ -370,7 +370,7 @@ namespace Critical.Physics
         /// each pump's ramp state and aggregates the results.
         /// 
         /// Example: Pump 1 at Stage 3 (70% heat) + Pump 2 at Stage 1 (5% heat)
-        ///   → EffectiveHeat = (0.70 + 0.05) × 5.25 MW = 3.94 MW
+        ///   → EffectiveHeat = (0.70 + 0.05) × 6.0 MW = 4.50 MW
         /// 
         /// Source: NRC HRTD 3.2 / 19.2.2
         /// </summary>
@@ -479,7 +479,7 @@ namespace Critical.Physics
             
             // Test 8: RCP heat calculation
             float heat4 = GetRCPHeat_MW(4);
-            if (Math.Abs(heat4 - 21f) > 0.1f) valid = false;
+            if (Math.Abs(heat4 - PlantConstants.RCP_HEAT_MW) > 0.1f) valid = false;
             
             return valid;
         }
@@ -487,3 +487,4 @@ namespace Critical.Physics
         #endregion
     }
 }
+

@@ -6,7 +6,7 @@
 //
 // PHYSICS:
 //   During Phase 2 heatup (RCPs running, bubble exists):
-//     - RCPs provide mechanical heat input (~21 MW with 4 pumps)
+//     - RCPs provide mechanical heat input (~24 MW with 4 pumps)
 //     - PZR heaters add additional heat (~1.8 MW)
 //     - Insulation losses remove heat (temperature dependent)
 //     - Net heat raises RCS temperature
@@ -568,3 +568,4 @@ namespace Critical.Physics
         #endregion
     }
 }
+

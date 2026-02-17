@@ -464,7 +464,7 @@ public partial class HeatupValidationVisual
             float rowY = y;
 
             float effHeat = engine.effectiveRCPHeat;
-            float maxHeat = PlantConstants.RCP_HEAT_MW;  // 21 MW
+            float maxHeat = PlantConstants.RCP_HEAT_MW;  // 24 MW
             Color heatC;
             if (engine.rcpCount == 0)
                 heatC = _cTextSecondary;
@@ -777,3 +777,4 @@ public partial class HeatupValidationVisual
         GL.PopMatrix();
     }
 }
+

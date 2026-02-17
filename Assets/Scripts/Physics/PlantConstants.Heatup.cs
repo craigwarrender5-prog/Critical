@@ -44,7 +44,7 @@ namespace Critical.Physics
         /// <summary>
         /// Expected heatup rate with all RCPs running in °F/hr.
         /// Source: NRC ML11223A342 Section 19.2.2 — "approximately 50°F per hour"
-        /// This is with ~20 MW net heat (21 MW RCP - 1 MW loss at moderate temp)
+        /// This is with ~23 MW net heat (24 MW RCP - 1 MW loss at moderate temp)
         /// </summary>
         public const float TYPICAL_HEATUP_RATE_F_HR = 50f;
         
@@ -267,11 +267,11 @@ namespace Critical.Physics
         ///   U ≈ 91 BTU/(hr·ft²·°F) → Rounded to 100 for modeling
         ///
         /// VALIDATION:
-        /// With U=100, A=220,000 ft², ΔT_lag=15°F, Q_in=21 MW:
+        /// With U=100, A=220,000 ft², ΔT_lag=15°F, Q_in=24 MW:
         ///   Q_sg = U×A×ΔT = 100 × 220,000 × 15 = 330 MBTU/hr = 96.7 MW
         ///   But ΔT_lag adjusts dynamically based on heat balance.
-        ///   Net Q_rcs = Q_in - Q_sg - Q_loss ≈ 21 - 7 - 1.5 = 12.5 MW
-        ///   Heatup rate = Q_net/(m×Cp) = 12.5/(2,900,000×1)×3.412 = 48°F/hr ✓
+        ///   Net Q_rcs = Q_in - Q_sg - Q_loss ≈ 24 - 7 - 1.5 = 15.5 MW
+        ///   Heatup rate = Q_net/(m×Cp) = 15.5/(2,900,000×1)×3.412 = 58°F/hr (pre-damping estimate)
         ///
         /// Previous value of 200 BTU/(hr·ft²·°F) was ~2× too high, resulting in
         /// excessive SG heat absorption (~14 MW) and slow heatup (~26°F/hr).
@@ -551,3 +551,4 @@ namespace Critical.Physics
         #endregion
     }
 }
+

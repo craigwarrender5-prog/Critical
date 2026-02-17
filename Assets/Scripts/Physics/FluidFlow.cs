@@ -115,8 +115,8 @@ namespace Critical.Physics
         public static float PumpHeat(float pumpSpeed)
         {
             // Pump heat is approximately proportional to speed cubed
-            // At nominal: 21 MW per pump
-            return AffinityLaws_Power(pumpSpeed, 1f, PlantConstants.RCP_HEAT_MW);
+            // At nominal: ~6 MW per pump (cold-water startup authority)
+            return AffinityLaws_Power(pumpSpeed, 1f, PlantConstants.RCP_HEAT_MW_EACH);
         }
         
         #endregion
@@ -449,3 +449,4 @@ namespace Critical.Physics
         #endregion
     }
 }
+

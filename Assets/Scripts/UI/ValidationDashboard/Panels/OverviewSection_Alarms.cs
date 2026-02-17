@@ -35,6 +35,7 @@ namespace Critical.UI.ValidationDashboard
         private AlarmTile _vctLevelTile;
         private AlarmTile _massConsTile;
         private AlarmTile _flowLowTile;
+        private AlarmTile _sgPressHighTile;
 
         protected override void BuildContent()
         {
@@ -68,6 +69,7 @@ namespace Critical.UI.ValidationDashboard
             _vctLevelTile = AlarmTile.Create(gridGO.transform, "VCT");
             _massConsTile = AlarmTile.Create(gridGO.transform, "MASS");
             _flowLowTile = AlarmTile.Create(gridGO.transform, "FLOW");
+            _sgPressHighTile = AlarmTile.Create(gridGO.transform, "SG P HI");
         }
 
         public override void UpdateData(HeatupSimEngine engine)
@@ -87,6 +89,7 @@ namespace Critical.UI.ValidationDashboard
             
             _massConsTile.SetState(engine.primaryMassAlarm);
             _flowLowTile.SetState(engine.rcsFlowLow);
+            _sgPressHighTile.SetState(engine.sgSecondaryPressureHigh);
         }
 
         public override void UpdateVisuals()

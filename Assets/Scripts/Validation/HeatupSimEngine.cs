@@ -488,6 +488,7 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public bool heatupInProgress;
     [HideInInspector] public bool pressureLow;
     [HideInInspector] public bool pressureHigh;
+    [HideInInspector] public bool sgSecondaryPressureHigh;
     [HideInInspector] public bool subcoolingLow;
     [HideInInspector] public bool modePermissive;
     [HideInInspector] public bool smmLowMargin;
@@ -760,6 +761,13 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public float noRcpTransportFactor = 1f;
     [HideInInspector] public string thermoStateWriter = "UNSET";
     private float smoothedRegime2Alpha = 0f;
+    private int previousPhysicsRegimeId = 0;
+    private string previousPhysicsRegimeLabel = "UNSET";
+    private float nextRegime2ConvergenceWarnTime_hr = 0f;
+    private float nextRegime3ConvergenceWarnTime_hr = 0f;
+    private float nextR1MassAuditWarnTime_hr = 0f;
+    private float nextPbocPairingWarnTime_hr = 0f;
+    [HideInInspector] public int hotPathWarningSuppressedCount = 0;
 
     // v4.4.0: Letdown orifice lineup state.
     // Per NRC HRTD 4.1: Three parallel orifices (2×75 + 1×45 gpm).
@@ -785,6 +793,7 @@ public partial class HeatupSimEngine : MonoBehaviour
     const float REGIME2_ALPHA_SMOOTH_TAU_HR = 0.03f;
     const float RCP_TRANSIENT_TRACE_WINDOW_HR = 0.35f;
     const float STRESS_FORCE_PRESSURE_MAX_STEP_PSI = 10f;
+    const float HOT_PATH_WARNING_MIN_INTERVAL_SEC = 60f;
 
     // v0.8.2: History cap: 1-minute samples, 240-minute (4-hour) rolling window
     const int MAX_HISTORY = 240;
@@ -1445,6 +1454,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         float alphaRaw = Mathf.Clamp01(rcpContribution.TotalFlowFraction);
         float alpha = ComputeRegime2CouplingAlpha(alphaRaw, dt);
         noRcpTransportFactor = 1f;
+        LogPhysicsRegimeTransitionIfNeeded(alpha);
 
         if (rcpCount == 0 || alpha < 0.001f)
         {
@@ -1844,8 +1854,11 @@ public partial class HeatupSimEngine : MonoBehaviour
             // — automatically correct once PZRWaterVolume is set above
             rcsWaterMass = physicsState.RCSWaterMass;
 
-            if (!coupledResult.Converged)
+            if (!coupledResult.Converged &&
+                ShouldEmitHotPathWarning(ref nextRegime2ConvergenceWarnTime_hr))
+            {
                 Debug.LogWarning($"[T+{simTime:F2}hr] CoupledThermo did not converge during blended regime");
+            }
 
             // Status display for ramping regime
             if (rcpCount < 4)
@@ -1858,7 +1871,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             else
             {
                 statusMessage = $"ALL 4 RCPs RAMPING (α={alpha:F2}, {rcpContribution.PumpsFullyRunning}/4 at rated)";
-                heatupPhaseDesc = $"HEATUP - 4 RCPs RAMPING ({effectiveRCPHeat:F1}/21 MW)";
+                heatupPhaseDesc = $"HEATUP - 4 RCPs RAMPING ({effectiveRCPHeat:F1}/{PlantConstants.RCP_HEAT_MW:F0} MW)";
             }
 
             if (heatupRate > 0.5f)
@@ -1997,8 +2010,11 @@ public partial class HeatupSimEngine : MonoBehaviour
             T_sat = WaterProperties.SaturationTemperature(pressure);
             T_pzr = T_sat;
 
-            if (!heatupResult.Converged)
+            if (!heatupResult.Converged &&
+                ShouldEmitHotPathWarning(ref nextRegime3ConvergenceWarnTime_hr))
+            {
                 Debug.LogWarning($"[T+{simTime:F2}hr] CoupledThermo did not converge, using estimate");
+            }
 
             if (rcpCount < 4)
             {
@@ -2010,7 +2026,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             else
             {
                 statusMessage = "ALL 4 RCPs RUNNING - FULL HEATUP";
-                heatupPhaseDesc = "FULL HEATUP - 4 RCPs (21 MW)";
+                heatupPhaseDesc = $"FULL HEATUP - 4 RCPs ({PlantConstants.RCP_HEAT_MW:F0} MW)";
             }
 
             if (heatupRate > 0.5f)
@@ -2089,8 +2105,11 @@ public partial class HeatupSimEngine : MonoBehaviour
                 float ledgerDrift_r1 = componentSum_r1 - physicsState.TotalPrimaryMass_lb;
                 if (Mathf.Abs(ledgerDrift_r1) > 1.0f)
                 {
-                    Debug.LogWarning($"[T+{simTime:F2}hr] [R1 MASS AUDIT] Ledger drift = {ledgerDrift_r1:F1} lbm " +
-                        $"(components={componentSum_r1:F0}, ledger={physicsState.TotalPrimaryMass_lb:F0}, phase={bubblePhase})");
+                    if (ShouldEmitHotPathWarning(ref nextR1MassAuditWarnTime_hr))
+                    {
+                        Debug.LogWarning($"[T+{simTime:F2}hr] [R1 MASS AUDIT] Ledger drift = {ledgerDrift_r1:F1} lbm " +
+                            $"(components={componentSum_r1:F0}, ledger={physicsState.TotalPrimaryMass_lb:F0}, phase={bubblePhase})");
+                    }
                 }
             }
         }
@@ -2108,6 +2127,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         // Steam dump, heater PID, and HZP state machine
         // Only active when approaching HZP conditions
         // ================================================================
+        UpdateHZPLifecycle();
         UpdateHZPSystems(dt);
 
         // Diagnostic: signed startup net heat (no clipping).
@@ -2422,7 +2442,7 @@ public partial class HeatupSimEngine : MonoBehaviour
     {
         const float overPrimaryThresholdPct = 5f;
         stageE_LastSGHeatRemoval_MW = sgHeatTransfer_MW;
-        stageE_PrimaryHeatInput_MW = Mathf.Max(0f, sgHeatTransfer_MW);
+        stageE_PrimaryHeatInput_MW = ComputeStageEPrimaryHeatInput_MW();
         stageE_EnergyWindowActive = sgStartupStateMode != SGStartupBoundaryStateMode.OpenPreheat;
 
         if (stageE_EnergyWindowActive)
@@ -2464,6 +2484,83 @@ public partial class HeatupSimEngine : MonoBehaviour
         {
             stageE_PercentMismatch = 0f;
         }
+    }
+
+    float ComputeStageEPrimaryHeatInput_MW()
+    {
+        // CS-0062: preserve primary heat-input semantics.
+        // This value must represent primary-side heat additions, never SG removal.
+        float rcpHeatInput_MW = Mathf.Max(0f, rcpHeat);
+        float heaterInput_MW = Mathf.Max(0f, pzrHeaterPower);
+        float rhrHeating_MW = Mathf.Max(0f, rhrNetHeat_MW);
+        return rcpHeatInput_MW + heaterInput_MW + rhrHeating_MW;
+    }
+
+    int GetCurrentPhysicsRegimeId(float couplingAlpha)
+    {
+        if (rcpCount == 0 || couplingAlpha < 0.001f)
+            return 1;
+        if (!rcpContribution.AllFullyRunning)
+            return 2;
+        return 3;
+    }
+
+    string GetPhysicsRegimeLabel(int regimeId, float couplingAlpha)
+    {
+        switch (regimeId)
+        {
+            case 1:
+                return "REGIME 1 (Isolated)";
+            case 2:
+                return $"REGIME 2 (Blended alpha={couplingAlpha:F2})";
+            case 3:
+                return "REGIME 3 (Coupled)";
+            default:
+                return "REGIME UNKNOWN";
+        }
+    }
+
+    void LogPhysicsRegimeTransitionIfNeeded(float couplingAlpha)
+    {
+        int currentRegimeId = GetCurrentPhysicsRegimeId(couplingAlpha);
+        string currentLabel = GetPhysicsRegimeLabel(currentRegimeId, couplingAlpha);
+
+        if (previousPhysicsRegimeId == 0)
+        {
+            previousPhysicsRegimeId = currentRegimeId;
+            previousPhysicsRegimeLabel = currentLabel;
+            return;
+        }
+
+        if (currentRegimeId != previousPhysicsRegimeId)
+        {
+            string reason = currentRegimeId == 1
+                ? "no_rcp_or_zero_coupling"
+                : (currentRegimeId == 2 ? "partial_rcp_coupling" : "all_rcps_fully_running");
+            LogEvent(
+                EventSeverity.INFO,
+                $"PHYSICS REGIME TRANSITION: {previousPhysicsRegimeLabel} -> {currentLabel} " +
+                $"(alpha={couplingAlpha:F3}, rcp={rcpCount}, reason={reason})");
+            Debug.Log(
+                $"[REGIME_TRANSITION] T+{simTime:F4}hr {previousPhysicsRegimeLabel} -> {currentLabel} " +
+                $"(alpha={couplingAlpha:F3}, rcp={rcpCount}, reason={reason})");
+        }
+
+        previousPhysicsRegimeId = currentRegimeId;
+        previousPhysicsRegimeLabel = currentLabel;
+    }
+
+    bool ShouldEmitHotPathWarning(ref float nextAllowedTime_hr)
+    {
+        float minInterval_hr = HOT_PATH_WARNING_MIN_INTERVAL_SEC / 3600f;
+        if (simTime + 1e-9f < nextAllowedTime_hr)
+        {
+            hotPathWarningSuppressedCount++;
+            return false;
+        }
+
+        nextAllowedTime_hr = simTime + minInterval_hr;
+        return true;
     }
 
     void ResetSGBoundaryStartupState()
@@ -2818,9 +2915,12 @@ public partial class HeatupSimEngine : MonoBehaviour
                 EventSeverity.ALARM,
                 $"PBOC pairing check fail at tick {evt.TickIndex}: " +
                 $"dm_RCS={evt.dm_RCS_lbm:F3}lbm, paired={pairedBucketMagnitude:F3}lbm");
-            Debug.LogWarning(
-                $"[PBOC] Pairing check fail tick={evt.TickIndex} dm_RCS={evt.dm_RCS_lbm:F3}lbm " +
-                $"paired={pairedBucketMagnitude:F3}lbm");
+            if (ShouldEmitHotPathWarning(ref nextPbocPairingWarnTime_hr))
+            {
+                Debug.LogWarning(
+                    $"[PBOC] Pairing check fail tick={evt.TickIndex} dm_RCS={evt.dm_RCS_lbm:F3}lbm " +
+                    $"paired={pairedBucketMagnitude:F3}lbm");
+            }
         }
         else
         {
@@ -3243,11 +3343,8 @@ public partial class HeatupSimEngine : MonoBehaviour
     /// </summary>
     string GetPhysicsRegimeString()
     {
-        if (rcpCount == 0)
-            return "REGIME 1 (Isolated)";
-        else if (!rcpContribution.AllFullyRunning)
-            return $"REGIME 2 (Blended α={rcpContribution.TotalFlowFraction:F2})";
-        else
-            return "REGIME 3 (Coupled)";
+        int regimeId = GetCurrentPhysicsRegimeId(smoothedRegime2Alpha);
+        return GetPhysicsRegimeLabel(regimeId, smoothedRegime2Alpha);
     }
 }
+

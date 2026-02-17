@@ -786,8 +786,8 @@ namespace Critical.Tests
                     return Math.Abs(t1 - 2.0f) < 0.01f && Math.Abs(t2 - 2.5f) < 0.01f;
                 });
             
-            Test("RS-08", "4 RCP heat input = 21 MW",
-                () => Math.Abs(RCPSequencer.GetRCPHeat_MW(4) - 21f) < 0.1f);
+            Test("RS-08", "4 RCP heat input = PlantConstants.RCP_HEAT_MW",
+                () => Math.Abs(RCPSequencer.GetRCPHeat_MW(4) - PlantConstants.RCP_HEAT_MW) < 0.1f);
         }
         
         private void RunLoopThermodynamicsTests()
@@ -799,7 +799,7 @@ namespace Critical.Tests
             
             Test("LT-01", "With 4 RCPs: T_hot > T_cold, forced flow",
                 () => {
-                    var result = LoopThermodynamics.CalculateLoopTemperatures(400f, 800f, 4, 21f);
+                    var result = LoopThermodynamics.CalculateLoopTemperatures(400f, 800f, 4, PlantConstants.RCP_HEAT_MW);
                     return result.T_hot > result.T_cold && result.IsForcedFlow;
                 });
             
@@ -811,13 +811,13 @@ namespace Critical.Tests
             
             Test("LT-03", "T_avg ≈ input T_rcs",
                 () => {
-                    var result = LoopThermodynamics.CalculateLoopTemperatures(400f, 800f, 4, 21f);
+                    var result = LoopThermodynamics.CalculateLoopTemperatures(400f, 800f, 4, PlantConstants.RCP_HEAT_MW);
                     return Math.Abs(result.T_avg - 400f) < 0.1f;
                 });
             
             Test("LT-04", "ΔT at HZP with 4 RCPs = 5-15°F (RCP heat only)",
                 () => {
-                    var result = LoopThermodynamics.CalculateLoopTemperatures(557f, 2250f, 4, 21f);
+                    var result = LoopThermodynamics.CalculateLoopTemperatures(557f, 2250f, 4, PlantConstants.RCP_HEAT_MW);
                     return result.DeltaT > 3f && result.DeltaT < 20f;
                 });
             
@@ -963,3 +963,4 @@ namespace Critical.Tests
         #endregion
     }
 }
+

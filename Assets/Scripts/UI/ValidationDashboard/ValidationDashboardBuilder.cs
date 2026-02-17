@@ -85,17 +85,17 @@ namespace Critical.UI.ValidationDashboard
             // Create main content area
             GameObject mainContent = CreateMainContentArea(canvasGO.transform);
 
-            // Create real Overview panel (Stage 3)
-            CreateOverviewPanel(mainContent.transform);
-            CreatePlaceholderPanel(mainContent.transform, "PrimaryPanel", 1, "Primary Loop Details - Coming Soon");
-            CreatePlaceholderPanel(mainContent.transform, "PressurizerPanel", 2, "Pressurizer Details - Coming Soon");
-            CreatePlaceholderPanel(mainContent.transform, "CVCSPanel", 3, "CVCS Details - Coming Soon");
-            CreatePlaceholderPanel(mainContent.transform, "SGRHRPanel", 4, "SG / RHR Details - Coming Soon");
-            CreatePlaceholderPanel(mainContent.transform, "AlarmsPanel", 5, "Alarms - Coming Soon");
-            CreatePlaceholderPanel(mainContent.transform, "ValidationPanel", 6, "Validation Metrics - Coming Soon");
+            // Create all detail panels (Stages 3-4)
+            CreatePanel<OverviewPanel>(mainContent.transform, "OverviewPanel", 0);
+            CreatePanel<PrimaryLoopPanel>(mainContent.transform, "PrimaryLoopPanel", 1);
+            CreatePanel<PressurizerPanel>(mainContent.transform, "PressurizerPanel", 2);
+            CreatePanel<CVCSPanel>(mainContent.transform, "CVCSPanel", 3);
+            CreatePanel<SGRHRPanel>(mainContent.transform, "SGRHRPanel", 4);
+            CreatePanel<AlarmsPanel>(mainContent.transform, "AlarmsPanel", 5);
+            CreatePanel<ValidationPanel>(mainContent.transform, "ValidationPanel", 6);
 
-            // Create mini-trends panel (right edge)
-            CreateMiniTrendsPlaceholder(canvasGO.transform);
+            // Create mini-trends panel (right edge) - Stage 5
+            CreateMiniTrendsPanel(canvasGO.transform);
 
             Debug.Log("[ValidationDashboardBuilder] Dashboard hierarchy complete");
 
@@ -181,12 +181,12 @@ namespace Critical.UI.ValidationDashboard
         }
 
         // ====================================================================
-        // OVERVIEW PANEL (Stage 3)
+        // GENERIC PANEL CREATION (Stages 3-4)
         // ====================================================================
 
-        private static void CreateOverviewPanel(Transform parent)
+        private static T CreatePanel<T>(Transform parent, string name, int tabIndex) where T : ValidationPanelBase
         {
-            GameObject panelGO = new GameObject("OverviewPanel");
+            GameObject panelGO = new GameObject(name);
             panelGO.transform.SetParent(parent, false);
 
             // Fill parent
@@ -197,14 +197,25 @@ namespace Critical.UI.ValidationDashboard
             rt.offsetMax = new Vector2(-ValidationDashboardTheme.PaddingStandard, -ValidationDashboardTheme.PaddingStandard);
 
             // CanvasGroup for visibility
-            panelGO.AddComponent<CanvasGroup>();
+            CanvasGroup cg = panelGO.AddComponent<CanvasGroup>();
 
-            // Add the real OverviewPanel component
-            panelGO.AddComponent<OverviewPanel>();
+            // Add the panel component
+            T panel = panelGO.AddComponent<T>();
+
+            // Hide all except Overview (tab 0)
+            if (tabIndex != 0)
+            {
+                cg.alpha = 0f;
+                cg.interactable = false;
+                cg.blocksRaycasts = false;
+                panelGO.SetActive(false);
+            }
+
+            return panel;
         }
 
         // ====================================================================
-        // PLACEHOLDER PANEL
+        // PLACEHOLDER PANEL (kept for backward compatibility)
         // ====================================================================
 
         private static void CreatePlaceholderPanel(Transform parent, string name, int tabIndex, string message)
@@ -252,10 +263,10 @@ namespace Critical.UI.ValidationDashboard
         }
 
         // ====================================================================
-        // MINI-TRENDS PLACEHOLDER
+        // MINI-TRENDS PANEL (Stage 5)
         // ====================================================================
 
-        private static void CreateMiniTrendsPlaceholder(Transform parent)
+        private static void CreateMiniTrendsPanel(Transform parent)
         {
             GameObject trendsGO = new GameObject("MiniTrendsPanel");
             trendsGO.transform.SetParent(parent, false);
@@ -278,81 +289,8 @@ namespace Critical.UI.ValidationDashboard
             // CanvasGroup
             trendsGO.AddComponent<CanvasGroup>();
 
-            // Vertical layout for trend strips
-            VerticalLayoutGroup layout = trendsGO.AddComponent<VerticalLayoutGroup>();
-            layout.childAlignment = TextAnchor.UpperCenter;
-            layout.childControlWidth = true;
-            layout.childControlHeight = false;
-            layout.childForceExpandWidth = true;
-            layout.childForceExpandHeight = false;
-            layout.spacing = ValidationDashboardTheme.PaddingSmall;
-            layout.padding = new RectOffset(
-                (int)ValidationDashboardTheme.PaddingSmall,
-                (int)ValidationDashboardTheme.PaddingSmall,
-                (int)ValidationDashboardTheme.PaddingSmall,
-                (int)ValidationDashboardTheme.PaddingSmall);
-
-            // Header label
-            GameObject headerGO = new GameObject("Header");
-            headerGO.transform.SetParent(trendsGO.transform, false);
-
-            LayoutElement headerLE = headerGO.AddComponent<LayoutElement>();
-            headerLE.preferredHeight = 20f;
-
-            TextMeshProUGUI headerText = headerGO.AddComponent<TextMeshProUGUI>();
-            headerText.text = "TRENDS";
-            headerText.fontSize = 11;
-            headerText.fontStyle = FontStyles.Bold;
-            headerText.alignment = TextAlignmentOptions.Center;
-            headerText.color = ValidationDashboardTheme.TextSecondary;
-
-            // Placeholder trend strips (8 total)
-            string[] trendLabels = new string[]
-            {
-                "RCS Pressure",
-                "PZR Level",
-                "Heater Output",
-                "Spray Flow",
-                "Charging",
-                "Letdown",
-                "T-avg",
-                "SG Pressure"
-            };
-
-            foreach (string label in trendLabels)
-            {
-                CreateMiniTrendPlaceholder(trendsGO.transform, label);
-            }
-        }
-
-        private static void CreateMiniTrendPlaceholder(Transform parent, string label)
-        {
-            GameObject trendGO = new GameObject($"Trend_{label.Replace(" ", "")}");
-            trendGO.transform.SetParent(parent, false);
-
-            LayoutElement le = trendGO.AddComponent<LayoutElement>();
-            le.preferredHeight = ValidationDashboardTheme.MiniTrendHeight + 14f;  // Include label
-
-            // Background
-            Image bg = trendGO.AddComponent<Image>();
-            bg.color = ValidationDashboardTheme.BackgroundGraph;
-
-            // Label
-            GameObject labelGO = new GameObject("Label");
-            labelGO.transform.SetParent(trendGO.transform, false);
-
-            RectTransform labelRT = labelGO.AddComponent<RectTransform>();
-            labelRT.anchorMin = new Vector2(0, 1);
-            labelRT.anchorMax = new Vector2(1, 1);
-            labelRT.pivot = new Vector2(0.5f, 1);
-            labelRT.sizeDelta = new Vector2(0, 12);
-            labelRT.anchoredPosition = new Vector2(0, -1);
-
-            TextMeshProUGUI labelText = labelGO.AddComponent<TextMeshProUGUI>();
-            labelText.text = label;
-            labelText.fontSize = 9;
-            labelText.alignment = TextAlignmentOptions.Center;
-            labelText.color = ValidationDashboardTheme.TextSecondary;
+            // Add the MiniTrendsPanel component
+            trendsGO.AddComponent<MiniTrendsPanel>();
         }
     }
 
