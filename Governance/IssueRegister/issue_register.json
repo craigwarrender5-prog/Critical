@@ -434,7 +434,7 @@
                        "resolution_type":  null
                    },
                    {
-                       "id":  "CS-0110",
+                       "id":  "CS-0111",
                        "title":  "PZR temperature (T_pzr) lacks primary visualization — no arc gauge or trend display",
                        "domain":  "Operator Interface & Scenarios",
                        "severity":  "MEDIUM",
@@ -452,7 +452,7 @@
                                         ],
                        "evidence":  [
                                         {
-                                            "ref":  "Governance/Issues/CS-0110_Investigation_Report_2026-02-17_194500.md",
+                                            "ref":  "Governance/Issues/CS-0111_Investigation_Report_2026-02-17_195000.md",
                                             "notes":  "Full investigation report with root cause and fix options."
                                         },
                                         {

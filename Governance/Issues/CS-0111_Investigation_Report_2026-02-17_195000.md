@@ -1,6 +1,6 @@
-# CS-0110 Investigation Report
+# CS-0111 Investigation Report
 
-**Issue ID:** CS-0110
+**Issue ID:** CS-0111
 **Title:** PZR temperature (T_pzr) lacks primary visualization — no arc gauge or trend display
 **Date:** 2026-02-17T19:45:00Z
 **Investigator:** Codex

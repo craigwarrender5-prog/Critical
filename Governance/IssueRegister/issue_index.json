@@ -1,7 +1,7 @@
 ﻿{
     "version":  "1.0.0",
     "generated_at":  "2026-02-17T19:05:15Z",
-    "entry_count":  110,
+    "entry_count":  111,
     "entries":  [
                     {
                         "id":  "CS-0001",
@@ -1902,11 +1902,30 @@
                                      "Diagnostic-to-Resolution",
                                      "User-Request-2026-02-17"
                                  ]
+                    },
+                    {
+                        "id":  "CS-0111",
+                        "title":  "PZR temperature (T_pzr) lacks primary visualization \u2014 no arc gauge or trend display",
+                        "domain":  "Operator Interface \u0026 Scenarios",
+                        "severity":  "MEDIUM",
+                        "status":  "READY",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0008",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-17T19:50:00Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "PZR-Temperature-Visualization",
+                                     "Dashboard-Arc-Gauge",
+                                     "Cold-Startup",
+                                     "User-Request-2026-02-17"
+                                 ]
                     }
                 ],
     "registry_role":  "AUTHORITATIVE_FULL_HISTORY",
     "registry_scope":  "Contains full lifecycle history (OPEN + CLOSED). Historical entries must remain in this file.",
     "active_working_set_file":  "Governance/IssueRegister/issue_register.json",
     "closed_issue_count":  102,
-    "active_issue_count":  8
+    "active_issue_count":  9
 }
