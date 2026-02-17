@@ -482,6 +482,10 @@ namespace Critical.UI.ValidationDashboard
                 ValidationDashboardTheme.GaugeArcDiameter * 0.6f);
             gaugeRT.anchoredPosition = new Vector2(0, 10);
 
+            // Ensure CanvasRenderer exists (required by MaskableGraphic for raycasting)
+            if (gaugeGO.GetComponent<CanvasRenderer>() == null)
+                gaugeGO.AddComponent<CanvasRenderer>();
+
             ArcGauge gauge = gaugeGO.AddComponent<ArcGauge>();
             gauge.minValue = min;
             gauge.maxValue = max;

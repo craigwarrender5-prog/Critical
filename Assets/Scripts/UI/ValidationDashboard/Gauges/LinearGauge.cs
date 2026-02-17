@@ -416,6 +416,10 @@ namespace Critical.UI.ValidationDashboard
                 gaugeRT.anchoredPosition = new Vector2(0, 2);
             }
 
+            // Ensure CanvasRenderer exists (required by MaskableGraphic for raycasting)
+            if (gaugeGO.GetComponent<CanvasRenderer>() == null)
+                gaugeGO.AddComponent<CanvasRenderer>();
+
             LinearGauge gauge = gaugeGO.AddComponent<LinearGauge>();
             gauge.isVertical = vertical;
             gauge.minValue = min;
