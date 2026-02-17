@@ -42,6 +42,7 @@ using UnityEngine;
 using Critical.Controllers;
 using Critical.Physics;
 using Critical.Simulation.Modular.State;
+using Critical.Systems.RCS;
 
 using Critical.Validation;
 namespace Critical.UI
@@ -118,6 +119,7 @@ namespace Critical.UI
         #region Private Fields
 
         private bool _sourcesResolved = false;
+        private RCSLoopManager _rcsLoopManager;
 
         private bool TryGetPlantStateSnapshot(out PlantState plantState)
         {
@@ -130,6 +132,34 @@ namespace Critical.UI
                 return false;
 
             plantState = snapshot.PlantState;
+            return true;
+        }
+
+        private bool TryRefreshRcsLoopManager(out RCSAggregateState aggregateState)
+        {
+            aggregateState = RCSAggregateState.Empty;
+
+            if (_rcsLoopManager == null)
+                _rcsLoopManager = new RCSLoopManager(1);
+
+            float tAvg = GetTavg();
+            float pressure = GetPZRPressure();
+            int rcpCount = GetRCPCount();
+            float tPzr = GetPZRWaterTemp();
+            float rcpHeat = heatupEngine != null
+                ? heatupEngine.rcpHeat
+                : rcpCount * PlantConstants.RCP_HEAT_MW_EACH;
+
+            if (float.IsNaN(tAvg) || float.IsNaN(pressure) || float.IsNaN(tPzr))
+                return false;
+
+            aggregateState = _rcsLoopManager.UpdateSingleLoopCompatibility(
+                tAvg,
+                pressure,
+                rcpCount,
+                rcpHeat,
+                tPzr);
+
             return true;
         }
 
@@ -219,6 +249,11 @@ namespace Critical.UI
             if (mosaicBoard == null)
                 mosaicBoard = FindObjectOfType<MosaicBoard>();
 
+            if (_rcsLoopManager == null)
+                _rcsLoopManager = new RCSLoopManager(1);
+            else if (_rcsLoopManager.LoopCount != 1)
+                _rcsLoopManager.ConfigureLoopCount(1);
+
             _sourcesResolved = true;
 
             if (debugLogging)
@@ -283,6 +318,43 @@ namespace Critical.UI
             if (heatupEngine != null) return heatupEngine.rcpCount;
             if (reactorController != null) return Mathf.RoundToInt(reactorController.FlowFraction * 4f);
             return 0;
+        }
+
+        /// <summary>Managed modular RCS loop count.</summary>
+        public int GetRCSManagedLoopCount()
+        {
+            if (_rcsLoopManager == null)
+                _rcsLoopManager = new RCSLoopManager(1);
+
+            return _rcsLoopManager.LoopCount;
+        }
+
+        /// <summary>
+        /// Tries to read loop-local modular RCS state for a loop index.
+        /// </summary>
+        public bool TryGetRCSLoopState(int loopIndex, out RCSLoopState loopState)
+        {
+            loopState = default;
+            if (!TryRefreshRcsLoopManager(out _))
+                return false;
+
+            return _rcsLoopManager != null && _rcsLoopManager.TryGetLoopState(loopIndex, out loopState);
+        }
+
+        /// <summary>Total aggregate modular RCS flow in gpm.</summary>
+        public float GetRCSAggregateFlow()
+        {
+            return TryRefreshRcsLoopManager(out RCSAggregateState aggregate)
+                ? aggregate.TotalFlow_gpm
+                : float.NaN;
+        }
+
+        /// <summary>Aggregate modular loop average delta-T in deg F.</summary>
+        public float GetRCSAggregateDeltaT()
+        {
+            return TryRefreshRcsLoopManager(out RCSAggregateState aggregate)
+                ? aggregate.AverageDeltaT_F
+                : float.NaN;
         }
 
         /// <summary>Simulation elapsed time (seconds).</summary>

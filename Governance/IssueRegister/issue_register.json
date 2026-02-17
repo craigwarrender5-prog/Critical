@@ -1,29 +1,9 @@
-﻿{
+{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-17T17:29:00Z",
+    "generated_at":  "2026-02-17T17:55:48Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-    "active_issue_count":  10,
+    "active_issue_count":  7,
     "issues":  [
-                   {
-                       "id":  "CS-0080",
-                       "title":  "RCP heat-input constants do not align with the cited cold-water heatup reference basis.",
-                       "domain":  "Primary Thermodynamics",
-                       "severity":  "HIGH",
-                       "status":  "READY",
-                       "created_at":  "2026-02-15T16:50:47Z",
-                       "updated_at":  "2026-02-17T14:59:27Z",
-                       "stage_detected":  "Reschedule-2026-02-17",
-                       "assigned_dp":  "DP-0001",
-                       "assigned_ip":  "IP-0045",
-                       "closed_at":  null,
-                       "resolution_type":  null,
-                       "tags":  [
-                                    "NCR-Migration",
-                                    "Audit-2026-02-15",
-                                    "F-002",
-                                    "Rescheduled-IP-0036"
-                                ]
-                   },
                    {
                        "id":  "CS-0057",
                        "title":  "SG startup draining contract at ~200F is not wired into runtime execution path",
@@ -335,92 +315,6 @@
                        "resolution_type":  null
                    },
                    {
-                       "id":  "CS-0105",
-                       "title":  "Modularize current single-loop RCS into reusable RCSLoop prefab/module boundary",
-                       "domain":  "Primary Thermodynamics",
-                       "severity":  "HIGH",
-                       "status":  "READY",
-                       "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T14:59:27Z",
-                       "stage_detected":  "User-Request-2026-02-17",
-                       "assigned_dp":  "DP-0001",
-                       "assigned_ip":  "IP-0045",
-                       "observations":  [
-                                            "Current RCS execution is effectively single-loop oriented.",
-                                            "Future multi-loop scaling needs reusable loop-local modular boundaries now."
-                                        ],
-                       "evidence":  [
-                                        {
-                                            "ref":  "Governance/Issues/CS-0105_Investigation_Report_2026-02-17_124730.md",
-                                            "notes":  "Loop-module extraction scope and equivalence expectations."
-                                        },
-                                        {
-                                            "ref":  "Technical_Documentation/NRC_HRTD_Section_3.2_Reactor_Coolant_System.md",
-                                            "notes":  "RCS system structure context."
-                                        }
-                                    ],
-                       "hypotheses":  [
-                                          "Defining loop-local module boundaries now reduces future N-loop expansion risk and refactor cost."
-                                      ],
-                       "root_cause":  null,
-                       "resolution_candidate":  "Define Loop A as reusable RCSLoop module/prefab boundary while preserving current behavior.",
-                       "links":  [
-                                     "Likely impacted: Assets/Scripts/Systems/RCS/ (new path), Assets/Prefabs/Systems/RCS/ (new path)",
-                                     "Likely impacted: Assets/Scripts/Physics/RCSHeatup.cs, Assets/Scripts/Physics/LoopThermodynamics.cs"
-                                 ],
-                       "tags":  [
-                                    "RCS-Modularization",
-                                    "Loop-A",
-                                    "Prefab-Boundary",
-                                    "User-Request-2026-02-17"
-                                ],
-                       "closed_at":  null,
-                       "resolution_type":  null
-                   },
-                   {
-                       "id":  "CS-0106",
-                       "title":  "Add RCS loop manager/aggregator supporting N loops with N=1 compatibility",
-                       "domain":  "Primary Thermodynamics",
-                       "severity":  "HIGH",
-                       "status":  "READY",
-                       "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T14:59:27Z",
-                       "stage_detected":  "User-Request-2026-02-17",
-                       "assigned_dp":  "DP-0001",
-                       "assigned_ip":  "IP-0045",
-                       "observations":  [
-                                            "Downstream consumers currently bind to single-loop assumptions.",
-                                            "N-loop evolution requires explicit manager-owned loop indexing and aggregate output contracts while preserving N=1 parity."
-                                        ],
-                       "evidence":  [
-                                        {
-                                            "ref":  "Governance/Issues/CS-0106_Investigation_Report_2026-02-17_124730.md",
-                                            "notes":  "Aggregator/loop-manager scope, risks, and acceptance criteria."
-                                        },
-                                        {
-                                            "ref":  "Technical_Documentation/NRC_HRTD_Section_3.2_Reactor_Coolant_System.md",
-                                            "notes":  "RCS system-level architecture context."
-                                        }
-                                    ],
-                       "hypotheses":  [
-                                          "A stable RCS manager API can preserve N=1 behavior while minimizing N=4 expansion refactor cost."
-                                      ],
-                       "root_cause":  null,
-                       "resolution_candidate":  "Define RCS loop manager contract with aggregate values and loop indexing semantics, preserving N=1 behavior.",
-                       "links":  [
-                                     "Likely impacted: Assets/Scripts/Systems/RCS/ (new path)",
-                                     "Likely impacted: Assets/Scripts/Physics/LoopThermodynamics.cs, Assets/Scripts/UI/ScreenDataBridge.cs"
-                                 ],
-                       "tags":  [
-                                    "RCS-Loop-Manager",
-                                    "RCS-Aggregation",
-                                    "N-Loop-Scaffolding",
-                                    "User-Request-2026-02-17"
-                                ],
-                       "closed_at":  null,
-                       "resolution_type":  null
-                   },
-                   {
                        "id":  "CS-0108",
                        "title":  "PZR temperature monitoring missing for bubble formation readiness during cold startup",
                        "domain":  "Operator Interface \u0026 Scenarios",
@@ -434,7 +328,7 @@
                        "observations":  [
                                             "ValidationDashboard displays T_pzr as numeric readout but provides no comparison to T_sat.",
                                             "No annunciator exists for PZR approaching or reaching saturation temperature.",
-                                            "NRC HRTD 17.0 specifies bubble formation occurs when T_pzr reaches T_sat (450Â°F at 400 psig).",
+                                            "NRC HRTD 17.0 specifies bubble formation occurs when T_pzr reaches T_sat (450°F at 400 psig).",
                                             "Operators cannot visually determine when pressurizer is ready for bubble draw."
                                         ],
                        "evidence":  [
@@ -444,7 +338,7 @@
                                         },
                                         {
                                             "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:38",
-                                            "notes":  "Heat PZR to T_sat (450Â°F at 400 psig) as key sequencing step."
+                                            "notes":  "Heat PZR to T_sat (450°F at 400 psig) as key sequencing step."
                                         },
                                         {
                                             "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:53",
@@ -463,7 +357,7 @@
                                           "Dashboard was designed with post-bubble operations as primary focus; pre-bubble cold startup monitoring was not implemented."
                                       ],
                        "root_cause":  "Missing pre-bubble monitoring instrumentation for T_pzr approach to T_sat.",
-                       "resolution_candidate":  "Add PZR subcooling readout (T_sat - T_pzr) and PZR SAT annunciator tile (INFO severity, triggers when subcooling \u003c= 5Â°F).",
+                       "resolution_candidate":  "Add PZR subcooling readout (T_sat - T_pzr) and PZR SAT annunciator tile (INFO severity, triggers when subcooling \u003c= 5°F).",
                        "links":  [
                                      "Assigned DP: DP-0008 - Operator Interface \u0026 Scenarios",
                                      "Likely impacted: Assets/Scripts/Validation/ValidationDashboard.Snapshot.cs",
