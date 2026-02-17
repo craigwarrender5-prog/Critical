@@ -39,6 +39,7 @@
       "enum": [
         "Primary Thermodynamics",
         "Pressurizer & Two-Phase Physics",
+        "Pressurizer & Startup Control",
         "Steam Generator Secondary Physics",
         "CVCS / Inventory Control",
         "Mass & Energy Conservation",
@@ -66,7 +67,7 @@
         "INVESTIGATING",
         "BLOCKED",
         "DEFERRED",
-        "READY_FOR_FIX"
+        "READY"
       ]
     },
     "evidenceItem": {
@@ -188,6 +189,19 @@
           "items": {
             "type": "string"
           }
+        },
+        "closed_at": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "date-time"
+        },
+        "resolution_type": {
+          "type": [
+            "string",
+            "null"
+          ]
         }
       }
     }

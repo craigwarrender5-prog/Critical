@@ -39,6 +39,7 @@
       "enum": [
         "Primary Thermodynamics",
         "Pressurizer & Two-Phase Physics",
+        "Pressurizer & Startup Control",
         "Steam Generator Secondary Physics",
         "CVCS / Inventory Control",
         "Mass & Energy Conservation",

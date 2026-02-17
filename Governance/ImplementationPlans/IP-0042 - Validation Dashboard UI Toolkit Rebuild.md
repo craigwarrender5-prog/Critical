@@ -3,10 +3,14 @@
 **Date:** 2026-02-17  
 **Domain Plan:** DP-0008 (Operator Interface & Scenarios)  
 **Predecessors:** IP-0025 (CLOSED), IP-0029 (CLOSED), IP-0030 (FAILED), IP-0031 (CLOSED), IP-0040 (FAILED), IP-0041 (SUPERSEDED)  
-**Status:** DRAFT — Awaiting Approval  
+**Status:** SUPERSEDED — Closed in favor of IP-0043 (OnGUI Parameter Expansion)  
+**Closed Date:** 2026-02-17  
+**Superseded By:** IP-0043  
 **Priority:** Critical  
 **Changelog Required:** Yes  
 **Target Version:** v0.8.0.0
+**Revision Note (2026-02-17):** Revised update cadence to 5 Hz default; added Stage 0A/0B/0C gates; reduced required custom drawing; clarified sampling vs animation smoothing; revised performance gate wording.  
+**Closeout Note (2026-02-17):** IP-0042 closed as superseded after Stage 0 technology risk materialized; execution path redirected to IP-0043.
 
 ---
 
@@ -114,25 +118,26 @@ Assets/UI/
 
 ### 3.2 Custom VisualElement Classes
 
-These require custom C# classes with `generateVisualContent` for drawing:
+Custom draw scope is intentionally minimized.
 
-| Element | Purpose | Drawing Method |
-|---------|---------|----------------|
-| `ArcGaugeElement` | 180° sweep gauge with needle | `MeshGenerationContext.Painter2D` arc commands |
-| `BidirectionalGaugeElement` | 270° center-zero gauge | `Painter2D` arc with center reference |
-| `LinearGaugeElement` | Horizontal/vertical bar | Simple rectangle fill |
-| `StripChartElement` | Multi-trace trend graph | `Painter2D` polyline + grid |
-| `AnnunciatorTileElement` | ISA-18.1 state machine | Rectangle with border + text |
+| Element | Requirement | Implementation Guidance |
+|---------|-------------|-------------------------|
+| `ArcGaugeElement` | **Mandatory custom draw** | `MeshGenerationContext.Painter2D` arc + needle rendering |
+| `StripChartElement` | **Mandatory custom draw** | `Painter2D` line rendering over fixed-size ring buffers |
+| `BidirectionalGaugeElement` | **Conditional custom draw** | Use custom draw only if standard composition cannot meet visual/perf targets |
+| Digital readout | **Standard VisualElement** | Label-based rendering (USS styled), no custom draw by default |
+| Status indicator | **Standard VisualElement** | Background/border class toggles via USS, no custom draw by default |
+| Annunciator tile | **Standard VisualElement** | USS-class driven state styling; custom draw optional later if required |
 
 ### 3.3 Data Binding Strategy
 
 UI Toolkit supports two binding approaches:
 
-**Option A: Direct Property Binding (Recommended)**
+**Option A: ViewModel Property Binding (Recommended)**
 ```csharp
-// In ValidationDashboardController
-public float T_avg => engine.T_avg;
-public float Pressure => engine.pressure;
+// In DashboardViewModel (snapshot source)
+public float T_avg => snapshot.T_avg;
+public float Pressure => snapshot.Pressure;
 
 // In UXML
 <ui:Label binding-path="T_avg" />
@@ -151,7 +156,15 @@ public class DashboardViewModel : INotifyBindablePropertyChanged
 }
 ```
 
-For this project, we'll use **Option A** with a thin ViewModel wrapper that reads from `HeatupSimEngine` at 10Hz.
+For this project, we'll use **Option A** with a thin ViewModel wrapper.
+
+**Global update cadence policy:**
+- Sampling/binding default is **5 Hz (200ms)**.
+- Optional override rates are **2 / 5 / 10 Hz** for profiling only.
+- Sampling/binding is not per-frame.
+- UI binds to `DashboardViewModel` snapshot values; UI elements do not bind directly to `HeatupSimEngine`.
+- `DashboardViewModel` snapshots engine state at 5 Hz by default.
+- Visual animation (needle/bar motion) is smoothed/interpolated between samples so motion remains fluid without higher binding cost.
 
 ---
 
@@ -232,35 +245,75 @@ All parameters from IP-0041 Section 4 are retained, plus these additions from yo
 
 ## 6. Implementation Stages
 
-### Stage 0: Proof of Concept — Custom Gauge Rendering (VALIDATION GATE)
-**Objective:** Validate that UI Toolkit can render custom arc gauges with acceptable performance before committing to full rebuild.
+### Stage 0A: Feasibility Gate
+**Objective:** Prove the minimum custom-draw surface works before scaling.
 
 **Tasks:**
-1. Create minimal test scene with UI Toolkit `UIDocument`
-2. Implement `ArcGaugeElement.cs` using `MeshGenerationContext.Painter2D`
-   - 180° sweep arc with configurable min/max
-   - Needle animation via `schedule.Execute()`
-   - Threshold coloring (green/amber/red bands)
-3. Implement `StripChartElement.cs` using `Painter2D.LineTo()`
-   - Ring buffer data source
-   - Auto-scaling Y axis
-   - Grid lines
-4. Bind test gauges to live `HeatupSimEngine` data
-5. Measure frame time impact (target: <1ms for 10 gauges + 2 charts)
+1. Create minimal test scene with UI Toolkit `UIDocument`.
+2. Implement `ArcGaugeElement.cs` (single gauge) and `StripChartElement.cs` (single trace).
+3. Bind to live `HeatupSimEngine` data with sampling/binding at **5 Hz (200ms)**.
+4. Record CPU and GC observations in the evidence log.
 
 **Deliverables:**
 - `Assets/Scripts/UI/UIToolkit/Elements/ArcGaugeElement.cs`
 - `Assets/Scripts/UI/UIToolkit/Elements/StripChartElement.cs`
 - `Assets/UI/Test/GaugeTest.uxml`
-- Performance measurement log
+- Stage 0A evidence log (CPU + GC observations, console status)
 
-**Exit Criteria:**
-- Arc gauge renders smoothly with animated needle
-- Strip chart renders 4-hour rolling history with 6 traces
-- Frame time < 1ms for test scene
-- **Craig approval to proceed** — if gauges look bad or performance is poor, STOP and reassess
+**Exit Criteria (Go/No-Go):**
+- Visuals are acceptable, stable, and free of obvious hitching.
+- No console errors.
+- CPU + GC observations are recorded in evidence.
+- **Craig explicit approval required** before Stage 0B.
 
-**CRITICAL:** Do not proceed to Stage 1 without explicit approval. This gate prevents another 5-IP failure chain.
+---
+
+### Stage 0B: Scale Gate
+**Objective:** Validate moderate composition scale before full panel buildout.
+
+**Tasks:**
+1. Scale prototype to ~6 gauges + 2 charts with multiple traces.
+2. Keep sampling/binding at **5 Hz (200ms)**.
+3. Capture measured CPU time, repaint cost indicators, and GC allocation checks.
+
+**Deliverables:**
+- Scale test scene/panel variant
+- Stage 0B evidence log (CPU, repaint, GC)
+
+**Exit Criteria (Go/No-Go):**
+- Stable behavior with no obvious hitches.
+- Evidence includes measured CPU time, repaint indicators, and GC allocation checks.
+- **Craig explicit approval required** before Stage 0C.
+
+---
+
+### Stage 0C: Operator Slice Gate
+**Objective:** Validate readability/layout before full Stage 1 investment.
+
+**Tasks:**
+1. Build a small overview slice mock: one column + mini trends + small log/list.
+2. Validate layout/readability at **1920x1080**.
+3. Keep sampling/binding at **5 Hz (200ms)**.
+
+**Deliverables:**
+- Operator-slice mock artifact
+- Stage 0C evidence log (layout/readability observations)
+
+**Exit Criteria (Go/No-Go):**
+- Layout holds at 1080p and readability is acceptable.
+- No console errors or obvious hitching.
+- **Craig explicit approval required** before Stage 1.
+
+---
+
+### Stage 0 Rendering & Allocation Rules (apply to Stage 0 and Stage 4)
+
+- Sampling/binding default is **5 Hz (200ms)**.
+- Optional **2 / 5 / 10 Hz** rates are for profiling only.
+- Avoid allocations in `generateVisualContent`.
+- Strip charts use fixed-size ring buffers.
+- Avoid layout invalidations when values change (update visuals, not layout).
+- Motion smoothness comes from interpolation between samples, not higher sampling rates.
 
 ---
 
@@ -276,18 +329,16 @@ All parameters from IP-0041 Section 4 are retained, plus these additions from yo
    - Glow effects via `text-shadow` for alarm states
 3. Create `ValidationDashboardDocument.cs` — MonoBehaviour that loads UXML and binds to engine
 4. Create `DashboardViewModel.cs` — thin wrapper exposing engine properties for binding
-5. Implement remaining custom elements:
-   - `LinearGaugeElement.cs`
-   - `BidirectionalGaugeElement.cs`
-   - `DigitalReadoutElement.cs`
-   - `StatusIndicatorElement.cs`
-   - `AnnunciatorTileElement.cs`
+5. Implement mandatory custom and standard widgets:
+   - Mandatory custom draw: `ArcGaugeElement.cs`, `StripChartElement.cs`
+   - Conditional custom draw: `BidirectionalGaugeElement.cs` only if required
+   - Standard widgets (no custom draw by default): digital readout, status indicator, annunciator tile via base VisualElements + USS classes
 6. Create UXML templates for each element
 
 **Deliverables:**
 - Complete `Assets/UI/` folder structure
 - `NuclearInstrument.uss` theme
-- 7 custom VisualElement classes
+- Mandatory custom elements complete; standard widgets use base VisualElements + USS (custom draw optional later)
 - 7 UXML component templates
 
 **Exit Criteria:**
@@ -305,7 +356,7 @@ All parameters from IP-0041 Section 4 are retained, plus these additions from yo
 2. Implement `OverviewPanel.cs` VisualElement class:
    - Query all child elements by name
    - Bind to `DashboardViewModel` properties
-   - Update at 10Hz via `schedule.Execute()`
+   - Sample/bind at **5 Hz (200ms)** via scheduler; visuals smoothed between samples
 3. Populate Column 1 (RCS): 2 ArcGauges (T_avg, Subcooling) + 10 DigitalReadouts
 4. Populate Column 2 (PZR): 2 ArcGauges (Pressure, Level) + 2 LinearGauges + 1 BidirectionalGauge + 8 readouts
 5. Populate Column 3 (CVCS): 1 ArcGauge (VCT Level) + 1 BidirectionalGauge + 12 readouts + StatusIndicators
@@ -364,7 +415,7 @@ All parameters from IP-0041 Section 4 are retained, plus these additions from yo
 2. Implement annunciator flash rates: 3Hz alerting, 0.7Hz clearing
 3. Add alarm glow effects via USS `text-shadow`
 4. Add setpoint markers to LinearGauges
-5. Performance profile: verify <2ms per frame
+5. Performance profile: verify measured UI cost against budget and Stage 0 Rendering & Allocation Rules
 6. Test at 1080p, 1440p, 4K
 7. Verify no console errors during 30-minute simulation
 8. Add USS media queries for different resolutions
@@ -377,7 +428,8 @@ All parameters from IP-0041 Section 4 are retained, plus these additions from yo
 - Legacy system disabled
 
 **Exit Criteria:**
-- Frame time <2ms at 10Hz update
+- Measured UI cost target: <2ms at default 5 Hz sampling/binding
+- Profiling captures 2 / 5 / 10 Hz comparison data (profiling mode only; 5 Hz remains default)
 - No console errors in 30-minute run
 - Professional appearance matching control room aesthetic
 - Craig approval: "This is the dashboard"
@@ -422,9 +474,9 @@ The legacy `HeatupValidationVisual` remains fully functional throughout this IP.
 ### 7.3 Performance Monitoring
 
 Each stage includes performance verification:
-- Stage 0: <1ms for 10 gauges
-- Stage 2: <1.5ms for full Overview
-- Stage 4: <2ms total frame budget
+- Stage 0A/0B/0C: measured evidence required (CPU + repaint indicators + GC checks), with no hitching
+- Stage 2: measured stability at default 5 Hz sampling/binding; profiling snapshots at 2 / 5 / 10 Hz
+- Stage 4: <2ms measured UI cost target at default 5 Hz plus steady-state GC behavior near zero
 
 If any stage exceeds its budget by >50%, stop and optimize before proceeding.
 
@@ -503,7 +555,7 @@ The existing `Assets/Scripts/UI/ValidationDashboard/` folder will be moved to `A
 - [ ] 100+ parameters displayed across tabs
 - [ ] 7-category strip chart system
 - [ ] Smooth animations
-- [ ] <2ms frame time
+- [ ] <2ms measured UI cost at default 5 Hz sampling
 - [ ] Professional control room aesthetic
 
 ### Project Success (Stage 5 Complete)
@@ -532,8 +584,10 @@ These items should be added to `Future_Features.md` upon IP-0042 completion.
 
 ## 11. Approval
 
-- [ ] **Stage 0 approved to begin** — Craig
-- [ ] **Stage 0 exit criteria met** — Craig
+- [ ] **Stage 0A approved to begin** — Craig
+- [ ] **Stage 0A exit criteria met** — Craig
+- [ ] **Stage 0B exit criteria met** — Craig
+- [ ] **Stage 0C exit criteria met** — Craig
 - [ ] **Proceed to Stage 1** — Craig
 - [ ] **Stage 2 complete** — Craig
 - [ ] **Stage 4 complete (MVP)** — Craig
