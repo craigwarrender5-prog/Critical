@@ -1,47 +1,9 @@
 ﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-17T16:47:47Z",
+    "generated_at":  "2026-02-17T17:29:00Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-    "active_issue_count":  11,
+    "active_issue_count":  10,
     "issues":  [
-                   {
-                       "id":  "CS-0010",
-                       "title":  "No SG secondary pressure alarm",
-                       "domain":  "Plant Protection \u0026 Limits",
-                       "severity":  "LOW",
-                       "status":  "READY",
-                       "created_at":  "2026-02-13T00:00:00Z",
-                       "updated_at":  "2026-02-17T14:59:27Z",
-                       "stage_detected":  "Reschedule-2026-02-17",
-                       "assigned_dp":  "DP-0006",
-                       "assigned_ip":  "IP-0044",
-                       "closed_at":  null,
-                       "resolution_type":  null,
-                       "tags":  [
-                                    "Plant Protection SG Boundary",
-                                    "Rescheduled-IP-0035"
-                                ]
-                   },
-                   {
-                       "id":  "CS-0079",
-                       "title":  "RCP startup permissive is configured below documented minimum startup pressure requirements.",
-                       "domain":  "Plant Protection \u0026 Limits",
-                       "severity":  "HIGH",
-                       "status":  "READY",
-                       "created_at":  "2026-02-15T16:50:47Z",
-                       "updated_at":  "2026-02-17T14:59:27Z",
-                       "stage_detected":  "Reschedule-2026-02-17",
-                       "assigned_dp":  "DP-0006",
-                       "assigned_ip":  "IP-0044",
-                       "closed_at":  null,
-                       "resolution_type":  null,
-                       "tags":  [
-                                    "NCR-Migration",
-                                    "Audit-2026-02-15",
-                                    "F-001",
-                                    "Rescheduled-IP-0035"
-                                ]
-                   },
                    {
                        "id":  "CS-0080",
                        "title":  "RCP heat-input constants do not align with the cited cold-water heatup reference basis.",
@@ -453,6 +415,66 @@
                                     "RCS-Loop-Manager",
                                     "RCS-Aggregation",
                                     "N-Loop-Scaffolding",
+                                    "User-Request-2026-02-17"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0108",
+                       "title":  "PZR temperature monitoring missing for bubble formation readiness during cold startup",
+                       "domain":  "Operator Interface \u0026 Scenarios",
+                       "severity":  "MEDIUM",
+                       "status":  "READY",
+                       "created_at":  "2026-02-17T18:15:00Z",
+                       "updated_at":  "2026-02-17T19:00:00Z",
+                       "stage_detected":  "User-Request-2026-02-17",
+                       "assigned_dp":  "DP-0008",
+                       "assigned_ip":  "IP-0050",
+                       "observations":  [
+                                            "ValidationDashboard displays T_pzr as numeric readout but provides no comparison to T_sat.",
+                                            "No annunciator exists for PZR approaching or reaching saturation temperature.",
+                                            "NRC HRTD 17.0 specifies bubble formation occurs when T_pzr reaches T_sat (450Â°F at 400 psig).",
+                                            "Operators cannot visually determine when pressurizer is ready for bubble draw."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Governance/Issues/CS-0108_Investigation_Report_2026-02-17_181500.md",
+                                            "notes":  "Full investigation report with root cause analysis and fix options."
+                                        },
+                                        {
+                                            "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:38",
+                                            "notes":  "Heat PZR to T_sat (450Â°F at 400 psig) as key sequencing step."
+                                        },
+                                        {
+                                            "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:53",
+                                            "notes":  "When pressurizer temperature reaches saturation temperature... a pressurizer bubble is established."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/ValidationDashboard.Snapshot.cs:108",
+                                            "notes":  "T_pzr captured but no PZR subcooling calculated."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/ValidationDashboard.Annunciators.cs",
+                                            "notes":  "No annunciator tile for PZR saturation approach."
+                                        }
+                                    ],
+                       "hypotheses":  [
+                                          "Dashboard was designed with post-bubble operations as primary focus; pre-bubble cold startup monitoring was not implemented."
+                                      ],
+                       "root_cause":  "Missing pre-bubble monitoring instrumentation for T_pzr approach to T_sat.",
+                       "resolution_candidate":  "Add PZR subcooling readout (T_sat - T_pzr) and PZR SAT annunciator tile (INFO severity, triggers when subcooling \u003c= 5Â°F).",
+                       "links":  [
+                                     "Assigned DP: DP-0008 - Operator Interface \u0026 Scenarios",
+                                     "Likely impacted: Assets/Scripts/Validation/ValidationDashboard.Snapshot.cs",
+                                     "Likely impacted: Assets/Scripts/Validation/ValidationDashboard.Annunciators.cs",
+                                     "Likely impacted: Assets/Scripts/Validation/Tabs/OverviewTab.cs"
+                                 ],
+                       "tags":  [
+                                    "PZR-Temperature-Monitoring",
+                                    "Bubble-Formation",
+                                    "Cold-Startup",
+                                    "ValidationDashboard",
                                     "User-Request-2026-02-17"
                                 ],
                        "closed_at":  null,

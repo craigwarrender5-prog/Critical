@@ -128,9 +128,9 @@ Implementation scope:
 
 ## 9. Domain Assignment Justification
 
-**Assigned Domain:** Validation & Diagnostics (DP-0007 or DP-0013)
+**Assigned Domain:** Operator Interface & Scenarios (DP-0008)
 
-Rationale: This is a dashboard display/monitoring enhancement, not a physics or control system change. The ValidationDashboard is the affected system, which falls under the Validation & Diagnostics domain.
+Rationale: This is a dashboard display/monitoring enhancement for operator visibility during cold startup. The ValidationDashboard operator interface is the affected system, which falls under the Operator Interface & Scenarios domain (DP-0008), not Validation & Diagnostics. DP-0008 covers operator interface design, dashboard/instrumentation displays, and scenario handling.
 
 ---
 

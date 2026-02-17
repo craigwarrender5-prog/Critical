@@ -1,8 +1,8 @@
 ﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-17T16:47:47Z",
+    "generated_at":  "2026-02-17T17:29:00Z",
     "source":  "Governance/IssueRegister/issue_index.json (CLOSED projection)",
-    "archived_issue_count":  96,
+    "archived_issue_count":  98,
     "issues":  [
                    {
                        "id":  "CS-0001",
@@ -2452,6 +2452,65 @@
                                                "Documentation/PROJECT_TREE.md"
                                            ],
                        "one_line_rca":  "PROJECT_TREE now defines Scenario System and Modular RCS target locations with explicit structural freeze guidance."
+                   },
+                   {
+                       "id":  "CS-0079",
+                       "title":  "RCP startup permissive is configured below documented minimum startup pressure requirements.",
+                       "domain":  "Plant Protection \u0026 Limits",
+                       "severity":  "HIGH",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-15T16:50:47Z",
+                       "updated_at":  "2026-02-17T17:29:00Z",
+                       "stage_detected":  "Reschedule-2026-02-17",
+                       "assigned_dp":  "DP-0006",
+                       "assigned_ip":  "IP-0044",
+                       "closed_at":  "2026-02-17T17:29:00Z",
+                       "resolution_type":  "FIXED",
+                       "tags":  [
+                                    "NCR-Migration",
+                                    "Audit-2026-02-15",
+                                    "F-001",
+                                    "Rescheduled-IP-0035"
+                                ],
+                       "fix_refs":  [
+                                        "IP-0044"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/ImplementationPlans/Closed/IP-0044/Reports/IP-0044_StageD_DomainValidation_2026-02-17_183500.md",
+                                               "Governance/ImplementationPlans/Closed/IP-0044/Reports/IP-0044_StageE_SystemRegression_2026-02-17_183900.md",
+                                               "Assets/Scripts/Physics/PlantConstants.Pressure.cs",
+                                               "Assets/Scripts/Physics/RCPSequencer.cs"
+                                           ],
+                       "one_line_rca":  "Startup permissive authority is now consistently enforced at \u003e=400 psig through shared constants, startup gate checks, and sequencer diagnostics."
+                   },
+                   {
+                       "id":  "CS-0010",
+                       "title":  "No SG secondary pressure alarm",
+                       "domain":  "Plant Protection \u0026 Limits",
+                       "severity":  "LOW",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "updated_at":  "2026-02-17T17:29:00Z",
+                       "stage_detected":  "Reschedule-2026-02-17",
+                       "assigned_dp":  "DP-0006",
+                       "assigned_ip":  "IP-0044",
+                       "closed_at":  "2026-02-17T17:29:00Z",
+                       "resolution_type":  "FIXED",
+                       "tags":  [
+                                    "Plant Protection SG Boundary",
+                                    "Rescheduled-IP-0035"
+                                ],
+                       "fix_refs":  [
+                                        "IP-0044"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/ImplementationPlans/Closed/IP-0044/Reports/IP-0044_StageD_DomainValidation_2026-02-17_183500.md",
+                                               "Governance/ImplementationPlans/Closed/IP-0044/Reports/IP-0044_StageE_SystemRegression_2026-02-17_183900.md",
+                                               "Assets/Scripts/Physics/AlarmManager.cs",
+                                               "Assets/Scripts/Validation/HeatupSimEngine.Alarms.cs",
+                                               "Assets/Scripts/Validation/HeatupValidationVisual.Annunciators.cs"
+                                           ],
+                       "one_line_rca":  "SG secondary pressure high alarm path is implemented end-to-end with deterministic set/clear behavior and operator annunciation visibility."
                    }
                ]
 }
