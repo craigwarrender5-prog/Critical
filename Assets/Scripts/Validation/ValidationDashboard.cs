@@ -299,17 +299,17 @@ namespace Critical.Validation
                     if (kb.digit8Key.wasPressedThisFrame) _currentTab = 7;
                 }
 
-                // Time acceleration (+/-)
+                // Time acceleration (+/-) - clamp, don't wrap
                 if (engine != null)
                 {
                     if (kb.equalsKey.wasPressedThisFrame || kb.numpadPlusKey.wasPressedThisFrame)
                     {
-                        int newIndex = (engine.currentSpeedIndex + 1) % 5;
+                        int newIndex = Mathf.Min(engine.currentSpeedIndex + 1, 4);
                         engine.SetTimeAcceleration(newIndex);
                     }
                     if (kb.minusKey.wasPressedThisFrame || kb.numpadMinusKey.wasPressedThisFrame)
                     {
-                        int newIndex = (engine.currentSpeedIndex - 1 + 5) % 5;
+                        int newIndex = Mathf.Max(engine.currentSpeedIndex - 1, 0);
                         engine.SetTimeAcceleration(newIndex);
                     }
                 }

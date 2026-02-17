@@ -59,14 +59,14 @@ namespace Critical.Validation
         internal static readonly Color _cBlueAccent = new Color(0.20f, 0.50f, 1.00f, 1f);
 
         // Text colors
-        internal static readonly Color _cTextPrimary = new Color(0.80f, 0.80f, 0.80f, 1f);   // #CCCCCC
-        internal static readonly Color _cTextSecondary = new Color(0.40f, 0.40f, 0.40f, 1f); // #666666
+        internal static readonly Color _cTextPrimary = new Color(0.90f, 0.90f, 0.90f, 1f);   // #E6E6E6 - brighter for readability
+        internal static readonly Color _cTextSecondary = new Color(0.65f, 0.65f, 0.65f, 1f); // #A6A6A6 - brighter labels
         internal static readonly Color _cTextBright = new Color(1.00f, 1.00f, 1.00f, 1f);
 
         // Gauge colors
-        internal static readonly Color _cGaugeArcBg = new Color(0.12f, 0.13f, 0.16f, 1f);
+        internal static readonly Color _cGaugeArcBg = new Color(0.15f, 0.16f, 0.19f, 1f);   // Slightly brighter background
         internal static readonly Color _cGaugeNeedle = new Color(1.00f, 1.00f, 1.00f, 0.95f);
-        internal static readonly Color _cGaugeTick = new Color(0.35f, 0.37f, 0.42f, 1f);
+        internal static readonly Color _cGaugeTick = new Color(0.50f, 0.52f, 0.56f, 1f);   // Brighter borders/dividers
 
         // LED colors
         internal static readonly Color _cLedOff = new Color(0.15f, 0.16f, 0.18f, 1f);
@@ -74,12 +74,12 @@ namespace Critical.Validation
         internal static readonly Color _cLedWarning = new Color(1.00f, 0.70f, 0.00f, 1f);
         internal static readonly Color _cLedAlarm = new Color(1.00f, 0.20f, 0.20f, 1f);
 
-        // Annunciator colors
-        internal static readonly Color _cAnnOff = new Color(0.10f, 0.11f, 0.13f, 1f);
-        internal static readonly Color _cAnnNormal = new Color(0.08f, 0.30f, 0.10f, 1f);
-        internal static readonly Color _cAnnAlerting = new Color(0.50f, 0.40f, 0.00f, 1f);
-        internal static readonly Color _cAnnAlarm = new Color(0.50f, 0.10f, 0.10f, 1f);
-        internal static readonly Color _cAnnAcked = new Color(0.30f, 0.25f, 0.00f, 1f);
+        // Annunciator colors - BRIGHT for visibility
+        internal static readonly Color _cAnnOff = new Color(0.15f, 0.16f, 0.18f, 1f);       // Dark gray (inactive)
+        internal static readonly Color _cAnnNormal = new Color(0.10f, 0.50f, 0.15f, 1f);    // GREEN - normal/safe
+        internal static readonly Color _cAnnAlerting = new Color(0.90f, 0.70f, 0.00f, 1f);  // YELLOW/AMBER - alerting
+        internal static readonly Color _cAnnAlarm = new Color(0.90f, 0.15f, 0.15f, 1f);     // RED - alarm
+        internal static readonly Color _cAnnAcked = new Color(0.60f, 0.50f, 0.00f, 1f);     // DARK YELLOW - acknowledged
 
         #endregion
 

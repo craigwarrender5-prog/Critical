@@ -1,8 +1,8 @@
 ﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-17T15:39:01Z",
+    "generated_at":  "2026-02-17T16:11:03Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-    "active_issue_count":  22,
+    "active_issue_count":  20,
     "issues":  [
                    {
                        "id":  "CS-0010",
@@ -620,58 +620,6 @@
                        "resolution_type":  null
                    },
                    {
-                       "id":  "CS-0098",
-                       "title":  "Heaters do not start after startup-hold release during cold-start sequence",
-                       "domain":  "Pressurizer \u0026 Startup Control",
-                       "severity":  "HIGH",
-                       "status":  "READY",
-                       "created_at":  "2026-02-16T21:45:00Z",
-                       "updated_at":  "2026-02-17T14:59:27Z",
-                       "stage_detected":  "Investigation-2026-02-16",
-                       "assigned_dp":  "DP-0012",
-                       "assigned_ip":  "IP-0048",
-                       "observations":  [
-                                            "Startup hold release is expected to return heater authority to automatic startup pressurization, but field behavior can remain effectively de-energized (0 MW) after release.",
-                                            "Observed symptom signature: pressure remains near initial cold-start values while heater mode/authority path can remain in OFF-equivalent behavior.",
-                                            "Operational impact: startup progression stalls and downstream pressure-dependent actions are blocked."
-                                        ],
-                       "evidence":  [
-                                        {
-                                            "ref":  "Governance/Issues/CS-0098_Investigation_Report_2026-02-16_214500.md",
-                                            "notes":  "Investigation record with code-path trace and disposition."
-                                        },
-                                        {
-                                            "ref":  "HeatupLogs/IP-0024_StageD_Hold_2026-02-15_194555/Heatup_Report_20260215_194556.txt",
-                                            "notes":  "Report shows heater mode OFF and final heater power 0.000 MW in startup-hold scenario."
-                                        },
-                                        {
-                                            "ref":  "Assets/Scripts/Validation/HeatupSimEngine.cs:2152",
-                                            "notes":  "Authority resolver latches OFF when current heater mode is OFF."
-                                        },
-                                        {
-                                            "ref":  "Assets/Scripts/Validation/HeatupSimEngine.cs:2198",
-                                            "notes":  "Startup-hold release logic clears hold but does not explicitly re-arm startup heater mode if mode is OFF."
-                                        }
-                                    ],
-                       "hypotheses":  [
-                                          "Heater mode can enter OFF before or during hold and remains OFF after release because release clears only hold state, not requested heater mode."
-                                      ],
-                       "root_cause":  "Confirmed: startup-hold release removes HOLD_LOCKED authority but does not enforce a non-OFF heater mode. If currentHeaterMode is OFF at release boundary, ResolveHeaterAuthorityState() continues returning OFF and heater demand remains 0 MW.",
-                       "resolution_candidate":  "On startup-hold release, enforce deterministic mode re-arm to PRESSURIZE_AUTO when manual-disable is false, then add regression validation proving non-zero heater demand within the first post-release window.",
-                       "links":  [
-                                     "Investigation artifact: Governance/Issues/CS-0098_Investigation_Report_2026-02-16_214500.md",
-                                     "Related historical scope: CS-0094, CS-0096 (DP-0012 closeout lineage)"
-                                 ],
-                       "tags":  [
-                                    "Investigation-2026-02-16",
-                                    "Startup-Heater-Release",
-                                    "DP-0012",
-                                    "Constitution-Article-VI"
-                                ],
-                       "closed_at":  null,
-                       "resolution_type":  null
-                   },
-                   {
                        "id":  "CS-0100",
                        "title":  "Update PROJECT_TREE.md to define Scenario System and Modular RCS target structure",
                        "domain":  "Project Governance",
@@ -709,53 +657,6 @@
                                     "Project-Structure",
                                     "Scenario-System",
                                     "Modular-RCS",
-                                    "User-Request-2026-02-17"
-                                ],
-                       "closed_at":  null,
-                       "resolution_type":  null
-                   },
-                   {
-                       "id":  "CS-0101",
-                       "title":  "Introduce deterministic Cold Shutdown initialization baseline as default startup state",
-                       "domain":  "Pressurizer & Startup Control",
-                       "severity":  "HIGH",
-                       "status":  "READY",
-                       "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T14:59:27Z",
-                       "stage_detected":  "User-Request-2026-02-17",
-                       "assigned_dp":  "DP-0012",
-                       "assigned_ip":  "IP-0048",
-                       "observations":  [
-                                            "Startup currently enters validation-run oriented behavior rather than a deterministic plant baseline.",
-                                            "A defined cold-shutdown baseline is required as the default idle state before scenario activation."
-                                        ],
-                       "evidence":  [
-                                        {
-                                            "ref":  "Governance/Issues/CS-0101_Investigation_Report_2026-02-17_124730.md",
-                                            "notes":  "Baseline-state feature definition and acceptance criteria."
-                                        },
-                                        {
-                                            "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md",
-                                            "notes":  "Startup sequence expectations and phase progression context."
-                                        },
-                                        {
-                                            "ref":  "Technical_Documentation/NRC_HRTD_Section_5.1_Residual_Heat_Removal_System.md",
-                                            "notes":  "Cold shutdown operational context."
-                                        }
-                                    ],
-                       "hypotheses":  [
-                                          "Default boot mode lacks an explicit scenario-neutral baseline ownership model."
-                                      ],
-                       "root_cause":  null,
-                       "resolution_candidate":  "Define Cold Shutdown as deterministic default boot baseline and keep simulator idle until scenario start.",
-                       "links":  [
-                                     "Likely impacted: Assets/Scripts/Validation/HeatupSimEngine.Init.cs",
-                                     "Likely impacted: Assets/Scripts/Validation/HeatupSimEngine.cs, Assets/Scripts/Physics/RHRSystem.cs"
-                                 ],
-                       "tags":  [
-                                    "Cold-Shutdown",
-                                    "Initialization-Baseline",
-                                    "Scenario-Entry",
                                     "User-Request-2026-02-17"
                                 ],
                        "closed_at":  null,

@@ -104,7 +104,8 @@ public partial class HeatupSimEngine : MonoBehaviour
     // ========================================================================
 
     [Header("Simulation Settings")]
-    public bool runOnStart = true;
+    [Tooltip("Auto-start scenario on boot. Disabled by default so boot lands in idle deterministic baseline (CS-0101).")]
+    public bool runOnStart = false;
 
     [Header("Initial Conditions")]
     public float startTemperature = 100f;
@@ -872,6 +873,24 @@ public partial class HeatupSimEngine : MonoBehaviour
 
         if (runOnStart)
             StartSimulation();
+        else
+            InitializeIdleBaselineOnBoot();
+    }
+
+    void InitializeIdleBaselineOnBoot()
+    {
+        if (isRunning)
+            return;
+
+        InitializeSimulation();
+        PublishTelemetrySnapshot();
+
+        string baselineName = (coldShutdownStart && startTemperature < 200f)
+            ? "COLD_SHUTDOWN"
+            : "WARM_START";
+        LogEvent(
+            EventSeverity.INFO,
+            $"BOOT BASELINE READY ({baselineName}) - Awaiting StartSimulation command");
     }
 
     /// <summary>
@@ -2264,14 +2283,28 @@ public partial class HeatupSimEngine : MonoBehaviour
             startupHoldPressureRateGatePassed &&
             startupHoldStateQualityGatePassed)
         {
+            HeaterMode modeBeforeRelease = currentHeaterMode;
             startupHoldActive = false;
             startupHoldReleaseLogged = true;
             startupHoldReleaseBlockReason = "NONE";
+
+            // CS-0098: deterministically re-arm heater mode on hold release when
+            // manual lockout is not active and mode was left OFF.
+            if (!heaterManualDisabled && currentHeaterMode == HeaterMode.OFF)
+            {
+                currentHeaterMode = HeaterMode.PRESSURIZE_AUTO;
+                LogEvent(
+                    EventSeverity.ACTION,
+                    "HEATER MODE RE-ARM: OFF -> PRESSURIZE_AUTO on startup-hold release");
+            }
+
             LogEvent(
                 EventSeverity.ACTION,
                 $"HEATER STARTUP HOLD RELEASED at T+{simTime:F4} hr " +
                 $"(dP/dt={startupHoldPressureRateAbs_psi_hr:F2} psi/hr, " +
-                $"stable_window={startupHoldPressureRateStableAccum_sec:F1}s, mode={currentHeaterMode})");
+                $"stable_window={startupHoldPressureRateStableAccum_sec:F1}s, " +
+                $"mode={currentHeaterMode}, prior_mode={modeBeforeRelease}, " +
+                $"manual_disable={(heaterManualDisabled ? "TRUE" : "FALSE")})");
             return;
         }
 

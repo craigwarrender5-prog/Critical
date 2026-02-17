@@ -215,6 +215,11 @@ namespace Critical.Simulation.Modular.Modules
             {
                 _state.StartupHoldActive = false;
                 _state.StartupHoldReleaseLogged = true;
+
+                // CS-0098 parity: modular authority path has no manual-disable
+                // input yet, so OFF is always re-armed on hold release.
+                if (_state.CurrentHeaterMode == HeaterMode.OFF)
+                    _state.CurrentHeaterMode = HeaterMode.PRESSURIZE_AUTO;
             }
         }
 

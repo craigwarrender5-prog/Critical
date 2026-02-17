@@ -1,8 +1,8 @@
 ﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-17T15:39:01Z",
+    "generated_at":  "2026-02-17T16:11:03Z",
     "source":  "Governance/IssueRegister/issue_index.json (CLOSED projection)",
-    "archived_issue_count":  85,
+    "archived_issue_count":  87,
     "issues":  [
                    {
                        "id":  "CS-0001",
@@ -1897,6 +1897,60 @@
                                     "Cross-Domain-Protocol",
                                     "IP-Revision-Control",
                                     "IP-0047-GateA"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0098",
+                       "title":  "Heaters do not start after startup-hold release during cold-start sequence",
+                       "domain":  "Pressurizer & Startup Control",
+                       "severity":  "HIGH",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-16T21:45:00Z",
+                       "closed_at":  "2026-02-17T16:11:03Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0048"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/ImplementationPlans/Closed/IP-0048/Reports/IP-0048_GateA_ColdShutdownBaseline.md",
+                                               "Governance/ImplementationPlans/Closed/IP-0048/Reports/IP-0048_GateB_HeaterReleaseValidation.md",
+                                               "Assets/Scripts/Validation/HeatupSimEngine.cs",
+                                               "Assets/Scripts/Simulation/Modular/Modules/PressurizerModule.cs"
+                                           ],
+                       "one_line_rca":  "Startup-hold release could leave heater mode OFF; release path now deterministically re-arms to PRESSURIZE_AUTO when not manually disabled.",
+                       "tags":  [
+                                    "Investigation-2026-02-16",
+                                    "Startup-Heater-Release",
+                                    "DP-0012",
+                                    "Constitution-Article-VI",
+                                    "IP-0048-GateB"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0101",
+                       "title":  "Introduce deterministic Cold Shutdown initialization baseline as default startup state",
+                       "domain":  "Pressurizer & Startup Control",
+                       "severity":  "HIGH",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-17T12:47:30Z",
+                       "closed_at":  "2026-02-17T16:11:03Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0048"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/ImplementationPlans/Closed/IP-0048/Reports/IP-0048_GateA_ColdShutdownBaseline.md",
+                                               "Governance/ImplementationPlans/Closed/IP-0048/Reports/IP-0048_GateB_HeaterReleaseValidation.md",
+                                               "Assets/Scripts/Validation/HeatupSimEngine.Init.cs",
+                                               "Assets/Scripts/Validation/HeatupSimEngine.cs"
+                                           ],
+                       "one_line_rca":  "Boot path now initializes deterministic cold-shutdown baseline in idle mode and waits for explicit StartSimulation command before scenario execution.",
+                       "tags":  [
+                                    "Cold-Shutdown",
+                                    "Initialization-Baseline",
+                                    "Scenario-Entry",
+                                    "User-Request-2026-02-17",
+                                    "IP-0048-GateA"
                                 ]
                    }
                ]

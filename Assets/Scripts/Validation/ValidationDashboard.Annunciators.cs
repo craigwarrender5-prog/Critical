@@ -90,7 +90,15 @@ namespace Critical.Validation
             bool wasActive = ConditionActive;
             ConditionActive = Condition != null && Condition(snapshot);
 
-            // State transitions
+            // INFO severity tiles: Simple ON/OFF, no alarm state machine
+            // These are status indicators (green when on, gray when off)
+            if (Severity == AlarmSeverity.Info)
+            {
+                State = ConditionActive ? AnnunciatorState.Normal : AnnunciatorState.Off;
+                return;
+            }
+
+            // WARNING/ALARM severity: Full ISA-18.1 state machine
             if (ConditionActive && !wasActive)
             {
                 // Condition just became active
