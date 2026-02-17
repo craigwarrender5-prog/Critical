@@ -1,9 +1,67 @@
 ﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-17T12:52:46Z",
+    "generated_at":  "2026-02-17T15:39:01Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-    "active_issue_count":  21,
+    "active_issue_count":  22,
     "issues":  [
+                   {
+                       "id":  "CS-0010",
+                       "title":  "No SG secondary pressure alarm",
+                       "domain":  "Plant Protection \u0026 Limits",
+                       "severity":  "LOW",
+                       "status":  "READY",
+                       "created_at":  "2026-02-13T00:00:00Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
+                       "stage_detected":  "Reschedule-2026-02-17",
+                       "assigned_dp":  "DP-0006",
+                       "assigned_ip":  "IP-0044",
+                       "closed_at":  null,
+                       "resolution_type":  null,
+                       "tags":  [
+                                    "Plant Protection SG Boundary",
+                                    "Rescheduled-IP-0035"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0079",
+                       "title":  "RCP startup permissive is configured below documented minimum startup pressure requirements.",
+                       "domain":  "Plant Protection \u0026 Limits",
+                       "severity":  "HIGH",
+                       "status":  "READY",
+                       "created_at":  "2026-02-15T16:50:47Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
+                       "stage_detected":  "Reschedule-2026-02-17",
+                       "assigned_dp":  "DP-0006",
+                       "assigned_ip":  "IP-0044",
+                       "closed_at":  null,
+                       "resolution_type":  null,
+                       "tags":  [
+                                    "NCR-Migration",
+                                    "Audit-2026-02-15",
+                                    "F-001",
+                                    "Rescheduled-IP-0035"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0080",
+                       "title":  "RCP heat-input constants do not align with the cited cold-water heatup reference basis.",
+                       "domain":  "Primary Thermodynamics",
+                       "severity":  "HIGH",
+                       "status":  "READY",
+                       "created_at":  "2026-02-15T16:50:47Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
+                       "stage_detected":  "Reschedule-2026-02-17",
+                       "assigned_dp":  "DP-0001",
+                       "assigned_ip":  "IP-0045",
+                       "closed_at":  null,
+                       "resolution_type":  null,
+                       "tags":  [
+                                    "NCR-Migration",
+                                    "Audit-2026-02-15",
+                                    "F-002",
+                                    "Rescheduled-IP-0036"
+                                ]
+                   },
                    {
                        "id":  "CS-0057",
                        "title":  "SG startup draining contract at ~200F is not wired into runtime execution path",
@@ -11,10 +69,10 @@
                        "severity":  "HIGH",
                        "status":  "READY",
                        "created_at":  "2026-02-14T19:55:32Z",
-                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
                        "stage_detected":  "Audit-2026-02-14",
                        "assigned_dp":  "DP-0011",
-                       "assigned_ip":  "IP-0037",
+                       "assigned_ip":  "IP-0046",
                        "observations":  [
                                             "Technical documentation specifies SG draining at approximately 200F, but runtime scanning found only the StartDraining declaration and no invocation path.",
                                             "Expected startup mass-state transition for SG secondary inventory appears unexecuted, risking mismatch between documented and simulated SG initial conditions."
@@ -59,10 +117,10 @@
                        "severity":  "MEDIUM",
                        "status":  "READY",
                        "created_at":  "2026-02-14T19:55:32Z",
-                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
                        "stage_detected":  "Audit-2026-02-14",
                        "assigned_dp":  "DP-0010",
-                       "assigned_ip":  "IP-0038",
+                       "assigned_ip":  "IP-0047",
                        "observations":  [
                                             "Multiple simulation-facing files exceed the \u003e1400 hard-fail threshold, increasing audit and ownership risk.",
                                             "No waiver evidence found in reviewed governance artifacts for these files."
@@ -111,10 +169,10 @@
                        "severity":  "LOW",
                        "status":  "READY",
                        "created_at":  "2026-02-14T19:55:32Z",
-                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
                        "stage_detected":  "Audit-2026-02-14",
                        "assigned_dp":  "DP-0010",
-                       "assigned_ip":  "IP-0038",
+                       "assigned_ip":  "IP-0047",
                        "observations":  [
                                             "The core engine header includes PURPOSE/ARCH/GOLD but does not include explicit SOURCES and UNITS sections required by C01.",
                                             "This is a mandatory GOLD conformance gate failure for header completeness."
@@ -159,10 +217,10 @@
                        "severity":  "HIGH",
                        "status":  "READY",
                        "created_at":  "2026-02-15T10:19:57Z",
-                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
                        "stage_detected":  "Stage E",
                        "assigned_dp":  "DP-0011",
-                       "assigned_ip":  "IP-0037",
+                       "assigned_ip":  "IP-0046",
                        "observations":  [
                                             "Technical documentation defines SG warmup as simultaneous heating and pressurization: as RCP heat input warms SG secondary, pressure should rise with temperature and later be regulated by steam dump control.",
                                             "Current build logs show SG secondary pressure remains near blanket floor (~17 psia) from first non-zero RCP circulation through extended post-bubble RCP-driven warmup and temperature rise, then increases only near/after boiling onset, indicating delayed pressure response inconsistent with documented warmup behavior.",
@@ -246,10 +304,10 @@
                        "severity":  "HIGH",
                        "status":  "READY",
                        "created_at":  "2026-02-15T16:50:47Z",
-                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
                        "stage_detected":  "Audit-2026-02-15",
                        "assigned_dp":  "DP-0011",
-                       "assigned_ip":  "IP-0037",
+                       "assigned_ip":  "IP-0046",
                        "observations":  [
                                             "Derived from Conformance Audit finding F-004.",
                                             "SG startup boundary behavior is modeled isolated where references indicate steam-line warmup/open-path behavior.",
@@ -292,10 +350,10 @@
                        "severity":  "HIGH",
                        "status":  "READY",
                        "created_at":  "2026-02-15T16:50:47Z",
-                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
                        "stage_detected":  "Audit-2026-02-15",
                        "assigned_dp":  "DP-0010",
-                       "assigned_ip":  "IP-0038",
+                       "assigned_ip":  "IP-0047",
                        "observations":  [
                                             "Derived from Conformance Audit finding F-006.",
                                             "Project-owned C# files do not uniformly meet required GOLD header metadata fields.",
@@ -338,10 +396,10 @@
                        "severity":  "MEDIUM",
                        "status":  "READY",
                        "created_at":  "2026-02-15T16:50:47Z",
-                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
                        "stage_detected":  "Audit-2026-02-15",
                        "assigned_dp":  "DP-0010",
-                       "assigned_ip":  "IP-0038",
+                       "assigned_ip":  "IP-0047",
                        "observations":  [
                                             "Derived from Conformance Audit finding F-007.",
                                             "File-level change history is incomplete or missing for audited modules.",
@@ -384,10 +442,10 @@
                        "severity":  "MEDIUM",
                        "status":  "READY",
                        "created_at":  "2026-02-15T16:50:47Z",
-                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
                        "stage_detected":  "Audit-2026-02-15",
                        "assigned_dp":  "DP-0010",
-                       "assigned_ip":  "IP-0038",
+                       "assigned_ip":  "IP-0047",
                        "observations":  [
                                             "Derived from Conformance Audit finding F-008.",
                                             "Public API surfaces lack consistent XML documentation coverage.",
@@ -430,10 +488,10 @@
                        "severity":  "MEDIUM",
                        "status":  "READY",
                        "created_at":  "2026-02-15T16:50:47Z",
-                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
                        "stage_detected":  "Audit-2026-02-15",
                        "assigned_dp":  "DP-0010",
-                       "assigned_ip":  "IP-0038",
+                       "assigned_ip":  "IP-0047",
                        "observations":  [
                                             "Derived from Conformance Audit finding F-009.",
                                             "Several modules exceed responsible file-size/separation-of-concerns limits, increasing coupling risk.",
@@ -476,10 +534,10 @@
                        "severity":  "MEDIUM",
                        "status":  "READY",
                        "created_at":  "2026-02-15T16:50:47Z",
-                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
                        "stage_detected":  "Audit-2026-02-15",
                        "assigned_dp":  "DP-0010",
-                       "assigned_ip":  "IP-0038",
+                       "assigned_ip":  "IP-0047",
                        "observations":  [
                                             "Derived from Conformance Audit finding F-011.",
                                             "Validation modules remain in global namespace, conflicting with namespace-folder convention standardization.",
@@ -522,10 +580,10 @@
                        "severity":  "HIGH",
                        "status":  "READY",
                        "created_at":  "2026-02-15T16:50:47Z",
-                       "updated_at":  "2026-02-16T19:31:03Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
                        "stage_detected":  "Audit-2026-02-15",
                        "assigned_dp":  "DP-0010",
-                       "assigned_ip":  "IP-0038",
+                       "assigned_ip":  "IP-0047",
                        "observations":  [
                                             "Derived from Conformance Audit finding F-012.",
                                             "Project-level changelog governance is missing, weakening traceability for module changes and deviations.",
@@ -568,10 +626,10 @@
                        "severity":  "HIGH",
                        "status":  "READY",
                        "created_at":  "2026-02-16T21:45:00Z",
-                       "updated_at":  "2026-02-16T21:45:00Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
                        "stage_detected":  "Investigation-2026-02-16",
                        "assigned_dp":  "DP-0012",
-                       "assigned_ip":  null,
+                       "assigned_ip":  "IP-0048",
                        "observations":  [
                                             "Startup hold release is expected to return heater authority to automatic startup pressurization, but field behavior can remain effectively de-energized (0 MW) after release.",
                                             "Observed symptom signature: pressure remains near initial cold-start values while heater mode/authority path can remain in OFF-equivalent behavior.",
@@ -614,64 +672,16 @@
                        "resolution_type":  null
                    },
                    {
-                       "id":  "CS-0099",
-                       "title":  "Governance Hardening v3 – Mandatory CS Lifecycle, Persistent Domain Model, Dependency Hierarchy Enforcement, Cross-Domain Protocol, CS Persistence Rule, and IP Revision Control",
-                       "domain":  "Project Governance",
-                       "severity":  "CRITICAL",
-                       "status":  "READY",
-                       "created_at":  "2026-02-17T12:47:00Z",
-                       "updated_at":  "2026-02-17T14:00:45Z",
-                       "stage_detected":  "Governance-Directive-2026-02-17",
-                       "assigned_dp":  "DP-0010",
-                       "assigned_ip":  "IP-0038",
-                       "observations":  [
-                                            "Constitution v1.5.0.0 permits governance ambiguity across CS gating, lifecycle transitions, and cross-domain execution controls.",
-                                            "Domain closure procedures allow archival patterns that are incompatible with persistent architectural boundaries.",
-                                            "Implementation Plan requirements do not mandate dependency hierarchy analysis or revision-history controls.",
-                                            "Current governance language does not strictly prevent CS bypass, silent deferral, or implicit cross-domain execution."
-                                        ],
-                       "evidence":  [
-                                        {
-                                            "ref":  "PROJECT_CONSTITUTION.md",
-                                            "notes":  "Pre-amendment constitution reviewed for lifecycle, DP persistence, and IP governance gaps."
-                                        },
-                                        {
-                                            "ref":  "Governance/Issues/CS-0099_Investigation_Report_2026-02-17_124700.md",
-                                            "notes":  "Investigation artifact documenting symptoms, root cause, options, recommendation, risks, and validation."
-                                        }
-                                    ],
-                       "hypotheses":  [
-                                          "Non-deterministic governance outcomes are caused by missing mandatory gates, weak lifecycle constraints, and absent revision controls."
-                                      ],
-                       "root_cause":  "Confirmed: constitutional language lacked mandatory, deterministic constraints for CS lifecycle gating, persistent domain ownership, dependency-ordered IP execution, explicit cross-domain approval, and IP revision governance.",
-                       "resolution_candidate":  "Adopt Constitution v1.6.0.0 with mandatory hardening rules: absolute CS gate, required investigation workflow, persistent Domain Plan model, dependency hierarchy + critical-path IP requirements, cross-domain inclusion approval protocol, CS persistence/reassignment controls, and required IP revision history.",
-                       "links":  [
-                                     "Investigation artifact: Governance/Issues/CS-0099_Investigation_Report_2026-02-17_124700.md",
-                                     "Primary amendment target: PROJECT_CONSTITUTION.md"
-                                 ],
-                       "tags":  [
-                                    "Governance-Hardening-v3",
-                                    "Constitution-Amendment",
-                                    "Mandatory-CS-Lifecycle",
-                                    "Persistent-Domain-Model",
-                                    "Dependency-Hierarchy",
-                                    "Cross-Domain-Protocol",
-                                    "IP-Revision-Control"
-                                ],
-                       "closed_at":  null,
-                       "resolution_type":  null
-                   },
-                   {
                        "id":  "CS-0100",
                        "title":  "Update PROJECT_TREE.md to define Scenario System and Modular RCS target structure",
                        "domain":  "Project Governance",
                        "severity":  "MEDIUM",
-                       "status":  "INVESTIGATING",
+                       "status":  "READY",
                        "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T14:00:45Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
                        "stage_detected":  "User-Request-2026-02-17",
                        "assigned_dp":  "DP-0010",
-                       "assigned_ip":  null,
+                       "assigned_ip":  "IP-0047",
                        "observations":  [
                                             "Authoritative project structure documentation does not yet include the intended Scenario System and Modular RCS target layout.",
                                             "Upcoming structural work needs explicit path governance before implementation begins."
@@ -709,12 +719,12 @@
                        "title":  "Introduce deterministic Cold Shutdown initialization baseline as default startup state",
                        "domain":  "Pressurizer & Startup Control",
                        "severity":  "HIGH",
-                       "status":  "INVESTIGATING",
+                       "status":  "READY",
                        "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T14:00:45Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
                        "stage_detected":  "User-Request-2026-02-17",
                        "assigned_dp":  "DP-0012",
-                       "assigned_ip":  null,
+                       "assigned_ip":  "IP-0048",
                        "observations":  [
                                             "Startup currently enters validation-run oriented behavior rather than a deterministic plant baseline.",
                                             "A defined cold-shutdown baseline is required as the default idle state before scenario activation."
@@ -756,9 +766,9 @@
                        "title":  "Establish scenario system framework with registry and scenario abstraction",
                        "domain":  "Operator Interface & Scenarios",
                        "severity":  "HIGH",
-                       "status":  "INVESTIGATING",
+                       "status":  "READY",
                        "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T14:00:45Z",
+                       "updated_at":  "2026-02-17T14:26:21Z",
                        "stage_detected":  "User-Request-2026-02-17",
                        "assigned_dp":  "DP-0008",
                        "assigned_ip":  null,
@@ -799,9 +809,9 @@
                        "title":  "Add in-simulator scenario selection overlay with keybind trigger",
                        "domain":  "Operator Interface & Scenarios",
                        "severity":  "MEDIUM",
-                       "status":  "INVESTIGATING",
+                       "status":  "READY",
                        "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T14:00:45Z",
+                       "updated_at":  "2026-02-17T14:26:21Z",
                        "stage_detected":  "User-Request-2026-02-17",
                        "assigned_dp":  "DP-0008",
                        "assigned_ip":  null,
@@ -842,12 +852,12 @@
                        "title":  "Wrap existing validation runner as selectable Validation Scenario",
                        "domain":  "Validation & Diagnostics",
                        "severity":  "HIGH",
-                       "status":  "INVESTIGATING",
+                       "status":  "READY",
                        "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T14:00:45Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
                        "stage_detected":  "User-Request-2026-02-17",
                        "assigned_dp":  "DP-0013",
-                       "assigned_ip":  null,
+                       "assigned_ip":  "IP-0049",
                        "observations":  [
                                             "Existing validation entrypoint is not scenario-selectable.",
                                             "Validation path must be invokable through scenario system without semantic changes."
@@ -885,12 +895,12 @@
                        "title":  "Modularize current single-loop RCS into reusable RCSLoop prefab/module boundary",
                        "domain":  "Primary Thermodynamics",
                        "severity":  "HIGH",
-                       "status":  "INVESTIGATING",
+                       "status":  "READY",
                        "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T14:00:45Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
                        "stage_detected":  "User-Request-2026-02-17",
                        "assigned_dp":  "DP-0001",
-                       "assigned_ip":  null,
+                       "assigned_ip":  "IP-0045",
                        "observations":  [
                                             "Current RCS execution is effectively single-loop oriented.",
                                             "Future multi-loop scaling needs reusable loop-local modular boundaries now."
@@ -928,12 +938,12 @@
                        "title":  "Add RCS loop manager/aggregator supporting N loops with N=1 compatibility",
                        "domain":  "Primary Thermodynamics",
                        "severity":  "HIGH",
-                       "status":  "INVESTIGATING",
+                       "status":  "READY",
                        "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T14:00:45Z",
+                       "updated_at":  "2026-02-17T14:59:27Z",
                        "stage_detected":  "User-Request-2026-02-17",
                        "assigned_dp":  "DP-0001",
-                       "assigned_ip":  null,
+                       "assigned_ip":  "IP-0045",
                        "observations":  [
                                             "Downstream consumers currently bind to single-loop assumptions.",
                                             "N-loop evolution requires explicit manager-owned loop indexing and aggregate output contracts while preserving N=1 parity."
@@ -961,57 +971,6 @@
                                     "RCS-Loop-Manager",
                                     "RCS-Aggregation",
                                     "N-Loop-Scaffolding",
-                                    "User-Request-2026-02-17"
-                                ],
-                       "closed_at":  null,
-                       "resolution_type":  null
-                   },
-                   {
-                       "id":  "CS-0107",
-                       "title":  "IP-0042 governance compliance remediation (scope anchoring, dependency hierarchy, revision control, and bundle-format alignment)",
-                       "domain":  "Operator Interface & Scenarios",
-                       "severity":  "HIGH",
-                       "status":  "READY",
-                       "created_at":  "2026-02-17T12:52:46Z",
-                       "updated_at":  "2026-02-17T13:27:44Z",
-                       "stage_detected":  "Governance-Review-2026-02-17",
-                       "assigned_dp":  "DP-0008",
-                       "assigned_ip":  "IP-0043",
-                       "observations":  [
-                                            "IP-0042 lacks explicit CS scope anchoring, dependency hierarchy, and revision-history controls required by Constitution v1.6.0.0.",
-                                            "IP-0042 exists in legacy single-file layout rather than required bundle-control-file structure.",
-                                            "Potential cross-domain dependencies are not formally documented via inclusion protocol."
-                                        ],
-                       "evidence":  [
-                                        {
-                                            "ref":  "Governance/ImplementationPlans/Closed/IP-0042 - Validation Dashboard UI Toolkit Rebuild.md",
-                                            "notes":  "Plan artifact reviewed; mandatory compliance sections missing."
-                                        },
-                                        {
-                                            "ref":  "PROJECT_CONSTITUTION.md",
-                                            "notes":  "Article VIII and Article IX constitutional requirements for IP compliance."
-                                        },
-                                        {
-                                            "ref":  "Governance/Issues/CS-0107_Investigation_Report_2026-02-17_125246.md",
-                                            "notes":  "Investigation and remediation requirements."
-                                        }
-                                    ],
-                       "hypotheses":  [
-                                          "IP-0042 was authored under a legacy template and not yet normalized to constitutional controls."
-                                      ],
-                       "root_cause":  "Confirmed governance non-compliance in the current IP-0042 planning artifact: missing mandatory CS scope linkage, dependency hierarchy, revision history, and bundle-format alignment requirements.",
-                       "resolution_candidate":  "Remediate IP-0042 artifact to full Constitution v1.6.0.0 compliance before any execution authorization.",
-                       "links":  [
-                                     "Assigned DP: DP-0008 - Operator Interface & Scenarios",
-                                     "Linked IP: IP-0043 - Validation Dashboard OnGUI Parameter Expansion",
-                                     "Investigation artifact: Governance/Issues/CS-0107_Investigation_Report_2026-02-17_125246.md"
-                                 ],
-                       "tags":  [
-                                   "IP-0043",
-                                    "Governance-Compliance",
-                                    "Dependency-Hierarchy",
-                                    "Revision-Control",
-                                    "Bundle-Format",
                                     "User-Request-2026-02-17"
                                 ],
                        "closed_at":  null,

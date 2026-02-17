@@ -2,11 +2,14 @@
 
 **Date:** 2026-02-17  
 **Domain Plan:** DP-0008 (Operator Interface & Scenarios)  
-**Predecessors:** IP-0042 (FAILED)  
-**Status:** DRAFT — Awaiting Approval  
+**Predecessors:** IP-0042 (SUPERSEDED)  
+**Status:** CLOSED  
+**Closed Date:** 2026-02-17  
+**Closure Note:** Completed and closed; CS-0107 archived as FIXED.  
 **Priority:** High  
 **Changelog Required:** Yes  
-**Target Version:** v0.8.0.0
+**Target Version:** v1.0.0.0  
+**Changelog:** CL-0043-v1.0.0.0-FINAL.md
 
 ---
 
@@ -18,40 +21,72 @@ The existing `HeatupValidationVisual` dashboard remains untouched as a fallback.
 
 ---
 
-## 2. Design Goals
+## 2. Scene Integration
+
+### 2.1 Existing Architecture
+
+The simulator uses a two-scene architecture:
+
+1. **MainScene** — Primary operator screen (build index 0, always loaded)
+2. **Validator.unity** — Loaded additively via `SceneBridge.cs` when user presses **V** key
+
+The `SceneBridge` component manages view switching:
+- **V key** → Load Validator scene additively, hide OperatorScreensCanvas
+- **1-8 / Tab / Esc** → Unload Validator scene, show OperatorScreensCanvas
+- `HeatupSimEngine` persists via `DontDestroyOnLoad` regardless of active scene
+
+### 2.2 New Dashboard Placement
+
+The new `ValidationDashboard` will:
+- Live in the **Validator.unity** scene (same as existing `HeatupValidationVisual`)
+- Be toggled via **V key** (handled by existing `SceneBridge`)
+- Find the persistent `HeatupSimEngine` via `FindObjectOfType` (same pattern as existing dashboard)
+- Coexist with `HeatupValidationVisual` initially — a toggle (e.g., **F2**) can switch between old/new dashboards
+
+### 2.3 File Structure
+
+New files will be placed alongside existing validation dashboard files:
+
+```
+Assets/Scripts/Validation/
+├── HeatupSimEngine.cs                   — (existing) Simulation engine
+├── HeatupSimEngine.*.cs                 — (existing) Engine partials
+├── HeatupValidationVisual.cs            — (existing) Legacy dashboard
+├── HeatupValidationVisual.*.cs          — (existing) Legacy dashboard partials
+├── ValidationDashboard.cs               — NEW: Main MonoBehaviour
+├── ValidationDashboard.Layout.cs        — NEW: Screen layout calculations
+├── ValidationDashboard.Styles.cs        — NEW: Colors, fonts, GUI styles
+├── ValidationDashboard.Gauges.cs        — NEW: Arc gauge, bar gauge, LED rendering
+├── ValidationDashboard.Panels.cs        — NEW: Panel/section rendering helpers
+├── ValidationDashboard.Snapshot.cs      — NEW: Data snapshot class
+├── Tabs/
+│   ├── DashboardTab.cs                  — NEW: Base class for tabs
+│   ├── OverviewTab.cs                   — NEW: Primary operations surface
+│   ├── RCSTab.cs                        — NEW: RCS Primary details
+│   ├── PressurizerTab.cs                — NEW: Pressurizer details
+│   ├── CVCSTab.cs                       — NEW: CVCS/VCT details
+│   ├── SGRHRTab.cs                      — NEW: SG and RHR details
+│   ├── SystemsTab.cs                    — NEW: BRS, Orifices, Mass Conservation
+│   ├── GraphsTab.cs                     — NEW: Strip chart trends
+│   └── LogTab.cs                        — NEW: Event log and annunciators
+```
+
+---
+
+## 3. Design Goals
 
 1. **Comprehensive parameter coverage** — Display all ~130 parameters from requirements
 2. **Primary operations surface** — All critical parameters visible without tab switching
 3. **Professional control room aesthetic** — Nuclear instrument look and feel
 4. **Clean architecture** — Modular, maintainable, well-documented code
 5. **GOLD standard from day one** — Follow all project quality criteria
+6. **Scene integration** — Work seamlessly with existing V-key toggle system
 
 ---
 
-## 3. Architecture
+## 4. Architecture
 
-### 3.1 File Structure
-
-```
-Assets/Scripts/Validation/Dashboard/
-├── ValidationDashboard.cs              — Main MonoBehaviour, lifecycle, input
-├── ValidationDashboard.Layout.cs       — Screen layout calculations
-├── ValidationDashboard.Styles.cs       — Colors, fonts, GUI styles
-├── ValidationDashboard.Gauges.cs       — Arc gauge, bar gauge, LED rendering
-├── ValidationDashboard.Panels.cs       — Panel/section rendering helpers
-├── Tabs/
-│   ├── DashboardTab.cs                 — Base class for tabs
-│   ├── OverviewTab.cs                  — Primary operations surface
-│   ├── RCSTab.cs                       — RCS Primary details
-│   ├── PressurizerTab.cs               — Pressurizer details
-│   ├── CVCSTab.cs                      — CVCS/VCT details
-│   ├── SGRHRTab.cs                     — SG and RHR details
-│   ├── SystemsTab.cs                   — BRS, Orifices, Mass Conservation
-│   ├── GraphsTab.cs                    — Strip chart trends
-│   └── LogTab.cs                       — Event log and annunciators
-```
-
-### 3.2 Class Responsibilities
+### 4.1 Class Responsibilities
 
 | Class | Responsibility |
 |-------|----------------|
@@ -60,16 +95,25 @@ Assets/Scripts/Validation/Dashboard/
 | `ValidationDashboard.Styles` | GUIStyle cache, color palette, fonts |
 | `ValidationDashboard.Gauges` | Reusable gauge drawing (arc, bar, LED, digital readout) |
 | `ValidationDashboard.Panels` | Section headers, bordered panels, parameter rows |
-| `DashboardTab` | Abstract base with Draw() method, engine reference |
+| `ValidationDashboard.Snapshot` | Data snapshot class for 10 Hz capture |
+| `DashboardTab` | Abstract base with Draw() method, snapshot reference |
 | Individual tabs | Specific parameter layouts for each system |
+
+### 4.2 Dashboard Toggle (Old/New)
+
+While both dashboards exist:
+- **F1** — Toggle current dashboard visibility (existing behavior)
+- **F2** — Switch between old (`HeatupValidationVisual`) and new (`ValidationDashboard`)
+
+Only one dashboard renders at a time. Both read from the same `HeatupSimEngine`.
 
 ---
 
-## 4. Primary Operations Surface (Overview Tab)
+## 5. Primary Operations Surface (Overview Tab)
 
 The Overview tab displays ALL critical parameters on a single 1920×1080 screen with NO scrolling.
 
-### 4.1 Layout
+### 5.1 Layout
 
 ```
 ┌────────────────────────────────────────────────────────────────────────────────┐
@@ -101,7 +145,7 @@ The Overview tab displays ALL critical parameters on a single 1920×1080 screen 
 └──────────────────────────────────────────────────┴────────────────────────────┘
 ```
 
-### 4.2 Column Widths
+### 5.2 Column Widths
 
 | Column | Width % | Content |
 |--------|---------|---------|
@@ -114,9 +158,9 @@ The Overview tab displays ALL critical parameters on a single 1920×1080 screen 
 
 ---
 
-## 5. Complete Parameter Inventory
+## 6. Complete Parameter Inventory
 
-### 5.1 Overview Tab (Always Visible)
+### 6.1 Overview Tab (Always Visible)
 
 **RCS Column (18 parameters):**
 - T_avg (arc gauge)
@@ -179,7 +223,7 @@ All existing annunciators from legacy dashboard
 **Footer — Event Log (8 entries):**
 Scrollable with severity colors
 
-### 5.2 Detail Tabs
+### 6.2 Detail Tabs
 
 Each detail tab expands on its system with:
 - Larger gauges
@@ -189,26 +233,28 @@ Each detail tab expands on its system with:
 
 ---
 
-## 6. Implementation Stages
+## 7. Implementation Stages
 
 ### Stage 1: Core Infrastructure
 **Objective:** Create base classes and rendering primitives.
 
 **Tasks:**
-1. Create `ValidationDashboard.cs` — MonoBehaviour shell
+1. Create `ValidationDashboard.cs` — MonoBehaviour shell with engine binding
 2. Create `ValidationDashboard.Layout.cs` — Screen region calculations with caching
 3. Create `ValidationDashboard.Styles.cs` — Color palette, GUIStyle factory (all cached)
 4. Create `ValidationDashboard.Gauges.cs` — Arc gauge, bar gauge, LED, digital readout
 5. Create `ValidationDashboard.Panels.cs` — Section headers, bordered panels
-6. Create `DashboardTab.cs` — Abstract base class
-7. Test: Render a test pattern with each gauge type
-8. **Performance gate:** Gauge rendering < 0.5ms for 10 gauges
+6. Create `ValidationDashboard.Snapshot.cs` — Data snapshot class
+7. Create `Tabs/` directory and `DashboardTab.cs` — Abstract base class
+8. Test: Render a test pattern with each gauge type
+9. **Performance gate:** Gauge rendering < 0.5ms for 10 gauges
 
 **Deliverables:**
 - Core partial classes
 - Working gauge rendering
+- Dashboard toggle (F2) between old/new
 
-**Exit Criteria:** Can draw arc gauge, bar gauge, LED, and digital readout on screen. Performance gate passed.
+**Exit Criteria:** Can draw arc gauge, bar gauge, LED, and digital readout on screen. F2 toggles between old/new dashboard. Performance gate passed.
 
 ---
 
@@ -216,7 +262,7 @@ Each detail tab expands on its system with:
 **Objective:** Build the 5-column + footer layout structure.
 
 **Tasks:**
-1. Create `OverviewTab.cs`
+1. Create `Tabs/OverviewTab.cs`
 2. Implement 5-column layout with proper proportions
 3. Implement footer split (annunciators left, log right)
 4. Add placeholder content in each section
@@ -236,7 +282,7 @@ Each detail tab expands on its system with:
 **Tasks:**
 1. RCS Column: T_avg arc, subcooling arc, all digital readouts, RCP LEDs
 2. PZR Column: Pressure arc, level arc, heater bar, spray bar, surge bar, bubble LED
-3. Wire all parameters to engine
+3. Wire all parameters to snapshot
 4. Implement threshold coloring
 5. Implement string preformatting in Update() (not OnGUI)
 
@@ -255,7 +301,7 @@ Each detail tab expands on its system with:
 1. CVCS Column: VCT arc, charging/letdown bars, net CVCS bar, LEDs, mass error
 2. SG/RHR Column: SG pressure arc, HZP bar, RHR status, LEDs
 3. Trends Column: 8 mini sparklines using cached Texture2D approach
-4. Wire all parameters to engine
+4. Wire all parameters to snapshot
 5. **Performance gate:** Sparklines < 0.3ms for 8 charts
 
 **Deliverables:**
@@ -292,10 +338,10 @@ Each detail tab expands on its system with:
 **Objective:** Create system detail tabs.
 
 **Tasks:**
-1. Create `RCSTab.cs` — expanded RCS detail + TEMPS/PRESSURE graphs
-2. Create `PressurizerTab.cs` — expanded PZR detail + PRESSURE/RATES graphs
-3. Create `CVCSTab.cs` — expanded CVCS/VCT detail + CVCS/VCT graphs
-4. Create `SGRHRTab.cs` — expanded SG/RHR detail + SG/HZP graphs
+1. Create `Tabs/RCSTab.cs` — expanded RCS detail + TEMPS/PRESSURE graphs
+2. Create `Tabs/PressurizerTab.cs` — expanded PZR detail + PRESSURE/RATES graphs
+3. Create `Tabs/CVCSTab.cs` — expanded CVCS/VCT detail + CVCS/VCT graphs
+4. Create `Tabs/SGRHRTab.cs` — expanded SG/RHR detail + SG/HZP graphs
 5. Implement tab switching (keyboard Ctrl+1-4)
 
 **Deliverables:**
@@ -309,9 +355,9 @@ Each detail tab expands on its system with:
 **Objective:** Create auxiliary tabs.
 
 **Tasks:**
-1. Create `SystemsTab.cs` — BRS detail, Orifice status, Mass conservation audit
-2. Create `GraphsTab.cs` — Full-width tabbed strip charts (7 categories)
-3. Create `LogTab.cs` — Full annunciator grid + expanded event log
+1. Create `Tabs/SystemsTab.cs` — BRS detail, Orifice status, Mass conservation audit
+2. Create `Tabs/GraphsTab.cs` — Full-width tabbed strip charts (7 categories)
+3. Create `Tabs/LogTab.cs` — Full annunciator grid + expanded event log
 4. Implement keyboard shortcuts (Ctrl+5-7)
 
 **Deliverables:**
@@ -325,26 +371,26 @@ Each detail tab expands on its system with:
 **Objective:** Final polish and switchover.
 
 **Tasks:**
-1. Implement all keyboard shortcuts (F1 toggle, Ctrl+1-8 tabs, F5-F9 speed)
+1. Implement all keyboard shortcuts (F1 toggle, F2 old/new switch, Ctrl+1-8 tabs, F5-F9 speed)
 2. Add header with mode/phase/time display
 3. Performance optimization pass
 4. Test at multiple resolutions
-5. Add toggle in ScreenManager to switch between old/new dashboard
+5. Verify integration with SceneBridge (V key loads Validator scene)
 6. **Final performance gate:** Full dashboard < 2.0ms
 7. Write changelog
 
 **Deliverables:**
 - Complete, polished dashboard
-- ScreenManager integration
-- CHANGELOG_v0.8.0.0.md
+- Seamless V-key scene integration
+- CHANGELOG_v1.0.0.0.md
 
-**Exit Criteria:** Dashboard is production-ready, can replace legacy system. Final performance gate passed.
+**Exit Criteria:** Dashboard is production-ready, integrates with V-key scene switching. Final performance gate passed.
 
 ---
 
-## 7. Technical Specifications
+## 8. Technical Specifications
 
-### 7.1 Color Palette
+### 8.1 Color Palette
 
 | Use | Color | Hex |
 |-----|-------|-----|
@@ -357,7 +403,7 @@ Each detail tab expands on its system with:
 | Text | Light gray | #CCCCCC |
 | Dim | Dim gray | #666666 |
 
-### 7.2 Gauge Specifications
+### 8.2 Gauge Specifications
 
 **Arc Gauge:**
 - 180° sweep (9 o'clock to 3 o'clock)
@@ -387,17 +433,17 @@ Each detail tab expands on its system with:
 - Threshold-based coloring
 - Unit suffix
 
-### 7.3 Performance Targets
+### 8.3 Performance Targets
 
 - Update rate: 10 Hz
 - Frame budget: < 2ms for OnGUI
 - Memory: No per-frame allocations
 
-### 7.4 Performance Architecture (Critical)
+### 8.4 Performance Architecture (Critical)
 
 **Risk:** 60+ parameters at 10 Hz with < 2ms budget is aggressive. The following mitigations are **mandatory**.
 
-#### 7.4.1 GUIStyle Caching
+#### 8.4.1 GUIStyle Caching
 
 All GUIStyles created **once** in Awake(), never in OnGUI():
 
@@ -418,7 +464,7 @@ public static void InitializeStyles()
 }
 ```
 
-#### 7.4.2 Rect Precomputation
+#### 8.4.2 Rect Precomputation
 
 Rects computed **once** per resolution change, not per frame:
 
@@ -441,7 +487,7 @@ public static void UpdateLayoutIfNeeded()
 }
 ```
 
-#### 7.4.3 String Preformatting (Zero Allocation)
+#### 8.4.3 String Preformatting (Zero Allocation)
 
 Strings formatted in `Update()`, not in `OnGUI()`. Use preallocated char buffers:
 
@@ -465,7 +511,7 @@ void OnGUI()
 }
 ```
 
-#### 7.4.4 Sparkline Architecture
+#### 8.4.4 Sparkline Architecture
 
 Sparklines use **fixed-size circular buffers** and **cached Texture2D**:
 
@@ -514,12 +560,12 @@ public class SparklineRenderer
 - **Never** allocate new lists or arrays during rendering
 - Use `SetPixels32` + `Apply(false)` for fastest texture updates
 
-#### 7.4.5 Snapshot Isolation Rule
+#### 8.4.5 Snapshot Isolation Rule
 
 **The dashboard reads from a data snapshot updated at 10 Hz. The UI never queries live engine values during OnGUI.**
 
 ```csharp
-// ValidationDashboard.cs
+// ValidationDashboard.Snapshot.cs
 public class DashboardSnapshot
 {
     // RCS
@@ -568,7 +614,7 @@ void OnGUI()
 - Future threading if needed (snapshot is thread-safe copy)
 - Deterministic UI behavior for testing
 
-#### 7.4.6 Performance Validation Gates
+#### 8.4.6 Performance Validation Gates
 
 Each stage has a mandatory performance gate:
 
@@ -583,52 +629,62 @@ Each stage has a mandatory performance gate:
 
 ---
 
-## 8. File Manifest
+## 9. File Manifest
 
 ### New Files
 
-| File | Purpose |
-|------|---------|
-| `ValidationDashboard.cs` | Main MonoBehaviour |
-| `ValidationDashboard.Layout.cs` | Layout calculations |
-| `ValidationDashboard.Styles.cs` | GUI styles and colors |
-| `ValidationDashboard.Gauges.cs` | Gauge rendering |
-| `ValidationDashboard.Panels.cs` | Panel helpers |
-| `Tabs/DashboardTab.cs` | Tab base class |
-| `Tabs/OverviewTab.cs` | Primary surface |
-| `Tabs/RCSTab.cs` | RCS detail |
-| `Tabs/PressurizerTab.cs` | PZR detail |
-| `Tabs/CVCSTab.cs` | CVCS detail |
-| `Tabs/SGRHRTab.cs` | SG/RHR detail |
-| `Tabs/SystemsTab.cs` | Auxiliary systems |
-| `Tabs/GraphsTab.cs` | Strip charts |
-| `Tabs/LogTab.cs` | Event log |
+| File | Location | Purpose |
+|------|----------|---------|
+| `ValidationDashboard.cs` | `Assets/Scripts/Validation/` | Main MonoBehaviour |
+| `ValidationDashboard.Layout.cs` | `Assets/Scripts/Validation/` | Layout calculations |
+| `ValidationDashboard.Styles.cs` | `Assets/Scripts/Validation/` | GUI styles and colors |
+| `ValidationDashboard.Gauges.cs` | `Assets/Scripts/Validation/` | Gauge rendering |
+| `ValidationDashboard.Panels.cs` | `Assets/Scripts/Validation/` | Panel helpers |
+| `ValidationDashboard.Snapshot.cs` | `Assets/Scripts/Validation/` | Data snapshot class |
+| `DashboardTab.cs` | `Assets/Scripts/Validation/Tabs/` | Tab base class |
+| `OverviewTab.cs` | `Assets/Scripts/Validation/Tabs/` | Primary surface |
+| `RCSTab.cs` | `Assets/Scripts/Validation/Tabs/` | RCS detail |
+| `PressurizerTab.cs` | `Assets/Scripts/Validation/Tabs/` | PZR detail |
+| `CVCSTab.cs` | `Assets/Scripts/Validation/Tabs/` | CVCS detail |
+| `SGRHRTab.cs` | `Assets/Scripts/Validation/Tabs/` | SG/RHR detail |
+| `SystemsTab.cs` | `Assets/Scripts/Validation/Tabs/` | Auxiliary systems |
+| `GraphsTab.cs` | `Assets/Scripts/Validation/Tabs/` | Strip charts |
+| `LogTab.cs` | `Assets/Scripts/Validation/Tabs/` | Event log |
 
 ### Modified Files
 
 | File | Changes |
 |------|---------|
-| `ScreenManager.cs` | Add new dashboard toggle |
+| `Validator.unity` | Add ValidationDashboard GameObject |
+
+### Unchanged Files (Preserved as Fallback)
+
+| File | Notes |
+|------|-------|
+| `HeatupValidationVisual.cs` | Legacy dashboard — remains functional |
+| `HeatupValidationVisual.*.cs` | All legacy partials preserved |
+| `SceneBridge.cs` | No changes needed — V key already works |
 
 ---
 
-## 9. Success Criteria
+## 10. Success Criteria
 
-- [ ] Overview tab displays 60+ parameters without scrolling
-- [ ] All 8 tabs accessible and functional
-- [ ] 27 annunciator tiles with correct ISA-18.1 behavior
-- [ ] Click-to-acknowledge on individual ALERTING tiles
-- [ ] 8 sparkline trends on Overview
-- [ ] Full strip charts on Graphs tab
-- [ ] Event log with severity filtering
-- [ ] All keyboard shortcuts working
-- [ ] Performance < 2ms per frame (all gates passed)
-- [ ] Works at 1080p and 1440p
-- [ ] Can toggle between old/new dashboard
+- [x] Overview tab displays 60+ parameters without scrolling
+- [x] All 8 tabs accessible and functional
+- [x] 27 annunciator tiles with correct ISA-18.1 behavior
+- [x] Click-to-acknowledge on individual ALERTING tiles
+- [x] 8 sparkline trends on Overview
+- [x] Full strip charts on Graphs tab
+- [x] Event log with severity filtering
+- [x] All keyboard shortcuts working (F1, F2, Ctrl+1-8, F5-F9)
+- [x] V key loads Validator scene with new dashboard
+- [x] F2 toggles between old/new dashboard (during transition period)
+- [x] Performance < 2ms per frame (all gates passed)
+- [x] Works at 1080p and 1440p
 
 ---
 
-## 10. Risk Assessment
+## 11. Risk Assessment
 
 | Risk | Likelihood | Mitigation |
 |------|------------|------------|
@@ -637,23 +693,24 @@ Each stage has a mandatory performance gate:
 | String allocation spikes | Low | All strings preformatted in Update(); no concatenation in OnGUI |
 | Layout breaks at different resolutions | Low | Rect caching with resolution-change detection |
 | GUIStyle creation in hot path | Low | Static initialization with guard flag |
+| Scene integration issues | Low | Uses same pattern as existing HeatupValidationVisual |
 
 ---
 
-## 11. Approval
+## 12. Approval
 
-- [ ] **IP-0043 approved to begin** — Craig
-- [ ] **Stage 1 complete (Core Infrastructure)** — Craig
-- [ ] **Stage 2 complete (Layout Framework)** — Craig
-- [ ] **Stage 3 complete (RCS/PZR Columns)** — Craig
-- [ ] **Stage 4 complete (CVCS/SG/Trends)** — Craig
-- [ ] **Stage 5 complete (Footer)** — Craig
-- [ ] **Stage 6 complete (Detail Tabs)** — Craig
-- [ ] **Stage 7 complete (Aux Tabs)** — Craig
-- [ ] **Stage 8 complete (Polish)** — Craig
-- [ ] **IP-0043 closed** — Craig
+- [x] **IP-0043 approved to begin** — Craig
+- [x] **Stage 1 complete (Core Infrastructure)** — Craig
+- [x] **Stage 2 complete (Layout Framework)** — Craig
+- [x] **Stage 3 complete (RCS/PZR Columns)** — Merged into Stage 2
+- [x] **Stage 4 complete (CVCS/SG/Trends)** — Craig
+- [x] **Stage 5 complete (Footer)** — Craig
+- [x] **Stage 6 complete (Detail Tabs)** — Craig
+- [x] **Stage 7 complete (Aux Tabs)** — Craig
+- [x] **Stage 8 complete (Polish)** — Craig
+- [x] **IP-0043 closed** — Craig
 
 ---
 
 *Implementation Plan prepared by Claude*  
-*Date: 2026-02-17*
+*Completed: 2026-02-17*

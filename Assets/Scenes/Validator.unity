@@ -119,6 +119,74 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
+--- !u!1 &582758273
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 582758276}
+  - component: {fileID: 582758275}
+  - component: {fileID: 582758274}
+  m_Layer: 0
+  m_Name: GameObject
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &582758274
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 582758273}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 0aa58d8b4f792264fb58f8355d5d0e17, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Critical.Validation.ValidationDashboard
+  engine: {fileID: 0}
+  refreshRate: 10
+  showOnStart: 1
+  enablePerfLogs: 0
+  dashboardVisible: 1
+  isActiveDashboard: 1
+--- !u!114 &582758275
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 582758273}
+  m_Enabled: 0
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c7cded6a0551a064fba54245eef9c50f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::HeatupValidationVisual
+  engine: {fileID: 0}
+  refreshRate: 10
+  showOnStart: 1
+  enableFrameTimeDiagnosticsLogs: 0
+  dashboardVisible: 1
+--- !u!4 &582758276
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 582758273}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1046.5448, y: 588.25806, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &619394800
 GameObject:
   m_ObjectHideFlags: 0
@@ -258,3 +326,4 @@ SceneRoots:
   m_Roots:
   - {fileID: 619394802}
   - {fileID: 1415653387}
+  - {fileID: 582758276}

@@ -1,8 +1,8 @@
-{
+﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-17T07:09:37Z",
+    "generated_at":  "2026-02-17T15:39:01Z",
     "source":  "Governance/IssueRegister/issue_index.json (CLOSED projection)",
-    "archived_issue_count":  86,
+    "archived_issue_count":  85,
     "issues":  [
                    {
                        "id":  "CS-0001",
@@ -22,9 +22,9 @@
                                                "HeatupLogs/IP-0017_RunB_20260214_164459/Unity_StageE_IP0017_RunB_20260214_164445.log:163872",
                                                "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_034_8.25hr.txt:209"
                                            ],
-                       "one_line_rca":  "Confirmed Ã¢â‚¬â€ `BulkHeatupStep()` parameter `totalPrimaryMass_lb` defaults to `0f` (RCSHeatup.cs:114). Neither call site (HeatupSimEngine.cs:1214-1217, 1378-1381) passes the 10th argument. Gate at Coup",
+                       "one_line_rca":  "Confirmed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â `BulkHeatupStep()` parameter `totalPrimaryMass_lb` defaults to `0f` (RCSHeatup.cs:114). Neither call site (HeatupSimEngine.cs:1214-1217, 1378-1381) passes the 10th argument. Gate at Coup",
                        "tags":  [
-                                    "Mass Conservation Ã¢â‚¬â€ Authority Enforcement"
+                                    "Mass Conservation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Authority Enforcement"
                                 ]
                    },
                    {
@@ -46,9 +46,9 @@
                                                "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_036_8.75hr.txt:35",
                                                "HeatupLogs/IP-0017_RunB_20260214_164459/Heatup_Interval_035_8.50hr.txt:35"
                                            ],
-                       "one_line_rca":  "Confirmed Ã¢â‚¬â€ Ledger was designed to be maintained by the solver in canonical mode. Canonical mode is never active (CS-0001), so no one updates the ledger after the initial rebase.",
+                       "one_line_rca":  "Confirmed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Ledger was designed to be maintained by the solver in canonical mode. Canonical mode is never active (CS-0001), so no one updates the ledger after the initial rebase.",
                        "tags":  [
-                                    "Mass Conservation Ã¢â‚¬â€ Ledger Integrity"
+                                    "Mass Conservation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Ledger Integrity"
                                 ]
                    },
                    {
@@ -70,9 +70,9 @@
                                                "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:45",
                                                "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:46"
                                            ],
-                       "one_line_rca":  "Confirmed Ã¢â‚¬â€ Fields declared in v5.3.0 as part of canonical architecture. Increment logic was never added to the CVCS flow paths in `StepSimulation()`. Full codebase grep confirms zero assignment sit",
+                       "one_line_rca":  "Confirmed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Fields declared in v5.3.0 as part of canonical architecture. Increment logic was never added to the CVCS flow paths in `StepSimulation()`. Full codebase grep confirms zero assignment sit",
                        "tags":  [
-                                    "Mass Conservation Ã¢â‚¬â€ Boundary Accounting"
+                                    "Mass Conservation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Boundary Accounting"
                                 ]
                    },
                    {
@@ -93,9 +93,9 @@
                                                "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_034_8.25hr.txt:234",
                                                "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_034_8.25hr.txt:239"
                                            ],
-                       "one_line_rca":  "Confirmed Ã¢â‚¬â€ v0.9.6 added pre-sync for solver input. In LEGACY mode, solver ignores PZR mass input and recomputes everything. Creates confusion about field ownership.",
+                       "one_line_rca":  "Confirmed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â v0.9.6 added pre-sync for solver input. In LEGACY mode, solver ignores PZR mass input and recomputes everything. Creates confusion about field ownership.",
                        "tags":  [
-                                    "Mass Conservation Ã¢â‚¬â€ State Ownership"
+                                    "Mass Conservation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â State Ownership"
                                 ]
                    },
                    {
@@ -116,9 +116,9 @@
                                                "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_035_8.50hr.txt:243",
                                                "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Interval_035_8.50hr.txt:254"
                                            ],
-                       "one_line_rca":  "Confirmed Ã¢â‚¬â€ v4.4.0 fix applied CVCS before solver to fix PZR level. Guard prevents double-counting. Architecturally correct in LEGACY mode but semantically wrong for canonical mode.",
+                       "one_line_rca":  "Confirmed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â v4.4.0 fix applied CVCS before solver to fix PZR level. Guard prevents double-counting. Architecturally correct in LEGACY mode but semantically wrong for canonical mode.",
                        "tags":  [
-                                    "Mass Conservation Ã¢â‚¬â€ Order of Operations"
+                                    "Mass Conservation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Order of Operations"
                                 ]
                    },
                    {
@@ -138,7 +138,7 @@
                                                "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageE_SystemRegression_2026-02-16_220200.md",
                                                "Governance/ImplementationReports/IP-0033_Closure_Recommendation_2026-02-16.md"
                                            ],
-                       "one_line_rca":  "Confirmed Ã¢â‚¬â€ Method added in v5.3.0 Stage 6 (Logging.cs:470, 114 lines, fully implemented). Call site in `StepSimulation()` was never added. Full codebase grep confirms zero call sites.",
+                       "one_line_rca":  "Confirmed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Method added in v5.3.0 Stage 6 (Logging.cs:470, 114 lines, fully implemented). Call site in `StepSimulation()` was never added. Full codebase grep confirms zero call sites.",
                        "tags":  [
                                     "Diagnostic Enforcement"
                                 ]
@@ -160,9 +160,9 @@
                                                "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageE_SystemRegression_2026-02-16_220200.md",
                                                "Governance/ImplementationReports/IP-0033_Closure_Recommendation_2026-02-16.md"
                                            ],
-                       "one_line_rca":  "Confirmed Ã¢â‚¬â€ TabValidation.cs:158-242 has 12 PASS/FAIL checks; none reference `primaryMassDrift`. UI was not updated when the diagnostic method was added in v5.3.0.",
+                       "one_line_rca":  "Confirmed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â TabValidation.cs:158-242 has 12 PASS/FAIL checks; none reference `primaryMassDrift`. UI was not updated when the diagnostic method was added in v5.3.0.",
                        "tags":  [
-                                    "Diagnostic Enforcement Ã¢â‚¬â€ Observability"
+                                    "Diagnostic Enforcement ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Observability"
                                 ]
                    },
                    {
@@ -183,9 +183,9 @@
                                                "Updates/Issues/IP-0015_StageE_Rerun_2026-02-14_164359.md:28",
                                                "HeatupLogs/IP-0017_RunA_20260214_164402/Heatup_Report_20260214_164402.txt:18"
                                            ],
-                       "one_line_rca":  "Confirmed Ã¢â‚¬â€ DEBUG-only conservation check exists in canonical path (CoupledThermo.cs:264-272, dead code). Static `ValidateMassConservation()` test exists (CoupledThermo.cs:516-529, manual runner onl",
+                       "one_line_rca":  "Confirmed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â DEBUG-only conservation check exists in canonical path (CoupledThermo.cs:264-272, dead code). Static `ValidateMassConservation()` test exists (CoupledThermo.cs:516-529, manual runner onl",
                        "tags":  [
-                                    "Mass Conservation Ã¢â‚¬â€ Runtime Validation"
+                                    "Mass Conservation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Runtime Validation"
                                 ]
                    },
                    {
@@ -209,28 +209,6 @@
                                 ]
                    },
                    {
-                       "id":  "CS-0010",
-                       "title":  "No SG secondary pressure alarm",
-                       "domain":  "Plant Protection \u0026 Limits",
-                       "severity":  "LOW",
-                       "status":  "CLOSED",
-                       "created_at":  "2026-02-13T00:00:00Z",
-                       "closed_at":  "2026-02-17T06:33:06Z",
-                       "resolution_type":  "FIXED",
-                       "fix_refs":  [
-                                        "IP-0035"
-                                    ],
-                       "validation_refs":  [
-                                               "Governance/ImplementationPlans/IP-0035/Reports/IP-0035_StageD_DomainValidation_2026-02-16_224400.md",
-                                               "Governance/ImplementationPlans/IP-0035/Reports/IP-0035_StageE_SystemRegression_2026-02-16_224900.md",
-                                               "Governance/ImplementationReports/IP-0035_Closure_Recommendation_2026-02-16.md"
-                                           ],
-                       "one_line_rca":  "SG secondary pressure had no high alarm path; IP-0035 added setpoint logic, propagation, and annunciation coverage.",
-                       "tags":  [
-                                    "Plant Protection Ã¢â‚¬â€ SG Boundary"
-                                ]
-                   },
-                   {
                        "id":  "CS-0011",
                        "title":  "Acceptance tests are formula-only, not simulation-validated",
                        "domain":  "Validation \u0026 Diagnostics",
@@ -247,7 +225,7 @@
                                                "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageE_SystemRegression_2026-02-16_220200.md",
                                                "Governance/ImplementationReports/IP-0033_Closure_Recommendation_2026-02-16.md"
                                            ],
-                       "one_line_rca":  "Confirmed Ã¢â‚¬â€ Tests designed as architectural validation (correct formulas). Simulation validation deferred to manual observation. No end-to-end test harness exists.",
+                       "one_line_rca":  "Confirmed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Tests designed as architectural validation (correct formulas). Simulation validation deferred to manual observation. No end-to-end test harness exists.",
                        "tags":  [
                                     "Validation Infrastructure"
                                 ]
@@ -269,7 +247,7 @@
                                                "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageE_SystemRegression_2026-02-16_220200.md",
                                                "Governance/ImplementationReports/IP-0033_Closure_Recommendation_2026-02-16.md"
                                            ],
-                       "one_line_rca":  "Confirmed Ã¢â‚¬â€ Regime is an internal physics concept, not an operator-visible alarm. Logging was not prioritized.",
+                       "one_line_rca":  "Confirmed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Regime is an internal physics concept, not an operator-visible alarm. Logging was not prioritized.",
                        "tags":  [
                                     "Observability"
                                 ]
@@ -297,7 +275,7 @@
                                            ],
                        "one_line_rca":  "Session reset path was previously fixed; strict same-process Run A/B evidence now confirms reset-state parity with no stale-session carryover.",
                        "tags":  [
-                                    "Mass Conservation Ã¢â‚¬â€ Session Integrity"
+                                    "Mass Conservation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Session Integrity"
                                 ]
                    },
                    {
@@ -319,7 +297,7 @@
                                            ],
                        "one_line_rca":  "Isolation boundary path now transitions correctly and no longer behaves as open inventory pressure boundary during startup.",
                        "tags":  [
-                                    "SG Secondary Physics Ã¢â‚¬â€ Pressure Boundary"
+                                    "SG Secondary Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Pressure Boundary"
                                 ]
                    },
                    {
@@ -341,7 +319,7 @@
                                            ],
                        "one_line_rca":  "Steam generation now accumulates inventory in isolated operation and contributes to physically consistent secondary pressurization.",
                        "tags":  [
-                                    "SG Secondary Physics Ã¢â‚¬â€ Compressible Volume"
+                                    "SG Secondary Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Compressible Volume"
                                 ]
                    },
                    {
@@ -363,7 +341,7 @@
                                            ],
                        "one_line_rca":  "SG sink behavior is bounded by corrected secondary-state physics, removing unrealistically dominant heat removal in startup.",
                        "tags":  [
-                                    "SG Secondary Physics Ã¢â‚¬â€ Heat Balance"
+                                    "SG Secondary Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Heat Balance"
                                 ]
                    },
                    {
@@ -388,7 +366,7 @@
                    },
                    {
                        "id":  "CS-0018",
-                       "title":  "NÃ¢â€šâ€š blanket treated as pressure clamp, not compressible cushion",
+                       "title":  "NÃƒÂ¢Ã¢â‚¬Å¡Ã¢â‚¬Å¡ blanket treated as pressure clamp, not compressible cushion",
                        "domain":  "Steam Generator Secondary Physics",
                        "severity":  "HIGH",
                        "status":  "CLOSED",
@@ -405,7 +383,7 @@
                                            ],
                        "one_line_rca":  "N2 blanket behavior is treated as compressible cushion response instead of rigid pressure clamp in startup conditions.",
                        "tags":  [
-                                    "SG Secondary Physics Ã¢â‚¬â€ Gas Volume Model"
+                                    "SG Secondary Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Gas Volume Model"
                                 ]
                    },
                    {
@@ -467,7 +445,7 @@
                                            ],
                        "one_line_rca":  "Solid hold pressure now follows physical state with bounded oscillation after isolated-branch and writer-governance corrections.",
                        "tags":  [
-                                    "Primary Thermodynamics Ã¢â‚¬â€ Solid Regime"
+                                    "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Solid Regime"
                                 ]
                    },
                    {
@@ -489,7 +467,7 @@
                                            ],
                        "one_line_rca":  "Pressurization coupling now tracks controller actuation coherently after transport and regime-coupling stabilization.",
                        "tags":  [
-                                    "Primary Thermodynamics Ã¢â‚¬â€ Controller Coupling"
+                                    "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Controller Coupling"
                                 ]
                    },
                    {
@@ -511,7 +489,7 @@
                                            ],
                        "one_line_rca":  "Surge and pressure trends are now consistently coupled through state-derived pressure evolution.",
                        "tags":  [
-                                    "Primary Thermodynamics Ã¢â‚¬â€ Solid Regime"
+                                    "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Solid Regime"
                                 ]
                    },
                    {
@@ -530,7 +508,7 @@
 
                                            ],
                        "tags":  [
-                                    "Primary Thermodynamics Ã¢â‚¬â€ PZR State Machine"
+                                    "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PZR State Machine"
                                 ]
                    },
                    {
@@ -549,7 +527,7 @@
 
                                            ],
                        "tags":  [
-                                    "Primary Thermodynamics Ã¢â‚¬â€ Bubble Detection"
+                                    "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Bubble Detection"
                                 ]
                    },
                    {
@@ -569,7 +547,7 @@
                                            ],
                        "one_line_rca":  "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
                        "tags":  [
-                                    "Primary Thermodynamics Ã¢â‚¬â€ Two-Phase Energy Balance"
+                                    "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Two-Phase Energy Balance"
                                 ]
                    },
                    {
@@ -589,7 +567,7 @@
                                            ],
                        "one_line_rca":  "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
                        "tags":  [
-                                    "Primary Thermodynamics Ã¢â‚¬â€ State Machine Logic"
+                                    "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â State Machine Logic"
                                 ]
                    },
                    {
@@ -609,7 +587,7 @@
                                            ],
                        "one_line_rca":  "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
                        "tags":  [
-                                    "Primary Thermodynamics Ã¢â‚¬â€ State Machine Timing"
+                                    "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â State Machine Timing"
                                 ]
                    },
                    {
@@ -629,7 +607,7 @@
                                            ],
                        "one_line_rca":  "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
                        "tags":  [
-                                    "Primary Thermodynamics Ã¢â‚¬â€ Two-Phase Energy Balance"
+                                    "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Two-Phase Energy Balance"
                                 ]
                    },
                    {
@@ -649,7 +627,7 @@
                                            ],
                        "one_line_rca":  "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
                        "tags":  [
-                                    "Primary Thermodynamics Ã¢â‚¬â€ Mass-Pressure Coupling"
+                                    "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Mass-Pressure Coupling"
                                 ]
                    },
                    {
@@ -671,7 +649,7 @@
                                            ],
                        "one_line_rca":  "RCP start heat-rate and pressure-step behavior are now stress-window bounded with corrected transient measurement logic.",
                        "tags":  [
-                                    "Primary Thermodynamics Ã¢â‚¬â€ Thermal Inertia"
+                                    "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Thermal Inertia"
                                 ]
                    },
                    {
@@ -713,7 +691,7 @@
                                            ],
                        "one_line_rca":  "No-RCP isolated hold now preserves stable/non-rising thermal response with corrected no-energy transport handling.",
                        "tags":  [
-                                    "Core Physics Ã¢â‚¬â€ Primary Energy Balance"
+                                    "Core Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Primary Energy Balance"
                                 ]
                    },
                    {
@@ -735,7 +713,7 @@
                                            ],
                        "one_line_rca":  "Pre-RCP regime behavior now exhibits bounded ceiling behavior instead of unbounded drift.",
                        "tags":  [
-                                    "Core Physics Ã¢â‚¬â€ Primary Energy Balance"
+                                    "Core Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Primary Energy Balance"
                                 ]
                    },
                    {
@@ -755,12 +733,12 @@
                                            ],
                        "one_line_rca":  "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
                        "tags":  [
-                                    "CVCS Ã¢â‚¬â€ Primary Energy Balance Boundary"
+                                    "CVCS ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Primary Energy Balance Boundary"
                                 ]
                    },
                    {
                        "id":  "CS-0036",
-                       "title":  "DRAIN phase duration excessive Ã¢â‚¬â€ PZR requires ~4 hours to reach 25% level",
+                       "title":  "DRAIN phase duration excessive ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PZR requires ~4 hours to reach 25% level",
                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
                        "severity":  "HIGH",
                        "status":  "CLOSED",
@@ -775,7 +753,7 @@
                                            ],
                        "one_line_rca":  "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
                        "tags":  [
-                                    "Bubble Formation Ã¢â‚¬â€ Phase Controller / CVCS Flow Balance"
+                                    "Bubble Formation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase Controller / CVCS Flow Balance"
                                 ]
                    },
                    {
@@ -794,7 +772,7 @@
 
                                            ],
                        "tags":  [
-                                    "Observability Ã¢â‚¬â€ Operator/Visual Enhancement"
+                                    "Observability ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Operator/Visual Enhancement"
                                 ]
                    },
                    {
@@ -816,7 +794,7 @@
                                            ],
                        "one_line_rca":  "RCP start/stop transient forcing and coupling were smoothed, removing prior PZR envelope spikes.",
                        "tags":  [
-                                    "Primary Thermodynamics Ã¢â‚¬â€ Regime Transition Stability"
+                                    "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Regime Transition Stability"
                                 ]
                    },
                    {
@@ -836,7 +814,7 @@
                                            ],
                        "one_line_rca":  "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
                        "tags":  [
-                                    "CVCS Ã¢â‚¬â€ VCT Flow Boundary Accounting"
+                                    "CVCS ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â VCT Flow Boundary Accounting"
                                 ]
                    },
                    {
@@ -856,7 +834,7 @@
                                            ],
                        "one_line_rca":  "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
                        "tags":  [
-                                    "Mass Conservation Ã¢â‚¬â€ Indicator Integrity"
+                                    "Mass Conservation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Indicator Integrity"
                                 ]
                    },
                    {
@@ -876,9 +854,9 @@
                                                "Governance/ImplementationPlans/IP-0033/Reports/IP-0033_StageE_SystemRegression_2026-02-16_220200.md",
                                                "Governance/ImplementationReports/IP-0033_Closure_Recommendation_2026-02-16.md"
                                            ],
-                       "one_line_rca":  "Confirmed Ã¢â‚¬â€ `initialSystemInventory_gal` is set at t=0 from `PlantConstants.RCS_WATER_VOLUME` (geometric, temperature-independent). `totalSystemInventory_gal` is computed at runtime from `RCSWaterMass / ÃÂ(T,P)` (mass-derived, temperature-dependent). The difference grows with temperature as density decreases. At 400Ã‚Â°F: phantom error Ã¢â€°Ë† 13,474 gallons.",
+                       "one_line_rca":  "Confirmed ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â `initialSystemInventory_gal` is set at t=0 from `PlantConstants.RCS_WATER_VOLUME` (geometric, temperature-independent). `totalSystemInventory_gal` is computed at runtime from `RCSWaterMass / ÃƒÂÃ‚Â(T,P)` (mass-derived, temperature-dependent). The difference grows with temperature as density decreases. At 400Ãƒâ€šÃ‚Â°F: phantom error ÃƒÂ¢Ã¢â‚¬Â°Ã‹â€  13,474 gallons.",
                        "tags":  [
-                                    "Validation / Diagnostic Display Ã¢â‚¬â€ Conservation Metric Integrity"
+                                    "Validation / Diagnostic Display ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Conservation Metric Integrity"
                                 ]
                    },
                    {
@@ -902,7 +880,7 @@
                    },
                    {
                        "id":  "CS-0043",
-                       "title":  "Pressurizer pressure boundary failure during bubble formation Ã¢â‚¬â€ runaway depressurization spiral",
+                       "title":  "Pressurizer pressure boundary failure during bubble formation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â runaway depressurization spiral",
                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
                        "severity":  "CRITICAL",
                        "status":  "CLOSED",
@@ -917,12 +895,12 @@
                                            ],
                        "one_line_rca":  "Closed by governance normalization pass with implementation evidence linked via fix_refs and validation_refs.",
                        "tags":  [
-                                    "Core Physics Ã¢â‚¬â€ Two-Phase Pressurizer Energy Partition"
+                                    "Core Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Two-Phase Pressurizer Energy Partition"
                                 ]
                    },
                    {
                        "id":  "CS-0044",
-                       "title":  "Async log writer Ã¢â‚¬â€ move synchronous file I/O to background thread",
+                       "title":  "Async log writer ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â move synchronous file I/O to background thread",
                        "domain":  "Performance \u0026 Runtime",
                        "severity":  "LOW",
                        "status":  "CLOSED",
@@ -942,7 +920,7 @@
                    },
                    {
                        "id":  "CS-0045",
-                       "title":  "Physics snapshot boundary Ã¢â‚¬â€ decouple physics compute from UI rendering",
+                       "title":  "Physics snapshot boundary ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â decouple physics compute from UI rendering",
                        "domain":  "Performance \u0026 Runtime",
                        "severity":  "LOW",
                        "status":  "CLOSED",
@@ -962,7 +940,7 @@
                    },
                    {
                        "id":  "CS-0046",
-                       "title":  "Physics parallelization Ã¢â‚¬â€ move simulation step to worker thread or Unity Jobs",
+                       "title":  "Physics parallelization ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â move simulation step to worker thread or Unity Jobs",
                        "domain":  "Performance \u0026 Runtime",
                        "severity":  "LOW",
                        "status":  "CLOSED",
@@ -1609,31 +1587,6 @@
                                 ]
                    },
                    {
-                       "id":  "CS-0079",
-                       "title":  "RCP startup permissive is configured below documented minimum startup pressure requirements.",
-                       "domain":  "Plant Protection \u0026 Limits",
-                       "severity":  "HIGH",
-                       "status":  "CLOSED",
-                       "created_at":  "2026-02-15T16:50:47Z",
-                       "closed_at":  "2026-02-17T06:33:06Z",
-                       "resolution_type":  "FIXED",
-                       "fix_refs":  [
-                                        "IP-0035"
-                                    ],
-                       "validation_refs":  [
-                                               "Governance/ImplementationPlans/IP-0035/Reports/IP-0035_StageD_DomainValidation_2026-02-16_224400.md",
-                                               "Governance/ImplementationPlans/IP-0035/Reports/IP-0035_StageE_SystemRegression_2026-02-16_224900.md",
-                                               "Governance/ImplementationReports/IP-0035_Closure_Recommendation_2026-02-16.md"
-                                           ],
-                       "one_line_rca":  "RCP startup permissive contract drifted below authority; IP-0035 aligned threshold and startup messaging to 400 psig.",
-                       "tags":  [
-                                    "NCR-Migration",
-                                    "Audit-2026-02-15",
-                                    "F-001",
-                                    "Constitution-Article-VI"
-                                ]
-                   },
-                   {
                        "id":  "CS-0081",
                        "title":  "Solid-plant high pressure control band is configured above documented operating band.",
                        "domain":  "Pressurizer \u0026 Two-Phase Physics",
@@ -1892,28 +1845,58 @@
                                 ]
                    },
                    {
-                       "id":  "CS-0080",
-                       "title":  "RCP heat-input constants do not align with the cited cold-water heatup reference basis.",
-                       "domain":  "Primary Thermodynamics",
+                       "id":  "CS-0107",
+                       "title":  "IP-0042 governance compliance remediation (scope anchoring, dependency hierarchy, revision control, and bundle-format alignment)",
+                       "domain":  "Operator Interface & Scenarios",
                        "severity":  "HIGH",
                        "status":  "CLOSED",
-                       "created_at":  "2026-02-15T16:50:47Z",
-                       "closed_at":  "2026-02-17T07:09:37Z",
+                       "created_at":  "2026-02-17T12:52:46Z",
+                       "closed_at":  "2026-02-17T15:30:57Z",
                        "resolution_type":  "FIXED",
                        "fix_refs":  [
-                                        "IP-0036"
+                                        "IP-0043"
                                     ],
                        "validation_refs":  [
-                                               "Governance/ImplementationPlans/IP-0036/Reports/IP-0036_StageD_DomainValidation_2026-02-17_072000.md",
-                                               "Governance/ImplementationPlans/IP-0036/Reports/IP-0036_StageE_SystemRegression_2026-02-17_072500.md",
-                                               "Governance/ImplementationReports/IP-0036_Closure_Recommendation_2026-02-17.md"
+                                               "Governance/ImplementationPlans/Closed/IP-0043 - Validation Dashboard OnGUI Parameter Expansion.md",
+                                               "Governance/Issues/CS-0107_Investigation_Report_2026-02-17_125246.md"
                                            ],
-                       "one_line_rca":  "Runtime RCP heat authority constants and consuming paths were aligned to the frozen baseline (6 MW each / 24 MW total).",
+                       "one_line_rca":  "Governance compliance remediation scope linked to IP-0043 was completed and closed under approved closeout.",
                        "tags":  [
-                                    "NCR-Migration",
-                                    "Audit-2026-02-15",
-                                    "F-002",
-                                    "Constitution-Article-VI"
+                                    "IP-0043",
+                                    "Governance-Compliance",
+                                    "Dependency-Hierarchy",
+                                    "Revision-Control",
+                                    "Bundle-Format",
+                                    "User-Request-2026-02-17"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0099",
+                       "title":  "Governance Hardening v3 – Mandatory CS Lifecycle, Persistent Domain Model, Dependency Hierarchy Enforcement, Cross-Domain Protocol, CS Persistence Rule, and IP Revision Control",
+                       "domain":  "Project Governance",
+                       "severity":  "CRITICAL",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-17T12:47:00Z",
+                       "closed_at":  "2026-02-17T15:39:01Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0047"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/ImplementationPlans/Closed/IP-0047/Reports/IP-0047_GateA_GovernanceBaseline.md",
+                                               "PROJECT_CONSTITUTION.md",
+                                               "Governance/IssueRegister/issue_register.schema.json"
+                                           ],
+                       "one_line_rca":  "Constitutional governance hardening baseline and active-status schema compliance were validated and recorded as Gate A PASS under IP-0047.",
+                       "tags":  [
+                                    "Governance-Hardening-v3",
+                                    "Constitution-Amendment",
+                                    "Mandatory-CS-Lifecycle",
+                                    "Persistent-Domain-Model",
+                                    "Dependency-Hierarchy",
+                                    "Cross-Domain-Protocol",
+                                    "IP-Revision-Control",
+                                    "IP-0047-GateA"
                                 ]
                    }
                ]
