@@ -36,7 +36,7 @@
 //   2. RCS heats slowly from pump heat + decay heat
 //   3. Hold at ~160°F (cold water addition accident limit)
 //   4. Bubble forms in pressurizer at ~230°F
-//   5. First RCP started (requires P ≥ 320 psig, bubble exists)
+//   5. First RCP started (requires P >= 400 psig, bubble exists)
 //   6. After all RCPs running → begin RHR isolation
 //   7. Close suction valves → RHR in STANDBY (ECCS alignment)
 //   8. Letdown transitions from HCV-128 to normal CVCS orifices

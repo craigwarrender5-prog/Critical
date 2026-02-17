@@ -127,6 +127,13 @@ public partial class HeatupSimEngine
         noRcpTransportFactor = 1f;
         thermoStateWriter = "INIT";
         smoothedRegime2Alpha = 0f;
+        previousPhysicsRegimeId = 0;
+        previousPhysicsRegimeLabel = "UNSET";
+        nextRegime2ConvergenceWarnTime_hr = 0f;
+        nextRegime3ConvergenceWarnTime_hr = 0f;
+        nextR1MassAuditWarnTime_hr = 0f;
+        nextPbocPairingWarnTime_hr = 0f;
+        hotPathWarningSuppressedCount = 0;
         pbocTickIndex = 0;
         pbocEventActiveThisTick = false;
         pbocCurrentEvent = default;
@@ -136,6 +143,7 @@ public partial class HeatupSimEngine
         pbocEventCount = 0;
         pbocPairingAssertionFailures = 0;
         CoupledThermo.ResetSessionFlags();
+        ResetHZPSystemsLifecycle();
 
         longHoldPressureAuditActive = false;
         longHoldPressureWriteCount = 0;
@@ -669,6 +677,7 @@ public partial class HeatupSimEngine
         sealInjectionOK = true;
         chargingActive = true;
         letdownActive = true;
+        sgSecondaryPressureHigh = false;
 
         // Clear history buffers and event log
         ClearHistoryAndEvents();
@@ -676,6 +685,7 @@ public partial class HeatupSimEngine
         // Reset alarm edge detection state
         prev_rcpCount = -1;
         prev_plantMode = -1;
+        prev_sgSecondaryPressureHigh = false;
 
         // Log initial state
         if (solidPressurizer)

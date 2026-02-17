@@ -1,7 +1,7 @@
-﻿{
+{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-16T12:33:37Z",
-    "entry_count":  97,
+    "generated_at":  "2026-02-17T06:33:06Z",
+    "entry_count":  98,
     "entries":  [
                     {
                         "id":  "CS-0001",
@@ -16,7 +16,7 @@
                         "closed_at":  "2026-02-14T00:00:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Mass Conservation â€” Authority Enforcement"
+                                     "Mass Conservation Ã¢â‚¬â€ Authority Enforcement"
                                  ]
                     },
                     {
@@ -32,7 +32,7 @@
                         "closed_at":  "2026-02-14T00:00:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Mass Conservation â€” Ledger Integrity"
+                                     "Mass Conservation Ã¢â‚¬â€ Ledger Integrity"
                                  ]
                     },
                     {
@@ -48,7 +48,7 @@
                         "closed_at":  "2026-02-14T00:00:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Mass Conservation â€” Boundary Accounting"
+                                     "Mass Conservation Ã¢â‚¬â€ Boundary Accounting"
                                  ]
                     },
                     {
@@ -64,7 +64,7 @@
                         "closed_at":  "2026-02-14T00:00:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Mass Conservation â€” State Ownership"
+                                     "Mass Conservation Ã¢â‚¬â€ State Ownership"
                                  ]
                     },
                     {
@@ -80,7 +80,7 @@
                         "closed_at":  "2026-02-14T00:00:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Mass Conservation â€” Order of Operations"
+                                     "Mass Conservation Ã¢â‚¬â€ Order of Operations"
                                  ]
                     },
                     {
@@ -88,13 +88,13 @@
                         "title":  "UpdatePrimaryMassLedgerDiagnostics() never called (dead code)",
                         "domain":  "Validation \u0026 Diagnostics",
                         "severity":  "HIGH",
-                        "status":  "READY_FOR_FIX",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0007",
-                        "assigned_ip":  "IP-0001",
-                        "updated_at":  "2026-02-14T15:57:51Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  "IP-0033",
+                        "updated_at":  "2026-02-16T20:58:00Z",
+                        "closed_at":  "2026-02-16T20:58:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "Diagnostic Enforcement"
                                  ]
@@ -104,15 +104,15 @@
                         "title":  "No UI display for primary ledger drift",
                         "domain":  "Validation \u0026 Diagnostics",
                         "severity":  "MEDIUM",
-                        "status":  "READY_FOR_FIX",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0007",
-                        "assigned_ip":  "IP-0001",
-                        "updated_at":  "2026-02-14T15:57:51Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  "IP-0033",
+                        "updated_at":  "2026-02-16T20:58:00Z",
+                        "closed_at":  "2026-02-16T20:58:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Diagnostic Enforcement â€” Observability"
+                                     "Diagnostic Enforcement Ã¢â‚¬â€ Observability"
                                  ]
                     },
                     {
@@ -128,7 +128,7 @@
                         "closed_at":  "2026-02-14T00:00:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Mass Conservation â€” Runtime Validation"
+                                     "Mass Conservation Ã¢â‚¬â€ Runtime Validation"
                                  ]
                     },
                     {
@@ -144,7 +144,7 @@
                         "closed_at":  "2026-02-14T19:20:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Energy Conservation â€” SG Boundary"
+                                     "Energy Conservation Ã¢â‚¬â€ SG Boundary"
                                  ]
                     },
                     {
@@ -152,15 +152,15 @@
                         "title":  "No SG secondary pressure alarm",
                         "domain":  "Plant Protection \u0026 Limits",
                         "severity":  "LOW",
-                        "status":  "READY_FOR_FIX",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0006",
-                        "assigned_ip":  "IP-0007",
-                        "updated_at":  "2026-02-14T15:57:51Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  "IP-0035",
+                        "updated_at":  "2026-02-17T06:33:06Z",
+                        "closed_at":  "2026-02-17T06:33:06Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Plant Protection â€” SG Boundary"
+                                     "Plant Protection Ã¢â‚¬â€ SG Boundary"
                                  ]
                     },
                     {
@@ -168,13 +168,13 @@
                         "title":  "Acceptance tests are formula-only, not simulation-validated",
                         "domain":  "Validation \u0026 Diagnostics",
                         "severity":  "HIGH",
-                        "status":  "READY_FOR_FIX",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0007",
-                        "assigned_ip":  "IP-0010",
-                        "updated_at":  "2026-02-14T15:57:51Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  "IP-0033",
+                        "updated_at":  "2026-02-16T20:58:00Z",
+                        "closed_at":  "2026-02-16T20:58:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "Validation Infrastructure"
                                  ]
@@ -184,13 +184,13 @@
                         "title":  "No regime transition logging",
                         "domain":  "Validation \u0026 Diagnostics",
                         "severity":  "LOW",
-                        "status":  "READY_FOR_FIX",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0007",
-                        "assigned_ip":  "IP-0012",
-                        "updated_at":  "2026-02-14T15:57:51Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  "IP-0033",
+                        "updated_at":  "2026-02-16T20:58:00Z",
+                        "closed_at":  "2026-02-16T20:58:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "Observability"
                                  ]
@@ -208,7 +208,7 @@
                         "closed_at":  "2026-02-14T16:27:40Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Mass Conservation â€” Session Integrity"
+                                     "Mass Conservation Ã¢â‚¬â€ Session Integrity"
                                  ]
                     },
                     {
@@ -224,7 +224,7 @@
                         "closed_at":  "2026-02-14T16:33:37Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "SG Secondary Physics â€” Pressure Boundary"
+                                     "SG Secondary Physics Ã¢â‚¬â€ Pressure Boundary"
                                  ]
                     },
                     {
@@ -240,7 +240,7 @@
                         "closed_at":  "2026-02-14T16:33:37Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "SG Secondary Physics â€” Compressible Volume"
+                                     "SG Secondary Physics Ã¢â‚¬â€ Compressible Volume"
                                  ]
                     },
                     {
@@ -256,7 +256,7 @@
                         "closed_at":  "2026-02-14T16:33:37Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "SG Secondary Physics â€” Heat Balance"
+                                     "SG Secondary Physics Ã¢â‚¬â€ Heat Balance"
                                  ]
                     },
                     {
@@ -272,12 +272,12 @@
                         "closed_at":  "2026-02-14T19:20:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "SG Secondary Physics â€” Startup Procedure"
+                                     "SG Secondary Physics Ã¢â‚¬â€ Startup Procedure"
                                  ]
                     },
                     {
                         "id":  "CS-0018",
-                        "title":  "Nâ‚‚ blanket treated as pressure clamp, not compressible cushion",
+                        "title":  "NÃ¢â€šâ€š blanket treated as pressure clamp, not compressible cushion",
                         "domain":  "Steam Generator Secondary Physics",
                         "severity":  "HIGH",
                         "status":  "CLOSED",
@@ -288,7 +288,7 @@
                         "closed_at":  "2026-02-14T16:33:37Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "SG Secondary Physics â€” Gas Volume Model"
+                                     "SG Secondary Physics Ã¢â‚¬â€ Gas Volume Model"
                                  ]
                     },
                     {
@@ -304,7 +304,7 @@
                         "closed_at":  "2026-02-14T19:20:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "SG Secondary Physics â€” Temperature Progression"
+                                     "SG Secondary Physics Ã¢â‚¬â€ Temperature Progression"
                                  ]
                     },
                     {
@@ -320,7 +320,7 @@
                         "closed_at":  "2026-02-14T19:20:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "SG Secondary Physics â€” Dynamic Response"
+                                     "SG Secondary Physics Ã¢â‚¬â€ Dynamic Response"
                                  ]
                     },
                     {
@@ -336,7 +336,7 @@
                         "closed_at":  "2026-02-15T08:50:52Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics â€” Solid Regime"
+                                     "Primary Thermodynamics Ã¢â‚¬â€ Solid Regime"
                                  ]
                     },
                     {
@@ -352,7 +352,7 @@
                         "closed_at":  "2026-02-15T08:50:52Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics â€” Controller Coupling"
+                                     "Primary Thermodynamics Ã¢â‚¬â€ Controller Coupling"
                                  ]
                     },
                     {
@@ -368,7 +368,7 @@
                         "closed_at":  "2026-02-15T08:50:52Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics â€” Solid Regime"
+                                     "Primary Thermodynamics Ã¢â‚¬â€ Solid Regime"
                                  ]
                     },
                     {
@@ -384,7 +384,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "CLOSE_NO_CODE",
                         "tags":  [
-                                     "Primary Thermodynamics â€” PZR State Machine"
+                                     "Primary Thermodynamics Ã¢â‚¬â€ PZR State Machine"
                                  ]
                     },
                     {
@@ -400,7 +400,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "CLOSE_NO_CODE",
                         "tags":  [
-                                     "Primary Thermodynamics â€” Bubble Detection"
+                                     "Primary Thermodynamics Ã¢â‚¬â€ Bubble Detection"
                                  ]
                     },
                     {
@@ -416,7 +416,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics â€” Two-Phase Energy Balance"
+                                     "Primary Thermodynamics Ã¢â‚¬â€ Two-Phase Energy Balance"
                                  ]
                     },
                     {
@@ -432,7 +432,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics â€” State Machine Logic"
+                                     "Primary Thermodynamics Ã¢â‚¬â€ State Machine Logic"
                                  ]
                     },
                     {
@@ -448,7 +448,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics â€” State Machine Timing"
+                                     "Primary Thermodynamics Ã¢â‚¬â€ State Machine Timing"
                                  ]
                     },
                     {
@@ -464,7 +464,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics â€” Two-Phase Energy Balance"
+                                     "Primary Thermodynamics Ã¢â‚¬â€ Two-Phase Energy Balance"
                                  ]
                     },
                     {
@@ -480,7 +480,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics â€” Mass-Pressure Coupling"
+                                     "Primary Thermodynamics Ã¢â‚¬â€ Mass-Pressure Coupling"
                                  ]
                     },
                     {
@@ -496,7 +496,7 @@
                         "closed_at":  "2026-02-15T08:50:52Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics â€” Thermal Inertia"
+                                     "Primary Thermodynamics Ã¢â‚¬â€ Thermal Inertia"
                                  ]
                     },
                     {
@@ -528,7 +528,7 @@
                         "closed_at":  "2026-02-15T08:50:52Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Core Physics â€” Primary Energy Balance"
+                                     "Core Physics Ã¢â‚¬â€ Primary Energy Balance"
                                  ]
                     },
                     {
@@ -544,7 +544,7 @@
                         "closed_at":  "2026-02-15T08:50:52Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Core Physics â€” Primary Energy Balance"
+                                     "Core Physics Ã¢â‚¬â€ Primary Energy Balance"
                                  ]
                     },
                     {
@@ -560,12 +560,12 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "CVCS â€” Primary Energy Balance Boundary"
+                                     "CVCS Ã¢â‚¬â€ Primary Energy Balance Boundary"
                                  ]
                     },
                     {
                         "id":  "CS-0036",
-                        "title":  "DRAIN phase duration excessive â€” PZR requires ~4 hours to reach 25% level",
+                        "title":  "DRAIN phase duration excessive Ã¢â‚¬â€ PZR requires ~4 hours to reach 25% level",
                         "domain":  "Pressurizer \u0026 Two-Phase Physics",
                         "severity":  "HIGH",
                         "status":  "CLOSED",
@@ -576,7 +576,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Bubble Formation â€” Phase Controller / CVCS Flow Balance"
+                                     "Bubble Formation Ã¢â‚¬â€ Phase Controller / CVCS Flow Balance"
                                  ]
                     },
                     {
@@ -592,7 +592,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "INVALID",
                         "tags":  [
-                                     "Observability â€” Operator/Visual Enhancement"
+                                     "Observability Ã¢â‚¬â€ Operator/Visual Enhancement"
                                  ]
                     },
                     {
@@ -608,7 +608,7 @@
                         "closed_at":  "2026-02-15T08:50:52Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics â€” Regime Transition Stability"
+                                     "Primary Thermodynamics Ã¢â‚¬â€ Regime Transition Stability"
                                  ]
                     },
                     {
@@ -624,7 +624,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "CVCS â€” VCT Flow Boundary Accounting"
+                                     "CVCS Ã¢â‚¬â€ VCT Flow Boundary Accounting"
                                  ]
                     },
                     {
@@ -640,7 +640,7 @@
                         "closed_at":  "2026-02-16T12:33:37Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Mass Conservation â€” Indicator Integrity"
+                                     "Mass Conservation Ã¢â‚¬â€ Indicator Integrity"
                                  ]
                     },
                     {
@@ -648,15 +648,15 @@
                         "title":  "Inventory audit baseline type mismatch (geometric vs mass-derived gallons)",
                         "domain":  "Validation \u0026 Diagnostics",
                         "severity":  "MEDIUM",
-                        "status":  "READY_FOR_FIX",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0007",
-                        "assigned_ip":  "IP-0011",
-                        "updated_at":  "2026-02-14T15:57:51Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  "IP-0033",
+                        "updated_at":  "2026-02-16T20:58:00Z",
+                        "closed_at":  "2026-02-16T20:58:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Validation / Diagnostic Display â€” Conservation Metric Integrity"
+                                     "Validation / Diagnostic Display Ã¢â‚¬â€ Conservation Metric Integrity"
                                  ]
                     },
                     {
@@ -672,12 +672,12 @@
                         "closed_at":  "2026-02-15T10:02:07Z",
                         "resolution_type":  "INVALID",
                         "tags":  [
-                                     "Operator \u0026 Scenario Framework â€” Dashboard Visualization"
+                                     "Operator \u0026 Scenario Framework Ã¢â‚¬â€ Dashboard Visualization"
                                  ]
                     },
                     {
                         "id":  "CS-0043",
-                        "title":  "Pressurizer pressure boundary failure during bubble formation â€” runaway depressurization spiral",
+                        "title":  "Pressurizer pressure boundary failure during bubble formation Ã¢â‚¬â€ runaway depressurization spiral",
                         "domain":  "Pressurizer \u0026 Two-Phase Physics",
                         "severity":  "CRITICAL",
                         "status":  "CLOSED",
@@ -688,12 +688,12 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Core Physics â€” Two-Phase Pressurizer Energy Partition"
+                                     "Core Physics Ã¢â‚¬â€ Two-Phase Pressurizer Energy Partition"
                                  ]
                     },
                     {
                         "id":  "CS-0044",
-                        "title":  "Async log writer â€” move synchronous file I/O to background thread",
+                        "title":  "Async log writer Ã¢â‚¬â€ move synchronous file I/O to background thread",
                         "domain":  "Performance \u0026 Runtime",
                         "severity":  "LOW",
                         "status":  "CLOSED",
@@ -709,7 +709,7 @@
                     },
                     {
                         "id":  "CS-0045",
-                        "title":  "Physics snapshot boundary â€” decouple physics compute from UI rendering",
+                        "title":  "Physics snapshot boundary Ã¢â‚¬â€ decouple physics compute from UI rendering",
                         "domain":  "Performance \u0026 Runtime",
                         "severity":  "LOW",
                         "status":  "CLOSED",
@@ -725,7 +725,7 @@
                     },
                     {
                         "id":  "CS-0046",
-                        "title":  "Physics parallelization â€” move simulation step to worker thread or Unity Jobs",
+                        "title":  "Physics parallelization Ã¢â‚¬â€ move simulation step to worker thread or Unity Jobs",
                         "domain":  "Performance \u0026 Runtime",
                         "severity":  "LOW",
                         "status":  "CLOSED",
@@ -865,7 +865,7 @@
                         "closed_at":  "2026-02-14T19:20:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "SG Secondary Physics â€” Dynamic Response",
+                                     "SG Secondary Physics Ã¢â‚¬â€ Dynamic Response",
                                      "Stage E Failure Follow-up"
                                  ]
                     },
@@ -912,8 +912,8 @@
                         "status":  "READY_FOR_FIX",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0011",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-14T20:03:10Z",
+                        "assigned_ip":  "IP-0037",
+                        "updated_at":  "2026-02-16T19:31:03Z",
                         "closed_at":  null,
                         "resolution_type":  null,
                         "tags":  [
@@ -926,13 +926,13 @@
                         "title":  "HZP subsystem initialization occurs in UPDATE path (lazy init phase leakage)",
                         "domain":  "Project Governance",
                         "severity":  "HIGH",
-                        "status":  "READY_FOR_FIX",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0010",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-14T19:55:32Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  "IP-0032",
+                        "updated_at":  "2026-02-16T20:10:00Z",
+                        "closed_at":  "2026-02-16T20:10:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "GOLD Lifecycle C05",
                                      "Update-time Initialization"
@@ -960,13 +960,13 @@
                         "title":  "PlantConstants partials execute runtime calculation logic (GOLD constants-file fail gate)",
                         "domain":  "Project Governance",
                         "severity":  "HIGH",
-                        "status":  "READY_FOR_FIX",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0010",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-14T19:55:32Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  "IP-0032",
+                        "updated_at":  "2026-02-16T20:10:00Z",
+                        "closed_at":  "2026-02-16T20:10:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "GOLD C03/C08",
                                      "Constants Runtime Logic"
@@ -994,13 +994,13 @@
                         "title":  "Stage E primary-heat telemetry is aliased to SG removal, collapsing over-primary validation signal",
                         "domain":  "Validation \u0026 Diagnostics",
                         "severity":  "HIGH",
-                        "status":  "READY_FOR_FIX",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0007",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-14T19:55:32Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  "IP-0033",
+                        "updated_at":  "2026-02-16T20:58:00Z",
+                        "closed_at":  "2026-02-16T20:58:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "Logging/Telemetry Semantics",
                                      "Validation Signal Integrity"
@@ -1014,8 +1014,8 @@
                         "status":  "READY_FOR_FIX",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0010",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-14T19:55:32Z",
+                        "assigned_ip":  "IP-0038",
+                        "updated_at":  "2026-02-16T19:31:03Z",
                         "closed_at":  null,
                         "resolution_type":  null,
                         "tags":  [
@@ -1028,13 +1028,13 @@
                         "title":  "Heatup engine state is exposed as ad-hoc mutable public fields without typed snapshot boundary",
                         "domain":  "Validation \u0026 Diagnostics",
                         "severity":  "HIGH",
-                        "status":  "READY_FOR_FIX",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0007",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-14T19:55:32Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  "IP-0033",
+                        "updated_at":  "2026-02-16T20:58:00Z",
+                        "closed_at":  "2026-02-16T20:58:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "State Ownership",
                                      "Structured Snapshot Boundary"
@@ -1133,8 +1133,8 @@
                         "status":  "READY_FOR_FIX",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0010",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-14T19:55:32Z",
+                        "assigned_ip":  "IP-0038",
+                        "updated_at":  "2026-02-16T19:31:03Z",
                         "closed_at":  null,
                         "resolution_type":  null,
                         "tags":  [
@@ -1271,8 +1271,8 @@
                         "status":  "READY_FOR_FIX",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0011",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-15T10:24:34Z",
+                        "assigned_ip":  "IP-0037",
+                        "updated_at":  "2026-02-16T19:31:03Z",
                         "closed_at":  null,
                         "resolution_type":  null,
                         "tags":  [
@@ -1286,13 +1286,13 @@
                         "title":  "RCP startup permissive is configured below documented minimum startup pressure requirements.",
                         "domain":  "Plant Protection \u0026 Limits",
                         "severity":  "HIGH",
-                        "status":  "INVESTIGATING",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0006",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-15T16:51:57Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  "IP-0035",
+                        "updated_at":  "2026-02-17T06:33:06Z",
+                        "closed_at":  "2026-02-17T06:33:06Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "NCR-Migration",
                                      "Audit-2026-02-15",
@@ -1305,11 +1305,11 @@
                         "title":  "RCP heat-input constants do not align with the cited cold-water heatup reference basis.",
                         "domain":  "Primary Thermodynamics",
                         "severity":  "HIGH",
-                        "status":  "INVESTIGATING",
+                        "status":  "READY_FOR_FIX",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0001",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-15T16:51:57Z",
+                        "assigned_ip":  "IP-0036",
+                        "updated_at":  "2026-02-16T19:31:03Z",
                         "closed_at":  null,
                         "resolution_type":  null,
                         "tags":  [
@@ -1343,11 +1343,11 @@
                         "title":  "SG startup boundary behavior is modeled isolated where references indicate steam-line warmup/open-path behavior.",
                         "domain":  "Steam Generator Secondary Physics",
                         "severity":  "HIGH",
-                        "status":  "INVESTIGATING",
+                        "status":  "READY_FOR_FIX",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0011",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-15T16:51:57Z",
+                        "assigned_ip":  "IP-0037",
+                        "updated_at":  "2026-02-16T19:31:03Z",
                         "closed_at":  null,
                         "resolution_type":  null,
                         "tags":  [
@@ -1362,13 +1362,13 @@
                         "title":  "Baseline A contains conflicting numeric authority for RCP heat, preventing single-source conformance.",
                         "domain":  "Project Governance",
                         "severity":  "MEDIUM",
-                        "status":  "INVESTIGATING",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0010",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-15T16:51:57Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  "IP-0032",
+                        "updated_at":  "2026-02-16T20:10:00Z",
+                        "closed_at":  "2026-02-16T20:10:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "NCR-Migration",
                                      "Audit-2026-02-15",
@@ -1381,11 +1381,11 @@
                         "title":  "Project-owned C# files do not uniformly meet required GOLD header metadata fields.",
                         "domain":  "Project Governance",
                         "severity":  "HIGH",
-                        "status":  "INVESTIGATING",
+                        "status":  "READY_FOR_FIX",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0010",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-15T16:51:57Z",
+                        "assigned_ip":  "IP-0038",
+                        "updated_at":  "2026-02-16T19:31:03Z",
                         "closed_at":  null,
                         "resolution_type":  null,
                         "tags":  [
@@ -1400,11 +1400,11 @@
                         "title":  "File-level change history is incomplete or missing for audited modules.",
                         "domain":  "Project Governance",
                         "severity":  "MEDIUM",
-                        "status":  "INVESTIGATING",
+                        "status":  "READY_FOR_FIX",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0010",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-15T16:51:57Z",
+                        "assigned_ip":  "IP-0038",
+                        "updated_at":  "2026-02-16T19:31:03Z",
                         "closed_at":  null,
                         "resolution_type":  null,
                         "tags":  [
@@ -1419,11 +1419,11 @@
                         "title":  "Public API surfaces lack consistent XML documentation coverage.",
                         "domain":  "Project Governance",
                         "severity":  "MEDIUM",
-                        "status":  "INVESTIGATING",
+                        "status":  "READY_FOR_FIX",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0010",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-15T16:51:57Z",
+                        "assigned_ip":  "IP-0038",
+                        "updated_at":  "2026-02-16T19:31:03Z",
                         "closed_at":  null,
                         "resolution_type":  null,
                         "tags":  [
@@ -1438,11 +1438,11 @@
                         "title":  "Several modules exceed responsible file-size/separation-of-concerns limits, increasing coupling risk.",
                         "domain":  "Project Governance",
                         "severity":  "MEDIUM",
-                        "status":  "INVESTIGATING",
+                        "status":  "READY_FOR_FIX",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0010",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-15T16:51:57Z",
+                        "assigned_ip":  "IP-0038",
+                        "updated_at":  "2026-02-16T19:31:03Z",
                         "closed_at":  null,
                         "resolution_type":  null,
                         "tags":  [
@@ -1457,13 +1457,13 @@
                         "title":  "Hot-path simulation code contains runtime logging patterns that can create avoidable overhead.",
                         "domain":  "Performance \u0026 Runtime",
                         "severity":  "MEDIUM",
-                        "status":  "INVESTIGATING",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0009",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-15T16:51:57Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  "IP-0034",
+                        "updated_at":  "2026-02-16T21:15:00Z",
+                        "closed_at":  "2026-02-16T21:15:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "NCR-Migration",
                                      "Audit-2026-02-15",
@@ -1476,11 +1476,11 @@
                         "title":  "Validation modules remain in global namespace, conflicting with namespace-folder convention standardization.",
                         "domain":  "Project Governance",
                         "severity":  "MEDIUM",
-                        "status":  "INVESTIGATING",
+                        "status":  "READY_FOR_FIX",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0010",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-15T16:51:57Z",
+                        "assigned_ip":  "IP-0038",
+                        "updated_at":  "2026-02-16T19:31:03Z",
                         "closed_at":  null,
                         "resolution_type":  null,
                         "tags":  [
@@ -1495,11 +1495,11 @@
                         "title":  "Project-level changelog governance is missing, weakening traceability for module changes and deviations.",
                         "domain":  "Project Governance",
                         "severity":  "HIGH",
-                        "status":  "INVESTIGATING",
+                        "status":  "READY_FOR_FIX",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0010",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-15T16:51:57Z",
+                        "assigned_ip":  "IP-0038",
+                        "updated_at":  "2026-02-16T19:31:03Z",
                         "closed_at":  null,
                         "resolution_type":  null,
                         "tags":  [
@@ -1533,13 +1533,13 @@
                         "title":  "Drain-phase CVCS letdown uses aggregate command-first logic that can force immediate 1-to-3 orifice opening.",
                         "domain":  "CVCS / Inventory Control",
                         "severity":  "HIGH",
-                        "status":  "INVESTIGATING",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0004",
                         "assigned_ip":  null,
-                        "updated_at":  "2026-02-15T17:31:24Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "updated_at":  "2026-02-15T19:22:54Z",
+                        "closed_at":  "2026-02-15T19:22:54Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "Investigation-2026-02-15",
                                      "Drain-Orifice",
@@ -1634,22 +1634,43 @@
                         "title":  "Remediate Legacy Governance Integrity Failures Identified by Global Gate Validation",
                         "domain":  "Project Governance",
                         "severity":  "HIGH",
-                        "status":  "INVESTIGATING",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0010",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-16T10:31:02Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  "IP-0032",
+                        "updated_at":  "2026-02-16T20:10:00Z",
+                        "closed_at":  "2026-02-16T20:10:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "Governance-Integrity",
                                      "Legacy-Gate-Debt",
                                      "Cross-Register-Parity",
                                      "Pre-IP-0026"
                                  ]
+                    },
+                    {
+                        "id":  "CS-0098",
+                        "title":  "Heaters do not start after startup-hold release during cold-start sequence",
+                        "domain":  "Pressurizer \u0026 Startup Control",
+                        "severity":  "HIGH",
+                        "status":  "READY_FOR_FIX",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0012",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-16T21:45:00Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "Investigation-2026-02-16",
+                                     "Startup-Heater-Release",
+                                     "DP-0012",
+                                     "Constitution-Article-VI"
+                                 ]
                     }
                 ],
     "registry_role":  "AUTHORITATIVE_FULL_HISTORY",
     "registry_scope":  "Contains full lifecycle history (OPEN + CLOSED). Historical entries must remain in this file.",
-    "active_working_set_file":  "Governance/IssueRegister/issue_register.json"
+    "active_working_set_file":  "Governance/IssueRegister/issue_register.json",
+    "closed_issue_count":  85,
+    "active_issue_count":  13
 }

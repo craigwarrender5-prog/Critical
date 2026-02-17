@@ -78,6 +78,57 @@ public partial class HeatupSimEngine
     
     // Flag to track if HZP systems have been initialized
     private bool hzpSystemsInitialized = false;
+    private bool hzpLifecycleActive = false;
+
+    bool ShouldHZPSystemsBeActive()
+    {
+        return (T_avg >= PlantConstants.SteamDump.HZP_APPROACH_TEMP_F) &&
+               bubbleFormed &&
+               !solidPressurizer &&
+               (rcpCount >= 4);
+    }
+
+    void ResetHZPSystemsLifecycle()
+    {
+        hzpSystemsInitialized = false;
+        hzpLifecycleActive = false;
+        hzpStable = false;
+        hzpReadyForStartup = false;
+        hzpProgress = 0f;
+        handoffInitiated = false;
+        heaterPIDActive = false;
+        heaterPIDOutput = 0.5f;
+        steamDumpHeat_MW = 0f;
+        steamDumpActive = false;
+        sgSteaming = false;
+        sgSecondaryPressure_psig = 0f;
+        steamPressure_psig = 0f;
+        startupPrereqs = default;
+
+        // Ensure run start cannot inherit HZP state from a prior session.
+        steamDumpState = SteamDumpController.Initialize();
+        hzpState = HZPStabilizationController.Initialize();
+        heaterPIDState = CVCSController.InitializeHeaterPID(pressure - 14.7f);
+    }
+
+    void UpdateHZPLifecycle()
+    {
+        bool shouldBeActive = ShouldHZPSystemsBeActive();
+
+        if (shouldBeActive && !hzpLifecycleActive)
+        {
+            InitializeHZPSystems();
+            hzpSystemsInitialized = true;
+            hzpLifecycleActive = true;
+            return;
+        }
+
+        if (!shouldBeActive && hzpLifecycleActive)
+        {
+            hzpLifecycleActive = false;
+            LogEvent(EventSeverity.INFO, $"HZP systems standby - T_avg={T_avg:F1}°F, RCPs={rcpCount}");
+        }
+    }
     
     // ========================================================================
     // HZP SYSTEM UPDATE — Called each timestep
@@ -90,31 +141,10 @@ public partial class HeatupSimEngine
     /// <param name="dt_hr">Timestep in hours</param>
     void UpdateHZPSystems(float dt_hr)
     {
-        // ================================================================
-        // CHECK IF HZP SYSTEMS SHOULD BE ACTIVE
-        // Activate when T_avg exceeds approach temperature (550°F)
-        // ================================================================
-        bool shouldBeActive = (T_avg >= PlantConstants.SteamDump.HZP_APPROACH_TEMP_F) && 
-                              bubbleFormed && 
-                              !solidPressurizer &&
-                              (rcpCount >= 4);
-        
-        if (!shouldBeActive)
+        bool shouldBeActive = ShouldHZPSystemsBeActive();
+        if (!shouldBeActive || !hzpSystemsInitialized)
         {
-            // Not yet at HZP approach conditions
-            if (hzpSystemsInitialized)
-            {
-                // Systems were active but conditions changed
-                LogEvent(EventSeverity.INFO, $"HZP systems standby - T_avg={T_avg:F1}°F, RCPs={rcpCount}");
-            }
             return;
-        }
-        
-        // Initialize HZP systems on first activation
-        if (!hzpSystemsInitialized)
-        {
-            InitializeHZPSystems();
-            hzpSystemsInitialized = true;
         }
         
         float dt_sec = dt_hr * 3600f;
@@ -366,3 +396,4 @@ public partial class HeatupSimEngine
         return heaterPIDState.StatusMessage;
     }
 }
+

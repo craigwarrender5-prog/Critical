@@ -35,6 +35,7 @@ namespace Critical.Simulation.Modular.State
             0f,
             0f,
             0f,
+            string.Empty,
             string.Empty);
 
         public float TimeHr { get; }
@@ -63,6 +64,7 @@ namespace Critical.Simulation.Modular.State
         public float RhrFlowGpm { get; }
         public float VctLevelPct { get; }
         public float RcsBoronPpm { get; }
+        public string RhrMode { get; }
         public string HeatupPhaseDescription { get; }
 
         public PlantState(
@@ -92,6 +94,7 @@ namespace Critical.Simulation.Modular.State
             float rhrFlowGpm,
             float vctLevelPct,
             float rcsBoronPpm,
+            string rhrMode,
             string heatupPhaseDescription)
         {
             TimeHr = timeHr;
@@ -120,6 +123,7 @@ namespace Critical.Simulation.Modular.State
             RhrFlowGpm = rhrFlowGpm;
             VctLevelPct = vctLevelPct;
             RcsBoronPpm = rcsBoronPpm;
+            RhrMode = rhrMode ?? string.Empty;
             HeatupPhaseDescription = heatupPhaseDescription ?? string.Empty;
         }
     }

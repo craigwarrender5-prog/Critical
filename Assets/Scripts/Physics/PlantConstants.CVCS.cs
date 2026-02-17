@@ -23,8 +23,6 @@
 // GOLD STANDARD: Yes
 // ============================================================================
 
-using System;
-
 namespace Critical.Physics
 {
     public static partial class PlantConstants
@@ -459,130 +457,6 @@ namespace Critical.Physics
         /// Source: Operational practice — avoid valve cycling
         /// </summary>
         public const float ORIFICE_CLOSE_HYSTERESIS = 3f;
-        
-        #endregion
-        
-        #region CVCS Flow Calculation Methods
-        
-        /// <summary>
-        /// Convert VCT level (%) to volume (gallons)
-        /// </summary>
-        public static float VCTLevelToVolume(float level_percent)
-        {
-            return VCT_CAPACITY_GAL * level_percent / 100f;
-        }
-        
-        /// <summary>
-        /// Convert VCT volume (gallons) to level (%)
-        /// </summary>
-        public static float VCTVolumeToLevel(float volume_gal)
-        {
-            return 100f * volume_gal / VCT_CAPACITY_GAL;
-        }
-        
-        /// <summary>
-        /// Calculate letdown flow through a single 75-gpm orifice based on RCS pressure.
-        /// Flow = K_75 * sqrt(P_rcs_psig - P_backpressure_psig).
-        /// At 2235 psig: 75 gpm. At 400 psig: ~13 gpm. At 100 psig: 0 gpm.
-        /// Source: NRC HRTD Section 4.1
-        /// </summary>
-        public static float CalculateOrificeLetdownFlow(float rcs_pressure_psig)
-        {
-            float deltaP = rcs_pressure_psig - LETDOWN_BACKPRESSURE_PSIG;
-            if (deltaP <= 0f) return 0f;
-            return ORIFICE_FLOW_COEFF_75 * (float)Math.Sqrt(deltaP);
-        }
-        
-        /// <summary>
-        /// Calculate letdown flow through a single 45-gpm orifice based on RCS pressure.
-        /// Flow = K_45 * sqrt(P_rcs_psig - P_backpressure_psig).
-        /// At 2235 psig: 45 gpm. At 400 psig: ~8 gpm. At 100 psig: 0 gpm.
-        /// Source: NRC HRTD Section 4.1 / CVCS analysis
-        /// </summary>
-        public static float CalculateOrifice45LetdownFlow(float rcs_pressure_psig)
-        {
-            float deltaP = rcs_pressure_psig - LETDOWN_BACKPRESSURE_PSIG;
-            if (deltaP <= 0f) return 0f;
-            return ORIFICE_FLOW_COEFF_45 * (float)Math.Sqrt(deltaP);
-        }
-        
-        /// <summary>
-        /// v4.4.0: Calculate total orifice letdown flow for a given lineup.
-        /// Sums flow from each open orifice at the current ΔP, then caps
-        /// at the ion exchanger limit (120 gpm).
-        /// 
-        /// Per NRC HRTD 4.1: Three parallel orifices (2×75 + 1×45 gpm).
-        /// Each orifice’s flow scales with sqrt(ΔP) independently.
-        /// Total is capped by downstream ion exchanger capacity.
-        /// </summary>
-        /// <param name="rcs_pressure_psig">RCS pressure in psig</param>
-        /// <param name="num75Open">Number of 75-gpm orifices open (0-2)</param>
-        /// <param name="open45">True if the 45-gpm orifice is open</param>
-        /// <returns>Total orifice letdown flow (gpm), capped at ion exchanger limit</returns>
-        public static float CalculateOrificeLineupFlow(float rcs_pressure_psig, int num75Open, bool open45)
-        {
-            float deltaP = rcs_pressure_psig - LETDOWN_BACKPRESSURE_PSIG;
-            if (deltaP <= 0f) return 0f;
-            
-            float sqrtDP = (float)Math.Sqrt(deltaP);
-            float flow75 = num75Open * ORIFICE_FLOW_COEFF_75 * sqrtDP;
-            float flow45 = open45 ? ORIFICE_FLOW_COEFF_45 * sqrtDP : 0f;
-            float total = flow75 + flow45;
-            
-            // Cap at ion exchanger downstream limit
-            return Math.Min(total, LETDOWN_ION_EXCHANGER_MAX_GPM);
-        }
-        
-        /// <summary>
-        /// Determine total letdown flow based on plant conditions and orifice lineup.
-        /// Below 350°F: RHR crossconnect (75 gpm via HCV-128) or orifices, whichever higher.
-        /// Above 350°F: Normal orifice path (pressure-dependent, lineup-dependent).
-        /// Source: NRC HRTD Section 19.0
-        /// 
-        /// v4.4.0: Updated to accept separate orifice lineup parameters instead
-        /// of a simple multiplier. This models the real plant’s mixed orifice
-        /// sizes (2×75 + 1×45 gpm) with ion exchanger flow limit.
-        /// </summary>
-        /// <param name="T_rcs_F">RCS temperature (°F)</param>
-        /// <param name="rcs_pressure_psia">RCS pressure (psia)</param>
-        /// <param name="numOrificesOpen">Legacy: number of 75-gpm orifices (backward compat)</param>
-        /// <param name="num75Open">Number of 75-gpm orifices open (0-2), -1 = use legacy</param>
-        /// <param name="open45">True if the 45-gpm orifice is open</param>
-        /// <returns>Total letdown flow (gpm)</returns>
-        public static float CalculateTotalLetdownFlow(
-            float T_rcs_F, float rcs_pressure_psia,
-            int numOrificesOpen = 1,
-            int num75Open = -1, bool open45 = false)
-        {
-            float rcs_pressure_psig = rcs_pressure_psia - PSIG_TO_PSIA;
-            
-            // v4.4.0: If num75Open is specified (>= 0), use the new lineup model
-            // Otherwise fall back to legacy behavior for backward compatibility
-            bool useNewModel = (num75Open >= 0);
-            
-            if (T_rcs_F < RHR_LETDOWN_ISOLATION_TEMP_F)
-            {
-                float rhrFlow = RHR_CROSSCONNECT_FLOW_GPM;
-                float orificeFlow;
-                if (useNewModel)
-                    orificeFlow = CalculateOrificeLineupFlow(rcs_pressure_psig, num75Open, open45);
-                else
-                    orificeFlow = CalculateOrificeLetdownFlow(rcs_pressure_psig) * numOrificesOpen;
-                return Math.Max(rhrFlow, orificeFlow);
-            }
-            else
-            {
-                float orificeFlow;
-                if (useNewModel)
-                    orificeFlow = CalculateOrificeLineupFlow(rcs_pressure_psig, num75Open, open45);
-                else
-                    orificeFlow = CalculateOrificeLetdownFlow(rcs_pressure_psig) * numOrificesOpen;
-                // Legacy LETDOWN_MAX_GPM cap is superseded by ion exchanger limit
-                // in the new model (already applied inside CalculateOrificeLineupFlow).
-                // Keep legacy cap for backward compat path.
-                return useNewModel ? orificeFlow : Math.Min(orificeFlow, LETDOWN_MAX_GPM);
-            }
-        }
         
         #endregion
     }

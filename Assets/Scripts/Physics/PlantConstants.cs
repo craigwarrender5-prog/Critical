@@ -35,8 +35,6 @@
 // GOLD STANDARD: Yes
 // ============================================================================
 
-using System;
-
 namespace Critical.Physics
 {
     /// <summary>
@@ -227,47 +225,6 @@ namespace Critical.Physics
         
         /// <summary>Conversion: ft³ to gallons</summary>
         public const float FT3_TO_GAL = 7.48052f;
-        
-        #endregion
-        
-        #region Unit Conversion Methods
-        
-        /// <summary>
-        /// Convert psig to psia
-        /// </summary>
-        public static float PsigToPsia(float psig)
-        {
-            return psig + PSIG_TO_PSIA;
-        }
-        
-        /// <summary>
-        /// Convert psia to psig
-        /// </summary>
-        public static float PsiaToPsig(float psia)
-        {
-            return psia - PSIG_TO_PSIA;
-        }
-        
-        /// <summary>
-        /// Convert °F to °R (Rankine)
-        /// </summary>
-        public static float FahrenheitToRankine(float fahrenheit)
-        {
-            return fahrenheit + RANKINE_OFFSET;
-        }
-        
-        /// <summary>
-        /// Calculate heat loss in MW at given system temperature.
-        /// Uses linear scaling: Q = k × (T_sys - T_ambient)
-        /// </summary>
-        /// <param name="T_system_F">System temperature in °F</param>
-        /// <returns>Heat loss in MW (always >= 0)</returns>
-        public static float CalculateHeatLoss_MW(float T_system_F)
-        {
-            float deltaT = T_system_F - AMBIENT_TEMP_F;
-            if (deltaT <= 0f) return 0f;
-            return HEAT_LOSS_COEFF_MW_PER_F * deltaT;
-        }
         
         #endregion
     }

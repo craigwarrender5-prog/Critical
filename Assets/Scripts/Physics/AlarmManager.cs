@@ -10,6 +10,7 @@
 //   - PZR Level High: > 85%
 //   - Pressure Low: < 350 psia
 //   - Pressure High: > 2300 psia
+//   - SG Secondary Pressure High: > 1085 psig
 //   - Subcooling Low: < 30°F
 //   - SMM Low Margin: < 15°F
 //   - SMM No Margin: ≤ 0°F
@@ -34,6 +35,7 @@ namespace Critical.Physics
         public bool RCSFlowLow;          // No RCPs running
         public bool PressureLow;         // Pressure < 350 psia
         public bool PressureHigh;        // Pressure > 2300 psia
+        public bool SGSecondaryPressureHigh; // SG secondary pressure > high alarm setpoint
         
         // Subcooling margin alarms
         public bool SubcoolingLow;       // Subcooling < 30°F
@@ -62,6 +64,7 @@ namespace Critical.Physics
     {
         public float PZRLevel;           // Pressurizer level (%)
         public float Pressure;           // RCS pressure (psia)
+        public float SGSecondaryPressure_psia; // SG secondary pressure (psia)
         public float Subcooling;         // Subcooling margin (°F)
         public float HeatupRate;         // RCS heatup rate (°F/hr)
         public float RVLISFull;          // RVLIS full range (%)
@@ -87,6 +90,7 @@ namespace Critical.Physics
         public const float PZR_LEVEL_BUBBLE_MAX = 95f;            // %
         public const float PRESSURE_LOW_SETPOINT = 350f;          // psia
         public const float PRESSURE_HIGH_SETPOINT = 2300f;        // psia
+        public const float SG_SECONDARY_PRESSURE_HIGH_SETPOINT_PSIA = 1099.7f; // 1085 psig
         public const float SUBCOOLING_LOW_SETPOINT = 30f;         // °F
         public const float SMM_LOW_MARGIN_SETPOINT = 15f;         // °F
         public const float SMM_NO_MARGIN_SETPOINT = 0f;           // °F
@@ -136,6 +140,10 @@ namespace Critical.Physics
             
             // Pressure High: Approaching safety valve setpoint
             alarms.PressureHigh = (inputs.Pressure > PRESSURE_HIGH_SETPOINT);
+
+            // SG secondary pressure high: approaching secondary relief domain.
+            alarms.SGSecondaryPressureHigh =
+                (inputs.SGSecondaryPressure_psia > SG_SECONDARY_PRESSURE_HIGH_SETPOINT_PSIA);
             
             // ================================================================
             // SUBCOOLING MARGIN ALARMS (SMM)
@@ -203,6 +211,7 @@ namespace Critical.Physics
             if (alarms.PZRLevelHigh) active.Add("PZR LVL HI");
             if (alarms.PressureLow) active.Add("PRESS LO");
             if (alarms.PressureHigh) active.Add("PRESS HI");
+            if (alarms.SGSecondaryPressureHigh) active.Add("SG PRESS HI");
             if (alarms.SubcoolingLow) active.Add("SUBCOOL LO");
             if (alarms.SMMLowMargin) active.Add("SMM LO MARGIN");
             if (alarms.SMMNoMargin) active.Add("SMM NO MARGIN");
