@@ -1,192 +1,197 @@
 // ============================================================================
-// CRITICAL: Master the Atom - Overview Section: Alarms
-// OverviewSection_Alarms.cs - Alarm Summary Display
+// CRITICAL: Master the Atom - Overview Section: Alarm Annunciator
+// OverviewSection_Alarms.cs - ISA-18.1 Annunciator Tile Grid
 // ============================================================================
 //
-// PARAMETERS DISPLAYED:
-//   - RCS Pressure High/Low
-//   - PZR Level High/Low
-//   - Subcooling Low
-//   - VCT Level High/Low
-//   - Mass Conservation Alarm
+// PURPOSE:
+//   MosaicAlarmPanel-style annunciator grid with ISA-18.1 state machine
+//   for alarm/warning tiles. 6×2 grid of 12 tiles covering key heatup
+//   alarm conditions and system status.
 //
-// VERSION: 1.0.0
-// DATE: 2026-02-16
-// IP: IP-0031 Stage 3
+// VISUAL STANDARD:
+//   Adopted from MosaicAlarmPanel.cs and NRC HRTD Section 4:
+//   - 4-edge borders, instrument font, dim/lit/flash states
+//   - INACTIVE → ALERTING (3 Hz) → ACKNOWLEDGED → CLEARING (0.7 Hz)
+//   - Status tiles (green) are simple on/off, no state machine
+//
+// VERSION: 2.0.0
+// DATE: 2026-02-17
+// IP: IP-0040 Stage 5
 // ============================================================================
 
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
+using Critical.Physics;
 
 namespace Critical.UI.ValidationDashboard
 {
     /// <summary>
-    /// Alarm summary section showing key annunciator states.
+    /// Annunciator grid section with ISA-18.1 compliant alarm tiles.
     /// </summary>
     public class OverviewSection_Alarms : OverviewSectionBase
     {
-        // Alarm tile references
-        private AlarmTile _pressHighTile;
-        private AlarmTile _pressLowTile;
-        private AlarmTile _pzrLevelHighTile;
-        private AlarmTile _pzrLevelLowTile;
-        private AlarmTile _subcoolLowTile;
-        private AlarmTile _vctLevelTile;
-        private AlarmTile _massConsTile;
-        private AlarmTile _flowLowTile;
-        private AlarmTile _sgPressHighTile;
+        // 12 annunciator tiles
+        private DashboardAnnunciatorTile[] _tiles;
+        private const int TILE_COUNT = 12;
+
+        // Tile index constants for readability
+        private const int PRESS_HIGH = 0;
+        private const int PRESS_LOW = 1;
+        private const int LVL_HIGH = 2;
+        private const int LVL_LOW = 3;
+        private const int SUBCOOL_LOW = 4;
+        private const int VCT_LEVEL = 5;
+        private const int MASS_CONS = 6;
+        private const int FLOW_LOW = 7;
+        private const int SG_PRESS_HIGH = 8;
+        private const int PZR_HTRS_ON = 9;
+        private const int SPRAY_ACTIVE = 10;
+        private const int BUBBLE_FORMED = 11;
+
+        // ACK button reference
+        private GameObject _ackButton;
 
         protected override void BuildContent()
         {
-            // Create a grid of alarm tiles
-            // Using GridLayoutGroup for proper arrangement
-
-            GameObject gridGO = new GameObject("AlarmGrid");
+            // --- Annunciator grid: 6×2 ---
+            GameObject gridGO = new GameObject("AnnunciatorGrid");
             gridGO.transform.SetParent(ContentRoot, false);
 
             RectTransform gridRT = gridGO.AddComponent<RectTransform>();
-            gridRT.anchorMin = Vector2.zero;
-            gridRT.anchorMax = Vector2.one;
-            gridRT.offsetMin = Vector2.zero;
-            gridRT.offsetMax = Vector2.zero;
+            LayoutElement gridLE = gridGO.AddComponent<LayoutElement>();
+            gridLE.flexibleHeight = 1;
+            gridLE.flexibleWidth = 1;
 
             GridLayoutGroup grid = gridGO.AddComponent<GridLayoutGroup>();
-            grid.cellSize = new Vector2(70, 28);
-            grid.spacing = new Vector2(4, 4);
-            grid.startCorner = GridLayoutGroup.Corner.UpperLeft;
-            grid.startAxis = GridLayoutGroup.Axis.Horizontal;
-            grid.childAlignment = TextAnchor.UpperLeft;
             grid.constraint = GridLayoutGroup.Constraint.FixedColumnCount;
-            grid.constraintCount = 2;
+            grid.constraintCount = 6;
+            grid.cellSize = new Vector2(72, 36);
+            grid.spacing = new Vector2(3, 3);
+            grid.childAlignment = TextAnchor.MiddleCenter;
+            grid.padding = new RectOffset(2, 2, 2, 2);
 
-            // Create alarm tiles
-            _pressHighTile = AlarmTile.Create(gridGO.transform, "P HIGH");
-            _pressLowTile = AlarmTile.Create(gridGO.transform, "P LOW");
-            _pzrLevelHighTile = AlarmTile.Create(gridGO.transform, "LVL HI");
-            _pzrLevelLowTile = AlarmTile.Create(gridGO.transform, "LVL LO");
-            _subcoolLowTile = AlarmTile.Create(gridGO.transform, "SUBCOOL");
-            _vctLevelTile = AlarmTile.Create(gridGO.transform, "VCT");
-            _massConsTile = AlarmTile.Create(gridGO.transform, "MASS");
-            _flowLowTile = AlarmTile.Create(gridGO.transform, "FLOW");
-            _sgPressHighTile = AlarmTile.Create(gridGO.transform, "SG P HI");
+            // Define tile descriptors
+            var descriptors = new AnnunciatorTileDescriptor[TILE_COUNT];
+            descriptors[PRESS_HIGH]     = new AnnunciatorTileDescriptor("PRESS\nHIGH", true);
+            descriptors[PRESS_LOW]      = new AnnunciatorTileDescriptor("PRESS\nLOW", true);
+            descriptors[LVL_HIGH]       = new AnnunciatorTileDescriptor("LVL\nHIGH", false, true);  // warning
+            descriptors[LVL_LOW]        = new AnnunciatorTileDescriptor("LVL\nLOW", true);
+            descriptors[SUBCOOL_LOW]    = new AnnunciatorTileDescriptor("SUBCOOL\nLOW", true);
+            descriptors[VCT_LEVEL]      = new AnnunciatorTileDescriptor("VCT\nLEVEL", false, true);  // warning
+            descriptors[MASS_CONS]      = new AnnunciatorTileDescriptor("MASS\nCONS", true);
+            descriptors[FLOW_LOW]       = new AnnunciatorTileDescriptor("FLOW\nLOW", true);
+            descriptors[SG_PRESS_HIGH]  = new AnnunciatorTileDescriptor("SG PRESS\nHIGH", false, true);  // warning
+            descriptors[PZR_HTRS_ON]    = new AnnunciatorTileDescriptor("PZR HTRS\nON", false);       // status (green)
+            descriptors[SPRAY_ACTIVE]   = new AnnunciatorTileDescriptor("SPRAY\nACTIVE", false);      // status (green)
+            descriptors[BUBBLE_FORMED]  = new AnnunciatorTileDescriptor("BUBBLE\nFORMED", false);     // status (green)
+
+            // Create tiles
+            _tiles = new DashboardAnnunciatorTile[TILE_COUNT];
+            for (int i = 0; i < TILE_COUNT; i++)
+            {
+                _tiles[i] = DashboardAnnunciatorTile.Create(gridGO.transform, descriptors[i]);
+            }
+
+            // --- ACK button ---
+            GameObject ackRow = new GameObject("AckRow");
+            ackRow.transform.SetParent(ContentRoot, false);
+
+            LayoutElement ackLE = ackRow.AddComponent<LayoutElement>();
+            ackLE.preferredHeight = 22;
+            ackLE.minHeight = 22;
+
+            HorizontalLayoutGroup ackLayout = ackRow.AddComponent<HorizontalLayoutGroup>();
+            ackLayout.childAlignment = TextAnchor.MiddleCenter;
+            ackLayout.childControlWidth = false;
+            ackLayout.childControlHeight = false;
+
+            _ackButton = new GameObject("AckButton");
+            _ackButton.transform.SetParent(ackRow.transform, false);
+
+            RectTransform ackRT = _ackButton.AddComponent<RectTransform>();
+            ackRT.sizeDelta = new Vector2(80, 20);
+
+            Image ackBg = _ackButton.AddComponent<Image>();
+            ackBg.color = new Color(0.25f, 0.25f, 0.30f, 1f);
+
+            Button ackBtn = _ackButton.AddComponent<Button>();
+            ackBtn.targetGraphic = ackBg;
+            ackBtn.onClick.AddListener(AcknowledgeAll);
+
+            // ACK label
+            GameObject ackLabelGO = new GameObject("Label");
+            ackLabelGO.transform.SetParent(_ackButton.transform, false);
+
+            RectTransform ackLabelRT = ackLabelGO.AddComponent<RectTransform>();
+            ackLabelRT.anchorMin = Vector2.zero;
+            ackLabelRT.anchorMax = Vector2.one;
+            ackLabelRT.offsetMin = Vector2.zero;
+            ackLabelRT.offsetMax = Vector2.zero;
+
+            TextMeshProUGUI ackText = ackLabelGO.AddComponent<TextMeshProUGUI>();
+            ackText.text = "ACK";
+            ackText.fontSize = 10;
+            ackText.fontStyle = FontStyles.Bold;
+            ackText.alignment = TextAlignmentOptions.Center;
+            ackText.color = ValidationDashboardTheme.TextSecondary;
         }
 
         public override void UpdateData(HeatupSimEngine engine)
         {
-            if (engine == null) return;
+            if (engine == null || _tiles == null) return;
 
-            // Update each alarm tile
-            _pressHighTile.SetState(engine.pressureHigh);
-            _pressLowTile.SetState(engine.pressureLow);
-            _pzrLevelHighTile.SetState(engine.pzrLevelHigh);
-            _pzrLevelLowTile.SetState(engine.pzrLevelLow);
-            _subcoolLowTile.SetState(engine.subcoolingLow);
-            
-            // VCT can be high or low
-            bool vctAlarm = engine.vctLevelHigh || engine.vctLevelLow;
-            _vctLevelTile.SetState(vctAlarm);
-            
-            _massConsTile.SetState(engine.primaryMassAlarm);
-            _flowLowTile.SetState(engine.rcsFlowLow);
-            _sgPressHighTile.SetState(engine.sgSecondaryPressureHigh);
+            // Alarm tiles (red) — use ISA-18.1 state machine
+            _tiles[PRESS_HIGH]?.UpdateCondition(engine.pressureHigh);
+            _tiles[PRESS_LOW]?.UpdateCondition(engine.pressureLow);
+            _tiles[LVL_LOW]?.UpdateCondition(engine.pzrLevelLow);
+            _tiles[SUBCOOL_LOW]?.UpdateCondition(engine.subcoolingLow);
+            _tiles[MASS_CONS]?.UpdateCondition(engine.primaryMassAlarm);
+            _tiles[FLOW_LOW]?.UpdateCondition(engine.rcsFlowLow);
+
+            // Warning tiles (amber) — use ISA-18.1 state machine
+            _tiles[LVL_HIGH]?.UpdateCondition(engine.pzrLevelHigh);
+            _tiles[VCT_LEVEL]?.UpdateCondition(engine.vctLevelHigh || engine.vctLevelLow);
+            _tiles[SG_PRESS_HIGH]?.UpdateCondition(engine.sgSecondaryPressureHigh);
+
+            // Status tiles (green) — simple on/off, no state machine
+            _tiles[PZR_HTRS_ON]?.UpdateCondition(engine.pzrHeatersOn);
+            _tiles[SPRAY_ACTIVE]?.UpdateCondition(engine.sprayActive);
+            _tiles[BUBBLE_FORMED]?.UpdateCondition(engine.bubbleFormed);
         }
 
         public override void UpdateVisuals()
         {
-            // Alarm tiles handle their own pulse animation
+            // Tiles handle their own flash animation via Update()
         }
-    }
 
-    // ========================================================================
-    // ALARM TILE - Single Annunciator Display
-    // ========================================================================
+        // ====================================================================
+        // ACK / RESET
+        // ====================================================================
 
-    /// <summary>
-    /// Single alarm annunciator tile with pulse animation.
-    /// </summary>
-    public class AlarmTile : MonoBehaviour
-    {
-        [SerializeField] private Image backgroundImage;
-        [SerializeField] private TextMeshProUGUI labelText;
-
-        private bool _isAlarmed;
-        private float _pulseTime;
-
-        private static readonly Color NormalBg = new Color32(30, 33, 41, 255);
-        private static readonly Color AlarmBg = new Color32(255, 46, 46, 255);
-        private static readonly Color NormalText = new Color32(100, 105, 120, 255);
-        private static readonly Color AlarmText = new Color32(20, 22, 28, 255);
-
-        void Update()
+        /// <summary>
+        /// Acknowledge all alerting tiles (ALERTING → ACKNOWLEDGED).
+        /// </summary>
+        private void AcknowledgeAll()
         {
-            if (_isAlarmed)
+            if (_tiles == null) return;
+            for (int i = 0; i < _tiles.Length; i++)
             {
-                // Pulse animation
-                _pulseTime += Time.deltaTime * 2f;
-                float pulse = (Mathf.Sin(_pulseTime * Mathf.PI * 2f) + 1f) * 0.5f;
-                float alpha = Mathf.Lerp(0.6f, 1f, pulse);
-                
-                if (backgroundImage != null)
-                {
-                    Color c = AlarmBg;
-                    c.a = alpha;
-                    backgroundImage.color = c;
-                }
+                _tiles[i]?.Acknowledge();
             }
         }
 
-        public void SetState(bool alarmed)
+        /// <summary>
+        /// Reset all clearing tiles (CLEARING → INACTIVE).
+        /// Called automatically by auto-reset timer in DashboardAnnunciatorTile.
+        /// </summary>
+        public void ResetAll()
         {
-            _isAlarmed = alarmed;
-            
-            if (!alarmed)
+            if (_tiles == null) return;
+            for (int i = 0; i < _tiles.Length; i++)
             {
-                _pulseTime = 0f;
+                _tiles[i]?.Reset();
             }
-
-            if (backgroundImage != null)
-            {
-                backgroundImage.color = alarmed ? AlarmBg : NormalBg;
-            }
-
-            if (labelText != null)
-            {
-                labelText.color = alarmed ? AlarmText : NormalText;
-            }
-        }
-
-        public static AlarmTile Create(Transform parent, string label)
-        {
-            GameObject tileGO = new GameObject($"AlarmTile_{label}");
-            tileGO.transform.SetParent(parent, false);
-
-            // Background
-            Image bg = tileGO.AddComponent<Image>();
-            bg.color = NormalBg;
-
-            // Label
-            GameObject labelGO = new GameObject("Label");
-            labelGO.transform.SetParent(tileGO.transform, false);
-
-            RectTransform labelRT = labelGO.AddComponent<RectTransform>();
-            labelRT.anchorMin = Vector2.zero;
-            labelRT.anchorMax = Vector2.one;
-            labelRT.offsetMin = new Vector2(2, 2);
-            labelRT.offsetMax = new Vector2(-2, -2);
-
-            TextMeshProUGUI labelTMP = labelGO.AddComponent<TextMeshProUGUI>();
-            labelTMP.text = label;
-            labelTMP.fontSize = 9;
-            labelTMP.fontStyle = FontStyles.Bold;
-            labelTMP.alignment = TextAlignmentOptions.Center;
-            labelTMP.color = NormalText;
-
-            AlarmTile tile = tileGO.AddComponent<AlarmTile>();
-            tile.backgroundImage = bg;
-            tile.labelText = labelTMP;
-
-            return tile;
         }
     }
 }

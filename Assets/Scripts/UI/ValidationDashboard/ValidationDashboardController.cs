@@ -344,7 +344,7 @@ namespace Critical.UI.ValidationDashboard
         // ====================================================================
 
         /// <summary>
-        /// Switch to a specific tab by index.
+        /// Switch to a specific tab by index with optional fade transition.
         /// </summary>
         public void SwitchToTab(int tabIndex)
         {
@@ -354,20 +354,48 @@ namespace Critical.UI.ValidationDashboard
                 return;
             }
 
+            if (tabIndex == CurrentTabIndex) return;
+
             int previousTab = CurrentTabIndex;
             CurrentTabIndex = tabIndex;
 
             // Update tab button states
             UpdateTabButtonStates();
 
-            // Show/hide panels
-            UpdatePanelVisibility();
+            // Fade transition if content container has CanvasGroup
+            if (tabContentContainer != null)
+            {
+                CanvasGroup cg = tabContentContainer.GetComponent<CanvasGroup>();
+                if (cg == null)
+                    cg = tabContentContainer.gameObject.AddComponent<CanvasGroup>();
+
+                StopAllCoroutines();
+                StartCoroutine(FadeTabTransition(cg, previousTab, tabIndex));
+            }
+            else
+            {
+                UpdatePanelVisibility();
+            }
 
             // Fire event
             OnTabChanged?.Invoke(tabIndex);
 
             if (enableDebugLogging)
                 Debug.Log($"[ValidationDashboard] Tab switched: {TAB_NAMES[previousTab]} -> {TAB_NAMES[tabIndex]}");
+        }
+
+        private System.Collections.IEnumerator FadeTabTransition(CanvasGroup cg, int fromTab, int toTab)
+        {
+            float fadeDuration = ValidationDashboardTheme.TabTransitionDuration * 0.5f;
+
+            // Fade out
+            yield return TabNavigationController.FadeCanvasGroup(cg, 0f, fadeDuration);
+
+            // Swap panels
+            UpdatePanelVisibility();
+
+            // Fade in
+            yield return TabNavigationController.FadeCanvasGroup(cg, 1f, fadeDuration);
         }
 
         private void UpdateTabButtonStates()

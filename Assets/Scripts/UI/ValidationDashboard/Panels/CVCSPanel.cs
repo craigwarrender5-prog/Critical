@@ -19,6 +19,11 @@ namespace Critical.UI.ValidationDashboard
         public override string PanelName => "CVCSPanel";
         public override int TabIndex => 3;
 
+        // Hero gauges
+        private ArcGauge _chargingHeroGauge;
+        private ArcGauge _letdownHeroGauge;
+        private BidirectionalGauge _netFlowHeroGauge;
+
         // Charging
         private StatusIndicator _chargingActiveIndicator;
         private DigitalReadout _chargingFlowReadout;
@@ -63,6 +68,9 @@ namespace Critical.UI.ValidationDashboard
             columnsLayout.spacing = 12;
             columnsLayout.padding = new RectOffset(8, 8, 8, 8);
 
+            // Hero gauge row
+            BuildHeroRow(columnsGO.transform);
+
             Transform chargingCol = CreateColumn(columnsGO.transform, "ChargingColumn", 1f);
             BuildChargingSection(chargingCol);
 
@@ -74,6 +82,30 @@ namespace Critical.UI.ValidationDashboard
 
             Transform boronCol = CreateColumn(columnsGO.transform, "BoronColumn", 1f);
             BuildBoronSection(boronCol);
+        }
+
+        private void BuildHeroRow(Transform parent)
+        {
+            GameObject heroGO = new GameObject("HeroGauges");
+            heroGO.transform.SetParent(parent.parent, false);
+            heroGO.transform.SetAsFirstSibling();
+
+            LayoutElement heroLE = heroGO.AddComponent<LayoutElement>();
+            heroLE.preferredHeight = 150;
+            heroLE.flexibleWidth = 1;
+
+            HorizontalLayoutGroup heroLayout = heroGO.AddComponent<HorizontalLayoutGroup>();
+            heroLayout.childAlignment = TextAnchor.MiddleCenter;
+            heroLayout.childControlWidth = false;
+            heroLayout.childControlHeight = false;
+            heroLayout.spacing = 16;
+
+            _chargingHeroGauge = ArcGauge.Create(heroGO.transform,
+                "CHARGING", 0f, 150f, 0f, 120f, 0f, 140f, " gpm");
+            _netFlowHeroGauge = BidirectionalGauge.Create(heroGO.transform,
+                "NET FLOW", 75f, " gpm");
+            _letdownHeroGauge = ArcGauge.Create(heroGO.transform,
+                "LETDOWN", 0f, 150f, 0f, 120f, 0f, 140f, " gpm");
         }
 
         private Transform CreateColumn(Transform parent, string name, float flex)
@@ -150,6 +182,12 @@ namespace Critical.UI.ValidationDashboard
         protected override void OnUpdateData()
         {
             if (Engine == null) return;
+
+            // Hero gauges
+            _chargingHeroGauge?.SetValue(Engine.chargingFlow);
+            _letdownHeroGauge?.SetValue(Engine.letdownFlow);
+            float heroNet = Engine.chargingFlow - Engine.letdownFlow;
+            _netFlowHeroGauge?.SetValue(heroNet);
 
             // Charging
             _chargingActiveIndicator?.SetOn(Engine.chargingActive);

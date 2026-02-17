@@ -14,26 +14,24 @@
 //   - Steam generator status
 //   - Alarm summary
 //
-// LAYOUT:
+// LAYOUT (IP-0040):
 //   ┌──────────────────────────────────────────────────────────────────┐
-//   │  GLOBAL HEALTH  │  REACTOR CORE  │  RCS PRIMARY  │  PRESSURIZER │
-//   │  ════════════   │  ════════════  │  ════════════ │  ══════════  │
-//   │  Mass Err: 0.1  │  Tavg: 425°F   │  P: 2235 psia │  Level: 25%  │
-//   │  Energy: OK     │  Thot: 440°F   │  Subcool: 50° │  P: 2235     │
-//   │  Net Heat: +2.1 │  Tcold: 410°F  │  RCPs: 4/4    │  Htrs: ON    │
-//   │                 │  ΔT: 30°F      │               │  Spray: OFF  │
+//   │  REACTOR / RCS (1.2)  │  PRESSURIZER (1.0)  │  CVCS / SG (1.0)    │
+//   │  [ArcGauges]          │  [ArcGauge]          │  [DigitalReadouts]   │
+//   │  Press  Tavg           │  PZR Level           │  Charging  Letdown   │
+//   │  Subcool  ΔT           │  [Status] [Status]   │  [BiGauge] Net CVCS  │
+//   │  [RCP1][RCP2][3][4]   │  PZR Temp  Surge     │  SG Press  Net Heat  │
 //   ├──────────────────────────────────────────────────────────────────┤
-//   │     CVCS        │    SG / RHR    │         ALARM SUMMARY        │
-//   │  ════════════   │  ════════════  │  ════════════════════════    │
-//   │  Chg: 75 gpm    │  SG P: 850 psi │  [OK] RCS Press   [OK] Level │
-//   │  Ltd: 75 gpm    │  SG HX: 2.1 MW │  [OK] Subcool     [OK] VCT   │
-//   │  Net: 0 gpm     │  RHR: STANDBY  │  [  ] Mass Cons   [  ] ...   │
-//   │  VCT: 42%       │  Boiling: NO   │                              │
+//   │  SYSTEM HEALTH (0.8)    │  ALARM ANNUNCIATOR (1.5)                    │
+//   │  [Digital] Mass Error   │  ┌────┬────┬────┬────┬────┬────┐            │
+//   │  [Status] Mass Cons     │  │PRHI│PRLO│LVHI│LVLO│SUBC│VCT │            │
+//   │  [Status] SG Boiling    │  ├────┼────┼────┼────┼────┼────┤            │
+//   │  [Status] RHR           │  │MASS│FLOW│SGP │HTRS│SPRY│BBLE│            │
 //   └──────────────────────────────────────────────────────────────────┘
 //
-// VERSION: 1.0.0
-// DATE: 2026-02-16
-// IP: IP-0031 Stage 3
+// VERSION: 2.0.0
+// DATE: 2026-02-17
+// IP: IP-0040 Stage 2
 // ============================================================================
 
 using UnityEngine;
@@ -63,13 +61,11 @@ namespace Critical.UI.ValidationDashboard
         [SerializeField] private RectTransform topRow;
         [SerializeField] private RectTransform bottomRow;
 
-        // Section scripts (created dynamically or assigned)
-        private OverviewSection_GlobalHealth _globalHealthSection;
-        private OverviewSection_ReactorCore _reactorCoreSection;
-        private OverviewSection_RCS _rcsSection;
+        // Section scripts — IP-0040 merged layout
+        private OverviewSection_ReactorRCS _reactorRcsSection;
         private OverviewSection_Pressurizer _pressurizerSection;
-        private OverviewSection_CVCS _cvcsSection;
-        private OverviewSection_SGRHR _sgRhrSection;
+        private OverviewSection_CVCSG _cvcsgSection;
+        private OverviewSection_SystemHealth _systemHealthSection;
         private OverviewSection_Alarms _alarmsSection;
 
         // ====================================================================
@@ -90,17 +86,15 @@ namespace Critical.UI.ValidationDashboard
 
         private void BuildLayout()
         {
-            // Create two-row grid layout
-            // Top row: Global Health, Reactor Core, RCS, Pressurizer
-            // Bottom row: CVCS, SG/RHR, Alarm Summary
+            // IP-0040: Proportional 3+2 layout
+            // Top row (60%): Reactor/RCS, Pressurizer, CVCS/SG
+            // Bottom row (40%): System Health, Alarm Annunciator Grid
 
-            RectTransform rt = GetComponent<RectTransform>();
-
-            // Top row container
+            // Top row container — 60% of panel height
             GameObject topRowGO = new GameObject("TopRow");
             topRowGO.transform.SetParent(transform, false);
             topRow = topRowGO.AddComponent<RectTransform>();
-            topRow.anchorMin = new Vector2(0, 0.5f);
+            topRow.anchorMin = new Vector2(0, 0.40f);
             topRow.anchorMax = new Vector2(1, 1);
             topRow.offsetMin = new Vector2(0, 4);
             topRow.offsetMax = new Vector2(0, 0);
@@ -112,14 +106,14 @@ namespace Critical.UI.ValidationDashboard
             topLayout.childForceExpandWidth = true;
             topLayout.childForceExpandHeight = true;
             topLayout.spacing = 8;
-            topLayout.padding = new RectOffset(4, 4, 4, 4);
+            topLayout.padding = new RectOffset(6, 6, 4, 4);
 
-            // Bottom row container
+            // Bottom row container — 40% of panel height
             GameObject bottomRowGO = new GameObject("BottomRow");
             bottomRowGO.transform.SetParent(transform, false);
             bottomRow = bottomRowGO.AddComponent<RectTransform>();
             bottomRow.anchorMin = new Vector2(0, 0);
-            bottomRow.anchorMax = new Vector2(1, 0.5f);
+            bottomRow.anchorMax = new Vector2(1, 0.40f);
             bottomRow.offsetMin = new Vector2(0, 0);
             bottomRow.offsetMax = new Vector2(0, -4);
 
@@ -130,21 +124,20 @@ namespace Critical.UI.ValidationDashboard
             bottomLayout.childForceExpandWidth = true;
             bottomLayout.childForceExpandHeight = true;
             bottomLayout.spacing = 8;
-            bottomLayout.padding = new RectOffset(4, 4, 4, 4);
+            bottomLayout.padding = new RectOffset(6, 6, 4, 4);
         }
 
         private void InitializeSections()
         {
-            // Create section containers in top row
-            _globalHealthSection = CreateSection<OverviewSection_GlobalHealth>(topRow, "GLOBAL HEALTH", 1f);
-            _reactorCoreSection = CreateSection<OverviewSection_ReactorCore>(topRow, "REACTOR CORE", 1f);
-            _rcsSection = CreateSection<OverviewSection_RCS>(topRow, "RCS PRIMARY", 1f);
-            _pressurizerSection = CreateSection<OverviewSection_Pressurizer>(topRow, "PRESSURIZER", 1f);
+            // IP-0040: 3+2 proportional section layout
+            // Top row: Reactor/RCS (wider), Pressurizer, CVCS/SG
+            _reactorRcsSection = CreateSection<OverviewSection_ReactorRCS>(topRow, "REACTOR / RCS", 1.2f);
+            _pressurizerSection = CreateSection<OverviewSection_Pressurizer>(topRow, "PRESSURIZER", 1.0f);
+            _cvcsgSection = CreateSection<OverviewSection_CVCSG>(topRow, "CVCS / SG", 1.0f);
 
-            // Create section containers in bottom row
-            _cvcsSection = CreateSection<OverviewSection_CVCS>(bottomRow, "CVCS", 1f);
-            _sgRhrSection = CreateSection<OverviewSection_SGRHR>(bottomRow, "SG / RHR", 1f);
-            _alarmsSection = CreateSection<OverviewSection_Alarms>(bottomRow, "ALARM SUMMARY", 1.5f);
+            // Bottom row: System Health (narrow), Alarm Annunciator (wide)
+            _systemHealthSection = CreateSection<OverviewSection_SystemHealth>(bottomRow, "SYSTEM HEALTH", 0.8f);
+            _alarmsSection = CreateSection<OverviewSection_Alarms>(bottomRow, "ALARM ANNUNCIATOR", 1.5f);
         }
 
         private T CreateSection<T>(Transform parent, string title, float flexWeight) where T : OverviewSectionBase
@@ -208,13 +201,10 @@ namespace Critical.UI.ValidationDashboard
         {
             if (Engine == null) return;
 
-            // Update all sections with fresh engine data
-            _globalHealthSection?.UpdateData(Engine);
-            _reactorCoreSection?.UpdateData(Engine);
-            _rcsSection?.UpdateData(Engine);
+            _reactorRcsSection?.UpdateData(Engine);
             _pressurizerSection?.UpdateData(Engine);
-            _cvcsSection?.UpdateData(Engine);
-            _sgRhrSection?.UpdateData(Engine);
+            _cvcsgSection?.UpdateData(Engine);
+            _systemHealthSection?.UpdateData(Engine);
             _alarmsSection?.UpdateData(Engine);
         }
 
@@ -224,13 +214,10 @@ namespace Critical.UI.ValidationDashboard
 
         protected override void OnUpdateVisuals()
         {
-            // Update section visuals (animations, color transitions)
-            _globalHealthSection?.UpdateVisuals();
-            _reactorCoreSection?.UpdateVisuals();
-            _rcsSection?.UpdateVisuals();
+            _reactorRcsSection?.UpdateVisuals();
             _pressurizerSection?.UpdateVisuals();
-            _cvcsSection?.UpdateVisuals();
-            _sgRhrSection?.UpdateVisuals();
+            _cvcsgSection?.UpdateVisuals();
+            _systemHealthSection?.UpdateVisuals();
             _alarmsSection?.UpdateVisuals();
         }
     }

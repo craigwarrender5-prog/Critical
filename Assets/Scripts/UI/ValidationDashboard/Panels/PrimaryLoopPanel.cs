@@ -19,6 +19,11 @@ namespace Critical.UI.ValidationDashboard
         public override string PanelName => "PrimaryLoopPanel";
         public override int TabIndex => 1;
 
+        // Hero gauges
+        private ArcGauge _pressureHeroGauge;
+        private ArcGauge _tavgHeroGauge;
+        private ArcGauge _subcoolHeroGauge;
+
         private DigitalReadout _tAvgReadout;
         private DigitalReadout _tHotReadout;
         private DigitalReadout _tColdReadout;
@@ -55,6 +60,9 @@ namespace Critical.UI.ValidationDashboard
             columnsLayout.spacing = 12;
             columnsLayout.padding = new RectOffset(8, 8, 8, 8);
 
+            // Hero gauge row
+            BuildHeroRow(columnsGO.transform);
+
             Transform tempCol = CreateColumn(columnsGO.transform, "TemperatureColumn", 1.2f);
             BuildTemperatureSection(tempCol);
 
@@ -63,6 +71,30 @@ namespace Critical.UI.ValidationDashboard
 
             Transform rcpCol = CreateColumn(columnsGO.transform, "RCPColumn", 1f);
             BuildRCPSection(rcpCol);
+        }
+
+        private void BuildHeroRow(Transform parent)
+        {
+            GameObject heroGO = new GameObject("HeroGauges");
+            heroGO.transform.SetParent(parent.parent, false);
+            heroGO.transform.SetAsFirstSibling();
+
+            LayoutElement heroLE = heroGO.AddComponent<LayoutElement>();
+            heroLE.preferredHeight = 150;
+            heroLE.flexibleWidth = 1;
+
+            HorizontalLayoutGroup heroLayout = heroGO.AddComponent<HorizontalLayoutGroup>();
+            heroLayout.childAlignment = TextAnchor.MiddleCenter;
+            heroLayout.childControlWidth = false;
+            heroLayout.childControlHeight = false;
+            heroLayout.spacing = 16;
+
+            _pressureHeroGauge = ArcGauge.Create(heroGO.transform,
+                "RCS PRESS", 0f, 2500f, 350f, 2300f, 300f, 2385f, " psia");
+            _tavgHeroGauge = ArcGauge.Create(heroGO.transform,
+                "T-AVG", 50f, 650f, 100f, 550f, 70f, 600f, " °F");
+            _subcoolHeroGauge = ArcGauge.Create(heroGO.transform,
+                "SUBCOOL", 0f, 200f, 30f, 999f, 20f, 999f, " °F");
         }
 
         private Transform CreateColumn(Transform parent, string name, float flex)
@@ -149,6 +181,11 @@ namespace Critical.UI.ValidationDashboard
         protected override void OnUpdateData()
         {
             if (Engine == null) return;
+
+            // Hero gauges
+            _pressureHeroGauge?.SetValue(Engine.pressure);
+            _tavgHeroGauge?.SetValue(Engine.T_avg);
+            _subcoolHeroGauge?.SetValue(Engine.subcooling);
 
             _tAvgReadout?.SetValue(Engine.T_avg);
             _tHotReadout?.SetValue(Engine.T_hot);

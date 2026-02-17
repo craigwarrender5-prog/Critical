@@ -309,10 +309,11 @@ namespace Critical.UI.ValidationDashboard
 
             TextMeshProUGUI valueTMP = valueGO.AddComponent<TextMeshProUGUI>();
             valueTMP.text = "---";
-            valueTMP.fontSize = fontSize;
-            valueTMP.fontStyle = FontStyles.Bold;
             valueTMP.alignment = TextAlignmentOptions.Center;
-            valueTMP.color = ValidationDashboardTheme.TextPrimary;
+            InstrumentFontHelper.ApplyInstrumentStyle(valueTMP, fontSize);
+
+            // Recessed backing behind digital readout
+            InstrumentFontHelper.CreateRecessedBacking(valueGO.transform, 96, fontSize + 4);
 
             // Unit text
             TextMeshProUGUI unitTMP = null;

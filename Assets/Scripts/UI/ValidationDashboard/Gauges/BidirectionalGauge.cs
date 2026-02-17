@@ -444,11 +444,12 @@ namespace Critical.UI.ValidationDashboard
             valueRT.anchoredPosition = new Vector2(0, 25);
 
             TextMeshProUGUI valueTMP = valueGO.AddComponent<TextMeshProUGUI>();
-            valueTMP.fontSize = 16;
-            valueTMP.fontStyle = FontStyles.Bold;
             valueTMP.alignment = TextAlignmentOptions.Center;
-            valueTMP.color = ValidationDashboardTheme.TextPrimary;
+            InstrumentFontHelper.ApplyInstrumentStyle(valueTMP, 16f);
             gauge.valueText = valueTMP;
+
+            // Recessed backing behind digital readout
+            InstrumentFontHelper.CreateRecessedBacking(valueGO.transform, 96, 22);
 
             // Label text
             GameObject labelGO = new GameObject("LabelText");

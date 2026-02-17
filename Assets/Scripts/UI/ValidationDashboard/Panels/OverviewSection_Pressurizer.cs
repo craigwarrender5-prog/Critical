@@ -1,52 +1,124 @@
 // ============================================================================
 // CRITICAL: Master the Atom - Overview Section: Pressurizer
-// OverviewSection_Pressurizer.cs - PZR Level and Status Summary
+// OverviewSection_Pressurizer.cs - PZR Level Gauge and Status Summary
 // ============================================================================
-// VERSION: 1.0.1
-// IP: IP-0031 Stage 3
+//
+// PURPOSE:
+//   Pressurizer overview section with arc gauge for level, status
+//   indicators for bubble/heater state, and digital readouts for
+//   temperature and surge flow.
+//
+// INSTRUMENTS:
+//   Top: ArcGauge (PZR Level 0-100%)
+//   Middle: 2× StatusIndicators (BUBBLE, HEATERS)
+//   Bottom: 2× DigitalReadouts (PZR Temp, Surge Flow)
+//
+// VERSION: 2.0.0
+// DATE: 2026-02-17
+// IP: IP-0040 Stage 4
 // ============================================================================
 
 using UnityEngine;
+using UnityEngine.UI;
+using TMPro;
 using Critical.Physics;
 
 namespace Critical.UI.ValidationDashboard
 {
     public class OverviewSection_Pressurizer : OverviewSectionBase
     {
-        private ParameterRow _levelRow;
-        private ParameterRow _tempRow;
-        private StatusRow _bubbleRow;
-        private StatusRow _heaterRow;
+        // Gauge references
+        private ArcGauge _levelGauge;
+        private StatusIndicator _bubbleIndicator;
+        private StatusIndicator _heaterIndicator;
+        private DigitalReadout _tempReadout;
+        private DigitalReadout _surgeReadout;
 
         protected override void BuildContent()
         {
-            _levelRow = CreateRow("LEVEL", "%", "F1");
-            _tempRow = CreateRow("T-PZR", "°F", "F1");
-            _bubbleRow = CreateStatusRow("BUBBLE");
-            _heaterRow = CreateStatusRow("HEATERS");
+            // --- Hero gauge: PZR Level ---
+            GameObject gaugeHolder = new GameObject("LevelGaugeHolder");
+            gaugeHolder.transform.SetParent(ContentRoot, false);
+
+            LayoutElement gaugeLE = gaugeHolder.AddComponent<LayoutElement>();
+            gaugeLE.preferredHeight = 140;
+            gaugeLE.flexibleWidth = 1;
+
+            HorizontalLayoutGroup gaugeLayout = gaugeHolder.AddComponent<HorizontalLayoutGroup>();
+            gaugeLayout.childAlignment = TextAnchor.MiddleCenter;
+            gaugeLayout.childControlWidth = false;
+            gaugeLayout.childControlHeight = false;
+
+            _levelGauge = ArcGauge.Create(gaugeHolder.transform,
+                "PZR LEVEL", 0f, 100f, 17f, 80f, 12f, 92f, " %");
+
+            // --- Status indicators row ---
+            GameObject statusRow = new GameObject("StatusRow");
+            statusRow.transform.SetParent(ContentRoot, false);
+
+            LayoutElement statusLE = statusRow.AddComponent<LayoutElement>();
+            statusLE.preferredHeight = 28;
+            statusLE.minHeight = 28;
+
+            HorizontalLayoutGroup statusLayout = statusRow.AddComponent<HorizontalLayoutGroup>();
+            statusLayout.childAlignment = TextAnchor.MiddleCenter;
+            statusLayout.childControlWidth = false;
+            statusLayout.childControlHeight = false;
+            statusLayout.spacing = 8;
+
+            _bubbleIndicator = StatusIndicator.Create(statusRow.transform, "BUBBLE",
+                StatusIndicator.IndicatorShape.Pill, 70, 22);
+            _heaterIndicator = StatusIndicator.Create(statusRow.transform, "HEATERS",
+                StatusIndicator.IndicatorShape.Pill, 70, 22);
+
+            // --- Digital readouts row ---
+            GameObject readoutRow = new GameObject("ReadoutRow");
+            readoutRow.transform.SetParent(ContentRoot, false);
+
+            LayoutElement readoutLE = readoutRow.AddComponent<LayoutElement>();
+            readoutLE.preferredHeight = 50;
+            readoutLE.flexibleWidth = 1;
+
+            HorizontalLayoutGroup readoutLayout = readoutRow.AddComponent<HorizontalLayoutGroup>();
+            readoutLayout.childAlignment = TextAnchor.MiddleCenter;
+            readoutLayout.childControlWidth = true;
+            readoutLayout.childControlHeight = true;
+            readoutLayout.childForceExpandWidth = true;
+            readoutLayout.spacing = 4;
+
+            _tempReadout = DigitalReadout.Create(readoutRow.transform, "PZR TEMP", "°F", "F1", 16f);
+            _surgeReadout = DigitalReadout.Create(readoutRow.transform, "SURGE", "gpm", "F1", 16f);
         }
 
         public override void UpdateData(HeatupSimEngine engine)
         {
             if (engine == null) return;
 
-            // Level with normal band (17-80%) and alarm thresholds (12-92%)
-            float level = engine.pzrLevel;
-            _levelRow.SetValueWithThresholds(level, 17f, 80f, 12f, 92f);
-
-            // PZR temperature
-            _tempRow.SetValue(engine.T_pzr);
+            _levelGauge?.SetValue(engine.pzrLevel);
+            _tempReadout?.SetValue(engine.T_pzr);
+            _surgeReadout?.SetValue(engine.surgeFlow);
 
             // Bubble status
-            string bubbleText = engine.solidPressurizer ? "SOLID" : 
-                               engine.bubbleFormed ? "FORMED" : "FORMING";
-            bool bubbleOK = engine.bubbleFormed;
-            _bubbleRow.SetStatus(bubbleText, bubbleOK);
+            if (_bubbleIndicator != null)
+            {
+                if (engine.bubbleFormed)
+                    _bubbleIndicator.SetState(StatusIndicator.IndicatorState.Normal);
+                else if (engine.heatupInProgress)
+                    _bubbleIndicator.SetState(StatusIndicator.IndicatorState.Warning);
+                else
+                    _bubbleIndicator.SetState(StatusIndicator.IndicatorState.Off);
+            }
 
             // Heater status
-            string heaterText = engine.pzrHeatersOn ? 
-                $"ON ({engine.pzrHeaterPower * 1000f:F0} kW)" : "OFF";
-            _heaterRow.SetStatus(heaterText, engine.pzrHeatersOn);
+            if (_heaterIndicator != null)
+            {
+                _heaterIndicator.SetOn(engine.pzrHeatersOn);
+            }
+        }
+
+        public override void UpdateVisuals()
+        {
+            // Gauges and indicators handle their own animation
         }
     }
 }

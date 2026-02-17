@@ -115,20 +115,50 @@ namespace Critical.UI.ValidationDashboard
         public static readonly Color GaugeArcBackground = new Color32(38, 41, 51, 255);  // #262933
 
         // ====================================================================
-        // ANNUNCIATOR TILE COLORS (dim backgrounds for alarm states)
+        // ANNUNCIATOR TILE COLORS
+        // Matches MosaicAlarmPanel.cs proven palette (NRC HRTD Section 4)
         // ====================================================================
 
-        /// <summary>Annunciator off / inactive.</summary>
-        public static readonly Color AnnunciatorOff = new Color32(30, 33, 41, 255);      // #1E2129
+        // --- Tile background states ---
 
-        /// <summary>Annunciator normal (dim green).</summary>
-        public static readonly Color AnnunciatorNormal = new Color32(26, 89, 31, 255);   // #1A591F
+        /// <summary>Annunciator off / inactive background.</summary>
+        public static readonly Color AnnunciatorOff = new Color(0.12f, 0.13f, 0.16f, 1f);
 
-        /// <summary>Annunciator warning (dim amber).</summary>
-        public static readonly Color AnnunciatorWarning = new Color32(115, 89, 0, 255);  // #735900
+        /// <summary>Annunciator normal / status background (green).</summary>
+        public static readonly Color AnnunciatorNormal = new Color(0.10f, 0.35f, 0.12f, 1f);
 
-        /// <summary>Annunciator alarm (dim red).</summary>
-        public static readonly Color AnnunciatorAlarm = new Color32(128, 20, 20, 255);   // #801414
+        /// <summary>Annunciator warning background (amber).</summary>
+        public static readonly Color AnnunciatorWarning = new Color(0.45f, 0.35f, 0.00f, 1f);
+
+        /// <summary>Annunciator alarm background (red).</summary>
+        public static readonly Color AnnunciatorAlarm = new Color(0.50f, 0.08f, 0.08f, 1f);
+
+        // --- Tile text/border active colors ---
+
+        /// <summary>Annunciator text/border green (status active).</summary>
+        public static readonly Color AnnunciatorTextGreen = new Color(0.18f, 0.82f, 0.25f, 1f);
+
+        /// <summary>Annunciator text/border amber (warning active).</summary>
+        public static readonly Color AnnunciatorTextAmber = new Color(1.00f, 0.78f, 0.00f, 1f);
+
+        /// <summary>Annunciator text/border red (alarm active).</summary>
+        public static readonly Color AnnunciatorTextRed = new Color(1.00f, 0.18f, 0.18f, 1f);
+
+        // --- Tile inactive colors ---
+
+        /// <summary>Annunciator dim text (inactive tile label).</summary>
+        public static readonly Color AnnunciatorTextDim = new Color(0.55f, 0.58f, 0.65f, 1f);
+
+        /// <summary>Annunciator dim border (inactive tile edge).</summary>
+        public static readonly Color AnnunciatorBorderDim = new Color(0.20f, 0.22f, 0.26f, 1f);
+
+        // --- Tile acknowledged colors ---
+
+        /// <summary>Annunciator acknowledged background (muted).</summary>
+        public static readonly Color AnnunciatorAckBg = new Color(0.18f, 0.18f, 0.20f, 1f);
+
+        /// <summary>Annunciator acknowledged text (muted).</summary>
+        public static readonly Color AnnunciatorAckText = new Color(0.50f, 0.50f, 0.50f, 1f);
 
         // ====================================================================
         // GRAPH TRACE COLORS (distinct for multi-trace plots)
@@ -232,6 +262,15 @@ namespace Critical.UI.ValidationDashboard
 
         /// <summary>Alarm pulse cycle duration (seconds).</summary>
         public const float AlarmPulseDuration = 0.5f;
+
+        /// <summary>ISA-18.1 alerting flash rate (Hz) — fast flash for new alarms.</summary>
+        public const float AnnunciatorAlertFlashHz = 3.0f;
+
+        /// <summary>ISA-18.1 clearing flash rate (Hz) — slow flash for cleared conditions.</summary>
+        public const float AnnunciatorClearFlashHz = 0.7f;
+
+        /// <summary>ISA-18.1 auto-reset delay (seconds) after clearing flash.</summary>
+        public const float AnnunciatorAutoResetDelay = 5.0f;
 
         /// <summary>Glow pulse minimum alpha.</summary>
         public const float GlowPulseMin = 0.3f;

@@ -19,6 +19,10 @@ namespace Critical.UI.ValidationDashboard
         public override string PanelName => "SGRHRPanel";
         public override int TabIndex => 4;
 
+        // Hero gauges
+        private ArcGauge _sgPressHeroGauge;
+        private ArcGauge _heatTransferHeroGauge;
+
         // SG Primary
         private DigitalReadout _sgPrimaryTempReadout;
         private DigitalReadout _sgHeatTransferReadout;
@@ -60,6 +64,9 @@ namespace Critical.UI.ValidationDashboard
             columnsLayout.spacing = 12;
             columnsLayout.padding = new RectOffset(8, 8, 8, 8);
 
+            // Hero gauge row
+            BuildHeroRow(columnsGO.transform);
+
             Transform sgPriCol = CreateColumn(columnsGO.transform, "SGPrimaryColumn", 1f);
             BuildSGPrimarySection(sgPriCol);
 
@@ -68,6 +75,28 @@ namespace Critical.UI.ValidationDashboard
 
             Transform rhrCol = CreateColumn(columnsGO.transform, "RHRColumn", 1f);
             BuildRHRSection(rhrCol);
+        }
+
+        private void BuildHeroRow(Transform parent)
+        {
+            GameObject heroGO = new GameObject("HeroGauges");
+            heroGO.transform.SetParent(parent.parent, false);
+            heroGO.transform.SetAsFirstSibling();
+
+            LayoutElement heroLE = heroGO.AddComponent<LayoutElement>();
+            heroLE.preferredHeight = 150;
+            heroLE.flexibleWidth = 1;
+
+            HorizontalLayoutGroup heroLayout = heroGO.AddComponent<HorizontalLayoutGroup>();
+            heroLayout.childAlignment = TextAnchor.MiddleCenter;
+            heroLayout.childControlWidth = false;
+            heroLayout.childControlHeight = false;
+            heroLayout.spacing = 20;
+
+            _sgPressHeroGauge = ArcGauge.Create(heroGO.transform,
+                "SG PRESS", 0f, 1200f, 0f, 1000f, 0f, 1100f, " psia");
+            _heatTransferHeroGauge = ArcGauge.Create(heroGO.transform,
+                "SG HEAT", -5f, 20f, -2f, 15f, -3f, 18f, " MW");
         }
 
         private Transform CreateColumn(Transform parent, string name, float flex)
@@ -138,6 +167,10 @@ namespace Critical.UI.ValidationDashboard
         protected override void OnUpdateData()
         {
             if (Engine == null) return;
+
+            // Hero gauges
+            _sgPressHeroGauge?.SetValue(Engine.sgSecondaryPressure_psia);
+            _heatTransferHeroGauge?.SetValue(Engine.sgHeatTransfer_MW);
 
             // SG Primary - use T_rcs as primary temp
             _sgPrimaryTempReadout?.SetValue(Engine.T_rcs);

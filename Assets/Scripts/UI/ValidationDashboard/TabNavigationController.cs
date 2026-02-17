@@ -262,6 +262,28 @@ namespace Critical.UI.ValidationDashboard
         /// </summary>
         public int CurrentTabIndex => _currentTabIndex;
 
+        /// <summary>
+        /// Fade a CanvasGroup alpha from current to target over duration.
+        /// Attach to any GameObject with a CanvasGroup.
+        /// </summary>
+        public static System.Collections.IEnumerator FadeCanvasGroup(
+            CanvasGroup group, float targetAlpha, float duration)
+        {
+            if (group == null) yield break;
+            float startAlpha = group.alpha;
+            float elapsed = 0f;
+
+            while (elapsed < duration)
+            {
+                elapsed += Time.unscaledDeltaTime;
+                float t = Mathf.Clamp01(elapsed / duration);
+                group.alpha = Mathf.Lerp(startAlpha, targetAlpha, t);
+                yield return null;
+            }
+
+            group.alpha = targetAlpha;
+        }
+
         // ====================================================================
         // RUNTIME PREFAB BUILDER
         // ====================================================================

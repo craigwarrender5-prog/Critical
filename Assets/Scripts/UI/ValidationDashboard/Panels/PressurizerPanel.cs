@@ -19,6 +19,10 @@ namespace Critical.UI.ValidationDashboard
         public override string PanelName => "PressurizerPanel";
         public override int TabIndex => 2;
 
+        // Hero gauges
+        private ArcGauge _levelHeroGauge;
+        private ArcGauge _pressureHeroGauge;
+
         // Level
         private DigitalReadout _levelReadout;
         private DigitalReadout _waterVolumeReadout;
@@ -63,6 +67,9 @@ namespace Critical.UI.ValidationDashboard
             columnsLayout.spacing = 12;
             columnsLayout.padding = new RectOffset(8, 8, 8, 8);
 
+            // Hero gauge row at top
+            Transform heroRow = CreateHeroRow(columnsGO.transform);
+
             Transform levelCol = CreateColumn(columnsGO.transform, "LevelColumn", 1f);
             BuildLevelSection(levelCol);
 
@@ -94,6 +101,32 @@ namespace Critical.UI.ValidationDashboard
             layout.padding = new RectOffset(8, 8, 8, 8);
 
             return colGO.transform;
+        }
+
+        private Transform CreateHeroRow(Transform parent)
+        {
+            // Swap the parent layout to vertical to stack hero row above columns
+            // This inserts a row of arc gauges above the existing 3-column layout
+            GameObject heroGO = new GameObject("HeroGauges");
+            heroGO.transform.SetParent(parent.parent, false);
+            heroGO.transform.SetAsFirstSibling();
+
+            LayoutElement heroLE = heroGO.AddComponent<LayoutElement>();
+            heroLE.preferredHeight = 150;
+            heroLE.flexibleWidth = 1;
+
+            HorizontalLayoutGroup heroLayout = heroGO.AddComponent<HorizontalLayoutGroup>();
+            heroLayout.childAlignment = TextAnchor.MiddleCenter;
+            heroLayout.childControlWidth = false;
+            heroLayout.childControlHeight = false;
+            heroLayout.spacing = 20;
+
+            _levelHeroGauge = ArcGauge.Create(heroGO.transform,
+                "PZR LEVEL", 0f, 100f, 17f, 80f, 12f, 92f, " %");
+            _pressureHeroGauge = ArcGauge.Create(heroGO.transform,
+                "PZR PRESS", 0f, 2500f, 350f, 2300f, 300f, 2385f, " psia");
+
+            return heroGO.transform;
         }
 
         private void BuildLevelSection(Transform parent)
@@ -144,6 +177,10 @@ namespace Critical.UI.ValidationDashboard
         protected override void OnUpdateData()
         {
             if (Engine == null) return;
+
+            // Hero gauges
+            _levelHeroGauge?.SetValue(Engine.pzrLevel);
+            _pressureHeroGauge?.SetValue(Engine.pressure);
 
             // Level
             _levelReadout?.SetValue(Engine.pzrLevel);
