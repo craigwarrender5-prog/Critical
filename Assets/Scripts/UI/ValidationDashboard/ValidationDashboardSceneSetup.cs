@@ -45,7 +45,7 @@ namespace Critical.Validation
 
         [Header("Dashboard Selection")]
         [Tooltip("Use new uGUI dashboard (true) or legacy OnGUI (false)")]
-        [SerializeField] private bool useNewDashboard = true;
+        [SerializeField] private bool useNewDashboard = false;  // IP-0041: Reverted to legacy until new dashboard font/material issues resolved
 
         [Header("Legacy Reference")]
         [Tooltip("Reference to legacy HeatupValidationVisual (auto-found if null)")]

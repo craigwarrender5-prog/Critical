@@ -520,8 +520,8 @@ namespace Critical.UI.ValidationDashboard
             InstrumentFontHelper.ApplyInstrumentStyle(valueTMP, 18f);
             gauge.valueText = valueTMP;
 
-            // Recessed backing behind digital readout
-            InstrumentFontHelper.CreateRecessedBacking(valueGO.transform, 96, 22);
+            // IP-0041 Stage 1: Recessed backing REMOVED — was rendering on top of text,
+            // producing black rectangles. Panel background provides sufficient contrast.
 
             // Label text
             GameObject labelGO = new GameObject("LabelText");

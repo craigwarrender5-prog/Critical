@@ -312,8 +312,10 @@ namespace Critical.UI.ValidationDashboard
             valueTMP.alignment = TextAlignmentOptions.Center;
             InstrumentFontHelper.ApplyInstrumentStyle(valueTMP, fontSize);
 
-            // Recessed backing behind digital readout
-            InstrumentFontHelper.CreateRecessedBacking(valueGO.transform, 96, fontSize + 4);
+            // IP-0041 Stage 1: Recessed backing REMOVED.
+            // The backing Image was rendering ON TOP of the TMP text within the same
+            // GameObject, producing opaque black rectangles. The panel background
+            // provides sufficient contrast for readability.
 
             // Unit text
             TextMeshProUGUI unitTMP = null;

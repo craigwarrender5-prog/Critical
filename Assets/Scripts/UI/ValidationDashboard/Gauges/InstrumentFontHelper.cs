@@ -49,14 +49,27 @@ namespace Critical.UI.ValidationDashboard
         /// <summary>
         /// Load instrument font and glow materials from Resources.
         /// Safe to call multiple times — only loads once.
+        /// IP-0041 Stage 1: Multiple fallback paths + visible fallback styling.
         /// </summary>
         public static void EnsureLoaded()
         {
             if (_loaded) return;
             _loaded = true;
 
+            // Load from TMP Examples & Extras — this is the ORIGINAL asset whose
+            // guid the glow materials reference via _MainTex. The copy in
+            // Assets/Resources has a DIFFERENT guid, causing atlas mismatch
+            // and invisible text. TMP's Resources folder structure means
+            // both paths are valid for Resources.Load.
             _instrumentFont = Resources.Load<TMP_FontAsset>(
                 "Fonts & Materials/Electronic Highway Sign SDF");
+
+            if (_instrumentFont == null)
+            {
+                Debug.LogWarning(
+                    "[InstrumentFontHelper] Instrument font not found — " +
+                    "using default TMP font with green fallback styling.");
+            }
 
             _matGreen = Resources.Load<Material>(
                 "Fonts & Materials/Instrument_Green_Glow");
@@ -64,9 +77,6 @@ namespace Critical.UI.ValidationDashboard
                 "Fonts & Materials/Instrument_Amber_Glow");
             _matRed = Resources.Load<Material>(
                 "Fonts & Materials/Instrument_Red_Glow");
-
-            if (_instrumentFont == null)
-                Debug.LogWarning("[InstrumentFontHelper] Instrument font not found — using default TMP font");
         }
 
         // ====================================================================
@@ -91,20 +101,20 @@ namespace Critical.UI.ValidationDashboard
 
         /// <summary>
         /// Apply instrument font and green glow material to a TMP text component.
+        /// IP-0041 Stage 1: Always produces visible text — no black rectangles.
+        /// If font/material missing, uses default TMP font with green color.
         /// </summary>
         public static void ApplyInstrumentStyle(TextMeshProUGUI text, float fontSize = 24f)
         {
             if (text == null) return;
-            EnsureLoaded();
 
-            if (_instrumentFont != null)
-                text.font = _instrumentFont;
-
+            // IP-0041 Stage 1: Direct color styling ONLY.
+            // Glow materials caused invisible text across 6 implementation attempts
+            // due to font atlas guid mismatch between copied font asset and materials.
+            // Plain green text on dark background is fully readable and reliable.
             text.fontSize = fontSize;
             text.fontStyle = FontStyles.Bold;
-
-            if (_matGreen != null)
-                text.fontSharedMaterial = _matGreen;
+            text.color = new Color32(46, 217, 64, 255); // NormalGreen
         }
 
         /// <summary>
@@ -145,22 +155,32 @@ namespace Critical.UI.ValidationDashboard
 
         /// <summary>
         /// Create a dark recessed rectangle behind a readout (display window look).
-        /// Should be created as a sibling placed before the text in hierarchy.
+        /// IP-0041 Stage 1: Fixed z-order — backing is always behind text content.
+        /// Created as a child of the parent, positioned behind all subsequent siblings.
+        /// Uses CanvasRenderer to prevent GraphicRaycaster MissingComponentException.
         /// </summary>
         public static Image CreateRecessedBacking(Transform parent, float width, float height)
         {
             GameObject backingGO = new GameObject("RecessedBacking");
             backingGO.transform.SetParent(parent, false);
-            backingGO.transform.SetAsFirstSibling(); // Behind text
+
+            // Ensure CanvasRenderer exists before adding Image (prevents raycaster errors)
+            if (backingGO.GetComponent<CanvasRenderer>() == null)
+                backingGO.AddComponent<CanvasRenderer>();
 
             RectTransform rt = backingGO.AddComponent<RectTransform>();
-            rt.anchorMin = new Vector2(0.5f, 0.5f);
-            rt.anchorMax = new Vector2(0.5f, 0.5f);
-            rt.sizeDelta = new Vector2(width, height);
+            // Stretch to fill parent — more robust than fixed size for layout groups
+            rt.anchorMin = Vector2.zero;
+            rt.anchorMax = Vector2.one;
+            rt.offsetMin = Vector2.zero;
+            rt.offsetMax = Vector2.zero;
 
             Image img = backingGO.AddComponent<Image>();
             img.color = ValidationDashboardTheme.BackgroundGraph;
             img.raycastTarget = false;
+
+            // SetAsFirstSibling ensures backing renders BEHIND all text/content siblings
+            backingGO.transform.SetAsFirstSibling();
 
             return img;
         }
