@@ -1,11 +1,9 @@
 // ============================================================================
 // CRITICAL: Master the Atom - Pressurizer Detail Panel
-// PressurizerPanel.cs - PZR Level, Pressure, Heaters, Spray, Relief
+// PressurizerPanel.cs - Detailed Pressurizer System Display
 // ============================================================================
-//
 // TAB: 2 (PRESSURIZER)
-// VERSION: 1.0.0
-// DATE: 2026-02-17
+// VERSION: 1.0.1
 // IP: IP-0031 Stage 4
 // ============================================================================
 
@@ -21,31 +19,24 @@ namespace Critical.UI.ValidationDashboard
         public override string PanelName => "PressurizerPanel";
         public override int TabIndex => 2;
 
-        // Level section
-        private ArcGauge _levelGauge;
-        private DigitalReadout _levelRateReadout;
-        private LinearGauge _steamSpaceGauge;
-        private LinearGauge _waterSpaceGauge;
+        // Level
+        private DigitalReadout _levelReadout;
+        private DigitalReadout _waterVolumeReadout;
+        private DigitalReadout _steamVolumeReadout;
 
-        // Pressure section
-        private ArcGauge _pressureGauge;
+        // Pressure
+        private DigitalReadout _pressureReadout;
         private DigitalReadout _tSatReadout;
         private DigitalReadout _tPzrReadout;
 
-        // Heater section
-        private StatusIndicator _heaterMasterIndicator;
-        private LinearGauge _heaterPowerGauge;
-        private DigitalReadout _heaterGroupsReadout;
-        private DigitalReadout _heaterOutputReadout;
+        // Heater Control
+        private StatusIndicator _heaterOnIndicator;
+        private DigitalReadout _heaterPowerReadout;
+        private DigitalReadout _heaterModeReadout;
 
-        // Spray section
-        private StatusIndicator _sprayIndicator;
+        // Spray/Relief
+        private StatusIndicator _sprayActiveIndicator;
         private DigitalReadout _sprayFlowReadout;
-        private DigitalReadout _sprayDeltaTReadout;
-
-        // Relief section
-        private StatusIndicator _porvIndicator;
-        private StatusIndicator _safetyIndicator;
 
         protected override void OnInitialize()
         {
@@ -78,7 +69,7 @@ namespace Critical.UI.ValidationDashboard
             Transform pressCol = CreateColumn(columnsGO.transform, "PressureColumn", 1f);
             BuildPressureSection(pressCol);
 
-            Transform controlCol = CreateColumn(columnsGO.transform, "ControlColumn", 1.2f);
+            Transform controlCol = CreateColumn(columnsGO.transform, "ControlColumn", 1f);
             BuildControlSection(controlCol);
         }
 
@@ -107,50 +98,30 @@ namespace Critical.UI.ValidationDashboard
 
         private void BuildLevelSection(Transform parent)
         {
-            CreateSectionHeader(parent, "PRESSURIZER LEVEL");
-            _levelGauge = ArcGauge.Create(parent, "LEVEL", 0f, 100f, 17f, 80f, 12f, 92f, "%");
-            _levelRateReadout = DigitalReadout.Create(parent, "LEVEL RATE", " %/hr", "F2", 16f);
-
-            CreateSectionHeader(parent, "VOLUME DISTRIBUTION");
-            _steamSpaceGauge = LinearGauge.Create(parent, "STEAM SPACE", 0f, 100f, false, 20f, 80f, 10f, 90f);
-            _waterSpaceGauge = LinearGauge.Create(parent, "WATER SPACE", 0f, 100f, false, 20f, 80f, 10f, 90f);
+            CreateSectionHeader(parent, "PZR LEVEL");
+            _levelReadout = DigitalReadout.Create(parent, "LEVEL", "%", "F1", 28f);
+            _waterVolumeReadout = DigitalReadout.Create(parent, "WATER SPACE", " ft³", "F1", 18f);
+            _steamVolumeReadout = DigitalReadout.Create(parent, "STEAM SPACE", " ft³", "F1", 18f);
         }
 
         private void BuildPressureSection(Transform parent)
         {
             CreateSectionHeader(parent, "PZR PRESSURE");
-            _pressureGauge = ArcGauge.Create(parent, "PRESSURE", 0f, 2500f, 400f, 2285f, 350f, 2385f, " psia");
-            _tSatReadout = DigitalReadout.Create(parent, "T-SAT @ P", "°F", "F1", 18f);
-            _tPzrReadout = DigitalReadout.Create(parent, "T-PZR", "°F", "F1", 18f);
+            _pressureReadout = DigitalReadout.Create(parent, "PRESSURE", " psia", "F0", 28f);
+            _tSatReadout = DigitalReadout.Create(parent, "T-SAT @ P", "°F", "F1", 20f);
+            _tPzrReadout = DigitalReadout.Create(parent, "T-PZR", "°F", "F1", 20f);
         }
 
         private void BuildControlSection(Transform parent)
         {
             CreateSectionHeader(parent, "HEATER CONTROL");
-            _heaterMasterIndicator = StatusIndicator.Create(parent, "HEATERS", StatusIndicator.IndicatorShape.Pill, 100f, 28f);
-            _heaterPowerGauge = LinearGauge.Create(parent, "HEATER POWER", 0f, 100f, false);
-            _heaterGroupsReadout = DigitalReadout.Create(parent, "GROUPS ON", "", "F0", 16f);
-            _heaterOutputReadout = DigitalReadout.Create(parent, "OUTPUT", " kW", "F0", 16f);
+            _heaterOnIndicator = StatusIndicator.Create(parent, "HEATERS", StatusIndicator.IndicatorShape.Pill, 70f, 28f);
+            _heaterPowerReadout = DigitalReadout.Create(parent, "POWER", " MW", "F3", 22f);
+            _heaterModeReadout = DigitalReadout.Create(parent, "MODE", "", "F0", 16f);
 
             CreateSectionHeader(parent, "SPRAY CONTROL");
-            _sprayIndicator = StatusIndicator.Create(parent, "SPRAY", StatusIndicator.IndicatorShape.Pill, 100f, 28f);
-            _sprayFlowReadout = DigitalReadout.Create(parent, "SPRAY FLOW", " gpm", "F1", 16f);
-            _sprayDeltaTReadout = DigitalReadout.Create(parent, "SPRAY ΔT", "°F", "F1", 16f);
-
-            CreateSectionHeader(parent, "RELIEF VALVES");
-            GameObject reliefRow = new GameObject("ReliefRow");
-            reliefRow.transform.SetParent(parent, false);
-            LayoutElement reliefLE = reliefRow.AddComponent<LayoutElement>();
-            reliefLE.preferredHeight = 32;
-
-            HorizontalLayoutGroup reliefLayout = reliefRow.AddComponent<HorizontalLayoutGroup>();
-            reliefLayout.childAlignment = TextAnchor.MiddleCenter;
-            reliefLayout.childControlWidth = false;
-            reliefLayout.childControlHeight = true;
-            reliefLayout.spacing = 16;
-
-            _porvIndicator = StatusIndicator.Create(reliefRow.transform, "PORV", StatusIndicator.IndicatorShape.Pill, 70f, 26f);
-            _safetyIndicator = StatusIndicator.Create(reliefRow.transform, "SAFETY", StatusIndicator.IndicatorShape.Pill, 70f, 26f);
+            _sprayActiveIndicator = StatusIndicator.Create(parent, "SPRAY", StatusIndicator.IndicatorShape.Pill, 60f, 26f);
+            _sprayFlowReadout = DigitalReadout.Create(parent, "FLOW", " gpm", "F1", 18f);
         }
 
         private void CreateSectionHeader(Transform parent, string title)
@@ -175,41 +146,45 @@ namespace Critical.UI.ValidationDashboard
             if (Engine == null) return;
 
             // Level
-            _levelGauge?.SetValue(Engine.pzrLevel);
-            _levelRateReadout?.SetValue(Engine.pzrLevelRate * 60f); // Convert to %/hr
+            _levelReadout?.SetValue(Engine.pzrLevel);
+            _waterVolumeReadout?.SetValue(Engine.pzrWaterVolume);
+            _steamVolumeReadout?.SetValue(Engine.pzrSteamVolume);
 
-            float steamPct = 100f - Engine.pzrLevel;
-            _steamSpaceGauge?.SetValue(steamPct);
-            _waterSpaceGauge?.SetValue(Engine.pzrLevel);
+            // Colorize level
+            if (_levelReadout != null)
+            {
+                if (Engine.pzrLevelLow || Engine.pzrLevelHigh)
+                    _levelReadout.SetColor(ValidationDashboardTheme.AlarmRed);
+                else if (Engine.pzrLevel < 20f || Engine.pzrLevel > 85f)
+                    _levelReadout.SetColor(ValidationDashboardTheme.WarningAmber);
+                else
+                    _levelReadout.SetColor(ValidationDashboardTheme.NormalGreen);
+            }
 
             // Pressure
-            _pressureGauge?.SetValue(Engine.pressure);
+            _pressureReadout?.SetValue(Engine.pressure);
             _tSatReadout?.SetValue(Engine.T_sat);
             _tPzrReadout?.SetValue(Engine.T_pzr);
 
-            // Heaters
-            bool heatersOn = Engine.pzrHeatersOn;
-            _heaterMasterIndicator?.SetOn(heatersOn);
+            // Heater control
+            _heaterOnIndicator?.SetOn(Engine.pzrHeatersOn);
+            _heaterOnIndicator?.SetColor(Engine.pzrHeatersOn ? 
+                ValidationDashboardTheme.AccentOrange : ValidationDashboardTheme.TextSecondary);
             
-            float heaterPct = (Engine.pzrHeaterPower / PlantConstants.HEATER_POWER_TOTAL) * 100f * 1000f;
-            _heaterPowerGauge?.SetValue(heaterPct);
-            _heaterGroupsReadout?.SetValue(Engine.pzrHeaterGroupsOn);
-            _heaterOutputReadout?.SetValue(Engine.pzrHeaterPower * 1000f);
+            _heaterPowerReadout?.SetValue(Engine.pzrHeaterPower);
+            
+            // Heater mode - use heaterAuthorityState string
+            if (_heaterModeReadout != null)
+            {
+                _heaterModeReadout.SetText(Engine.heaterAuthorityState);
+            }
 
-            // Spray
-            bool sprayActive = Engine.sprayActive;
-            _sprayIndicator?.SetOn(sprayActive);
+            // Spray control
+            _sprayActiveIndicator?.SetOn(Engine.sprayActive);
+            _sprayActiveIndicator?.SetColor(Engine.sprayActive ? 
+                ValidationDashboardTheme.AccentBlue : ValidationDashboardTheme.TextSecondary);
+            
             _sprayFlowReadout?.SetValue(Engine.sprayFlow_GPM);
-            
-            float sprayDeltaT = Engine.T_pzr - Engine.T_cold;
-            _sprayDeltaTReadout?.SetValue(sprayDeltaT);
-
-            if (_sprayFlowReadout != null && sprayActive)
-                _sprayFlowReadout.SetColor(ValidationDashboardTheme.InfoCyan);
-
-            // Relief valves
-            _porvIndicator?.SetState(Engine.porvOpen, Engine.porvOpen);
-            _safetyIndicator?.SetState(Engine.safetyOpen, Engine.safetyOpen);
         }
     }
 }

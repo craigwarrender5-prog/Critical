@@ -1,7 +1,7 @@
 ﻿HEATUP INTERVAL LOG
 ======================================================================
 Log Entry:        #1
-Timestamp:        16/02/2026 6:49:52 p.m.
+Timestamp:        17/02/2026 8:40:00 a.m.
 Sim Time:         0.00 hours (00:00:00)
 Wall-Clock Time:  00:00:00
 Effective Speed:  1x (1x RT)
@@ -49,7 +49,22 @@ CVCS (Chemical & Volume Control):
   Divert Fraction:        0.00
 
 PZR PRESSURE CONTROL (v4.4.0):
-  Heater Mode:             OFF
+  Heater Mode:      PRESSURIZE_AUTO
+  Authority State:  HOLD_LOCKED
+  Authority Reason: startup_hold_active
+  Limiter Reason:   HOLD_LOCKED
+  Limiter Detail:   Startup hold authority active
+  Auto Demand Supp:        YES
+  Hold Active:             YES
+  Hold Elapsed:            0.0 s
+  Hold Release @:         15.0 s
+  Hold dP/dt |abs|:       0.00 psi/hr
+  Hold Gate Time:        BLOCK
+  Hold Gate dP/dt:       BLOCK
+  Hold Gate State:       BLOCK
+  Hold Block Why:   MIN_TIME_NOT_REACHED
+  Htr dPdt Clamp:           NO
+  Htr Ramp Clamp:           NO
   Heater Power:          0.000 MW
   Spray Enabled:            NO
   Spray Active:             NO
@@ -209,11 +224,11 @@ RCP (Reactor Coolant Pump) STATE:
   Steam: 0 lb/hr (0.00 MW) | Cumulative: 0 lb | Sec.Mass: 1660000 lb
   v5.4.0: Inventory=0 lb | Outflow=0 lb/hr | V_steam=1000 ft³ | P_inv=2 psig | OPEN | Psrc=floor
   Level: WR=100.0% NR=181.8% | PRE-DRAIN | Drained: 0 lb
-  TOP: T=120.0°F  ΔT=0.0°F  Q=0.000MW  h=0  Af=0.000  [TRANS]  B=0.00
-  N1: T=120.0°F  ΔT=0.0°F  Q=0.000MW  h=0  Af=0.000  [ABOVE]  B=0.00
-  N2: T=120.0°F  ΔT=0.0°F  Q=0.000MW  h=0  Af=0.000  [ABOVE]  B=0.00
-  N3: T=120.0°F  ΔT=0.0°F  Q=0.000MW  h=0  Af=0.000  [ABOVE]  B=0.00
-  BOT: T=120.0°F  ΔT=0.0°F  Q=0.000MW  h=0  Af=0.000  [ABOVE]  B=0.00
+  TOP: T=120.0Â°F  Î”T=0.0Â°F  Q=0.000MW  h=0  Af=0.000  [TRANS]  B=0.00
+  N1: T=120.0Â°F  Î”T=0.0Â°F  Q=0.000MW  h=0  Af=0.000  [ABOVE]  B=0.00
+  N2: T=120.0Â°F  Î”T=0.0Â°F  Q=0.000MW  h=0  Af=0.000  [ABOVE]  B=0.00
+  N3: T=120.0Â°F  Î”T=0.0Â°F  Q=0.000MW  h=0  Af=0.000  [ABOVE]  B=0.00
+  BOT: T=120.0Â°F  Î”T=0.0Â°F  Q=0.000MW  h=0  Af=0.000  [ABOVE]  B=0.00
 
 
   MASS INVENTORY:
@@ -257,7 +272,7 @@ RCP (Reactor Coolant Pump) STATE:
   v4.4.0 PRESSURE/LEVEL CONTROL VALIDATION:
     PZR Level within ±10%:  FAIL (level=100.0%, SP=25.0%, err=75.0%)
     P Rate (HTR):         HTR_PRESS (0.0 psi/hr, dist_SP=250.3 psi)
-    Heater Mode at PID:   PASS (mode=OFF)
+    Heater Mode at PID:   PASS (mode=PRESSURIZE_AUTO)
     Spray if P>2275 psia: PASS (P=115, spray=False)
 
   INVENTORY AUDIT (v1.1.0 — Comprehensive Mass Balance):

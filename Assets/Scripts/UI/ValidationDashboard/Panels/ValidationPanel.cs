@@ -1,11 +1,9 @@
 // ============================================================================
-// CRITICAL: Master the Atom - Validation Metrics Panel
-// ValidationPanel.cs - Physics Validation and Conservation Metrics
+// CRITICAL: Master the Atom - Validation Panel
+// ValidationPanel.cs - Mass/Energy Conservation and Simulation Metrics
 // ============================================================================
-//
 // TAB: 6 (VALIDATION)
-// VERSION: 1.0.0
-// DATE: 2026-02-17
+// VERSION: 1.0.1
 // IP: IP-0031 Stage 4
 // ============================================================================
 
@@ -23,28 +21,20 @@ namespace Critical.UI.ValidationDashboard
 
         // Mass Conservation
         private DigitalReadout _massErrorReadout;
-        private DigitalReadout _massErrorRateReadout;
-        private LinearGauge _massErrorGauge;
         private StatusIndicator _massStatusIndicator;
 
-        // Energy Conservation
+        // Energy Balance
         private DigitalReadout _netHeatReadout;
         private DigitalReadout _heatInputReadout;
         private DigitalReadout _heatRemovalReadout;
-        private LinearGauge _energyBalanceGauge;
 
-        // Thermal Balance
+        // Thermal Sources
         private DigitalReadout _rcpHeatReadout;
-        private DigitalReadout _pzrHeaterReadout;
-        private DigitalReadout _sgHeatReadout;
-        private DigitalReadout _rhrHeatReadout;
+        private DigitalReadout _pzrHeatReadout;
+        private DigitalReadout _sgTransferReadout;
+        private DigitalReadout _rhrRemovalReadout;
 
-        // Timestep Metrics
-        private DigitalReadout _dtReadout;
-        private DigitalReadout _simSpeedReadout;
-        private DigitalReadout _iterationsReadout;
-
-        // Validation Status
+        // Stability
         private StatusIndicator _thermalStabilityIndicator;
         private StatusIndicator _pressureStabilityIndicator;
         private StatusIndicator _levelStabilityIndicator;
@@ -83,7 +73,7 @@ namespace Critical.UI.ValidationDashboard
             Transform thermalCol = CreateColumn(columnsGO.transform, "ThermalColumn", 1f);
             BuildThermalSection(thermalCol);
 
-            Transform statusCol = CreateColumn(columnsGO.transform, "StatusColumn", 0.8f);
+            Transform statusCol = CreateColumn(columnsGO.transform, "StatusColumn", 1f);
             BuildStatusSection(statusCol);
         }
 
@@ -113,41 +103,33 @@ namespace Critical.UI.ValidationDashboard
         private void BuildMassSection(Transform parent)
         {
             CreateSectionHeader(parent, "MASS CONSERVATION");
-            _massErrorReadout = DigitalReadout.Create(parent, "MASS ERROR", " lbm", "F3", 24f);
-            _massErrorRateReadout = DigitalReadout.Create(parent, "ERROR RATE", " lbm/hr", "F3", 16f);
-            _massErrorGauge = LinearGauge.Create(parent, "ERROR BAND", -100f, 100f, false, -10f, 10f, -50f, 50f);
-            _massStatusIndicator = StatusIndicator.Create(parent, "MASS OK", StatusIndicator.IndicatorShape.Pill, 100f, 32f);
+            _massErrorReadout = DigitalReadout.Create(parent, "MASS ERROR", " lbm", "F2", 24f);
+            _massStatusIndicator = StatusIndicator.Create(parent, "STATUS", StatusIndicator.IndicatorShape.Pill, 80f, 28f);
         }
 
         private void BuildEnergySection(Transform parent)
         {
             CreateSectionHeader(parent, "ENERGY BALANCE");
-            _netHeatReadout = DigitalReadout.Create(parent, "NET HEAT", " MW", "F3", 24f);
-            _heatInputReadout = DigitalReadout.Create(parent, "HEAT INPUT", " MW", "F3", 16f);
-            _heatRemovalReadout = DigitalReadout.Create(parent, "HEAT REMOVAL", " MW", "F3", 16f);
-            _energyBalanceGauge = LinearGauge.Create(parent, "BALANCE", -10f, 10f, false, -2f, 2f, -5f, 5f);
+            _netHeatReadout = DigitalReadout.Create(parent, "NET HEAT", " MW", "F2", 24f);
+            _heatInputReadout = DigitalReadout.Create(parent, "HEAT INPUT", " MW", "F2", 18f);
+            _heatRemovalReadout = DigitalReadout.Create(parent, "HEAT REMOVAL", " MW", "F2", 18f);
         }
 
         private void BuildThermalSection(Transform parent)
         {
-            CreateSectionHeader(parent, "HEAT SOURCES / SINKS");
-            _rcpHeatReadout = DigitalReadout.Create(parent, "RCP HEAT", " MW", "F3", 18f);
-            _pzrHeaterReadout = DigitalReadout.Create(parent, "PZR HEATERS", " MW", "F3", 18f);
-            _sgHeatReadout = DigitalReadout.Create(parent, "SG TRANSFER", " MW", "F3", 18f);
-            _rhrHeatReadout = DigitalReadout.Create(parent, "RHR REMOVAL", " MW", "F3", 18f);
-
-            CreateSectionHeader(parent, "TIMESTEP");
-            _dtReadout = DigitalReadout.Create(parent, "DT", " sec", "F4", 16f);
-            _simSpeedReadout = DigitalReadout.Create(parent, "SIM SPEED", "x", "F1", 16f);
-            _iterationsReadout = DigitalReadout.Create(parent, "ITERATIONS", "", "F0", 16f);
+            CreateSectionHeader(parent, "THERMAL SOURCES");
+            _rcpHeatReadout = DigitalReadout.Create(parent, "RCP HEAT", " MW", "F2", 18f);
+            _pzrHeatReadout = DigitalReadout.Create(parent, "PZR HEATERS", " MW", "F3", 18f);
+            _sgTransferReadout = DigitalReadout.Create(parent, "SG TRANSFER", " MW", "F2", 18f);
+            _rhrRemovalReadout = DigitalReadout.Create(parent, "RHR REMOVAL", " MW", "F2", 18f);
         }
 
         private void BuildStatusSection(Transform parent)
         {
             CreateSectionHeader(parent, "STABILITY STATUS");
-            _thermalStabilityIndicator = StatusIndicator.Create(parent, "THERMAL", StatusIndicator.IndicatorShape.Pill, 100f, 28f);
-            _pressureStabilityIndicator = StatusIndicator.Create(parent, "PRESSURE", StatusIndicator.IndicatorShape.Pill, 100f, 28f);
-            _levelStabilityIndicator = StatusIndicator.Create(parent, "LEVEL", StatusIndicator.IndicatorShape.Pill, 100f, 28f);
+            _thermalStabilityIndicator = StatusIndicator.Create(parent, "THERMAL", StatusIndicator.IndicatorShape.Pill, 80f, 26f);
+            _pressureStabilityIndicator = StatusIndicator.Create(parent, "PRESSURE", StatusIndicator.IndicatorShape.Pill, 80f, 26f);
+            _levelStabilityIndicator = StatusIndicator.Create(parent, "LEVEL", StatusIndicator.IndicatorShape.Pill, 80f, 26f);
         }
 
         private void CreateSectionHeader(Transform parent, string title)
@@ -171,53 +153,48 @@ namespace Critical.UI.ValidationDashboard
         {
             if (Engine == null) return;
 
-            // Mass Conservation
-            _massErrorReadout?.SetValue(Engine.massError_lbm);
-            _massErrorRateReadout?.SetValue(Engine.massErrorRate_lbmPerHour);
-            _massErrorGauge?.SetValue(Engine.massError_lbm);
-            _massStatusIndicator?.SetState(Engine.primaryMassConservationOK && !Engine.primaryMassAlarm, Engine.primaryMassAlarm);
-
-            if (_massErrorReadout != null)
+            // Mass conservation - use massError_lbm field
+            float massErr = Engine.massError_lbm;
+            _massErrorReadout?.SetValue(massErr);
+            
+            if (_massStatusIndicator != null)
             {
-                float absError = Mathf.Abs(Engine.massError_lbm);
-                if (absError > 50f) _massErrorReadout.SetColor(ValidationDashboardTheme.AlarmRed);
-                else if (absError > 10f) _massErrorReadout.SetColor(ValidationDashboardTheme.WarningAmber);
-                else _massErrorReadout.SetColor(ValidationDashboardTheme.NormalGreen);
+                bool massOK = Mathf.Abs(massErr) < 10f;
+                _massStatusIndicator.SetOn(massOK);
+                _massStatusIndicator.SetColor(massOK ? ValidationDashboardTheme.NormalGreen : 
+                    Mathf.Abs(massErr) < 50f ? ValidationDashboardTheme.WarningAmber : ValidationDashboardTheme.AlarmRed);
             }
 
-            // Energy Balance
+            // Energy balance - use netPlantHeat_MW
             _netHeatReadout?.SetValue(Engine.netPlantHeat_MW);
-            _heatInputReadout?.SetValue(Engine.totalHeatInput_MW);
-            _heatRemovalReadout?.SetValue(Engine.totalHeatRemoval_MW);
-            _energyBalanceGauge?.SetValue(Engine.netPlantHeat_MW);
+            
+            // Heat input = RCP + PZR heaters + RHR pump heat
+            float heatInput = Engine.rcpHeat + Engine.pzrHeaterPower + Mathf.Max(0f, Engine.rhrPumpHeat_MW);
+            _heatInputReadout?.SetValue(heatInput);
+            
+            // Heat removal = SG + RHR HX + insulation losses
+            float heatRemoval = Engine.sgHeatTransfer_MW + Engine.rhrHXRemoval_MW;
+            _heatRemovalReadout?.SetValue(heatRemoval);
 
-            if (_netHeatReadout != null)
-            {
-                float absNet = Mathf.Abs(Engine.netPlantHeat_MW);
-                if (absNet > 5f) _netHeatReadout.SetColor(ValidationDashboardTheme.AlarmRed);
-                else if (absNet > 2f) _netHeatReadout.SetColor(ValidationDashboardTheme.WarningAmber);
-                else _netHeatReadout.SetColor(ValidationDashboardTheme.NormalGreen);
-            }
-
-            // Thermal Sources
+            // Thermal sources
             _rcpHeatReadout?.SetValue(Engine.rcpHeat);
-            _pzrHeaterReadout?.SetValue(Engine.pzrHeaterPower);
-            _sgHeatReadout?.SetValue(Engine.sgHeatTransfer_MW);
-            _rhrHeatReadout?.SetValue(Engine.rhrHeatRemoval_MW);
+            _pzrHeatReadout?.SetValue(Engine.pzrHeaterPower);
+            _sgTransferReadout?.SetValue(Engine.sgHeatTransfer_MW);
+            _rhrRemovalReadout?.SetValue(Engine.rhrHXRemoval_MW);
 
-            // Timestep
-            _dtReadout?.SetValue(Engine.dt);
-            _simSpeedReadout?.SetValue(Engine.effectiveTimeScale);
-            _iterationsReadout?.SetValue(Engine.iterationCount);
-
-            // Stability indicators
-            bool thermalStable = Mathf.Abs(Engine.temperatureRate) < 5f; // <5°F/hr
-            bool pressureStable = Mathf.Abs(Engine.pressureRate) < 20f;   // <20 psi/hr
-            bool levelStable = Mathf.Abs(Engine.pzrLevelRate) < 1f;       // <1%/hr
-
+            // Stability indicators - use heatupRate and pressureRate
+            bool thermalStable = Mathf.Abs(Engine.heatupRate) < 5f;
             _thermalStabilityIndicator?.SetOn(thermalStable);
+            _thermalStabilityIndicator?.SetColor(thermalStable ? ValidationDashboardTheme.NormalGreen : ValidationDashboardTheme.WarningAmber);
+
+            bool pressureStable = Mathf.Abs(Engine.pressureRate) < 20f;
             _pressureStabilityIndicator?.SetOn(pressureStable);
+            _pressureStabilityIndicator?.SetColor(pressureStable ? ValidationDashboardTheme.NormalGreen : ValidationDashboardTheme.WarningAmber);
+
+            // Level stability - approximate from surge flow
+            bool levelStable = Mathf.Abs(Engine.surgeFlow) < 50f;
             _levelStabilityIndicator?.SetOn(levelStable);
+            _levelStabilityIndicator?.SetColor(levelStable ? ValidationDashboardTheme.NormalGreen : ValidationDashboardTheme.WarningAmber);
         }
     }
 }

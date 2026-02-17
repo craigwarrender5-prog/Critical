@@ -26,6 +26,11 @@ namespace Critical.Physics
         public struct VCTState
         {
             public float Level_percent;
+            public float Level
+            {
+                get => Level_percent;
+                set => Level_percent = value;
+            }
             public float Volume_gal;
             public float BoronConcentration_ppm;
             public float BoronMass_lb;

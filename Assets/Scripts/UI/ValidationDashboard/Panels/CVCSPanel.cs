@@ -1,11 +1,9 @@
 // ============================================================================
 // CRITICAL: Master the Atom - CVCS Detail Panel
-// CVCSPanel.cs - Charging, Letdown, VCT, Boric Acid Control
+// CVCSPanel.cs - Chemical and Volume Control System Display
 // ============================================================================
-//
 // TAB: 3 (CVCS)
-// VERSION: 1.0.0
-// DATE: 2026-02-17
+// VERSION: 1.0.1
 // IP: IP-0031 Stage 4
 // ============================================================================
 
@@ -21,31 +19,24 @@ namespace Critical.UI.ValidationDashboard
         public override string PanelName => "CVCSPanel";
         public override int TabIndex => 3;
 
-        // Charging section
-        private StatusIndicator _chargingPumpIndicator;
-        private ArcGauge _chargingFlowGauge;
-        private DigitalReadout _chargingTempReadout;
-
-        // Letdown section
-        private StatusIndicator _letdownIndicator;
-        private ArcGauge _letdownFlowGauge;
-        private DigitalReadout _letdownTempReadout;
-        private StatusIndicator _letdownIsolatedIndicator;
-
-        // Net flow section
-        private BidirectionalGauge _netFlowGauge;
+        // Charging
+        private StatusIndicator _chargingActiveIndicator;
+        private DigitalReadout _chargingFlowReadout;
         private DigitalReadout _netFlowReadout;
-        private DigitalReadout _rcsInventoryReadout;
 
-        // VCT section
-        private ArcGauge _vctLevelGauge;
-        private DigitalReadout _vctLevelRateReadout;
-        private StatusIndicator _vctAutoMakeupIndicator;
-        private StatusIndicator _vctDivertIndicator;
+        // Letdown
+        private StatusIndicator _letdownActiveIndicator;
+        private DigitalReadout _letdownFlowReadout;
+        private StatusIndicator _letdownIsolatedIndicator;
+        private DigitalReadout _rcsMassReadout;
 
-        // Boron section
-        private DigitalReadout _boronConcReadout;
-        private DigitalReadout _boronRateReadout;
+        // VCT
+        private DigitalReadout _vctLevelReadout;
+        private StatusIndicator _makeupActiveIndicator;
+        private StatusIndicator _divertActiveIndicator;
+
+        // Boron
+        private DigitalReadout _boronReadout;
 
         protected override void OnInitialize()
         {
@@ -72,16 +63,16 @@ namespace Critical.UI.ValidationDashboard
             columnsLayout.spacing = 12;
             columnsLayout.padding = new RectOffset(8, 8, 8, 8);
 
-            Transform chgCol = CreateColumn(columnsGO.transform, "ChargingColumn", 1f);
-            BuildChargingSection(chgCol);
+            Transform chargingCol = CreateColumn(columnsGO.transform, "ChargingColumn", 1f);
+            BuildChargingSection(chargingCol);
 
-            Transform ltdCol = CreateColumn(columnsGO.transform, "LetdownColumn", 1f);
-            BuildLetdownSection(ltdCol);
+            Transform letdownCol = CreateColumn(columnsGO.transform, "LetdownColumn", 1f);
+            BuildLetdownSection(letdownCol);
 
             Transform vctCol = CreateColumn(columnsGO.transform, "VCTColumn", 1f);
             BuildVCTSection(vctCol);
 
-            Transform boronCol = CreateColumn(columnsGO.transform, "BoronColumn", 0.8f);
+            Transform boronCol = CreateColumn(columnsGO.transform, "BoronColumn", 1f);
             BuildBoronSection(boronCol);
         }
 
@@ -110,44 +101,33 @@ namespace Critical.UI.ValidationDashboard
 
         private void BuildChargingSection(Transform parent)
         {
-            CreateSectionHeader(parent, "CHARGING SYSTEM");
-            _chargingPumpIndicator = StatusIndicator.Create(parent, "CHG PUMP", StatusIndicator.IndicatorShape.Pill, 100f, 28f);
-            _chargingFlowGauge = ArcGauge.Create(parent, "CHARGING FLOW", 0f, 150f, 40f, 120f, 20f, 140f, " gpm");
-            _chargingTempReadout = DigitalReadout.Create(parent, "CHG TEMP", "°F", "F1", 16f);
-
-            CreateSectionHeader(parent, "NET FLOW");
-            _netFlowGauge = BidirectionalGauge.Create(parent, "NET CVCS", 100f, " gpm");
-            _netFlowReadout = DigitalReadout.Create(parent, "NET", " gpm", "F1", 18f);
+            CreateSectionHeader(parent, "CHARGING");
+            _chargingActiveIndicator = StatusIndicator.Create(parent, "ACTIVE", StatusIndicator.IndicatorShape.Pill, 60f, 26f);
+            _chargingFlowReadout = DigitalReadout.Create(parent, "FLOW", " gpm", "F1", 24f);
+            _netFlowReadout = DigitalReadout.Create(parent, "NET FLOW", " gpm", "F1", 20f);
         }
 
         private void BuildLetdownSection(Transform parent)
         {
-            CreateSectionHeader(parent, "LETDOWN SYSTEM");
-            _letdownIndicator = StatusIndicator.Create(parent, "LETDOWN", StatusIndicator.IndicatorShape.Pill, 100f, 28f);
-            _letdownFlowGauge = ArcGauge.Create(parent, "LETDOWN FLOW", 0f, 150f, 40f, 120f, 20f, 140f, " gpm");
-            _letdownTempReadout = DigitalReadout.Create(parent, "LTD TEMP", "°F", "F1", 16f);
-            _letdownIsolatedIndicator = StatusIndicator.Create(parent, "ISOLATED", StatusIndicator.IndicatorShape.Pill, 100f, 28f);
-
-            CreateSectionHeader(parent, "RCS INVENTORY");
-            _rcsInventoryReadout = DigitalReadout.Create(parent, "RCS MASS", " lbm", "F0", 16f);
+            CreateSectionHeader(parent, "LETDOWN");
+            _letdownActiveIndicator = StatusIndicator.Create(parent, "ACTIVE", StatusIndicator.IndicatorShape.Pill, 60f, 26f);
+            _letdownFlowReadout = DigitalReadout.Create(parent, "FLOW", " gpm", "F1", 24f);
+            _letdownIsolatedIndicator = StatusIndicator.Create(parent, "ISOLATED", StatusIndicator.IndicatorShape.Pill, 70f, 26f);
+            _rcsMassReadout = DigitalReadout.Create(parent, "RCS MASS", " lbm", "F0", 18f);
         }
 
         private void BuildVCTSection(Transform parent)
         {
-            CreateSectionHeader(parent, "VOLUME CONTROL TANK");
-            _vctLevelGauge = ArcGauge.Create(parent, "VCT LEVEL", 0f, 100f, 20f, 80f, 11f, 95f, "%");
-            _vctLevelRateReadout = DigitalReadout.Create(parent, "VCT RATE", " %/hr", "F2", 16f);
-
-            CreateSectionHeader(parent, "VCT CONTROLS");
-            _vctAutoMakeupIndicator = StatusIndicator.Create(parent, "AUTO MAKEUP", StatusIndicator.IndicatorShape.Pill, 110f, 26f);
-            _vctDivertIndicator = StatusIndicator.Create(parent, "DIVERT", StatusIndicator.IndicatorShape.Pill, 110f, 26f);
+            CreateSectionHeader(parent, "VCT");
+            _vctLevelReadout = DigitalReadout.Create(parent, "LEVEL", "%", "F1", 24f);
+            _makeupActiveIndicator = StatusIndicator.Create(parent, "MAKEUP", StatusIndicator.IndicatorShape.Pill, 70f, 26f);
+            _divertActiveIndicator = StatusIndicator.Create(parent, "DIVERT", StatusIndicator.IndicatorShape.Pill, 65f, 26f);
         }
 
         private void BuildBoronSection(Transform parent)
         {
-            CreateSectionHeader(parent, "BORON CONTROL");
-            _boronConcReadout = DigitalReadout.Create(parent, "BORON CONC", " ppm", "F0", 20f);
-            _boronRateReadout = DigitalReadout.Create(parent, "BORON RATE", " ppm/hr", "F2", 16f);
+            CreateSectionHeader(parent, "BORON");
+            _boronReadout = DigitalReadout.Create(parent, "CONC", " ppm", "F0", 24f);
         }
 
         private void CreateSectionHeader(Transform parent, string title)
@@ -172,41 +152,46 @@ namespace Critical.UI.ValidationDashboard
             if (Engine == null) return;
 
             // Charging
-            _chargingPumpIndicator?.SetOn(Engine.chargingActive);
-            _chargingFlowGauge?.SetValue(Engine.chargingFlow);
-            _chargingTempReadout?.SetValue(Engine.chargingTemp);
-
-            // Letdown
-            _letdownIndicator?.SetOn(Engine.letdownActive);
-            _letdownFlowGauge?.SetValue(Engine.letdownFlow);
-            _letdownTempReadout?.SetValue(Engine.letdownTemp);
-            _letdownIsolatedIndicator?.SetState(Engine.letdownIsolatedFlag, Engine.letdownIsolatedFlag);
-
-            // Net flow
+            _chargingActiveIndicator?.SetOn(Engine.chargingActive);
+            _chargingFlowReadout?.SetValue(Engine.chargingFlow);
+            
+            // Net flow = charging - letdown
             float netFlow = Engine.chargingFlow - Engine.letdownFlow;
-            _netFlowGauge?.SetValue(netFlow);
             _netFlowReadout?.SetValue(netFlow);
-
             if (_netFlowReadout != null)
             {
-                if (netFlow > 5f) _netFlowReadout.SetColor(ValidationDashboardTheme.AccentBlue);
-                else if (netFlow < -5f) _netFlowReadout.SetColor(ValidationDashboardTheme.AccentOrange);
-                else _netFlowReadout.SetColor(ValidationDashboardTheme.NormalGreen);
+                if (netFlow > 10f) _netFlowReadout.SetColor(ValidationDashboardTheme.AccentBlue);
+                else if (netFlow < -10f) _netFlowReadout.SetColor(ValidationDashboardTheme.AccentOrange);
+                else _netFlowReadout.SetColor(ValidationDashboardTheme.TextPrimary);
             }
 
-            // RCS inventory
-            _rcsInventoryReadout?.SetValue(Engine.rcsMass);
+            // Letdown
+            _letdownActiveIndicator?.SetOn(Engine.letdownActive);
+            _letdownFlowReadout?.SetValue(Engine.letdownFlow);
+            _letdownIsolatedIndicator?.SetOn(Engine.letdownIsolatedFlag);
+            _letdownIsolatedIndicator?.SetColor(Engine.letdownIsolatedFlag ? 
+                ValidationDashboardTheme.WarningAmber : ValidationDashboardTheme.TextSecondary);
+            
+            // RCS mass
+            _rcsMassReadout?.SetValue(Engine.rcsWaterMass);
 
             // VCT
-            float vctLevel = Engine.vctState.Level_percent;
-            _vctLevelGauge?.SetValue(vctLevel);
-            _vctLevelRateReadout?.SetValue(Engine.vctState.LevelRate_pctPerHour);
-            _vctAutoMakeupIndicator?.SetOn(Engine.vctAutoMakeupActive);
-            _vctDivertIndicator?.SetOn(Engine.vctDivertActive);
+            _vctLevelReadout?.SetValue(Engine.vctState.Level);
+            if (_vctLevelReadout != null)
+            {
+                if (Engine.vctLevelLow || Engine.vctLevelHigh)
+                    _vctLevelReadout.SetColor(ValidationDashboardTheme.AlarmRed);
+                else if (Engine.vctState.Level < 25f || Engine.vctState.Level > 80f)
+                    _vctLevelReadout.SetColor(ValidationDashboardTheme.WarningAmber);
+                else
+                    _vctLevelReadout.SetColor(ValidationDashboardTheme.NormalGreen);
+            }
 
-            // Boron
-            _boronConcReadout?.SetValue(Engine.boronConcentration);
-            _boronRateReadout?.SetValue(Engine.boronRate);
+            _makeupActiveIndicator?.SetOn(Engine.vctMakeupActive);
+            _divertActiveIndicator?.SetOn(Engine.vctDivertActive);
+
+            // Boron - use rcsBoronConcentration
+            _boronReadout?.SetValue(Engine.rcsBoronConcentration);
         }
     }
 }

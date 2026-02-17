@@ -267,8 +267,8 @@ namespace Critical.Validation
             sb.AppendLine($"- AT-08 max PZR delta: `{evidence.AT08.MaxPzrLevelStepDeltaPercent:F6}%` over `{evidence.AT08.WindowStepsEvaluated}` steps");
             sb.AppendLine();
             sb.AppendLine("## Artifacts");
-            sb.AppendLine($"- Summary: `{ToRepoRelative(Path.Combine(logDir, \"acceptance_summary.txt\"))}`");
-            sb.AppendLine($"- Evidence CSV: `{ToRepoRelative(Path.Combine(logDir, \"acceptance_evidence.csv\"))}`");
+            sb.AppendLine($"- Summary: `{ToRepoRelative(Path.Combine(logDir, "acceptance_summary.txt"))}`");
+            sb.AppendLine($"- Evidence CSV: `{ToRepoRelative(Path.Combine(logDir, "acceptance_evidence.csv"))}`");
             sb.AppendLine();
             sb.AppendLine("## Thresholds");
             sb.AppendLine($"- AT-02 drift <= `{At02MaxDriftPercent:F3}%` across `{At02RequiredWindowHours:F1}` hr balanced two-phase window");

@@ -175,6 +175,30 @@ namespace Critical.UI.ValidationDashboard
             UpdateVisuals();
         }
 
+        /// <summary>
+        /// Backward-compatible color setter for the current state bucket.
+        /// </summary>
+        public void SetColor(Color color)
+        {
+            switch (currentState)
+            {
+                case IndicatorState.Off:
+                    offColor = color;
+                    break;
+                case IndicatorState.Normal:
+                    normalColor = color;
+                    break;
+                case IndicatorState.Warning:
+                    warningColor = color;
+                    break;
+                case IndicatorState.Alarm:
+                    alarmColor = color;
+                    break;
+            }
+
+            UpdateVisuals();
+        }
+
         // ====================================================================
         // VISUALS
         // ====================================================================

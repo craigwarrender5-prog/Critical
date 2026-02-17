@@ -1,11 +1,9 @@
 // ============================================================================
 // CRITICAL: Master the Atom - SG/RHR Detail Panel
-// SGRHRPanel.cs - Steam Generators and Residual Heat Removal
+// SGRHRPanel.cs - Steam Generator and RHR System Display
 // ============================================================================
-//
 // TAB: 4 (SG / RHR)
-// VERSION: 1.0.0
-// DATE: 2026-02-17
+// VERSION: 1.0.1
 // IP: IP-0031 Stage 4
 // ============================================================================
 
@@ -21,28 +19,21 @@ namespace Critical.UI.ValidationDashboard
         public override string PanelName => "SGRHRPanel";
         public override int TabIndex => 4;
 
-        // SG Primary section
+        // SG Primary
         private DigitalReadout _sgPrimaryTempReadout;
-        private DigitalReadout _sgTubeTempReadout;
-
-        // SG Secondary section
-        private ArcGauge _sgPressureGauge;
-        private DigitalReadout _sgSecondaryTempReadout;
-        private DigitalReadout _sgSatTempReadout;
-        private StatusIndicator _boilingIndicator;
-
-        // SG Heat Transfer section
-        private ArcGauge _sgHeatGauge;
+        private DigitalReadout _sgHeatTransferReadout;
         private DigitalReadout _sgDeltaTReadout;
-        private DigitalReadout _sgUAReadout;
 
-        // RHR section
+        // SG Secondary
+        private DigitalReadout _sgSecPressureReadout;
+        private DigitalReadout _sgSecTempReadout;
+        private DigitalReadout _sgSatTempReadout;
+        private StatusIndicator _sgBoilingIndicator;
+
+        // RHR
         private StatusIndicator _rhrActiveIndicator;
         private DigitalReadout _rhrModeReadout;
-        private ArcGauge _rhrFlowGauge;
-        private DigitalReadout _rhrHeatRemovalReadout;
-        private DigitalReadout _rhrInletTempReadout;
-        private DigitalReadout _rhrOutletTempReadout;
+        private DigitalReadout _rhrHeatReadout;
 
         protected override void OnInitialize()
         {
@@ -75,7 +66,7 @@ namespace Critical.UI.ValidationDashboard
             Transform sgSecCol = CreateColumn(columnsGO.transform, "SGSecondaryColumn", 1f);
             BuildSGSecondarySection(sgSecCol);
 
-            Transform rhrCol = CreateColumn(columnsGO.transform, "RHRColumn", 1.2f);
+            Transform rhrCol = CreateColumn(columnsGO.transform, "RHRColumn", 1f);
             BuildRHRSection(rhrCol);
         }
 
@@ -105,37 +96,26 @@ namespace Critical.UI.ValidationDashboard
         private void BuildSGPrimarySection(Transform parent)
         {
             CreateSectionHeader(parent, "SG PRIMARY SIDE");
-            _sgPrimaryTempReadout = DigitalReadout.Create(parent, "PRIMARY TEMP", "°F", "F1", 24f);
-            _sgTubeTempReadout = DigitalReadout.Create(parent, "TUBE WALL", "°F", "F1", 18f);
-
-            CreateSectionHeader(parent, "HEAT TRANSFER");
-            _sgHeatGauge = ArcGauge.Create(parent, "SG HEAT", -50f, 50f, -30f, 30f, -45f, 45f, " MW");
-            _sgDeltaTReadout = DigitalReadout.Create(parent, "ΔT (Pri-Sec)", "°F", "F1", 18f);
-            _sgUAReadout = DigitalReadout.Create(parent, "UA COEFFICIENT", " BTU/hr-°F", "F0", 14f);
+            _sgPrimaryTempReadout = DigitalReadout.Create(parent, "PRIMARY TEMP", "°F", "F1", 22f);
+            _sgHeatTransferReadout = DigitalReadout.Create(parent, "HEAT TRANSFER", " MW", "F2", 24f);
+            _sgDeltaTReadout = DigitalReadout.Create(parent, "ΔT (Pri-Sec)", "°F", "F1", 20f);
         }
 
         private void BuildSGSecondarySection(Transform parent)
         {
             CreateSectionHeader(parent, "SG SECONDARY SIDE");
-            _sgPressureGauge = ArcGauge.Create(parent, "SG PRESSURE", 0f, 1200f, 100f, 1000f, 50f, 1100f, " psia");
-            _sgSecondaryTempReadout = DigitalReadout.Create(parent, "SECONDARY TEMP", "°F", "F1", 20f);
-            _sgSatTempReadout = DigitalReadout.Create(parent, "T-SAT @ P", "°F", "F1", 16f);
-
-            CreateSectionHeader(parent, "BOILING STATUS");
-            _boilingIndicator = StatusIndicator.Create(parent, "BOILING", StatusIndicator.IndicatorShape.Pill, 100f, 32f);
+            _sgSecPressureReadout = DigitalReadout.Create(parent, "SEC PRESSURE", " psia", "F0", 22f);
+            _sgSecTempReadout = DigitalReadout.Create(parent, "SEC TEMP", "°F", "F1", 20f);
+            _sgSatTempReadout = DigitalReadout.Create(parent, "T-SAT @ P", "°F", "F1", 18f);
+            _sgBoilingIndicator = StatusIndicator.Create(parent, "BOILING", StatusIndicator.IndicatorShape.Pill, 70f, 26f);
         }
 
         private void BuildRHRSection(Transform parent)
         {
-            CreateSectionHeader(parent, "RESIDUAL HEAT REMOVAL");
-            _rhrActiveIndicator = StatusIndicator.Create(parent, "RHR SYSTEM", StatusIndicator.IndicatorShape.Pill, 120f, 32f);
-            _rhrModeReadout = DigitalReadout.Create(parent, "MODE", "", "F0", 16f);
-            _rhrFlowGauge = ArcGauge.Create(parent, "RHR FLOW", 0f, 5000f, 1000f, 4500f, 500f, 4800f, " gpm");
-
-            CreateSectionHeader(parent, "RHR TEMPERATURES");
-            _rhrInletTempReadout = DigitalReadout.Create(parent, "INLET TEMP", "°F", "F1", 18f);
-            _rhrOutletTempReadout = DigitalReadout.Create(parent, "OUTLET TEMP", "°F", "F1", 18f);
-            _rhrHeatRemovalReadout = DigitalReadout.Create(parent, "HEAT REMOVAL", " MW", "F2", 20f);
+            CreateSectionHeader(parent, "RHR SYSTEM");
+            _rhrActiveIndicator = StatusIndicator.Create(parent, "RHR ACTIVE", StatusIndicator.IndicatorShape.Pill, 80f, 28f);
+            _rhrModeReadout = DigitalReadout.Create(parent, "MODE", "", "F0", 18f);
+            _rhrHeatReadout = DigitalReadout.Create(parent, "NET HEAT", " MW", "F2", 22f);
         }
 
         private void CreateSectionHeader(Transform parent, string title)
@@ -159,58 +139,45 @@ namespace Critical.UI.ValidationDashboard
         {
             if (Engine == null) return;
 
-            // SG Primary
-            _sgPrimaryTempReadout?.SetValue(Engine.T_avg);
-            _sgTubeTempReadout?.SetValue(Engine.sgTubeWallTemp);
-
-            // SG Secondary
-            _sgPressureGauge?.SetValue(Engine.sgSecondaryPressure_psia);
-            _sgSecondaryTempReadout?.SetValue(Engine.sgSecondaryTemp);
-            _sgSatTempReadout?.SetValue(Engine.sgSatTemp);
-
-            // Boiling status
-            bool boiling = Engine.sgBoilingActive;
-            _boilingIndicator?.SetState(boiling, false);
-            if (_boilingIndicator != null)
-            {
-                if (boiling)
-                    _boilingIndicator.SetColors(ValidationDashboardTheme.Neutral, ValidationDashboardTheme.WarningAmber, 
-                        ValidationDashboardTheme.WarningAmber, ValidationDashboardTheme.AlarmRed);
-            }
-
-            // Heat transfer
-            _sgHeatGauge?.SetValue(Engine.sgHeatTransfer_MW);
-            float deltaT = Engine.T_avg - Engine.sgSecondaryTemp;
+            // SG Primary - use T_rcs as primary temp
+            _sgPrimaryTempReadout?.SetValue(Engine.T_rcs);
+            _sgHeatTransferReadout?.SetValue(Engine.sgHeatTransfer_MW);
+            
+            // Delta T between primary and secondary
+            float deltaT = Engine.T_rcs - Engine.T_sg_secondary;
             _sgDeltaTReadout?.SetValue(deltaT);
-            _sgUAReadout?.SetValue(Engine.sgUA);
 
-            if (_sgHeatGauge != null)
+            // SG Secondary - use actual field names
+            _sgSecPressureReadout?.SetValue(Engine.sgSecondaryPressure_psia);
+            _sgSecTempReadout?.SetValue(Engine.T_sg_secondary);
+            _sgSatTempReadout?.SetValue(Engine.sgSaturationTemp_F);
+            
+            _sgBoilingIndicator?.SetOn(Engine.sgBoilingActive);
+            if (_sgBoilingIndicator != null)
             {
-                if (Engine.sgHeatTransfer_MW > 0.5f)
-                    _sgDeltaTReadout?.SetColor(ValidationDashboardTheme.InfoCyan);
-                else if (Engine.sgHeatTransfer_MW < -0.5f)
-                    _sgDeltaTReadout?.SetColor(ValidationDashboardTheme.AccentOrange);
-                else
-                    _sgDeltaTReadout?.SetColor(ValidationDashboardTheme.TextPrimary);
+                _sgBoilingIndicator.SetColor(Engine.sgBoilingActive ? 
+                    ValidationDashboardTheme.WarningAmber : ValidationDashboardTheme.TextSecondary);
             }
 
-            // RHR
+            // RHR - use actual field names
             _rhrActiveIndicator?.SetOn(Engine.rhrActive);
-            _rhrModeReadout?.SetValue(0); // Mode as number
+            _rhrActiveIndicator?.SetColor(Engine.rhrActive ? 
+                ValidationDashboardTheme.NormalGreen : ValidationDashboardTheme.TextSecondary);
+
+            // Mode string
             if (_rhrModeReadout != null)
             {
-                // Override with text
-                var textComp = _rhrModeReadout.GetComponentInChildren<TMPro.TextMeshProUGUI>();
-                if (textComp != null) textComp.text = Engine.rhrModeString;
+                _rhrModeReadout.SetText(Engine.rhrModeString);
             }
 
-            _rhrFlowGauge?.SetValue(Engine.rhrFlow);
-            _rhrInletTempReadout?.SetValue(Engine.rhrInletTemp);
-            _rhrOutletTempReadout?.SetValue(Engine.rhrOutletTemp);
-            _rhrHeatRemovalReadout?.SetValue(Engine.rhrHeatRemoval_MW);
-
-            if (_rhrHeatRemovalReadout != null && Engine.rhrActive)
-                _rhrHeatRemovalReadout.SetColor(ValidationDashboardTheme.InfoCyan);
+            // Net RHR heat effect
+            _rhrHeatReadout?.SetValue(Engine.rhrNetHeat_MW);
+            if (_rhrHeatReadout != null)
+            {
+                if (Engine.rhrNetHeat_MW > 0.5f) _rhrHeatReadout.SetColor(ValidationDashboardTheme.AccentOrange);
+                else if (Engine.rhrNetHeat_MW < -0.5f) _rhrHeatReadout.SetColor(ValidationDashboardTheme.AccentBlue);
+                else _rhrHeatReadout.SetColor(ValidationDashboardTheme.TextPrimary);
+            }
         }
     }
 }

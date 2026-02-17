@@ -464,6 +464,20 @@ namespace Critical.UI.ValidationDashboard
             }
         }
 
+        public void SetStatus(string text, bool active)
+        {
+            Color c = active ? ValidationDashboardTheme.NormalGreen : ValidationDashboardTheme.WarningAmber;
+
+            if (statusImage != null)
+                statusImage.color = c;
+
+            if (statusText != null)
+            {
+                statusText.text = text;
+                statusText.color = c;
+            }
+        }
+
         public void SetStatusText(string text, Color color)
         {
             if (statusText != null)

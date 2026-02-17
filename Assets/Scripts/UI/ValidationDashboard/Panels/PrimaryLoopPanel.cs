@@ -2,10 +2,8 @@
 // CRITICAL: Master the Atom - Primary Loop Detail Panel
 // PrimaryLoopPanel.cs - Detailed RCS and Loop Temperature Display
 // ============================================================================
-//
 // TAB: 1 (PRIMARY)
-// VERSION: 1.0.0
-// DATE: 2026-02-17
+// VERSION: 1.0.2
 // IP: IP-0031 Stage 4
 // ============================================================================
 
@@ -21,18 +19,13 @@ namespace Critical.UI.ValidationDashboard
         public override string PanelName => "PrimaryLoopPanel";
         public override int TabIndex => 1;
 
-        // Temperature section
-        private ArcGauge _tAvgGauge;
-        private ArcGauge _tHotGauge;
-        private ArcGauge _tColdGauge;
+        private DigitalReadout _tAvgReadout;
+        private DigitalReadout _tHotReadout;
+        private DigitalReadout _tColdReadout;
         private DigitalReadout _tSatReadout;
         private DigitalReadout _subcoolReadout;
-
-        // Pressure section
-        private ArcGauge _pressureGauge;
+        private DigitalReadout _pressureReadout;
         private DigitalReadout _pressureRateReadout;
-
-        // RCP section
         private StatusIndicator[] _rcpIndicators = new StatusIndicator[4];
         private DigitalReadout _rcpHeatReadout;
         private DigitalReadout _surgeFlowReadout;
@@ -98,24 +91,9 @@ namespace Critical.UI.ValidationDashboard
         private void BuildTemperatureSection(Transform parent)
         {
             CreateSectionHeader(parent, "LOOP TEMPERATURES");
-            _tAvgGauge = ArcGauge.Create(parent, "T-AVG", 50f, 600f, 100f, PlantConstants.MODE_3_TEMP_F, 80f, PlantConstants.MODE_3_TEMP_F + 20f, "°F");
-
-            GameObject tempRow = new GameObject("TempRow");
-            tempRow.transform.SetParent(parent, false);
-            LayoutElement rowLE = tempRow.AddComponent<LayoutElement>();
-            rowLE.preferredHeight = 100;
-
-            HorizontalLayoutGroup rowLayout = tempRow.AddComponent<HorizontalLayoutGroup>();
-            rowLayout.childAlignment = TextAnchor.MiddleCenter;
-            rowLayout.childControlWidth = true;
-            rowLayout.childControlHeight = true;
-            rowLayout.childForceExpandWidth = true;
-            rowLayout.childForceExpandHeight = false;
-            rowLayout.spacing = 8;
-
-            _tHotGauge = ArcGauge.Create(tempRow.transform, "T-HOT", 50f, 650f, 100f, 620f, 80f, 640f, "°F");
-            _tColdGauge = ArcGauge.Create(tempRow.transform, "T-COLD", 50f, 600f, 100f, 560f, 80f, 580f, "°F");
-
+            _tAvgReadout = DigitalReadout.Create(parent, "T-AVG", "°F", "F1", 28f);
+            _tHotReadout = DigitalReadout.Create(parent, "T-HOT", "°F", "F1", 22f);
+            _tColdReadout = DigitalReadout.Create(parent, "T-COLD", "°F", "F1", 22f);
             _tSatReadout = DigitalReadout.Create(parent, "T-SAT", "°F", "F1", 20f);
             _subcoolReadout = DigitalReadout.Create(parent, "SUBCOOLING", "°F", "F1", 28f);
         }
@@ -123,7 +101,7 @@ namespace Critical.UI.ValidationDashboard
         private void BuildPressureSection(Transform parent)
         {
             CreateSectionHeader(parent, "RCS PRESSURE");
-            _pressureGauge = ArcGauge.Create(parent, "PRESSURE", 0f, 2500f, 400f, PlantConstants.PZR_OPERATING_PRESSURE_PSIA + 50f, 350f, PlantConstants.PZR_OPERATING_PRESSURE_PSIA + 100f, " psia");
+            _pressureReadout = DigitalReadout.Create(parent, "PRESSURE", " psia", "F0", 28f);
             _pressureRateReadout = DigitalReadout.Create(parent, "PRESSURE RATE", " psi/hr", "F1", 18f);
         }
 
@@ -140,8 +118,6 @@ namespace Critical.UI.ValidationDashboard
             rcpLayout.childAlignment = TextAnchor.MiddleCenter;
             rcpLayout.childControlWidth = false;
             rcpLayout.childControlHeight = true;
-            rcpLayout.childForceExpandWidth = false;
-            rcpLayout.childForceExpandHeight = false;
             rcpLayout.spacing = 8;
 
             for (int i = 0; i < 4; i++)
@@ -174,9 +150,9 @@ namespace Critical.UI.ValidationDashboard
         {
             if (Engine == null) return;
 
-            _tAvgGauge?.SetValue(Engine.T_avg);
-            _tHotGauge?.SetValue(Engine.T_hot);
-            _tColdGauge?.SetValue(Engine.T_cold);
+            _tAvgReadout?.SetValue(Engine.T_avg);
+            _tHotReadout?.SetValue(Engine.T_hot);
+            _tColdReadout?.SetValue(Engine.T_cold);
             _tSatReadout?.SetValue(Engine.T_sat);
             _subcoolReadout?.SetValue(Engine.subcooling);
 
@@ -187,7 +163,7 @@ namespace Critical.UI.ValidationDashboard
                 else _subcoolReadout.SetColor(ValidationDashboardTheme.NormalGreen);
             }
 
-            _pressureGauge?.SetValue(Engine.pressure);
+            _pressureReadout?.SetValue(Engine.pressure);
             _pressureRateReadout?.SetValue(Engine.pressureRate);
 
             if (_pressureRateReadout != null)

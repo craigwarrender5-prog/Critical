@@ -85,6 +85,8 @@ namespace Critical.UI.ValidationDashboard
         private float _targetValue;
         private Color _targetColor;
         private Color _currentColor;
+        private bool _hasTextOverride;
+        private string _textOverride = string.Empty;
 
         // ====================================================================
         // PROPERTIES
@@ -145,6 +147,7 @@ namespace Critical.UI.ValidationDashboard
         /// </summary>
         public void SetValue(float value)
         {
+            _hasTextOverride = false;
             _targetValue = value;
             currentValue = value;
             _targetColor = GetTargetColor();
@@ -159,6 +162,16 @@ namespace Critical.UI.ValidationDashboard
                 _currentColor = _targetColor;
             }
             
+            UpdateDisplay();
+        }
+
+        /// <summary>
+        /// Backward-compatible text mode for non-numeric readouts.
+        /// </summary>
+        public void SetText(string text)
+        {
+            _hasTextOverride = true;
+            _textOverride = text ?? string.Empty;
             UpdateDisplay();
         }
 
@@ -245,7 +258,7 @@ namespace Critical.UI.ValidationDashboard
         {
             if (valueText != null)
             {
-                valueText.text = _displayValue.ToString(valueFormat);
+                valueText.text = _hasTextOverride ? _textOverride : _displayValue.ToString(valueFormat);
                 valueText.color = _currentColor;
             }
 
