@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Validation Dashboard v2
 // ValidationDashboard.cs - Main MonoBehaviour and Core Coordinator
 // ============================================================================
@@ -40,10 +40,11 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
 
+using Critical.Validation;
 namespace Critical.Validation
 {
     /// <summary>
-    /// New Validation Dashboard — OnGUI coordinator with comprehensive parameter coverage.
+    /// New Validation Dashboard â€” OnGUI coordinator with comprehensive parameter coverage.
     /// Reads HeatupSimEngine public state via snapshot pattern.
     /// All rendering delegated to partials and tab classes.
     /// </summary>
@@ -350,7 +351,7 @@ namespace Critical.Validation
             int alarmCount = _annunciatorManager?.TotalActiveCount ?? 0;
             if (alarmCount > 0)
             {
-                string alarmStr = $"⚠ {alarmCount} ALARM{(alarmCount > 1 ? "S" : "")}";
+                string alarmStr = $"âš  {alarmCount} ALARM{(alarmCount > 1 ? "S" : "")}";
                 Color alarmColor = (_annunciatorManager?.AlarmCount ?? 0) > 0 
                     ? _cAlarmRed 
                     : _cWarningAmber;
@@ -390,7 +391,7 @@ namespace Critical.Validation
             switch (_currentTab)
             {
                 case 0:
-                    // Overview tab — full 5-column layout with 60+ parameters
+                    // Overview tab â€” full 5-column layout with 60+ parameters
                     _overviewTab.Draw(area);
                     break;
                 case 1:
@@ -482,3 +483,4 @@ namespace Critical.Validation
 
     }
 }
+

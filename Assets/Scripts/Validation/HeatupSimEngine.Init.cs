@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Simulation Engine (Initialization Partial)
 // HeatupSimEngine.Init.cs - Cold Start & Warm Start Initialization
 // ============================================================================
@@ -19,15 +19,15 @@
 //     - CVCS PI controller initialized for two-phase operations
 //
 // SOURCES:
-//   - NRC HRTD 19.2.1 — Solid plant pressure control band (320-400 psig)
-//   - NRC HRTD 19.2.2 — Cold shutdown startup sequence
-//   - NRC HRTD 19.0 — RHR letdown path at low temperature
+//   - NRC HRTD 19.2.1 â€” Solid plant pressure control band (320-400 psig)
+//   - NRC HRTD 19.2.2 â€” Cold shutdown startup sequence
+//   - NRC HRTD 19.0 â€” RHR letdown path at low temperature
 //
 // ARCHITECTURE:
 //   Partial class of HeatupSimEngine. This file owns:
-//     - InitializeColdShutdown() — Mode 5 cold start state setup
-//     - InitializeWarmStart() — Hot start with existing bubble
-//     - InitializeCommon() — Shared initialization for both paths
+//     - InitializeColdShutdown() â€” Mode 5 cold start state setup
+//     - InitializeWarmStart() â€” Hot start with existing bubble
+//     - InitializeCommon() â€” Shared initialization for both paths
 //   Called by RunSimulation() in the main HeatupSimEngine.cs.
 //
 // GOLD STANDARD: Yes
@@ -35,6 +35,10 @@
 
 using UnityEngine;
 using Critical.Physics;
+
+
+namespace Critical.Validation
+{
 
 /// <summary>
 /// Explicit CVCS lineup state used by cold shutdown initialization.
@@ -103,7 +107,7 @@ public struct ColdShutdownProfile
 public partial class HeatupSimEngine
 {
     // ========================================================================
-    // INITIALIZATION ENTRY POINT — Called by RunSimulation()
+    // INITIALIZATION ENTRY POINT â€” Called by RunSimulation()
     // ========================================================================
 
     /// <summary>
@@ -113,7 +117,7 @@ public partial class HeatupSimEngine
     void InitializeSimulation()
     {
         // ============================================================
-        // v0.3.0.0 Phase A (CS-0032): Frame rate cap — 30 FPS target.
+        // v0.3.0.0 Phase A (CS-0032): Frame rate cap â€” 30 FPS target.
         // Prevents main thread from burning 100% CPU on render/physics,
         // ensures OS message pump and input events are serviced.
         // ============================================================
@@ -273,7 +277,7 @@ public partial class HeatupSimEngine
         rhrActive = rhrState.Mode != RHRMode.Standby;
         rhrModeString = rhrState.Mode.ToString();
 
-        // Initialize time acceleration module — start at 1x real-time
+        // Initialize time acceleration module â€” start at 1x real-time
         TimeAcceleration.Initialize(0);
         wallClockTime = 0f;
         currentSpeedIndex = 0;
@@ -338,7 +342,7 @@ public partial class HeatupSimEngine
         // which skipped the pressurization ramp entirely.
         pressure = coldShutdownProfile.Pressure_psia;
 
-        // Initialize solid plant physics module — owns all P-T-V coupling during solid ops
+        // Initialize solid plant physics module â€” owns all P-T-V coupling during solid ops
         solidPlantState = SolidPlantPressure.Initialize(
             pressure,
             coldShutdownProfile.Temperature_F,
@@ -448,7 +452,7 @@ public partial class HeatupSimEngine
             ? "COLD SHUTDOWN - PROFILE LOADED - STARTUP HOLD ACTIVE"
             : "COLD SHUTDOWN - PROFILE LOADED";
         Debug.Log($"[HeatupEngine] COLD SHUTDOWN: Solid pressurizer");
-        Debug.Log($"  T_rcs = {T_rcs:F1}°F, P = {pressure - 14.7f:F0} psig ({pressure:F1} psia)");
+        Debug.Log($"  T_rcs = {T_rcs:F1}Â°F, P = {pressure - 14.7f:F0} psig ({pressure:F1} psia)");
         Debug.Log($"  Total mass = {totalSystemMass:F0} lb (conserved)");
         Debug.Log($"  RCS mass = {rcsWaterMass:F0} lb, PZR mass = {pzrWaterMass:F0} lb");
         Debug.Log($"  VCT Level = {vctState.Level_percent:F0}%, Boron = {vctState.BoronConcentration_ppm:F0} ppm");
@@ -579,7 +583,7 @@ public partial class HeatupSimEngine
     }
 
     // ========================================================================
-    // COMMON INITIALIZATION — Shared by both cold shutdown and warm start
+    // COMMON INITIALIZATION â€” Shared by both cold shutdown and warm start
     // ========================================================================
 
     void InitializeCommon()
@@ -705,10 +709,10 @@ public partial class HeatupSimEngine
         AddHistory();
 
         // v5.4.1 Fix B: Compute initial total system MASS for conservation check.
-        // Mass is the conserved quantity — volume varies with T/P.
+        // Mass is the conserved quantity â€” volume varies with T/P.
         // Total = RCS(lbm) + PZR_water(lbm) + PZR_steam(lbm) + VCT(lbm) + BRS(lbm)
         {
-            float rhoVCT = WaterProperties.WaterDensity(100f, 14.7f);  // VCT at ~100°F, atmospheric
+            float rhoVCT = WaterProperties.WaterDensity(100f, 14.7f);  // VCT at ~100Â°F, atmospheric
 
             // Use tracked masses (already computed in Init paths above)
             float rcsMass = physicsState.RCSWaterMass;
@@ -736,3 +740,6 @@ public partial class HeatupSimEngine
         InitializeInventoryAudit();
     }
 }
+
+}
+

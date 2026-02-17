@@ -1,4 +1,4 @@
-// CRITICAL: Master the Atom - Phase 1 Core Physics Engine
+﻿// CRITICAL: Master the Atom - Phase 1 Core Physics Engine
 // CoupledThermo.cs - Coupled Pressure-Temperature-Volume Solver
 //
 // Implements: Gap #1 - P-T-V coupling (MOST CRITICAL)
@@ -6,8 +6,8 @@
 // THE PROBLEM:
 // In a closed RCS, temperature change causes expansion, but volume is constrained.
 // This creates pressure increase, which changes density, which reduces expansion.
-// Simple uncoupled model: 10°F rise → 0 psi change (WRONG!)
-// Coupled model: 10°F rise → 60-80 psi change (CORRECT!)
+// Simple uncoupled model: 10Â°F rise â†’ 0 psi change (WRONG!)
+// Coupled model: 10Â°F rise â†’ 60-80 psi change (CORRECT!)
 //
 // THE SOLUTION:
 // Iterative solver that converges pressure, temperature, and volume
@@ -27,7 +27,7 @@ namespace Critical.Physics
     /// Coupled thermodynamic solver for PWR RCS and pressurizer.
     /// This is the MOST CRITICAL module - all other phases depend on correct P-T-V coupling.
     /// 
-    /// Key validation: 10°F Tavg rise must produce 60-80 psi pressure increase.
+    /// Key validation: 10Â°F Tavg rise must produce 60-80 psi pressure increase.
     /// If this test fails, the entire simulation will be unrealistic.
     /// 
     /// Pressure bounds are parameterized on all public solver methods to support
@@ -59,7 +59,7 @@ namespace Critical.Physics
         /// <summary>Pressure convergence tolerance in psi</summary>
         private const float PRESSURE_TOLERANCE = 0.1f;
         
-        /// <summary>Volume convergence tolerance in ft³</summary>
+        /// <summary>Volume convergence tolerance in ftÂ³</summary>
         private const float VOLUME_TOLERANCE = 0.01f;
         
         /// <summary>Mass conservation tolerance as fraction</summary>
@@ -80,24 +80,24 @@ namespace Critical.Physics
         /// the same volume holds different mass. The mass difference
         /// surges into/out of the pressurizer.
         /// 
-        /// - Temperature rise → density drop → mass surges INTO PZR → level rises → steam compresses → P rises
-        /// - Temperature drop → density rise → mass surges OUT of PZR → level drops → steam expands → P drops
+        /// - Temperature rise â†’ density drop â†’ mass surges INTO PZR â†’ level rises â†’ steam compresses â†’ P rises
+        /// - Temperature drop â†’ density rise â†’ mass surges OUT of PZR â†’ level drops â†’ steam expands â†’ P drops
         /// 
         /// v5.3.0 Stage 3: Added totalPrimaryMass_lb parameter for mass conservation.
         /// When provided (> 0), the solver uses this as the authoritative total mass
-        /// constraint instead of deriving from V×ρ. RCS mass is computed as the
+        /// constraint instead of deriving from VÃ—Ï. RCS mass is computed as the
         /// remainder (total - PZR water - PZR steam), guaranteeing exact conservation.
         /// 
         /// v5.4.0 Stage 3: CANONICAL MASS UNIFICATION
         /// The totalPrimaryMass_lb parameter is now MANDATORY for two-phase operations.
-        /// The solver MUST accept this value as an absolute constraint — it is NOT
-        /// permitted to recompute total mass from V×ρ. This ensures:
-        ///   Rule R1: Single Canonical Ledger — TotalPrimaryMass_lb is sole authority
-        ///   Rule R3: No V×ρ Overwrite — solver distributes mass, never recalculates total
-        ///   Rule R5: Derived RCS Mass — RCS = Total - PZR_water - PZR_steam (by construction)
+        /// The solver MUST accept this value as an absolute constraint â€” it is NOT
+        /// permitted to recompute total mass from VÃ—Ï. This ensures:
+        ///   Rule R1: Single Canonical Ledger â€” TotalPrimaryMass_lb is sole authority
+        ///   Rule R3: No VÃ—Ï Overwrite â€” solver distributes mass, never recalculates total
+        ///   Rule R5: Derived RCS Mass â€” RCS = Total - PZR_water - PZR_steam (by construction)
         /// </summary>
         /// <param name="state">System state (modified in place if converged)</param>
-        /// <param name="deltaT_F">Temperature change in °F</param>
+        /// <param name="deltaT_F">Temperature change in Â°F</param>
         /// <param name="maxIterations">Maximum solver iterations</param>
         /// <param name="P_floor">Minimum pressure bound in psia (15 for heatup, 1800 for at-power)</param>
         /// <param name="P_ceiling">Maximum pressure bound in psia</param>
@@ -121,7 +121,7 @@ namespace Critical.Physics
             // v5.4.0 Stage 3: CANONICAL MASS CONSTRAINT (MANDATORY)
             // =============================================================
             // Rule R1: TotalPrimaryMass_lb is the SOLE authority for total mass.
-            // Rule R3: The solver must NOT recalculate total mass from V×ρ.
+            // Rule R3: The solver must NOT recalculate total mass from VÃ—Ï.
             //
             // When totalPrimaryMass_lb > 0, it is the canonical ledger from
             // HeatupSimEngine, updated ONLY by boundary flows (CVCS, relief).
@@ -140,14 +140,14 @@ namespace Critical.Physics
                 M_total = totalPrimaryMass_lb;
                 if (!_solverModeLogged)
                 {
-                    UnityEngine.Debug.Log("CoupledThermo: CANONICAL mode active — ledger authoritative");
+                    UnityEngine.Debug.Log("CoupledThermo: CANONICAL mode active â€” ledger authoritative");
                     _solverModeLogged = true;
                 }
             }
             else
             {
                 // ============================================================
-                // DEPRECATED — LEGACY MODE (v0.1.0.0 Phase D, CS-0004)
+                // DEPRECATED â€” LEGACY MODE (v0.1.0.0 Phase D, CS-0004)
                 //
                 // This else-branch fires when totalPrimaryMass_lb <= 0,
                 // meaning no canonical ledger value was provided by the caller.
@@ -163,7 +163,7 @@ namespace Critical.Physics
                 //   - Any future standalone unit test that exercises the solver
                 //     without a full engine context
                 //
-                // WARNING: V×ρ derivation violates INV-1 (Single Mass Authority).
+                // WARNING: VÃ—Ï derivation violates INV-1 (Single Mass Authority).
                 // The component sum computed here has no relationship to the
                 // canonical ledger and will NOT reflect CVCS boundary flows.
                 //
@@ -172,7 +172,7 @@ namespace Critical.Physics
                 // future architecture hardening.
                 // ============================================================
                 M_total = state.RCSWaterMass + state.PZRWaterMass + state.PZRSteamMass;
-                UnityEngine.Debug.LogWarning("CoupledThermo: LEGACY mode — V×ρ derivation active (DEPRECATED)");
+                UnityEngine.Debug.LogWarning("CoupledThermo: LEGACY mode â€” VÃ—Ï derivation active (DEPRECATED)");
             }
             
             // Initial pressure estimate using quick estimate
@@ -262,7 +262,7 @@ namespace Critical.Physics
                 //
                 // When using canonical mass ledger, RCS mass is computed as
                 // the REMAINDER: total - PZR water - PZR steam.
-                // This guarantees exact conservation — the component sum
+                // This guarantees exact conservation â€” the component sum
                 // ALWAYS equals the ledger, preventing drift.
                 //
                 // Physical justification: The RCS volume is affected by thermal
@@ -270,7 +270,7 @@ namespace Critical.Physics
                 // acknowledges this flexibility. PZR masses are constrained by
                 // the steam bubble (volume-limited). RCS absorbs the "slop."
                 //
-                // CRITICAL: The solver MUST NOT compute total mass from V×ρ.
+                // CRITICAL: The solver MUST NOT compute total mass from VÃ—Ï.
                 // The ledger value is AUTHORITATIVE. The solver distributes
                 // the ledger mass among components; it does not validate or
                 // override the ledger.
@@ -281,7 +281,7 @@ namespace Critical.Physics
                     // CANONICAL MODE: Solver accepts ledger as hard constraint
                     
                     // Step 1: Estimate PZR state from equilibrium mass distribution
-                    // Use RCS V×ρ only to ESTIMATE how mass partitions, NOT to override total
+                    // Use RCS VÃ—Ï only to ESTIMATE how mass partitions, NOT to override total
                     float M_RCS_est = V_RCS * rho_RCS;  // Estimate only
                     float M_PZR_est = M_total - M_RCS_est;
                     
@@ -291,11 +291,11 @@ namespace Critical.Physics
                     state.PZRWaterVolume = Math.Max(0f, Math.Min(state.PZRWaterVolume, PlantConstants.PZR_WATER_MAX));
                     state.PZRSteamVolume = V_PZR_total - state.PZRWaterVolume;
                     
-                    // Step 3: PZR masses from V×ρ (volume-constrained by PZR geometry)
+                    // Step 3: PZR masses from VÃ—Ï (volume-constrained by PZR geometry)
                     state.PZRWaterMass = state.PZRWaterVolume * rho_PZR_water;
                     state.PZRSteamMass = state.PZRSteamVolume * rho_PZR_steam;
                     
-                    // Step 4: RCS mass is the REMAINDER — guarantees exact conservation
+                    // Step 4: RCS mass is the REMAINDER â€” guarantees exact conservation
                     // This is Rule R5: RCS = Total - PZR_water - PZR_steam
                     // The sum RCS + PZR_water + PZR_steam = M_total BY CONSTRUCTION
                     state.RCSWaterMass = M_total - state.PZRWaterMass - state.PZRSteamMass;
@@ -315,7 +315,7 @@ namespace Critical.Physics
                 }
                 else
                 {
-                    // LEGACY MODE (deprecated): derive all masses from V×ρ
+                    // LEGACY MODE (deprecated): derive all masses from VÃ—Ï
                     // WARNING: This path does NOT guarantee conservation with boundary flows
                     state.RCSWaterMass = V_RCS * rho_RCS;
                     
@@ -343,11 +343,11 @@ namespace Critical.Physics
         /// Simplified coupled solver for quick estimates.
         /// Uses analytic approximation instead of full iteration.
         /// </summary>
-        /// <param name="T0">Initial temperature in °F</param>
+        /// <param name="T0">Initial temperature in Â°F</param>
         /// <param name="P0">Initial pressure in psia</param>
-        /// <param name="deltaT">Temperature change in °F</param>
-        /// <param name="V_RCS">RCS volume in ft³</param>
-        /// <param name="V_PZR_steam">Pressurizer steam volume in ft³</param>
+        /// <param name="deltaT">Temperature change in Â°F</param>
+        /// <param name="V_RCS">RCS volume in ftÂ³</param>
+        /// <param name="V_PZR_steam">Pressurizer steam volume in ftÂ³</param>
         /// <returns>Pressure change in psi</returns>
         public static float QuickPressureEstimate(
             float T0, float P0, float deltaT, 
@@ -509,7 +509,7 @@ namespace Critical.Physics
         #region Validation Tests
         
         /// <summary>
-        /// CRITICAL TEST: Verify 10°F rise produces 60-80 psi increase.
+        /// CRITICAL TEST: Verify 10Â°F rise produces 60-80 psi increase.
         /// This is THE key validation for Gap #1.
         /// If this fails, the entire simulation will be unrealistic.
         /// </summary>
@@ -520,14 +520,14 @@ namespace Critical.Physics
             var state = InitializeAtSteadyState();
             float P0 = state.Pressure;
             
-            // Apply 10°F temperature rise
+            // Apply 10Â°F temperature rise
             bool converged = SolveEquilibrium(ref state, 10f);
             
             if (!converged) return false;
             
             float deltaP = state.Pressure - P0;
             
-            // Expected: 60-80 psi (6-8 psi/°F)
+            // Expected: 60-80 psi (6-8 psi/Â°F)
             // Accept slightly wider range for numerical tolerance: 50-100 psi
             return deltaP >= 50f && deltaP <= 100f;
         }
@@ -618,7 +618,7 @@ namespace Critical.Physics
         /// Phase 2 Fix: Verify solver converges at heatup conditions (low T, low P).
         /// This was C3 from the Phase 1 audit - the solver previously clamped to
         /// 1800-2700 psia, making it non-functional below Mode 3.
-        /// Tests convergence at 300°F / 400 psia (mid-heatup, Mode 4).
+        /// Tests convergence at 300Â°F / 400 psia (mid-heatup, Mode 4).
         /// </summary>
         /// <returns>True if solver converges at heatup conditions</returns>
         public static bool ValidateHeatupRange()
@@ -627,7 +627,7 @@ namespace Critical.Physics
             var state = InitializeAtHeatupConditions(300f, 400f);
             float P0 = state.Pressure;
             
-            // Apply 10°F rise - should produce smaller dP than at-power
+            // Apply 10Â°F rise - should produce smaller dP than at-power
             // because water is less dense and more compressible at low P/T
             bool converged = SolveEquilibrium(ref state, 10f, MAX_ITERATIONS, 15f, 2700f);
             
@@ -637,7 +637,7 @@ namespace Critical.Physics
             
             // At low pressure, expansion coefficient is smaller and steam is more
             // compressible, so dP/dT should be lower than at operating conditions.
-            // Accept 10-80 psi for 10°F at 400 psia (wider range due to lower P)
+            // Accept 10-80 psi for 10Â°F at 400 psia (wider range due to lower P)
             return deltaP >= 5f && deltaP <= 120f;
         }
         
@@ -734,7 +734,7 @@ namespace Critical.Physics
         /// PHYSICS: After bubble formation, the PZR has a small steam bubble (~25% level
         /// means 75% steam by volume). RCS is at heatup temperature and pressure.
         /// </summary>
-        /// <param name="T_rcs_F">RCS temperature in °F (e.g. 300 for mid-heatup)</param>
+        /// <param name="T_rcs_F">RCS temperature in Â°F (e.g. 300 for mid-heatup)</param>
         /// <param name="pressure_psia">System pressure in psia (e.g. 400 for mid-heatup)</param>
         /// <param name="pzrLevelPercent">PZR water level as percentage (default 25% post-bubble)</param>
         /// <returns>Initialized system state at heatup conditions</returns>
@@ -779,15 +779,15 @@ namespace Critical.Physics
     {
         // Primary state variables
         public float Pressure;          // psia
-        public float Temperature;       // °F (RCS average)
+        public float Temperature;       // Â°F (RCS average)
         
         // RCS state
-        public float RCSVolume;         // ft³ (fixed - rigid piping)
+        public float RCSVolume;         // ftÂ³ (fixed - rigid piping)
         public float RCSWaterMass;      // lb
         
         // Pressurizer state
-        public float PZRWaterVolume;    // ft³
-        public float PZRSteamVolume;    // ft³
+        public float PZRWaterVolume;    // ftÂ³
+        public float PZRSteamVolume;    // ftÂ³
         public float PZRWaterMass;      // lb
         public float PZRSteamMass;      // lb
         public float PZRTotalEnthalpy_BTU; // BTU, persistent thermodynamic state for two-phase closure
@@ -803,19 +803,19 @@ namespace Critical.Physics
         // TotalPrimaryMassSolid = loops + PZR, updated only by CVCS boundary flow.
         // PZRWaterMassSolid = PZR only, updated only by surge transfer.
         // Loops mass = TotalPrimaryMassSolid - PZRWaterMassSolid (derived, never stored).
-        public float TotalPrimaryMassSolid;  // lb — total primary (loops+PZR), boundary-only
-        public float PZRWaterMassSolid;      // lb — conserved PZR mass from SolidPlantPressure
+        public float TotalPrimaryMassSolid;  // lb â€” total primary (loops+PZR), boundary-only
+        public float PZRWaterMassSolid;      // lb â€” conserved PZR mass from SolidPlantPressure
         
         // v5.3.0: Canonical total primary mass ledger (persists across ALL regimes)
         // This is the authoritative mass ledger for the entire primary system.
-        // Updated ONLY by boundary flows (CVCS, relief). Never derived from V×ρ.
-        // At solid→two-phase transition: TotalPrimaryMass_lb = TotalPrimaryMassSolid
+        // Updated ONLY by boundary flows (CVCS, relief). Never derived from VÃ—Ï.
+        // At solidâ†’two-phase transition: TotalPrimaryMass_lb = TotalPrimaryMassSolid
         // Stage 1: Field exists and is handed off; Stage 2+ will apply boundary flows.
         public float TotalPrimaryMass_lb;
         
         // v5.3.0 Stage 4: Cumulative relief mass tracking
         // Tracks total mass lost through relief valve(s) for diagnostics.
-        // Relief mass is a true boundary loss — water leaves the primary system.
+        // Relief mass is a true boundary loss â€” water leaves the primary system.
         // Used for conservation check: M_expected = M_initial + CVCS_in - CVCS_out - Relief
         // v0.1.0.0 Phase B: Relief accumulator increments when two-phase relief physics is implemented.
         // Currently, relief only exists in solid-ops (SolidPlantPressure.cs) where it is folded
@@ -850,7 +850,7 @@ namespace Critical.Physics
         public float CumulativeCBOLoss_lb;        // CBO loss (true boundary sink)
         
         // =========================================================================
-        // v5.4.0 Stage 0: SURGE FLOW TRACKING FIELDS (Diagnostic — No Behavior Change)
+        // v5.4.0 Stage 0: SURGE FLOW TRACKING FIELDS (Diagnostic â€” No Behavior Change)
         // These fields track mass flowing between PZR and RCS through the surge line.
         // Used for mass conservation diagnostics and bubble formation analysis.
         // Positive surgeFlowRate = into PZR (insurge), Negative = out of PZR (outsurge)
@@ -874,3 +874,5 @@ namespace Critical.Physics
         public float PZRLevel => PZRWaterVolume / PlantConstants.PZR_TOTAL_VOLUME * 100f;
     }
 }
+
+

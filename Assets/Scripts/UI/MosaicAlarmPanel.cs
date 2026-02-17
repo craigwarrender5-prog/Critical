@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Annunciator Alarm Panel
 // MosaicAlarmPanel.cs - Nuclear I&C Annunciator Tile Grid
 // ============================================================================
@@ -13,16 +13,16 @@
 //   Tiles follow nuclear I&C annunciator window conventions:
 //     - Dark when inactive (condition not met)
 //     - Illuminated with colored background when active:
-//       * Green  — normal status indicators (CRITICAL, HTRS ON, etc.)
-//       * Amber  — warning conditions (LVL HIGH, T-AVG deviation)
-//       * Red    — alarm conditions (PRESS LOW, TRIP, SUBCOOL LOW)
+//       * Green  â€” normal status indicators (CRITICAL, HTRS ON, etc.)
+//       * Amber  â€” warning conditions (LVL HIGH, T-AVG deviation)
+//       * Red    â€” alarm conditions (PRESS LOW, TRIP, SUBCOOL LOW)
 //     - 1px border: active color when lit, dim when off
 //     - Multi-line centered labels in instrument font
 //
 // REFERENCE:
 //   Westinghouse 4-Loop PWR main control board annunciator panel
-//   NRC HRTD Section 4 — Annunciator Window Tile conventions
-//   HeatupValidationVisual.Annunciators.cs — project visual standard
+//   NRC HRTD Section 4 â€” Annunciator Window Tile conventions
+//   HeatupValidationVisual.Annunciators.cs â€” project visual standard
 //
 // ARCHITECTURE:
 //   Implements IMosaicComponent + IAlarmFlashReceiver for MosaicBoard lifecycle.
@@ -30,7 +30,7 @@
 //   Tile GameObjects created dynamically on Initialize() if not pre-built
 //   by OperatorScreenBuilder.
 //
-// CREATED: v4.2.2 — Replaced text-list alarm panel with annunciator tile grid
+// CREATED: v4.2.2 â€” Replaced text-list alarm panel with annunciator tile grid
 // ============================================================================
 
 using System.Collections.Generic;
@@ -38,6 +38,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+using Critical.Validation;
 namespace Critical.UI
 {
     using Controllers;
@@ -119,7 +120,7 @@ namespace Critical.UI
         #endregion
 
         // ====================================================================
-        // TILE DEFINITIONS — 16 tiles covering key reactor alarms/status
+        // TILE DEFINITIONS â€” 16 tiles covering key reactor alarms/status
         // ====================================================================
 
         #region Tile Definitions
@@ -147,13 +148,13 @@ namespace Critical.UI
             // Row 3: Level/margin alarms + warnings
             new TileDescriptor("SUBCOOL\nLOW",        true),      // 8
             new TileDescriptor("PZR LVL\nLOW",        true),      // 9
-            new TileDescriptor("PZR LVL\nHIGH",       false, true), // 10 — warning (amber)
-            new TileDescriptor("OVERPOWER\nΔT",       true),      // 11
+            new TileDescriptor("PZR LVL\nHIGH",       false, true), // 10 â€” warning (amber)
+            new TileDescriptor("OVERPOWER\nÎ”T",       true),      // 11
 
             // Row 4: Status indicators (green when active)
-            new TileDescriptor("REACTOR\nCRITICAL",   false),     // 12 — status (green)
-            new TileDescriptor("AUTO ROD\nCONTROL",   false),     // 13 — status (green)
-            new TileDescriptor("PZR HTRS\nON",        false),     // 14 — status (green)
+            new TileDescriptor("REACTOR\nCRITICAL",   false),     // 12 â€” status (green)
+            new TileDescriptor("AUTO ROD\nCONTROL",   false),     // 13 â€” status (green)
+            new TileDescriptor("PZR HTRS\nON",        false),     // 14 â€” status (green)
             new TileDescriptor("LOW\nFLOW",           true),      // 15
         };
 
@@ -499,7 +500,7 @@ namespace Critical.UI
             _tileStates[8]  = false;                                                       // SUBCOOL LOW (awaiting RCS T-H bridge)
             _tileStates[9]  = false;                                                       // PZR LVL LOW (awaiting RCS T-H bridge)
             _tileStates[10] = false;                                                       // PZR LVL HIGH (awaiting RCS T-H bridge)
-            _tileStates[11] = reactor.IsTripped && reactor.NeutronPower > 1.09f;          // OVERPOWER ΔT (simplified)
+            _tileStates[11] = reactor.IsTripped && reactor.NeutronPower > 1.09f;          // OVERPOWER Î”T (simplified)
 
             // Row 4: Status indicators + low flow
             _tileStates[12] = reactor.IsCritical;                                          // REACTOR CRITICAL
@@ -530,7 +531,7 @@ namespace Critical.UI
                 if (!_tileStates[i])
                     _tiles[i].Acknowledged = false;
 
-                // New alarm onset — mark unacknowledged
+                // New alarm onset â€” mark unacknowledged
                 if (_tileStates[i] && !wasActive && TILE_DEFS[i].IsAlarm)
                     _tiles[i].Acknowledged = false;
 
@@ -552,21 +553,21 @@ namespace Critical.UI
 
             if (!tile.Active)
             {
-                // Inactive — dark tile
+                // Inactive â€” dark tile
                 bgColor = COLOR_ANN_OFF;
                 textColor = COLOR_TEXT_DIM;
                 borderColor = COLOR_BORDER_DIM;
             }
             else if (tile.Acknowledged && desc.IsAlarm)
             {
-                // Acknowledged alarm — muted
+                // Acknowledged alarm â€” muted
                 bgColor = COLOR_ACK_BG;
                 textColor = COLOR_ACK_TEXT;
                 borderColor = COLOR_ACK_TEXT;
             }
             else if (desc.IsAlarm)
             {
-                // Active alarm — flash support
+                // Active alarm â€” flash support
                 bool showLit = !_alarmFlashing || tile.Acknowledged;
                 bgColor = showLit ? COLOR_ANN_ALARM : COLOR_ANN_OFF;
                 textColor = showLit ? COLOR_TEXT_RED : COLOR_TEXT_DIM;
@@ -574,14 +575,14 @@ namespace Critical.UI
             }
             else if (desc.IsWarning)
             {
-                // Active warning — amber
+                // Active warning â€” amber
                 bgColor = COLOR_ANN_WARNING;
                 textColor = COLOR_TEXT_AMBER;
                 borderColor = COLOR_TEXT_AMBER;
             }
             else
             {
-                // Active status — green
+                // Active status â€” green
                 bgColor = COLOR_ANN_NORMAL;
                 textColor = COLOR_TEXT_GREEN;
                 borderColor = COLOR_TEXT_GREEN;
@@ -680,3 +681,4 @@ namespace Critical.UI
         #endregion
     }
 }
+

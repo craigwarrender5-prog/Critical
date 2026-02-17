@@ -1,28 +1,28 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - UI Component (Tab Pressurizer Partial)
 // HeatupValidationVisual.TabPressurizer.cs - Tab 2: Pressurizer
 // ============================================================================
 //
 // PURPOSE:
-//   Renders the Pressurizer system detail tab — comprehensive view of all
+//   Renders the Pressurizer system detail tab â€” comprehensive view of all
 //   pressurizer-related parameters, heater control, bubble formation state,
 //   and surge flow dynamics. Pairs PZR gauges and status panels with the
 //   most relevant trend graphs (Pressure + CVCS).
 //
 //   Layout (2-column):
-//     ┌───────────────────────┬──────────────────────────────┐
-//     │ PZR GAUGES            │  TREND GRAPHS                │
-//     │  - RCS Pressure arc   │  (PRESSURE graph — top)      │
-//     │  - PZR Level arc      │  (CVCS graph — bottom)       │
-//     │  - Heater Power bar   │                              │
-//     │  - Press Rate bar     │                              │
-//     │  - Level Setpt bar    │                              │
-//     │  - Surge Flow bidir   │                              │
-//     │─────────────────────  │                              │
-//     │ HEATER CONTROL PANEL  │                              │
-//     │─────────────────────  │                              │
-//     │ BUBBLE STATE PANEL    │                              │
-//     └───────────────────────┴──────────────────────────────┘
+//     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+//     â”‚ PZR GAUGES            â”‚  TREND GRAPHS                â”‚
+//     â”‚  - RCS Pressure arc   â”‚  (PRESSURE graph â€” top)      â”‚
+//     â”‚  - PZR Level arc      â”‚  (CVCS graph â€” bottom)       â”‚
+//     â”‚  - Heater Power bar   â”‚                              â”‚
+//     â”‚  - Press Rate bar     â”‚                              â”‚
+//     â”‚  - Level Setpt bar    â”‚                              â”‚
+//     â”‚  - Surge Flow bidir   â”‚                              â”‚
+//     â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  â”‚                              â”‚
+//     â”‚ HEATER CONTROL PANEL  â”‚                              â”‚
+//     â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  â”‚                              â”‚
+//     â”‚ BUBBLE STATE PANEL    â”‚                              â”‚
+//     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
 // READS FROM:
 //   Delegates all rendering to existing partial methods:
@@ -31,22 +31,26 @@
 //     - Panels partial: DrawHeaterModePanel(), DrawBubbleStatePanel()
 //
 // REFERENCE:
-//   NRC HRTD 6.1 — Pressurizer design and operation
-//   NRC HRTD 10.2 — Pressurizer heater control
-//   NRC HRTD 19.2.2 — Bubble formation procedure
-//   Westinghouse 4-Loop PWR FSAR Chapter 5.4 — Pressurizer
+//   NRC HRTD 6.1 â€” Pressurizer design and operation
+//   NRC HRTD 10.2 â€” Pressurizer heater control
+//   NRC HRTD 19.2.2 â€” Bubble formation procedure
+//   Westinghouse 4-Loop PWR FSAR Chapter 5.4 â€” Pressurizer
 //
 // ARCHITECTURE:
 //   Partial class of HeatupValidationVisual. Implements:
-//     - DrawPressurizerTab(Rect) — dispatched from Core tab switch
-//   Contains layout orchestration only — no rendering logic.
+//     - DrawPressurizerTab(Rect) â€” dispatched from Core tab switch
+//   Contains layout orchestration only â€” no rendering logic.
 //
 // GOLD STANDARD: Yes
-// v5.0.0: New file — Pressurizer tab for multi-tab dashboard redesign
+// v5.0.0: New file â€” Pressurizer tab for multi-tab dashboard redesign
 // ============================================================================
 
 using UnityEngine;
 using Critical.Physics;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupValidationVisual
 {
@@ -137,7 +141,7 @@ public partial class HeatupValidationVisual
         // PZR Gauge Group (Pressure arc, Level arc, Heater/Rate/Setpt bars)
         DrawPressurizerGauges(x, ref y, w);
 
-        // Surge Flow — Bidirectional arc gauge (from CVCS group, shown here
+        // Surge Flow â€” Bidirectional arc gauge (from CVCS group, shown here
         // because surge flow is operationally a PZR parameter)
         DrawPZRSurgeGauge(x, ref y, w);
 
@@ -169,11 +173,14 @@ public partial class HeatupValidationVisual
         DrawGaugeArcBidirectional(
             new Vector2(x + w * 0.5f, rowY + arcR + 14f), arcR,
             engine.surgeFlow, -50f, 50f,
-            _cOrangeAccent,   // Positive (outsurge) — expansion, heatup
-            _cBlueAccent,     // Negative (insurge) — contraction, spray
+            _cOrangeAccent,   // Positive (outsurge) â€” expansion, heatup
+            _cBlueAccent,     // Negative (insurge) â€” contraction, spray
             "SURGE", engine.surgeFlow, "gpm");
 
         y += GAUGE_ROW_H;
         y += GAUGE_GROUP_GAP;
     }
 }
+
+}
+

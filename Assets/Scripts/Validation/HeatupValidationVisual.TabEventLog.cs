@@ -1,22 +1,22 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - UI Component (Tab Event Log Partial)
 // HeatupValidationVisual.TabEventLog.cs - Tab 6: Event Log
 // ============================================================================
 //
 // PURPOSE:
-//   Renders the full Event Log tab — complete annunciator tile grid (all 26
+//   Renders the full Event Log tab â€” complete annunciator tile grid (all 26
 //   tiles) in the upper region and full-width scrollable event log in the
 //   lower region with severity filtering (ALL/INFO/ALERT/ALARM).
 //
 //   Layout (2-region, full width):
-//     ┌─────────────────────────────────────────────────┐
-//     │ ANNUNCIATOR TILES (full grid, all 26 tiles)     │
-//     │ (top 35% of area)                               │
-//     ├─────────────────────────────────────────────────┤
-//     │ [ALL] [INFO] [ALERT] [ALARM]  severity filter   │
-//     │ EVENT LOG (scrollable, full width)               │
-//     │ (bottom 65% of area)                            │
-//     └─────────────────────────────────────────────────┘
+//     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+//     â”‚ ANNUNCIATOR TILES (full grid, all 26 tiles)     â”‚
+//     â”‚ (top 35% of area)                               â”‚
+//     â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+//     â”‚ [ALL] [INFO] [ALERT] [ALARM]  severity filter   â”‚
+//     â”‚ EVENT LOG (scrollable, full width)               â”‚
+//     â”‚ (bottom 65% of area)                            â”‚
+//     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
 // READS FROM:
 //   Delegates rendering to existing partial methods:
@@ -24,19 +24,23 @@
 //   Plus new severity filter buttons (tab-local state).
 //
 // REFERENCE:
-//   NRC HRTD 19.0 — Plant operations monitoring
+//   NRC HRTD 19.0 â€” Plant operations monitoring
 //   Westinghouse main control board annunciator conventions
 //
 // ARCHITECTURE:
 //   Partial class of HeatupValidationVisual. Implements:
-//     - DrawEventLogTab(Rect) — dispatched from Core tab switch
+//     - DrawEventLogTab(Rect) â€” dispatched from Core tab switch
 //
 // GOLD STANDARD: Yes
-// v5.0.0: New file — Event Log tab for multi-tab dashboard redesign
+// v5.0.0: New file â€” Event Log tab for multi-tab dashboard redesign
 // ============================================================================
 
 using UnityEngine;
 using Critical.Physics;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupValidationVisual
 {
@@ -200,7 +204,7 @@ public partial class HeatupValidationVisual
 
         if (filterSev == null)
         {
-            // Unfiltered — direct index access (fast path)
+            // Unfiltered â€” direct index access (fast path)
             for (int i = firstVisRow; i <= lastVisRow; i++)
             {
                 var entry = log[i];
@@ -214,7 +218,7 @@ public partial class HeatupValidationVisual
         }
         else
         {
-            // Filtered — scan through log mapping filtered index to actual index
+            // Filtered â€” scan through log mapping filtered index to actual index
             int visIdx = 0;
             for (int i = 0; i < log.Count && visIdx <= lastVisRow; i++)
             {
@@ -250,3 +254,6 @@ public partial class HeatupValidationVisual
         }
     }
 }
+
+}
+

@@ -1,32 +1,32 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - UI Component (Tab CVCS Partial)
 // HeatupValidationVisual.TabCVCS.cs - Tab 3: CVCS / Inventory
 // ============================================================================
 //
 // PURPOSE:
-//   Renders the CVCS and Inventory detail tab — comprehensive view of all
+//   Renders the CVCS and Inventory detail tab â€” comprehensive view of all
 //   Chemical and Volume Control System flows, liquid inventory (VCT/BRS),
 //   and system mass conservation tracking. Pairs CVCS and inventory gauges
 //   with the most relevant trend graphs (CVCS flows + VCT/BRS levels).
 //
 //   Layout (2-column):
-//     ┌───────────────────────┬──────────────────────────────┐
-//     │ CVCS FLOW GAUGES      │  TREND GRAPHS                │
-//     │  - Charging arc       │  (CVCS graph — top)           │
-//     │  - Letdown arc        │  (VCT/BRS graph — bottom)     │
-//     │  - Surge bar          │                              │
-//     │  - Net CVCS bar       │                              │
-//     │  - Seal Inj bar       │                              │
-//     │  - LD Path indicator  │                              │
-//     │─────────────────────  │                              │
-//     │ VCT/BRS GAUGES        │                              │
-//     │  - VCT Level arc      │                              │
-//     │  - BRS Holdup arc     │                              │
-//     │  - BRS Flow bidir     │                              │
-//     │  - VCT Boron bar      │                              │
-//     │─────────────────────  │                              │
-//     │ INVENTORY PANEL       │                              │
-//     └───────────────────────┴──────────────────────────────┘
+//     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+//     â”‚ CVCS FLOW GAUGES      â”‚  TREND GRAPHS                â”‚
+//     â”‚  - Charging arc       â”‚  (CVCS graph â€” top)           â”‚
+//     â”‚  - Letdown arc        â”‚  (VCT/BRS graph â€” bottom)     â”‚
+//     â”‚  - Surge bar          â”‚                              â”‚
+//     â”‚  - Net CVCS bar       â”‚                              â”‚
+//     â”‚  - Seal Inj bar       â”‚                              â”‚
+//     â”‚  - LD Path indicator  â”‚                              â”‚
+//     â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  â”‚                              â”‚
+//     â”‚ VCT/BRS GAUGES        â”‚                              â”‚
+//     â”‚  - VCT Level arc      â”‚                              â”‚
+//     â”‚  - BRS Holdup arc     â”‚                              â”‚
+//     â”‚  - BRS Flow bidir     â”‚                              â”‚
+//     â”‚  - VCT Boron bar      â”‚                              â”‚
+//     â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  â”‚                              â”‚
+//     â”‚ INVENTORY PANEL       â”‚                              â”‚
+//     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
 // READS FROM:
 //   Delegates all rendering to existing partial methods:
@@ -35,20 +35,24 @@
 //     - Panels partial: DrawInventoryPanel()
 //
 // REFERENCE:
-//   NRC HRTD 4.1 — Chemical and Volume Control System
-//   NRC HRTD 4.1.2 — VCT level control and BRS operations
-//   Westinghouse 4-Loop PWR FSAR Chapter 9.3 — CVCS
+//   NRC HRTD 4.1 â€” Chemical and Volume Control System
+//   NRC HRTD 4.1.2 â€” VCT level control and BRS operations
+//   Westinghouse 4-Loop PWR FSAR Chapter 9.3 â€” CVCS
 //
 // ARCHITECTURE:
 //   Partial class of HeatupValidationVisual. Implements:
-//     - DrawCVCSTab(Rect) — dispatched from Core tab switch
-//   Contains layout orchestration only — no rendering logic.
+//     - DrawCVCSTab(Rect) â€” dispatched from Core tab switch
+//   Contains layout orchestration only â€” no rendering logic.
 //
 // GOLD STANDARD: Yes
-// v5.0.0: New file — CVCS/Inventory tab for multi-tab dashboard redesign
+// v5.0.0: New file â€” CVCS/Inventory tab for multi-tab dashboard redesign
 // ============================================================================
 
 using UnityEngine;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupValidationVisual
 {
@@ -130,3 +134,6 @@ public partial class HeatupValidationVisual
         DrawInventoryPanel(x, ref y, w);
     }
 }
+
+}
+

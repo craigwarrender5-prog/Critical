@@ -1,6 +1,7 @@
-using System;
+﻿using System;
 using Critical.Simulation.Modular.Transfer;
-
+
+using Critical.Validation;
 namespace Critical.Simulation.Modular.Modules
 {
     /// <summary>
@@ -114,3 +115,4 @@ namespace Critical.Simulation.Modular.Modules
         }
     }
 }
+

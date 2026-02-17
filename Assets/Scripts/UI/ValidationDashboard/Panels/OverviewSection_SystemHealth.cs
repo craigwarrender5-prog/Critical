@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Overview Section: System Health
 // OverviewSection_SystemHealth.cs - Mass/Energy Conservation Status
 // ============================================================================
@@ -9,8 +9,8 @@
 //   OverviewSection_GlobalHealth.
 //
 // INSTRUMENTS:
-//   Top: 2× DigitalReadouts (Mass Error, Energy Balance)
-//   Bottom: 3× StatusIndicators (Mass Cons OK, SG Boiling, RHR Active)
+//   Top: 2Ã— DigitalReadouts (Mass Error, Energy Balance)
+//   Bottom: 3Ã— StatusIndicators (Mass Cons OK, SG Boiling, RHR Active)
 //
 // VERSION: 2.0.0
 // DATE: 2026-02-17
@@ -22,6 +22,7 @@ using UnityEngine.UI;
 using TMPro;
 using Critical.Physics;
 
+using Critical.Validation;
 namespace Critical.UI.ValidationDashboard
 {
     /// <summary>
@@ -98,3 +99,4 @@ namespace Critical.UI.ValidationDashboard
         }
     }
 }
+

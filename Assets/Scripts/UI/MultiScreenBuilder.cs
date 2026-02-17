@@ -3,6 +3,16 @@
 // MultiScreenBuilder.cs - Editor Tool for Creating All Operator Screen UIs
 // ============================================================================
 //
+// File: Assets/Scripts/UI/MultiScreenBuilder.cs
+// Module: Critical.UI.MultiScreenBuilder
+// Responsibility: Editor-time construction of unified operator screen hierarchy.
+// Standards: GOLD v1.0, SRP/SOLID
+// Version: 2.1
+// Last Updated: 2026-02-17
+// Changes:
+//   - 2.1 (2026-02-17): Added GOLD metadata fields and bounded file-level change ledger.
+//   - 2.0 (2026-02-10): Added unified all-screen builder flow and shared canvas wiring.
+//
 // PURPOSE:
 //   Creates the COMPLETE multi-screen operator interface hierarchy in a
 //   single Unity scene. All screens share one Canvas, one ScreenManager,
@@ -42,17 +52,10 @@
 //   3. (Optional) Assign RCS model prefab to Screen 2 in Inspector
 //   4. Press Play — keys 1/2/Tab switch screens
 //
-// VERSION: 2.0.9
-// DATE: 2026-02-10
-//
 // SOURCES:
 //   - IMPLEMENTATION_PLAN_v2.0.0_MultiScreenGUI.md
 //   - Operator_Screen_Layout_Plan_v1_0_0.md
 //   - OperatorScreenBuilder.cs (Screen 1 pattern reference)
-//
-// VERSION: 2.0.0
-// DATE: 2026-02-10
-// CLASSIFICATION: UI — Editor Tool
 // ============================================================================
 
 using UnityEngine;

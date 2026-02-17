@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Overview Panel
 // OverviewPanel.cs - Main At-a-Glance Dashboard View
 // ============================================================================
@@ -7,7 +7,7 @@
 //   The primary dashboard view showing all critical parameters at a glance
 //   without requiring tab navigation. Displays:
 //   - Global simulation health (mass/energy conservation)
-//   - Reactor core temperatures (Tavg, Thot, Tcold, ΔT)
+//   - Reactor core temperatures (Tavg, Thot, Tcold, Î”T)
 //   - RCS status (pressure, subcooling, RCP status)
 //   - Pressurizer state (level, pressure, heater/spray)
 //   - CVCS flows (charging, letdown, net)
@@ -15,19 +15,19 @@
 //   - Alarm summary
 //
 // LAYOUT (IP-0040):
-//   ┌──────────────────────────────────────────────────────────────────┐
-//   │  REACTOR / RCS (1.2)  │  PRESSURIZER (1.0)  │  CVCS / SG (1.0)    │
-//   │  [ArcGauges]          │  [ArcGauge]          │  [DigitalReadouts]   │
-//   │  Press  Tavg           │  PZR Level           │  Charging  Letdown   │
-//   │  Subcool  ΔT           │  [Status] [Status]   │  [BiGauge] Net CVCS  │
-//   │  [RCP1][RCP2][3][4]   │  PZR Temp  Surge     │  SG Press  Net Heat  │
-//   ├──────────────────────────────────────────────────────────────────┤
-//   │  SYSTEM HEALTH (0.8)    │  ALARM ANNUNCIATOR (1.5)                    │
-//   │  [Digital] Mass Error   │  ┌────┬────┬────┬────┬────┬────┐            │
-//   │  [Status] Mass Cons     │  │PRHI│PRLO│LVHI│LVLO│SUBC│VCT │            │
-//   │  [Status] SG Boiling    │  ├────┼────┼────┼────┼────┼────┤            │
-//   │  [Status] RHR           │  │MASS│FLOW│SGP │HTRS│SPRY│BBLE│            │
-//   └──────────────────────────────────────────────────────────────────┘
+//   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+//   â”‚  REACTOR / RCS (1.2)  â”‚  PRESSURIZER (1.0)  â”‚  CVCS / SG (1.0)    â”‚
+//   â”‚  [ArcGauges]          â”‚  [ArcGauge]          â”‚  [DigitalReadouts]   â”‚
+//   â”‚  Press  Tavg           â”‚  PZR Level           â”‚  Charging  Letdown   â”‚
+//   â”‚  Subcool  Î”T           â”‚  [Status] [Status]   â”‚  [BiGauge] Net CVCS  â”‚
+//   â”‚  [RCP1][RCP2][3][4]   â”‚  PZR Temp  Surge     â”‚  SG Press  Net Heat  â”‚
+//   â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+//   â”‚  SYSTEM HEALTH (0.8)    â”‚  ALARM ANNUNCIATOR (1.5)                    â”‚
+//   â”‚  [Digital] Mass Error   â”‚  â”Œâ”€â”€â”€â”€â”¬â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”            â”‚
+//   â”‚  [Status] Mass Cons     â”‚  â”‚PRHIâ”‚PRLOâ”‚LVHIâ”‚LVLOâ”‚SUBCâ”‚VCT â”‚            â”‚
+//   â”‚  [Status] SG Boiling    â”‚  â”œâ”€â”€â”€â”€â”¼â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”¼â”€â”€â”€â”€â”¤            â”‚
+//   â”‚  [Status] RHR           â”‚  â”‚MASSâ”‚FLOWâ”‚SGP â”‚HTRSâ”‚SPRYâ”‚BBLEâ”‚            â”‚
+//   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
 // VERSION: 2.0.0
 // DATE: 2026-02-17
@@ -39,6 +39,7 @@ using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
 
+using Critical.Validation;
 namespace Critical.UI.ValidationDashboard
 {
     /// <summary>
@@ -61,7 +62,7 @@ namespace Critical.UI.ValidationDashboard
         [SerializeField] private RectTransform topRow;
         [SerializeField] private RectTransform bottomRow;
 
-        // Section scripts — IP-0040 merged layout
+        // Section scripts â€” IP-0040 merged layout
         private OverviewSection_ReactorRCS _reactorRcsSection;
         private OverviewSection_Pressurizer _pressurizerSection;
         private OverviewSection_CVCSG _cvcsgSection;
@@ -90,7 +91,7 @@ namespace Critical.UI.ValidationDashboard
             // Top row (60%): Reactor/RCS, Pressurizer, CVCS/SG
             // Bottom row (40%): System Health, Alarm Annunciator Grid
 
-            // Top row container — 60% of panel height
+            // Top row container â€” 60% of panel height
             GameObject topRowGO = new GameObject("TopRow");
             topRowGO.transform.SetParent(transform, false);
             topRow = topRowGO.AddComponent<RectTransform>();
@@ -108,7 +109,7 @@ namespace Critical.UI.ValidationDashboard
             topLayout.spacing = 8;
             topLayout.padding = new RectOffset(6, 6, 4, 4);
 
-            // Bottom row container — 40% of panel height
+            // Bottom row container â€” 40% of panel height
             GameObject bottomRowGO = new GameObject("BottomRow");
             bottomRowGO.transform.SetParent(transform, false);
             bottomRow = bottomRowGO.AddComponent<RectTransform>();
@@ -543,3 +544,4 @@ namespace Critical.UI.ValidationDashboard
         }
     }
 }
+

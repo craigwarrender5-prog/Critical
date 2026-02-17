@@ -1,6 +1,6 @@
-// ============================================================================
-// CRITICAL: Master the Atom — SG Forensics Black Box Logging
-// SGForensics.cs — High-Resolution Ring Buffer & Triggered Dump
+﻿// ============================================================================
+// CRITICAL: Master the Atom â€” SG Forensics Black Box Logging
+// SGForensics.cs â€” High-Resolution Ring Buffer & Triggered Dump
 // ============================================================================
 //
 // PURPOSE:
@@ -15,8 +15,8 @@
 //   - Ring buffer: Fixed-size circular buffer (~90 entries at 2-second sim
 //     resolution = ~180 seconds of history). Configurable via BUFFER_SIZE.
 //   - Trigger evaluation: Called after each SG update. Fires dump on:
-//       1. SG regime change (Subcooled ↔ Boiling ↔ SteamDump)
-//       2. |Δ sgHeatTransfer_MW| > 5 MW between consecutive timesteps
+//       1. SG regime change (Subcooled â†” Boiling â†” SteamDump)
+//       2. |Î” sgHeatTransfer_MW| > 5 MW between consecutive timesteps
 //       3. SG drain start/stop edge
 //       4. Inventory conservation alarm edge (rising only)
 //   - CSV dump: Writes entire ring buffer to Logs/Forensics/ with metadata
@@ -26,7 +26,7 @@
 //   tracking fields. It does not modify any physics state.
 //
 // CALLED BY:
-//   HeatupSimEngine.cs — after each SG model update in all three regimes.
+//   HeatupSimEngine.cs â€” after each SG model update in all three regimes.
 //
 // v5.0.1: Initial implementation
 // ============================================================================
@@ -39,7 +39,7 @@ using UnityEngine;
 namespace Critical.Physics
 {
     // ========================================================================
-    // FORENSICS SNAPSHOT — Flat primitives only, no heap allocations
+    // FORENSICS SNAPSHOT â€” Flat primitives only, no heap allocations
     // ========================================================================
 
     /// <summary>
@@ -54,7 +54,7 @@ namespace Critical.Physics
         public float SimTime_hr;
 
         // --- RCS State ---
-        /// <summary>RCS bulk temperature (°F)</summary>
+        /// <summary>RCS bulk temperature (Â°F)</summary>
         public float T_rcs_F;
         /// <summary>RCS pressure (psia)</summary>
         public float Pressure_psia;
@@ -74,21 +74,21 @@ namespace Critical.Physics
         public float SGHeatTransfer_BTUhr;
 
         // --- SG Temperatures ---
-        /// <summary>SG secondary bulk average temperature (°F)</summary>
+        /// <summary>SG secondary bulk average temperature (Â°F)</summary>
         public float SGBulkTemp_F;
-        /// <summary>SG top node temperature (°F)</summary>
+        /// <summary>SG top node temperature (Â°F)</summary>
         public float SGTopNodeTemp_F;
-        /// <summary>SG bottom node temperature (°F)</summary>
+        /// <summary>SG bottom node temperature (Â°F)</summary>
         public float SGBottomNodeTemp_F;
-        /// <summary>Stratification ΔT between top and bottom nodes (°F)</summary>
+        /// <summary>Stratification Î”T between top and bottom nodes (Â°F)</summary>
         public float SGStratification_F;
 
         // --- SG Secondary Pressure ---
         /// <summary>SG secondary side pressure (psia)</summary>
         public float SGSecondaryPressure_psia;
-        /// <summary>Saturation temperature at SG secondary pressure (°F)</summary>
+        /// <summary>Saturation temperature at SG secondary pressure (Â°F)</summary>
         public float SGSaturationTemp_F;
-        /// <summary>Max node superheat above T_sat (°F)</summary>
+        /// <summary>Max node superheat above T_sat (Â°F)</summary>
         public float SGMaxSuperheat_F;
         /// <summary>Boiling intensity fraction (0-1)</summary>
         public float SGBoilingIntensity;
@@ -124,7 +124,7 @@ namespace Critical.Physics
         public float TotalSteamProduced_lb;
 
         // --- Per-Node HTC (5 nodes max) ---
-        /// <summary>Node 0 (top) HTC BTU/(hr·ft²·°F)</summary>
+        /// <summary>Node 0 (top) HTC BTU/(hrÂ·ftÂ²Â·Â°F)</summary>
         public float Node0_HTC;
         /// <summary>Node 1 HTC</summary>
         public float Node1_HTC;
@@ -184,15 +184,15 @@ namespace Critical.Physics
         public bool Node4_Boiling;
 
         // --- Per-Node Temperatures ---
-        /// <summary>Node 0 temperature (°F)</summary>
+        /// <summary>Node 0 temperature (Â°F)</summary>
         public float Node0_Temp_F;
-        /// <summary>Node 1 temperature (°F)</summary>
+        /// <summary>Node 1 temperature (Â°F)</summary>
         public float Node1_Temp_F;
-        /// <summary>Node 2 temperature (°F)</summary>
+        /// <summary>Node 2 temperature (Â°F)</summary>
         public float Node2_Temp_F;
-        /// <summary>Node 3 temperature (°F)</summary>
+        /// <summary>Node 3 temperature (Â°F)</summary>
         public float Node3_Temp_F;
-        /// <summary>Node 4 temperature (°F)</summary>
+        /// <summary>Node 4 temperature (Â°F)</summary>
         public float Node4_Temp_F;
 
         // --- Inventory Audit ---
@@ -221,16 +221,16 @@ namespace Critical.Physics
     /// </summary>
     public enum ForensicsTrigger
     {
-        /// <summary>SG thermal regime changed (Subcooled ↔ Boiling ↔ SteamDump)</summary>
+        /// <summary>SG thermal regime changed (Subcooled â†” Boiling â†” SteamDump)</summary>
         RegimeChange,
 
-        /// <summary>|Δ sgHeatTransfer_MW| > 5 MW between consecutive timesteps</summary>
+        /// <summary>|Î” sgHeatTransfer_MW| > 5 MW between consecutive timesteps</summary>
         HeatTransferSpike,
 
-        /// <summary>SG drain started (DrainingActive: false → true)</summary>
+        /// <summary>SG drain started (DrainingActive: false â†’ true)</summary>
         DrainStart,
 
-        /// <summary>SG drain stopped (DrainingActive: true → false)</summary>
+        /// <summary>SG drain stopped (DrainingActive: true â†’ false)</summary>
         DrainStop,
 
         /// <summary>Inventory conservation alarm activated</summary>
@@ -289,7 +289,7 @@ namespace Critical.Physics
         private static bool _initialized;
 
         // ====================================================================
-        // PREVIOUS-FRAME STATE — For edge detection
+        // PREVIOUS-FRAME STATE â€” For edge detection
         // ====================================================================
 
         private static SGThermalRegime _prevRegime;
@@ -298,12 +298,12 @@ namespace Critical.Physics
         private static bool _prevInventoryAlarm;
 
         // ====================================================================
-        // DUMP TRACKING — Cooldown to prevent dump floods
+        // DUMP TRACKING â€” Cooldown to prevent dump floods
         // ====================================================================
 
         /// <summary>
         /// Minimum sim-time between consecutive dumps (hours).
-        /// 30 sim-seconds = 30/3600 ≈ 0.00833 hr.
+        /// 30 sim-seconds = 30/3600 â‰ˆ 0.00833 hr.
         /// Prevents a single oscillating condition from generating
         /// hundreds of files.
         /// </summary>
@@ -353,7 +353,7 @@ namespace Critical.Physics
                 Debug.Log($"[SGForensics] Created forensics directory: {_forensicsPath}");
             }
 
-            Debug.Log($"[SGForensics] Initialized — buffer={BUFFER_SIZE} slots, " +
+            Debug.Log($"[SGForensics] Initialized â€” buffer={BUFFER_SIZE} slots, " +
                       $"spike threshold={HEAT_TRANSFER_SPIKE_THRESHOLD_MW} MW, " +
                       $"cooldown={DUMP_COOLDOWN_HR * 3600f:F0}s");
         }
@@ -493,7 +493,7 @@ namespace Critical.Physics
             snap.SGSecondaryPressure_psia = sgState.SecondaryPressure_psia;
             snap.SGSaturationTemp_F = sgState.SaturationTemp_F;
             snap.SGMaxSuperheat_F = sgState.MaxSuperheat_F;
-            // Boiling intensity not stored on state; pass 0 — engine can override
+            // Boiling intensity not stored on state; pass 0 â€” engine can override
             snap.SGBoilingIntensity = 0f;
 
             snap.ThermoclineHeight_ft = sgState.ThermoclineHeight_ft;
@@ -511,7 +511,7 @@ namespace Critical.Physics
             snap.SteamRate_MW = sgState.SteamProductionRate_MW;
             snap.TotalSteamProduced_lb = sgState.TotalSteamProduced_lb;
 
-            // Per-node data — flat fields to avoid array allocation
+            // Per-node data â€” flat fields to avoid array allocation
             int N = sgState.NodeCount;
             // v5.0.1: Check if blend array is available
             bool hasBlend = sgState.NodeRegimeBlend != null && sgState.NodeRegimeBlend.Length >= N;
@@ -581,7 +581,7 @@ namespace Critical.Physics
         public static int BufferCount => _count;
 
         // ====================================================================
-        // PRIVATE — CSV DUMP
+        // PRIVATE â€” CSV DUMP
         // ====================================================================
 
         /// <summary>
@@ -640,13 +640,13 @@ namespace Critical.Physics
             );
 
             // ================================================================
-            // CSV DATA — Walk ring buffer from oldest to newest
+            // CSV DATA â€” Walk ring buffer from oldest to newest
             // ================================================================
             int startIdx;
             if (_count < BUFFER_SIZE)
-                startIdx = 0;  // Buffer not yet full — start at 0
+                startIdx = 0;  // Buffer not yet full â€” start at 0
             else
-                startIdx = _writeIndex;  // Buffer full — oldest entry is at write index
+                startIdx = _writeIndex;  // Buffer full â€” oldest entry is at write index
 
             for (int i = 0; i < _count; i++)
             {
@@ -688,3 +688,5 @@ namespace Critical.Physics
         }
     }
 }
+
+

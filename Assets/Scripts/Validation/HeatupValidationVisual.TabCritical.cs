@@ -1,26 +1,36 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - UI Component (Tab Critical Partial)
 // HeatupValidationVisual.TabCritical.cs - Tab 8: Critical Variables Overview
 // ============================================================================
 //
+// File: Assets/Scripts/Validation/HeatupValidationVisual.TabCritical.cs
+// Module: Critical.Validation.HeatupValidationVisual (partial)
+// Responsibility: Critical-tab layout and summary rendering for key plant metrics.
+// Standards: GOLD v1.0, SRP/SOLID
+// Version: 5.3
+// Last Updated: 2026-02-17
+// Changes:
+//   - 5.3 (2026-02-17): Added GOLD metadata fields and bounded change-history ledger.
+//   - 5.2 (2026-02-16): Introduced critical summary tab and subsystem blocks.
+//
 // PURPOSE:
 //   Renders a single-screen, no-scroll "at a glance" validation tab showing
 //   the five most important subsystem summaries simultaneously:
-//     1. RCS Primary  — Temps, pressure, pressure rate, heat input
-//     2. Pressurizer  — Pressure, temp, level, heaters, spray, bubble
-//     3. Steam Generator — Pressure, T_sat, T_bulk, ΔT, boiling, steam dump
-//     4. CVCS          — Charging, letdown, net flow, inventory, conservation
-//     5. VCT           — Level, makeup/divert/RWST flags
+//     1. RCS Primary  â€” Temps, pressure, pressure rate, heat input
+//     2. Pressurizer  â€” Pressure, temp, level, heaters, spray, bubble
+//     3. Steam Generator â€” Pressure, T_sat, T_bulk, Î”T, boiling, steam dump
+//     4. CVCS          â€” Charging, letdown, net flow, inventory, conservation
+//     5. VCT           â€” Level, makeup/divert/RWST flags
 //
-//   Layout (2-row, 3+2 grid, no scrolling at 1920×1080+):
-//     ┌─────────────────┬──────────────────┬──────────────────┐
-//     │  RCS PRIMARY     │  PRESSURIZER     │  STEAM GENERATOR │
-//     ├─────────────────┴─────────┬────────┴──────────────────┤
-//     │  CVCS (Flows & Inventory)  │  VCT (Level & Status)     │
-//     └────────────────────────────┴───────────────────────────┘
+//   Layout (2-row, 3+2 grid, no scrolling at 1920Ã—1080+):
+//     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+//     â”‚  RCS PRIMARY     â”‚  PRESSURIZER     â”‚  STEAM GENERATOR â”‚
+//     â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+//     â”‚  CVCS (Flows & Inventory)  â”‚  VCT (Level & Status)     â”‚
+//     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
 // READS FROM:
-//   HeatupSimEngine public fields only — no private access, no new data.
+//   HeatupSimEngine public fields only â€” no private access, no new data.
 //   All fields verified to exist in HeatupSimEngine.cs as of v5.1.0.
 //
 // RENDERING:
@@ -30,32 +40,36 @@
 //   _statusLabelStyle / _statusValueStyle (14pt).
 //
 // REFERENCE:
-//   Westinghouse 4-Loop PWR control room — operator "board walk" overview
-//   NRC HRTD 19.0 — Plant Operations monitoring requirements
+//   Westinghouse 4-Loop PWR control room â€” operator "board walk" overview
+//   NRC HRTD 19.0 â€” Plant Operations monitoring requirements
 //
 // ARCHITECTURE:
 //   Partial class of HeatupValidationVisual. Implements:
-//     - DrawCriticalTab(Rect) — dispatched from Core tab switch (case 7)
+//     - DrawCriticalTab(Rect) â€” dispatched from Core tab switch (case 7)
 //     - DrawCriticalBlock_RCS()
 //     - DrawCriticalBlock_PZR()
 //     - DrawCriticalBlock_SG()
 //     - DrawCriticalBlock_CVCS()
 //     - DrawCriticalBlock_VCT()
-//     - DrawCriticalBigRow() — large numeric readout row
-//     - DrawCriticalSmallRow() — normal-sized status row
-//     - DrawCriticalIndicator() — ON/OFF or YES/NO boolean indicator
+//     - DrawCriticalBigRow() â€” large numeric readout row
+//     - DrawCriticalSmallRow() â€” normal-sized status row
+//     - DrawCriticalIndicator() â€” ON/OFF or YES/NO boolean indicator
 //
-// GOLD STANDARD: No (new additive UI — no physics)
-// v5.2.0: New file — Critical tab for at-a-glance plant validation
+// GOLD STANDARD: No (new additive UI â€” no physics)
+// v5.2.0: New file â€” Critical tab for at-a-glance plant validation
 // ============================================================================
 
 using UnityEngine;
 using Critical.Physics;
 
+
+namespace Critical.Validation
+{
+
 public partial class HeatupValidationVisual
 {
     // ========================================================================
-    // CRITICAL TAB — LAYOUT CONSTANTS
+    // CRITICAL TAB â€” LAYOUT CONSTANTS
     // ========================================================================
 
     // Top row: 3 equal blocks. Bottom row: 2 equal blocks.
@@ -68,13 +82,13 @@ public partial class HeatupValidationVisual
     const float CRIT_SMALL_ROW_H = 18f;        // Normal status row (matches STATUS_ROW_H)
 
     // ========================================================================
-    // WARNING SUPPRESSION — One-shot missing field warnings
+    // WARNING SUPPRESSION â€” One-shot missing field warnings
     // ========================================================================
 
     private static bool _critMissingFieldWarned = false;
 
     // ========================================================================
-    // THRESHOLD CONSTANTS — Placeholder values for color coding
+    // THRESHOLD CONSTANTS â€” Placeholder values for color coding
     // TODO: Move to PlantConstants or configuration asset in future version
     // ========================================================================
 
@@ -90,7 +104,7 @@ public partial class HeatupValidationVisual
     const float CRIT_NET_FLOW_WARN = 10f;
     const float CRIT_NET_FLOW_ALARM = 20f;
 
-    // SG early boiling temperature threshold (°F)
+    // SG early boiling temperature threshold (Â°F)
     // Boiling below this T_rcs is unexpected during heatup
     const float CRIT_SG_EARLY_BOIL_TEMP = 350f;
 
@@ -150,7 +164,7 @@ public partial class HeatupValidationVisual
         // Big readouts: T_avg and Pressure
         Color tavgC = GetHighThresholdColor(engine.T_avg, 545f, 570f,
             _cNormalGreen, _cWarningAmber, _cAlarmRed);
-        DrawCriticalBigRow(ref y, x, w, "T_AVG", $"{engine.T_avg:F1} °F", tavgC);
+        DrawCriticalBigRow(ref y, x, w, "T_AVG", $"{engine.T_avg:F1} Â°F", tavgC);
 
         float psia = engine.pressure;
         float psig = psia - 14.696f;
@@ -160,8 +174,8 @@ public partial class HeatupValidationVisual
         y += 4f;
 
         // Secondary rows
-        DrawCriticalSmallRow(ref y, x, w, "T_HOT", $"{engine.T_hot:F1} °F", _cTrace2);
-        DrawCriticalSmallRow(ref y, x, w, "T_COLD", $"{engine.T_cold:F1} °F", _cTrace3);
+        DrawCriticalSmallRow(ref y, x, w, "T_HOT", $"{engine.T_hot:F1} Â°F", _cTrace2);
+        DrawCriticalSmallRow(ref y, x, w, "T_COLD", $"{engine.T_cold:F1} Â°F", _cTrace3);
 
         // Pressure rate with color coding
         float absRate = Mathf.Abs(engine.pressureRate);
@@ -210,7 +224,7 @@ public partial class HeatupValidationVisual
 
         // Secondary rows
         DrawCriticalSmallRow(ref y, x, w, "PZR TEMP",
-            $"{engine.T_pzr:F1} °F", _cTrace4);
+            $"{engine.T_pzr:F1} Â°F", _cTrace4);
 
         DrawCriticalSmallRow(ref y, x, w, "HEATER",
             $"{engine.pzrHeaterPower:F0} kW",
@@ -255,26 +269,26 @@ public partial class HeatupValidationVisual
         float y = area.y;
 
         DrawSectionHeader(new Rect(area.x, y, area.width, GAUGE_GROUP_HEADER_H),
-            "STEAM GENERATOR (×4)");
+            "STEAM GENERATOR (Ã—4)");
         y += GAUGE_GROUP_HEADER_H + 4f;
 
-        // Big readouts: SG Pressure and ΔT
+        // Big readouts: SG Pressure and Î”T
         DrawCriticalBigRow(ref y, x, w, "SG PRESS",
             $"{engine.sgSecondaryPressure_psia:F0} psia", _cTextPrimary);
 
         float deltaT = engine.T_rcs - engine.T_sg_secondary;
         Color deltaTColor = deltaT > 0f ? _cNormalGreen : _cWarningAmber;
-        DrawCriticalBigRow(ref y, x, w, "PRI–SEC ΔT",
-            $"{deltaT:F1} °F", deltaTColor);
+        DrawCriticalBigRow(ref y, x, w, "PRIâ€“SEC Î”T",
+            $"{deltaT:F1} Â°F", deltaTColor);
 
         y += 4f;
 
         // Secondary rows
         DrawCriticalSmallRow(ref y, x, w, "T_SAT (SG)",
-            $"{engine.sgSaturationTemp_F:F1} °F", _cTrace5);
+            $"{engine.sgSaturationTemp_F:F1} Â°F", _cTrace5);
 
         DrawCriticalSmallRow(ref y, x, w, "SG BULK TEMP",
-            $"{engine.T_sg_secondary:F1} °F", _cTrace6);
+            $"{engine.T_sg_secondary:F1} Â°F", _cTrace6);
 
         // Steam dump indicator
         DrawCriticalIndicator(ref y, x, w, "STEAM DUMP",
@@ -302,7 +316,7 @@ public partial class HeatupValidationVisual
         float y = area.y;
 
         DrawSectionHeader(new Rect(area.x, y, area.width, GAUGE_GROUP_HEADER_H),
-            "CVCS — FLOWS & INVENTORY");
+            "CVCS â€” FLOWS & INVENTORY");
         y += GAUGE_GROUP_HEADER_H + 4f;
 
         // Big readouts: Charging, Letdown, Net
@@ -328,16 +342,16 @@ public partial class HeatupValidationVisual
         DrawCriticalSmallRow(ref y, x, w, "SYSTEM MASS",
             $"{engine.totalSystemMass_lbm:F0} lbm", _cTextPrimary);
 
-        // v5.4.2: Primary mass conservation — canonical lbm ledger
-        // Thresholds: green < 100, amber 100–500, red > 500 lbm
+        // v5.4.2: Primary mass conservation â€” canonical lbm ledger
+        // Thresholds: green < 100, amber 100â€“500, red > 500 lbm
         float massErr = engine.massError_lbm;
         Color massC = Mathf.Abs(massErr) < 100f ? _cNormalGreen :
                       Mathf.Abs(massErr) < 500f ? _cWarningAmber : _cAlarmRed;
         DrawCriticalSmallRow(ref y, x, w, "MASS CONS ERR",
             $"{massErr:F1} lbm", massC);
 
-        // VCT flow imbalance — CVCS loop diagnostic (gallons, not primary conservation)
-        // Thresholds: green < 10, amber 10–50, red > 50 gal
+        // VCT flow imbalance â€” CVCS loop diagnostic (gallons, not primary conservation)
+        // Thresholds: green < 10, amber 10â€“50, red > 50 gal
         float vctErr = engine.massConservationError;
         Color vctC = Mathf.Abs(vctErr) < 10f ? _cNormalGreen :
                      Mathf.Abs(vctErr) < 50f ? _cWarningAmber : _cAlarmRed;
@@ -358,7 +372,7 @@ public partial class HeatupValidationVisual
         float y = area.y;
 
         DrawSectionHeader(new Rect(area.x, y, area.width, GAUGE_GROUP_HEADER_H),
-            "VCT — VOLUME CONTROL TANK");
+            "VCT â€” VOLUME CONTROL TANK");
         y += GAUGE_GROUP_HEADER_H + 4f;
 
         // Big readout: VCT Level
@@ -376,7 +390,7 @@ public partial class HeatupValidationVisual
 
         // Normal band reference
         DrawCriticalSmallRow(ref y, x, w, "NORMAL BAND",
-            $"{PlantConstants.VCT_LEVEL_NORMAL_LOW:F0}–{PlantConstants.VCT_LEVEL_NORMAL_HIGH:F0} %",
+            $"{PlantConstants.VCT_LEVEL_NORMAL_LOW:F0}â€“{PlantConstants.VCT_LEVEL_NORMAL_HIGH:F0} %",
             _cTextSecondary);
 
         y += 4f;
@@ -396,9 +410,9 @@ public partial class HeatupValidationVisual
 
         // Annunciator flags
         if (engine.vctLevelLow)
-            DrawCriticalSmallRow(ref y, x, w, "⚠ VCT LO", "ALARM", _cAlarmRed);
+            DrawCriticalSmallRow(ref y, x, w, "âš  VCT LO", "ALARM", _cAlarmRed);
         if (engine.vctLevelHigh)
-            DrawCriticalSmallRow(ref y, x, w, "⚠ VCT HI", "ALARM", _cAlarmRed);
+            DrawCriticalSmallRow(ref y, x, w, "âš  VCT HI", "ALARM", _cAlarmRed);
 
         // If no alarms, show all-clear
         if (!engine.vctLevelLow && !engine.vctLevelHigh)
@@ -406,7 +420,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // RENDERING HELPERS — Big value row, small row, indicator
+    // RENDERING HELPERS â€” Big value row, small row, indicator
     // ========================================================================
 
     /// <summary>
@@ -453,3 +467,6 @@ public partial class HeatupValidationVisual
         DrawStatusRow(ref y, x, w, label, val, stateColor);
     }
 }
+
+}
+

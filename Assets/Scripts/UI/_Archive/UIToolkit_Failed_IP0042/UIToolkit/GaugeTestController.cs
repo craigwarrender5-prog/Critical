@@ -1,6 +1,6 @@
-// ============================================================================
-// CRITICAL: Master the Atom — UI Toolkit Test Controller
-// GaugeTestController.cs — Stage 0 Proof of Concept Test Harness
+﻿// ============================================================================
+// CRITICAL: Master the Atom â€” UI Toolkit Test Controller
+// GaugeTestController.cs â€” Stage 0 Proof of Concept Test Harness
 // ============================================================================
 
 using UnityEngine;
@@ -9,6 +9,7 @@ using System.Diagnostics;
 using System.Collections.Generic;
 using Critical.UI.UIToolkit.Elements;
 
+using Critical.Validation;
 namespace Critical.UI.UIToolkit
 {
     [RequireComponent(typeof(UIDocument))]
@@ -253,10 +254,10 @@ namespace Critical.UI.UIToolkit
             if (_gaugePzrLevel != null) _gaugePzrLevel.Value = engine.pzrLevel;
             if (_gaugeSubcool != null) _gaugeSubcool.Value = engine.subcooling;
             
-            if (_labelTavg != null) _labelTavg.text = $"{engine.T_avg:F1} °F";
+            if (_labelTavg != null) _labelTavg.text = $"{engine.T_avg:F1} Â°F";
             if (_labelPressure != null) _labelPressure.text = $"{engine.pressure:F0} psia";
             if (_labelPzrLevel != null) _labelPzrLevel.text = $"{engine.pzrLevel:F1} %";
-            if (_labelSubcool != null) _labelSubcool.text = $"{engine.subcooling:F1} °F";
+            if (_labelSubcool != null) _labelSubcool.text = $"{engine.subcooling:F1} Â°F";
             
             if (_modeLabel != null) _modeLabel.text = engine.GetModeString().Replace("\n", " ");
             if (_phaseLabel != null) _phaseLabel.text = engine.heatupPhaseDesc ?? "INITIALIZING";
@@ -289,10 +290,10 @@ namespace Critical.UI.UIToolkit
             if (_gaugePzrLevel != null) _gaugePzrLevel.Value = testLevel;
             if (_gaugeSubcool != null) _gaugeSubcool.Value = testSubcool;
             
-            if (_labelTavg != null) _labelTavg.text = $"{testTavg:F1} °F";
+            if (_labelTavg != null) _labelTavg.text = $"{testTavg:F1} Â°F";
             if (_labelPressure != null) _labelPressure.text = $"{testPressure:F0} psia";
             if (_labelPzrLevel != null) _labelPzrLevel.text = $"{testLevel:F1} %";
-            if (_labelSubcool != null) _labelSubcool.text = $"{testSubcool:F1} °F";
+            if (_labelSubcool != null) _labelSubcool.text = $"{testSubcool:F1} Â°F";
             
             if (_modeLabel != null) _modeLabel.text = "MODE 5 Cold Shutdown (TEST)";
             if (_phaseLabel != null) _phaseLabel.text = "UI TOOLKIT TEST MODE";
@@ -310,7 +311,7 @@ namespace Critical.UI.UIToolkit
         {
             if (_updateCount == 0) return;
             float avgMs = _accumulatedUpdateTime / _updateCount;
-            UnityEngine.Debug.Log($"[GaugeTest PERF] Avg: {avgMs:F3}ms, Max: {_maxUpdateTime:F3}ms — {(avgMs < 1.0f ? "PASS ✓" : "FAIL ✗")}");
+            UnityEngine.Debug.Log($"[GaugeTest PERF] Avg: {avgMs:F3}ms, Max: {_maxUpdateTime:F3}ms â€” {(avgMs < 1.0f ? "PASS âœ“" : "FAIL âœ—")}");
             _accumulatedUpdateTime = 0f;
             _updateCount = 0;
             _maxUpdateTime = 0f;
@@ -326,3 +327,4 @@ namespace Critical.UI.UIToolkit
         }
     }
 }
+

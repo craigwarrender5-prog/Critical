@@ -3,6 +3,19 @@
 // PlantConstants.Pressure.cs - Pressure Setpoints, RCPs, RHR, Solid Plant
 // ============================================================================
 //
+// File: Assets/Scripts/Physics/PlantConstants.Pressure.cs
+// Module: Critical.Physics.PlantConstants (partial)
+// Responsibility: Pressure-domain constants and permissive thresholds for startup/operation.
+// Standards: GOLD v1.0, SRP/SOLID
+// Version: 5.1
+// Last Updated: 2026-02-17
+// Changes:
+//   - 5.1 (2026-02-17): Added GOLD metadata fields and bounded file-level change history.
+//   - 5.0 (2026-02-17): Updated solid-plant control band to 320-400 psig aligned with references.
+//   - 4.2 (2026-02-16): Added startup permissive helpers and RCP pressure checks.
+//   - 4.1 (2026-02-15): Added steam dump/high-pressure constants used by HZP flow.
+//   - 4.0 (2026-02-14): Consolidated pressure constants into partial PlantConstants authority.
+//
 // DOMAIN: Normal/trip/safety pressure setpoints, solid plant pressure control,
 //         Reactor Coolant Pumps, Residual Heat Removal system limits
 //

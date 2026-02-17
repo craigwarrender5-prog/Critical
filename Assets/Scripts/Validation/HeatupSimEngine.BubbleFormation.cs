@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Simulation Engine (Bubble Formation Partial)
 // HeatupSimEngine.BubbleFormation.cs - Multi-Phase Bubble Formation Procedure
 // ============================================================================
@@ -11,24 +11,24 @@
 // PHYSICS:
 //   Bubble formation is a thermodynamic process, NOT mechanical drain:
 //     PRIMARY: Steam generation from heater power at T_sat
-//       dV_steam = (Q_heaters / h_fg) × (1/ρ_steam - 1/ρ_water) × dt
+//       dV_steam = (Q_heaters / h_fg) Ã— (1/Ï_steam - 1/Ï_water) Ã— dt
 //     SECONDARY: CVCS trim via letdown/charging imbalance
 //       Net outflow = letdown - charging (75 gpm - 0/44 gpm)
 //   
-//   Phase sequence: NONE → DETECTION → VERIFICATION → DRAIN → STABILIZE
-//                   → PRESSURIZE → COMPLETE
+//   Phase sequence: NONE â†’ DETECTION â†’ VERIFICATION â†’ DRAIN â†’ STABILIZE
+//                   â†’ PRESSURIZE â†’ COMPLETE
 //
 // SOURCES:
-//   - NRC HRTD 2.1 — Steam displacement mechanism
-//   - NRC HRTD 4.1 — CCP capacity (44 gpm), CVCS flow balance
-//   - NRC HRTD 19.2.2 — Bubble formation procedure, CCP start, aux spray test
-//   - NRC ML11223A342 — Heatup limits, RCP pressure requirements
+//   - NRC HRTD 2.1 â€” Steam displacement mechanism
+//   - NRC HRTD 4.1 â€” CCP capacity (44 gpm), CVCS flow balance
+//   - NRC HRTD 19.2.2 â€” Bubble formation procedure, CCP start, aux spray test
+//   - NRC ML11223A342 â€” Heatup limits, RCP pressure requirements
 //
 // ARCHITECTURE:
 //   Partial class of HeatupSimEngine. This file owns:
 //     - BubbleFormationPhase enum (7 phases)
-//     - ProcessBubbleDetection() — detects first steam in solid PZR branch
-//     - UpdateBubbleFormation() — full state machine (switch on bubblePhase)
+//     - ProcessBubbleDetection() â€” detects first steam in solid PZR branch
+//     - UpdateBubbleFormation() â€” full state machine (switch on bubblePhase)
 //     - Thermodynamic drain calculation (steam displacement + CVCS trim)
 //     - CCP start logic and aux spray test model
 //
@@ -40,6 +40,10 @@
 
 using UnityEngine;
 using Critical.Physics;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupSimEngine
 {
@@ -71,7 +75,7 @@ public partial class HeatupSimEngine
     }
 
     // ========================================================================
-    // BUBBLE DETECTION — Called from solid pressurizer physics branch
+    // BUBBLE DETECTION â€” Called from solid pressurizer physics branch
     // Detects when SolidPlantPressure module signals bubble formation.
     // ========================================================================
 
@@ -95,7 +99,7 @@ public partial class HeatupSimEngine
         if (solidPlantState.BubbleFormed && bubblePhase == BubbleFormationPhase.NONE)
         {
             // ================================================================
-            // BUBBLE DETECTED — Begin multi-phase formation procedure
+            // BUBBLE DETECTED â€” Begin multi-phase formation procedure
             // Per NRC HRTD 19.2.2: This is NOT instant. The bubble is first
             // detected, then verified, then the PZR is drained over ~40 min.
             //
@@ -110,19 +114,19 @@ public partial class HeatupSimEngine
                 preHandoffMass_lbm = physicsState.RCSWaterMass + physicsState.PZRWaterMass;
 
             solidPressurizer = false;
-            // bubbleFormed stays FALSE until drain completes — gates RCP starts
+            // bubbleFormed stays FALSE until drain completes â€” gates RCP starts
             bubbleFormationTemp = solidPlantState.BubbleFormationTemp;
 
             // ================================================================
             // PRESSURE TRANSITION (v1.3.1.0 fix)
-            // Do NOT jump to Psat(T_pzr) — the PZR is still functionally
+            // Do NOT jump to Psat(T_pzr) â€” the PZR is still functionally
             // water-solid with only a thin steam film at heater surfaces.
             // Pressure remains at current solid-plant-controlled value.
             // ================================================================
             T_sat = WaterProperties.SaturationTemperature(pressure);
             physicsState.Pressure = pressure;
 
-            // PZR is still 100% water — only a thin steam film at heater surfaces.
+            // PZR is still 100% water â€” only a thin steam film at heater surfaces.
             // Apply RTCC reconciliation so authority transfer preserves total tracked mass.
             float rhoWater = WaterProperties.WaterDensity(T_pzr, pressure);
             float reconstructedPzrWater_lbm = physicsState.PZRWaterVolume * rhoWater;
@@ -178,7 +182,7 @@ public partial class HeatupSimEngine
             return true;
         }
 
-        // No bubble — update status display
+        // No bubble â€” update status display
         if (bubblePhase == BubbleFormationPhase.NONE)
         {
             heatupPhaseDesc = $"SOLID PZR - HEATING TO TSAT ({T_sat:F0}F)";
@@ -189,14 +193,14 @@ public partial class HeatupSimEngine
     }
 
     // ========================================================================
-    // BUBBLE FORMATION STATE MACHINE — Runs each timestep during active phases
+    // BUBBLE FORMATION STATE MACHINE â€” Runs each timestep during active phases
     // Returns true if DRAIN phase is active (signals CVCS override)
     // ========================================================================
 
     /// <summary>
     /// Advance the bubble formation state machine by one timestep.
-    /// Handles phase transitions: DETECTION → VERIFICATION → DRAIN →
-    /// STABILIZE → PRESSURIZE → COMPLETE.
+    /// Handles phase transitions: DETECTION â†’ VERIFICATION â†’ DRAIN â†’
+    /// STABILIZE â†’ PRESSURIZE â†’ COMPLETE.
     /// </summary>
     /// <returns>True if DRAIN phase is active (CVCS flows overridden)</returns>
     bool UpdateBubbleFormation(float dt)
@@ -278,7 +282,7 @@ public partial class HeatupSimEngine
     }
 
     // ========================================================================
-    // VERIFICATION PHASE — Aux spray test per NRC HRTD 19.2.2
+    // VERIFICATION PHASE â€” Aux spray test per NRC HRTD 19.2.2
     // ========================================================================
 
     void UpdateVerificationPhase(float dt, float phaseElapsed)
@@ -307,7 +311,7 @@ public partial class HeatupSimEngine
             }
             else if (sprayElapsed_sec >= PlantConstants.AUX_SPRAY_TEST_DURATION_SEC && auxSprayActive)
             {
-                // Spray secured — log result
+                // Spray secured â€” log result
                 auxSprayActive = false;
                 auxSprayPressureDrop = auxSprayPressureBefore - pressure;
                 auxSprayTestPassed = (auxSprayPressureDrop >= PlantConstants.AUX_SPRAY_MIN_PRESSURE_DROP &&
@@ -378,7 +382,7 @@ public partial class HeatupSimEngine
     }
 
     // ========================================================================
-    // DRAIN PHASE — Thermodynamic steam displacement + CVCS trim
+    // DRAIN PHASE â€” Thermodynamic steam displacement + CVCS trim
     // Per NRC HRTD 19.2.2 / 2.1
     // ========================================================================
 
@@ -458,7 +462,7 @@ public partial class HeatupSimEngine
         if (pressure < PlantConstants.BUBBLE_DRAIN_MIN_PRESSURE_PSIA)
             drainPressureBandMaintained = false;
 
-        // IP-0022 CS-0039: DRAIN CVCS transfer is an internal PZR↔RCS movement.
+        // IP-0022 CS-0039: DRAIN CVCS transfer is an internal PZRâ†”RCS movement.
         // Do not mutate VCT RCS-change accumulator here; PBOC owns boundary tracking.
 
         float dm_steamActual_step = physicsState.PZRSteamMass - pzrSteamMass_before;
@@ -480,7 +484,7 @@ public partial class HeatupSimEngine
 
         // ============================================================
         // v5.4.1 Stage 0: Forensic drain mass audit (0.1 lbm precision)
-        // Logs Δm for each mass transfer to detect conservation violations.
+        // Logs Î”m for each mass transfer to detect conservation violations.
         // ============================================================
         float pzrTotalMass_after = physicsState.PZRWaterMass + physicsState.PZRSteamMass;
         float systemMass_after = physicsState.RCSWaterMass + pzrTotalMass_after;
@@ -504,7 +508,7 @@ public partial class HeatupSimEngine
         {
             Debug.Log($"[T+{simTime:F2}hr] DRAIN AUDIT: Level={pzrLevel:F1}%, " +
                 $"dm_steam={dm_steamActual_step:F1}lbm, dm_cvcs={dm_cvcsActual:F1}lbm, " +
-                $"Δm_PZR={dm_pzr:F1}lbm, Δm_sys={dm_system:F1}lbm{(massViolation ? " *** VIOLATION ***" : "")}");
+                $"Î”m_PZR={dm_pzr:F1}lbm, Î”m_sys={dm_system:F1}lbm{(massViolation ? " *** VIOLATION ***" : "")}");
             Debug.Log($"  PZR: water={physicsState.PZRWaterMass:F1}lbm, steam={physicsState.PZRSteamMass:F1}lbm, " +
                 $"total={pzrTotalMass_after:F1}lbm | RCS={physicsState.RCSWaterMass:F0}lbm | " +
                 $"SysTotal={systemMass_after:F0}lbm");
@@ -513,11 +517,11 @@ public partial class HeatupSimEngine
         if (massViolation)
         {
             LogEvent(EventSeverity.ALERT,
-                $"DRAIN Δm_sys={dm_system:F1}lbm (steam reconciliation at V={pzrSteamVolume:F1}ft³)");
+                $"DRAIN Î”m_sys={dm_system:F1}lbm (steam reconciliation at V={pzrSteamVolume:F1}ftÂ³)");
         }
 
         // ============================================================
-        // v0.3.0.0 Phase D (Fix 3.3): DRAIN→STABILIZE continuity guard
+        // v0.3.0.0 Phase D (Fix 3.3): DRAINâ†’STABILIZE continuity guard
         // Level gate is primary (mandatory). Pressure rate is advisory:
         // if pressure is changing rapidly at drain exit, log a warning
         // but still transition (prevents infinite DRAIN).
@@ -534,8 +538,8 @@ public partial class HeatupSimEngine
             {
                 LogEvent(EventSeverity.ALERT,
                     $"DRAIN exit advisory: pressure rate {pressureRate:F1} psi/hr exceeds " +
-                    $"{PlantConstants.MAX_DRAIN_EXIT_PRESSURE_RATE:F0} psi/hr threshold — proceeding to STABILIZE");
-                Debug.LogWarning($"[T+{simTime:F2}hr] DRAIN→STABILIZE: pressureRate={pressureRate:F1} psi/hr " +
+                    $"{PlantConstants.MAX_DRAIN_EXIT_PRESSURE_RATE:F0} psi/hr threshold â€” proceeding to STABILIZE");
+                Debug.LogWarning($"[T+{simTime:F2}hr] DRAINâ†’STABILIZE: pressureRate={pressureRate:F1} psi/hr " +
                     $"(advisory limit {PlantConstants.MAX_DRAIN_EXIT_PRESSURE_RATE:F0} psi/hr)");
             }
 
@@ -568,7 +572,7 @@ public partial class HeatupSimEngine
 
             LogEvent(EventSeverity.ACTION, $"PZR drain complete at {pzrLevel:F1}% - stabilizing CVCS");
             LogEvent(EventSeverity.INFO, $"CCP running: {(ccpStarted ? "YES" : "NO")}, Aux spray: {(auxSprayTestPassed ? "PASSED" : "N/A")}");
-            LogEvent(EventSeverity.INFO, $"DRAIN final mass audit: Δm_sys={dm_system:F1}lbm, PZR_total={pzrTotalMass_after:F0}lbm");
+            LogEvent(EventSeverity.INFO, $"DRAIN final mass audit: Î”m_sys={dm_system:F1}lbm, PZR_total={pzrTotalMass_after:F0}lbm");
             LogEvent(EventSeverity.INFO, $"DRAIN exit pressure rate: {pressureRate:F1} psi/hr ({(pressureStable ? "STABLE" : "ADVISORY")})");
             LogEvent(EventSeverity.INFO,
                 $"DRAIN reconciliation: steam={drainSteamDisplacement_lbm:F1} lbm, cvcs={drainCvcsTransfer_lbm:F1} lbm, steam_frac={steamFrac:F2}");
@@ -576,14 +580,14 @@ public partial class HeatupSimEngine
                 $"DRAIN gates: duration={phaseElapsed * 60f:F1} min, pressureInBand={pressureInBand}, levelReached={levelReached}, transition={drainTransitionReason}");
             LogEvent(EventSeverity.INFO,
                 $"DRAIN CVCS policy: mode={drainCvcsPolicyMode}, letdown={drainLetdownFlow_gpm:F1} gpm, charging={drainChargingFlow_gpm:F1} gpm, netOut={drainNetOutflowFlow_gpm:F1} gpm");
-            Debug.Log($"[T+{simTime:F2}hr] DRAIN complete. Level={pzrLevel:F1}%, Steam={pzrSteamVolume:F0}ft³, dP/dt={pressureRate:F1} psi/hr");
+            Debug.Log($"[T+{simTime:F2}hr] DRAIN complete. Level={pzrLevel:F1}%, Steam={pzrSteamVolume:F0}ftÂ³, dP/dt={pressureRate:F1} psi/hr");
         }
         else
         {
             float drainProgress = (bubbleDrainStartLevel - pzrLevel) / (bubbleDrainStartLevel - PlantConstants.PZR_LEVEL_AFTER_BUBBLE) * 100f;
             heatupPhaseDesc = $"BUBBLE FORMATION - DRAINING ({drainProgress:F0}%)";
             statusMessage =
-                $"PZR DRAIN: {pzrLevel:F1}% → {PlantConstants.PZR_LEVEL_AFTER_BUBBLE:F0}% | " +
+                $"PZR DRAIN: {pzrLevel:F1}% â†’ {PlantConstants.PZR_LEVEL_AFTER_BUBBLE:F0}% | " +
                 $"LD={currentLetdown_gpm:F0} CHG={currentCharging_gpm:F0} NET={netOutflow_gpm:F0} gpm ({drainCvcsPolicyMode})";
         }
     }
@@ -760,7 +764,7 @@ public partial class HeatupSimEngine
     }
 
     // ========================================================================
-    // PRESSURIZE PHASE — Heaters raise pressure for RCP NPSH
+    // PRESSURIZE PHASE â€” Heaters raise pressure for RCP NPSH
     // Per NRC HRTD 19.2.2
     // ========================================================================
 
@@ -774,7 +778,7 @@ public partial class HeatupSimEngine
         float minRcpP_psig = PlantConstants.MIN_RCP_PRESSURE_PSIG;
 
         // ============================================================
-        // v0.3.0.0 Phase D (Fix 3.3): PRESSURIZE→COMPLETE continuity guard
+        // v0.3.0.0 Phase D (Fix 3.3): PRESSURIZEâ†’COMPLETE continuity guard
         // Pressure gate is primary (mandatory, unchanged).
         // Level stability gate is mandatory: prevents completing bubble
         // formation if PZR level has drifted far from the DRAIN target.
@@ -797,15 +801,15 @@ public partial class HeatupSimEngine
             LogEvent(EventSeverity.INFO, $"Total bubble formation time: {(simTime - bubbleFormationTemp):F1} min");
             Debug.Log($"[T+{simTime:F2}hr] === BUBBLE FORMATION COMPLETE ===");
             Debug.Log($"  P={pressure:F0}psia ({pressure_psig:F0}psig), Level={pzrLevel:F1}%");
-            Debug.Log($"  Steam space: {pzrSteamVolume:F0}ft³, RCP start permitted");
+            Debug.Log($"  Steam space: {pzrSteamVolume:F0}ftÂ³, RCP start permitted");
         }
         else if (pressureSufficient && !levelStable)
         {
-            // Pressure met but level has drifted below acceptable range — hold in PRESSURIZE
+            // Pressure met but level has drifted below acceptable range â€” hold in PRESSURIZE
             float pProgress = pressure_psig / minRcpP_psig * 100f;
             heatupPhaseDesc = "BUBBLE FORMATION - PRESSURIZING (LEVEL LOW)";
             statusMessage = $"PRESSURIZE HOLD: P={pressure_psig:F0}psig OK, Level={pzrLevel:F1}% < {PlantConstants.PZR_LEVEL_AFTER_BUBBLE - 2f:F0}% min";
-            Debug.LogWarning($"[T+{simTime:F2}hr] PRESSURIZE→COMPLETE blocked: pressure OK ({pressure_psig:F0} psig) " +
+            Debug.LogWarning($"[T+{simTime:F2}hr] PRESSURIZEâ†’COMPLETE blocked: pressure OK ({pressure_psig:F0} psig) " +
                 $"but level too low ({pzrLevel:F1}% < {PlantConstants.PZR_LEVEL_AFTER_BUBBLE - 2f:F0}%)");
         }
         else
@@ -2071,3 +2075,6 @@ public partial class HeatupSimEngine
         }
     }
 }
+
+}
+

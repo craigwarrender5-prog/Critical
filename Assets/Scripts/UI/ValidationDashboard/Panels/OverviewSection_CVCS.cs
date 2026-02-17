@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Overview Section: CVCS
 // OverviewSection_CVCS.cs - Charging, Letdown, VCT Display
 // ============================================================================
@@ -16,7 +16,8 @@
 
 using UnityEngine;
 using Critical.Physics;
-
+
+using Critical.Validation;
 namespace Critical.UI.ValidationDashboard
 {
     /// <summary>
@@ -90,3 +91,4 @@ namespace Critical.UI.ValidationDashboard
         }
     }
 }
+

@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Validation Dashboard Scene Integration
 // ValidationDashboardSceneSetup.cs - Setup for Validator Scene
 // ============================================================================
@@ -31,6 +31,7 @@ using UnityEngine.SceneManagement;
 using UnityEngine.EventSystems;
 using Critical.UI.ValidationDashboard;
 
+using Critical.Validation;
 namespace Critical.Validation
 {
     /// <summary>
@@ -283,3 +284,4 @@ namespace Critical.Validation
         }
     }
 }
+

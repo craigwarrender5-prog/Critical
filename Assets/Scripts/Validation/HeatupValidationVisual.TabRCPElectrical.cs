@@ -1,33 +1,33 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - UI Component (Tab RCP/Electrical Partial)
 // HeatupValidationVisual.TabRCPElectrical.cs - Tab 5: RCP / Electrical
 // ============================================================================
 //
 // PURPOSE:
-//   Renders the RCP and Electrical/HZP detail tab — per-pump startup status,
+//   Renders the RCP and Electrical/HZP detail tab â€” per-pump startup status,
 //   RCP heat contribution gauges, HZP stabilization state (steam dump, PID,
 //   startup readiness), and HZP-specific arc gauges. Pairs with RCP Heat
 //   and HZP history graphs.
 //
 //   Layout (2-column):
-//     ┌───────────────────────┬──────────────────────────────┐
-//     │ RCP STARTUP GRID      │  TREND GRAPHS                │
-//     │  (4-pump status)      │  (RCP HEAT graph — top)       │
-//     │─────────────────────  │  (HZP graph — bottom)         │
-//     │ RCP HEAT GAUGES       │                              │
-//     │  - Eff RCP Heat arc   │                              │
-//     │  - Coupling α bar     │                              │
-//     │  - Flow Frac bar      │                              │
-//     │  - Grid Energy bar    │                              │
-//     │─────────────────────  │                              │
-//     │ HZP GAUGES            │                              │
-//     │  - Steam Dump arc     │                              │
-//     │  - HZP Progress arc   │                              │
-//     │─────────────────────  │                              │
-//     │ HZP STABILIZATION     │                              │
-//     │  (steam dump, PID,    │                              │
-//     │   startup readiness)  │                              │
-//     └───────────────────────┴──────────────────────────────┘
+//     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+//     â”‚ RCP STARTUP GRID      â”‚  TREND GRAPHS                â”‚
+//     â”‚  (4-pump status)      â”‚  (RCP HEAT graph â€” top)       â”‚
+//     â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  â”‚  (HZP graph â€” bottom)         â”‚
+//     â”‚ RCP HEAT GAUGES       â”‚                              â”‚
+//     â”‚  - Eff RCP Heat arc   â”‚                              â”‚
+//     â”‚  - Coupling Î± bar     â”‚                              â”‚
+//     â”‚  - Flow Frac bar      â”‚                              â”‚
+//     â”‚  - Grid Energy bar    â”‚                              â”‚
+//     â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  â”‚                              â”‚
+//     â”‚ HZP GAUGES            â”‚                              â”‚
+//     â”‚  - Steam Dump arc     â”‚                              â”‚
+//     â”‚  - HZP Progress arc   â”‚                              â”‚
+//     â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  â”‚                              â”‚
+//     â”‚ HZP STABILIZATION     â”‚                              â”‚
+//     â”‚  (steam dump, PID,    â”‚                              â”‚
+//     â”‚   startup readiness)  â”‚                              â”‚
+//     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
 // READS FROM:
 //   Delegates all rendering to existing partial methods:
@@ -36,21 +36,25 @@
 //     - Graphs partial: DrawGraphContent() for RCP HEAT (5) and HZP (6)
 //
 // REFERENCE:
-//   NRC HRTD 3.2 — Reactor Coolant Pump operations
-//   NRC HRTD 10.2 — Heater control during HZP
-//   NRC HRTD 11.2 — Steam dump system
-//   NRC HRTD 19.0 — Plant startup operations
+//   NRC HRTD 3.2 â€” Reactor Coolant Pump operations
+//   NRC HRTD 10.2 â€” Heater control during HZP
+//   NRC HRTD 11.2 â€” Steam dump system
+//   NRC HRTD 19.0 â€” Plant startup operations
 //
 // ARCHITECTURE:
 //   Partial class of HeatupValidationVisual. Implements:
-//     - DrawRCPElectricalTab(Rect) — dispatched from Core tab switch
-//   Contains layout orchestration only — no rendering logic.
+//     - DrawRCPElectricalTab(Rect) â€” dispatched from Core tab switch
+//   Contains layout orchestration only â€” no rendering logic.
 //
 // GOLD STANDARD: Yes
-// v5.0.0: New file — RCP/Electrical tab for multi-tab dashboard redesign
+// v5.0.0: New file â€” RCP/Electrical tab for multi-tab dashboard redesign
 // ============================================================================
 
 using UnityEngine;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupValidationVisual
 {
@@ -127,7 +131,7 @@ public partial class HeatupValidationVisual
         DrawRCPGrid(x, ref y, w);
         y += STATUS_SECTION_GAP;
 
-        // RCP Heat Gauges (Eff RCP Heat arc, Coupling α, Flow Frac, Grid Energy)
+        // RCP Heat Gauges (Eff RCP Heat arc, Coupling Î±, Flow Frac, Grid Energy)
         DrawRCPHeatGauges(x, ref y, w);
         y += STATUS_SECTION_GAP;
 
@@ -139,3 +143,6 @@ public partial class HeatupValidationVisual
         DrawHZPPanel(x, ref y, w);
     }
 }
+
+}
+

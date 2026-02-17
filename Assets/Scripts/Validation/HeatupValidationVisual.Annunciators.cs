@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - UI Component (Annunciators Partial)
 // HeatupValidationVisual.Annunciators.cs - Alarm Tiles + Event Log
 // ============================================================================
@@ -9,19 +9,19 @@
 //   Right 55%: Scrollable operations event log with severity color-coding
 //
 // READS FROM:
-//   HeatupSimEngine — all bool annunciator fields, eventLog list
+//   HeatupSimEngine â€” all bool annunciator fields, eventLog list
 //
 // REFERENCE:
 //   Westinghouse 4-Loop PWR main control board annunciator panel:
 //     - Tiles dark when inactive, illuminated when alarmed
 //     - Color: Green=normal, Amber=warning, Red=alarm, Dim=off
 //     - Event log follows plant computer printout format
-//   NRC HRTD Section 19 — Plant Operations monitoring
+//   NRC HRTD Section 19 â€” Plant Operations monitoring
 //
 // ARCHITECTURE:
 //   Partial class of HeatupValidationVisual. Implements:
-//     - DrawAnnunciatorContent(Rect) — tile grid rendering
-//     - DrawEventLogContent(Rect) — scrollable event log
+//     - DrawAnnunciatorContent(Rect) â€” tile grid rendering
+//     - DrawEventLogContent(Rect) â€” scrollable event log
 //
 // GOLD STANDARD: Yes
 // v0.9.6 PERF FIX: Visible-only event log rendering eliminates 72,000 allocs/sec
@@ -30,6 +30,10 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Critical.Physics;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupValidationVisual
 {
@@ -59,7 +63,7 @@ public partial class HeatupValidationVisual
     private const int TILE_COUNT = 27;
 
     // ========================================================================
-    // PARTIAL METHOD — Annunciator Tiles (left footer)
+    // PARTIAL METHOD â€” Annunciator Tiles (left footer)
     // ========================================================================
 
     partial void DrawAnnunciatorContent(Rect area)
@@ -96,7 +100,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // BUILD TILE ARRAY — Maps engine booleans to display tiles
+    // BUILD TILE ARRAY â€” Maps engine booleans to display tiles
     // ========================================================================
 
     /// <summary>
@@ -170,7 +174,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // DRAW SINGLE TILE — Illuminated alarm tile
+    // DRAW SINGLE TILE â€” Illuminated alarm tile
     // ========================================================================
 
     void DrawTile(Rect rect, AnnunciatorTile tile)
@@ -233,7 +237,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // PARTIAL METHOD — Event Log (right footer)
+    // PARTIAL METHOD â€” Event Log (right footer)
     // v0.9.6 PERF FIX: Only draw visible entries, use pre-formatted strings
     // ========================================================================
 
@@ -318,3 +322,6 @@ public partial class HeatupValidationVisual
         GUI.EndScrollView();
     }
 }
+
+}
+

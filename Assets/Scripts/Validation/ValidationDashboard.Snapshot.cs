@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Validation Dashboard v2
 // ValidationDashboard.Snapshot.cs - Data Snapshot Class
 // ============================================================================
@@ -28,6 +28,7 @@
 using UnityEngine;
 using Critical.Physics;
 
+using Critical.Validation;
 namespace Critical.Validation
 {
     /// <summary>
@@ -62,31 +63,31 @@ namespace Critical.Validation
         // RCS PRIMARY
         // ====================================================================
 
-        /// <summary>Average RCS temperature (°F)</summary>
+        /// <summary>Average RCS temperature (Â°F)</summary>
         public float T_avg;
 
-        /// <summary>Hot leg temperature (°F)</summary>
+        /// <summary>Hot leg temperature (Â°F)</summary>
         public float T_hot;
 
-        /// <summary>Cold leg temperature (°F)</summary>
+        /// <summary>Cold leg temperature (Â°F)</summary>
         public float T_cold;
 
-        /// <summary>Core delta-T (°F)</summary>
+        /// <summary>Core delta-T (Â°F)</summary>
         public float CoreDeltaT;
 
-        /// <summary>RCS bulk temperature (°F)</summary>
+        /// <summary>RCS bulk temperature (Â°F)</summary>
         public float T_rcs;
 
         /// <summary>RCS pressure (psia)</summary>
         public float Pressure;
 
-        /// <summary>Saturation temperature at current pressure (°F)</summary>
+        /// <summary>Saturation temperature at current pressure (Â°F)</summary>
         public float T_sat;
 
-        /// <summary>Subcooling margin (°F)</summary>
+        /// <summary>Subcooling margin (Â°F)</summary>
         public float Subcooling;
 
-        /// <summary>Heatup rate (°F/hr)</summary>
+        /// <summary>Heatup rate (Â°F/hr)</summary>
         public float HeatupRate;
 
         /// <summary>Pressure rate of change (psi/hr)</summary>
@@ -105,16 +106,16 @@ namespace Critical.Validation
         // PRESSURIZER
         // ====================================================================
 
-        /// <summary>Pressurizer temperature (°F)</summary>
+        /// <summary>Pressurizer temperature (Â°F)</summary>
         public float T_pzr;
 
         /// <summary>Pressurizer level (%)</summary>
         public float PzrLevel;
 
-        /// <summary>Pressurizer water volume (ft³)</summary>
+        /// <summary>Pressurizer water volume (ftÂ³)</summary>
         public float PzrWaterVolume;
 
-        /// <summary>Pressurizer steam volume (ft³)</summary>
+        /// <summary>Pressurizer steam volume (ftÂ³)</summary>
         public float PzrSteamVolume;
 
         /// <summary>Pressurizer heater power (MW)</summary>
@@ -185,10 +186,10 @@ namespace Critical.Validation
         /// <summary>SG secondary pressure (psia)</summary>
         public float SgSecondaryPressure;
 
-        /// <summary>SG saturation temperature (°F)</summary>
+        /// <summary>SG saturation temperature (Â°F)</summary>
         public float SgSatTemp;
 
-        /// <summary>SG bulk temperature (°F)</summary>
+        /// <summary>SG bulk temperature (Â°F)</summary>
         public float SgBulkTemp;
 
         /// <summary>SG heat transfer (MW)</summary>
@@ -340,3 +341,4 @@ namespace Critical.Validation
         }
     }
 }
+

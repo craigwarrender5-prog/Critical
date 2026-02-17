@@ -1,11 +1,11 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Screen Data Bridge
 // ScreenDataBridge.cs - Centralized Data Access for All Operator Screens
 // ============================================================================
 //
 // PURPOSE:
 //   Provides a single access point for all operator screens to read simulator
-//   data. Screens should never directly search for physics modules — they
+//   data. Screens should never directly search for physics modules â€” they
 //   call ScreenDataBridge getters instead. This decouples UI from physics
 //   module discovery and handles null/missing sources gracefully.
 //
@@ -35,14 +35,15 @@
 //
 // VERSION: 4.3.0
 // DATE: 2026-02-11
-// CLASSIFICATION: UI — Data Infrastructure
+// CLASSIFICATION: UI â€” Data Infrastructure
 // ============================================================================
 
 using UnityEngine;
 using Critical.Controllers;
 using Critical.Physics;
 using Critical.Simulation.Modular.State;
-
+
+using Critical.Validation;
 namespace Critical.UI
 {
     /// <summary>
@@ -96,13 +97,13 @@ namespace Critical.UI
         #region Inspector Fields
 
         [Header("Data Source References (Auto-discovered if null)")]
-        [Tooltip("HeatupSimEngine instance — primary data source during heatup")]
+        [Tooltip("HeatupSimEngine instance â€” primary data source during heatup")]
         [SerializeField] private HeatupSimEngine heatupEngine;
 
-        [Tooltip("ReactorController instance — primary data source during operations")]
+        [Tooltip("ReactorController instance â€” primary data source during operations")]
         [SerializeField] private ReactorController reactorController;
 
-        [Tooltip("MosaicBoard instance — gauge data provider")]
+        [Tooltip("MosaicBoard instance â€” gauge data provider")]
         [SerializeField] private MosaicBoard mosaicBoard;
 
         [Header("Debug")]
@@ -135,7 +136,7 @@ namespace Critical.UI
         #endregion
 
         // ====================================================================
-        // PUBLIC PROPERTIES — Source References
+        // PUBLIC PROPERTIES â€” Source References
         // ====================================================================
 
         #region Source Properties
@@ -222,7 +223,7 @@ namespace Critical.UI
 
             if (debugLogging)
             {
-                Debug.Log($"[ScreenDataBridge] Sources resolved — " +
+                Debug.Log($"[ScreenDataBridge] Sources resolved â€” " +
                           $"HeatupEngine: {(heatupEngine != null ? "Found" : "NULL")}, " +
                           $"ReactorController: {(reactorController != null ? "Found" : "NULL")}, " +
                           $"MosaicBoard: {(mosaicBoard != null ? "Found" : "NULL")}");
@@ -237,7 +238,7 @@ namespace Critical.UI
 
         #region Core Reactor Parameters
 
-        /// <summary>Average coolant temperature (°F).</summary>
+        /// <summary>Average coolant temperature (Â°F).</summary>
         public float GetTavg()
         {
             if (heatupEngine != null) return heatupEngine.T_avg;
@@ -245,21 +246,21 @@ namespace Critical.UI
             return float.NaN;
         }
 
-        /// <summary>Hot leg temperature (°F).</summary>
+        /// <summary>Hot leg temperature (Â°F).</summary>
         public float GetThot()
         {
             if (heatupEngine != null) return heatupEngine.T_hot;
             return float.NaN;
         }
 
-        /// <summary>Cold leg temperature (°F).</summary>
+        /// <summary>Cold leg temperature (Â°F).</summary>
         public float GetTcold()
         {
             if (heatupEngine != null) return heatupEngine.T_cold;
             return float.NaN;
         }
 
-        /// <summary>Core delta-T (°F). T_hot - T_cold.</summary>
+        /// <summary>Core delta-T (Â°F). T_hot - T_cold.</summary>
         public float GetDeltaT()
         {
             float thot = GetThot();
@@ -268,7 +269,7 @@ namespace Critical.UI
             return thot - tcold;
         }
 
-        /// <summary>RCS flow fraction (0.0–1.0).</summary>
+        /// <summary>RCS flow fraction (0.0â€“1.0).</summary>
         public float GetFlowFraction()
         {
             if (reactorController != null) return reactorController.FlowFraction;
@@ -276,7 +277,7 @@ namespace Critical.UI
             return float.NaN;
         }
 
-        /// <summary>Number of running RCPs (0–4).</summary>
+        /// <summary>Number of running RCPs (0â€“4).</summary>
         public int GetRCPCount()
         {
             if (heatupEngine != null) return heatupEngine.rcpCount;
@@ -291,7 +292,7 @@ namespace Critical.UI
             return Time.time;
         }
 
-        /// <summary>Reactor heatup rate (°F/hr).</summary>
+        /// <summary>Reactor heatup rate (Â°F/hr).</summary>
         public float GetHeatupRate()
         {
             if (heatupEngine != null) return heatupEngine.heatupRate;
@@ -350,7 +351,7 @@ namespace Critical.UI
             return float.NaN;
         }
 
-        /// <summary>Pressurizer water temperature (°F).</summary>
+        /// <summary>Pressurizer water temperature (Â°F).</summary>
         public float GetPZRWaterTemp()
         {
             if (heatupEngine != null) return heatupEngine.T_pzr;
@@ -364,28 +365,28 @@ namespace Critical.UI
             return float.NaN;
         }
 
-        /// <summary>Pressurizer water volume (ft³).</summary>
+        /// <summary>Pressurizer water volume (ftÂ³).</summary>
         public float GetPZRWaterVolume()
         {
             if (heatupEngine != null) return heatupEngine.pzrWaterVolume;
             return float.NaN;
         }
 
-        /// <summary>Pressurizer steam volume (ft³).</summary>
+        /// <summary>Pressurizer steam volume (ftÂ³).</summary>
         public float GetPZRSteamVolume()
         {
             if (heatupEngine != null) return heatupEngine.pzrSteamVolume;
             return float.NaN;
         }
 
-        /// <summary>Saturation temperature at current pressure (°F).</summary>
+        /// <summary>Saturation temperature at current pressure (Â°F).</summary>
         public float GetTsat()
         {
             if (heatupEngine != null) return heatupEngine.T_sat;
             return float.NaN;
         }
 
-        /// <summary>Subcooling margin (°F). Tsat - Tavg.</summary>
+        /// <summary>Subcooling margin (Â°F). Tsat - Tavg.</summary>
         public float GetSubcooling()
         {
             if (heatupEngine != null) return heatupEngine.subcooling;
@@ -468,7 +469,7 @@ namespace Critical.UI
 
         #region Steam Generator Parameters
 
-        /// <summary>SG secondary average temperature (°F).</summary>
+        /// <summary>SG secondary average temperature (Â°F).</summary>
         public float GetSGSecondaryTemp()
         {
             if (heatupEngine != null) return heatupEngine.T_sg_secondary;
@@ -482,28 +483,28 @@ namespace Critical.UI
             return float.NaN;
         }
 
-        /// <summary>SG top node temperature (°F) — multi-node model.</summary>
+        /// <summary>SG top node temperature (Â°F) â€” multi-node model.</summary>
         public float GetSGTopNodeTemp()
         {
             if (heatupEngine != null) return heatupEngine.sgTopNodeTemp;
             return float.NaN;
         }
 
-        /// <summary>SG bottom node temperature (°F) — multi-node model.</summary>
+        /// <summary>SG bottom node temperature (Â°F) â€” multi-node model.</summary>
         public float GetSGBottomNodeTemp()
         {
             if (heatupEngine != null) return heatupEngine.sgBottomNodeTemp;
             return float.NaN;
         }
 
-        /// <summary>SG stratification delta-T (°F).</summary>
+        /// <summary>SG stratification delta-T (Â°F).</summary>
         public float GetSGStratificationDeltaT()
         {
             if (heatupEngine != null) return heatupEngine.sgStratificationDeltaT;
             return float.NaN;
         }
 
-        /// <summary>SG natural circulation fraction (0–1).</summary>
+        /// <summary>SG natural circulation fraction (0â€“1).</summary>
         public float GetSGCirculationFraction()
         {
             if (heatupEngine != null) return heatupEngine.sgCirculationFraction;
@@ -531,7 +532,7 @@ namespace Critical.UI
         /// </summary>
         public float GetSGLevel(int sgIndex)
         {
-            // PLACEHOLDER: Lumped SG model — no per-SG level instrumentation yet.
+            // PLACEHOLDER: Lumped SG model â€” no per-SG level instrumentation yet.
             // All SGs report the same value.
             // Future: Replace with individual SG level tracking.
             return float.NaN;
@@ -555,14 +556,14 @@ namespace Critical.UI
             return float.NaN;
         }
 
-        /// <summary>Saturation temperature at current SG secondary pressure (°F).</summary>
+        /// <summary>Saturation temperature at current SG secondary pressure (Â°F).</summary>
         public float GetSGSaturationTemp()
         {
             if (heatupEngine != null) return heatupEngine.sgSaturationTemp_F;
             return float.NaN;
         }
 
-        /// <summary>Max node superheat above T_sat (°F).</summary>
+        /// <summary>Max node superheat above T_sat (Â°F).</summary>
         public float GetSGMaxSuperheat()
         {
             if (heatupEngine != null) return heatupEngine.sgMaxSuperheat_F;
@@ -607,7 +608,7 @@ namespace Critical.UI
         #endregion
 
         // ====================================================================
-        // RHR SYSTEM PARAMETERS (v4.3.0 — getters for v3.0.0 physics)
+        // RHR SYSTEM PARAMETERS (v4.3.0 â€” getters for v3.0.0 physics)
         // ====================================================================
 
         #region RHR Parameters
@@ -652,7 +653,7 @@ namespace Critical.UI
             return float.NaN;
         }
 
-        /// <summary>RHR isolation ramp progress (0.0–1.0). 1.0 = fully isolated.</summary>
+        /// <summary>RHR isolation ramp progress (0.0â€“1.0). 1.0 = fully isolated.</summary>
         public float GetRHRIsolationProgress()
         {
             if (heatupEngine != null)
@@ -692,7 +693,7 @@ namespace Critical.UI
             return 0f;
         }
 
-        /// <summary>RHR HX inlet temperature (°F). Same as RCS temperature.</summary>
+        /// <summary>RHR HX inlet temperature (Â°F). Same as RCS temperature.</summary>
         public float GetRHRHXInletTemp()
         {
             if (heatupEngine != null && heatupEngine.rhrActive)
@@ -700,16 +701,16 @@ namespace Critical.UI
             return float.NaN;
         }
 
-        /// <summary>RHR HX outlet temperature (°F). Estimated from removal and flow.</summary>
+        /// <summary>RHR HX outlet temperature (Â°F). Estimated from removal and flow.</summary>
         public float GetRHRHXOutletTemp()
         {
             if (heatupEngine != null && heatupEngine.rhrActive)
             {
-                // Q = m_dot × cp × ΔT  →  ΔT = Q / (m_dot × cp)
-                // At ~3000 gpm ≈ 6.68 ft³/s, ρ ≈ 62 lb/ft³ → ~25,000 lb/min
-                // Q_removal in BTU/hr, cp ≈ 1.0
+                // Q = m_dot Ã— cp Ã— Î”T  â†’  Î”T = Q / (m_dot Ã— cp)
+                // At ~3000 gpm â‰ˆ 6.68 ftÂ³/s, Ï â‰ˆ 62 lb/ftÂ³ â†’ ~25,000 lb/min
+                // Q_removal in BTU/hr, cp â‰ˆ 1.0
                 float Q_BTUhr = heatupEngine.rhrHXRemoval_MW * 3.412e6f;
-                float massFlowPerHr = 3000f * 60f * 8.33f;  // gpm → lb/hr (water ~8.33 lb/gal)
+                float massFlowPerHr = 3000f * 60f * 8.33f;  // gpm â†’ lb/hr (water ~8.33 lb/gal)
                 float deltaT = (massFlowPerHr > 0) ? Q_BTUhr / massFlowPerHr : 0f;
                 return heatupEngine.T_rcs - deltaT;
             }
@@ -738,7 +739,7 @@ namespace Critical.UI
             return float.NaN;
         }
 
-        /// <summary>Steam dump valve demand (0–1).</summary>
+        /// <summary>Steam dump valve demand (0â€“1).</summary>
         public float GetSteamDumpDemand()
         {
             if (heatupEngine != null && heatupEngine.steamDumpState.IsActive)
@@ -761,7 +762,7 @@ namespace Critical.UI
             return false;
         }
 
-        /// <summary>HZP stabilization progress (0–100%).</summary>
+        /// <summary>HZP stabilization progress (0â€“100%).</summary>
         public float GetHZPProgress()
         {
             if (heatupEngine != null) return heatupEngine.hzpProgress;
@@ -800,7 +801,7 @@ namespace Critical.UI
         #endregion
 
         // ====================================================================
-        // UTILITY — Placeholder Value Handling
+        // UTILITY â€” Placeholder Value Handling
         // ====================================================================
 
         #region Utility
@@ -810,7 +811,7 @@ namespace Critical.UI
         /// </summary>
         /// <param name="value">The value to format.</param>
         /// <param name="format">C# numeric format string (e.g., "F1", "F0").</param>
-        /// <param name="suffix">Unit suffix (e.g., "°F", "psia").</param>
+        /// <param name="suffix">Unit suffix (e.g., "Â°F", "psia").</param>
         /// <returns>Formatted string or "---" if no data.</returns>
         public static string FormatOrPlaceholder(float value, string format = "F1", string suffix = "")
         {
@@ -829,3 +830,4 @@ namespace Critical.UI
         #endregion
     }
 }
+

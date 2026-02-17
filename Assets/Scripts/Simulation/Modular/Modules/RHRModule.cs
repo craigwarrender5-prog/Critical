@@ -1,5 +1,6 @@
-using Critical.Simulation.Modular.Validation;
-
+﻿using Critical.Simulation.Modular.Validation;
+
+using Critical.Validation;
 namespace Critical.Simulation.Modular.Modules
 {
     public sealed class RHRModule : IPlantModule
@@ -32,3 +33,4 @@ namespace Critical.Simulation.Modular.Modules
         }
     }
 }
+

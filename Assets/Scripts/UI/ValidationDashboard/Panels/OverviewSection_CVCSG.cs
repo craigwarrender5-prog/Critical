@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Overview Section: CVCS / SG (Merged)
 // OverviewSection_CVCSG.cs - Combined CVCS + Steam Generator
 // ============================================================================
@@ -10,9 +10,9 @@
 //   OverviewSection_SGRHR.
 //
 // INSTRUMENTS:
-//   Top: 2× DigitalReadouts (Charging Flow, Letdown Flow)
+//   Top: 2Ã— DigitalReadouts (Charging Flow, Letdown Flow)
 //   Middle: BidirectionalGauge (Net CVCS Flow)
-//   Bottom: 2× DigitalReadouts (SG Secondary Pressure, Net Plant Heat)
+//   Bottom: 2Ã— DigitalReadouts (SG Secondary Pressure, Net Plant Heat)
 //
 // VERSION: 2.0.0
 // DATE: 2026-02-17
@@ -24,6 +24,7 @@ using UnityEngine.UI;
 using TMPro;
 using Critical.Physics;
 
+using Critical.Validation;
 namespace Critical.UI.ValidationDashboard
 {
     /// <summary>
@@ -113,3 +114,4 @@ namespace Critical.UI.ValidationDashboard
         }
     }
 }
+

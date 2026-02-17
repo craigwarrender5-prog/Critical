@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Steam Generator Operator Screen
 // SteamGeneratorScreen.cs - Screen 5: Steam Generators (4x SG Monitor)
 // ============================================================================
@@ -23,7 +23,7 @@
 //   - HeatupSimEngine: SG secondary temp (lumped), SG heat transfer,
 //     SG top/bottom node temps, steam pressure, steaming status,
 //     T_hot (SG inlet), T_cold (SG outlet), SG circulation fraction
-//   - NOTE: Currently lumped model — all 4 SGs show identical data.
+//   - NOTE: Currently lumped model â€” all 4 SGs show identical data.
 //     Per-SG instrumentation is PLACEHOLDER pending individual SG models.
 //
 // WESTINGHOUSE 4-LOOP PWR STEAM GENERATOR SPECIFICATIONS:
@@ -51,6 +51,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+using Critical.Validation;
 namespace Critical.UI
 {
     public class SteamGeneratorScreen : OperatorScreen
@@ -202,7 +203,7 @@ namespace Critical.UI
         #region Right Panel Updates (Secondary Side)
         private void UpdateRightPanelGauges()
         {
-            // Levels — per-SG getter (currently returns NaN for all)
+            // Levels â€” per-SG getter (currently returns NaN for all)
             TextMeshProUGUI[] levelTexts = { text_SGA_Level, text_SGB_Level, text_SGC_Level, text_SGD_Level };
             for (int i = 0; i < 4; i++)
             {
@@ -218,7 +219,7 @@ namespace Critical.UI
                 }
             }
 
-            // Steam pressure — v4.3.0: Use tracked SG secondary pressure
+            // Steam pressure â€” v4.3.0: Use tracked SG secondary pressure
             float steamP = _data.GetSGSecondaryPressure_psig();
             TextMeshProUGUI[] pressTexts = { text_SGA_SteamPressure, text_SGB_SteamPressure, text_SGC_SteamPressure, text_SGD_SteamPressure };
             for (int i = 0; i < 4; i++)
@@ -249,7 +250,7 @@ namespace Critical.UI
 
             for (int i = 0; i < 4; i++)
             {
-                // Tube bundle color — interpolate based on primary temps
+                // Tube bundle color â€” interpolate based on primary temps
                 if (sg_TubeBundles[i] != null)
                 {
                     if (!float.IsNaN(tHot))
@@ -260,7 +261,7 @@ namespace Critical.UI
                     else sg_TubeBundles[i].color = COLOR_TUBE_BUNDLE;
                 }
 
-                // Level fill — uses per-SG getter (currently NaN → empty)
+                // Level fill â€” uses per-SG getter (currently NaN â†’ empty)
                 if (sg_LevelFills[i] != null)
                 {
                     float level = _data.GetSGLevel(i);
@@ -275,7 +276,7 @@ namespace Critical.UI
                     }
                 }
 
-                // Steam dome — active if steaming
+                // Steam dome â€” active if steaming
                 if (sg_SteamDomes[i] != null)
                     sg_SteamDomes[i].color = steaming ? COLOR_STEAM_ACTIVE : COLOR_STEAM;
 
@@ -372,7 +373,7 @@ namespace Critical.UI
                 }
                 else { text_CirculationFraction.text = "---"; text_CirculationFraction.color = COLOR_PLACEHOLDER; }
             }
-            // Feedwater / Steam flow — PLACEHOLDER
+            // Feedwater / Steam flow â€” PLACEHOLDER
             if (text_FeedwaterFlow != null) { text_FeedwaterFlow.text = "---"; text_FeedwaterFlow.color = COLOR_PLACEHOLDER; }
             if (text_SteamFlow != null) { text_SteamFlow.text = "---"; text_SteamFlow.color = COLOR_PLACEHOLDER; }
         }
@@ -397,3 +398,4 @@ namespace Critical.UI
         #endregion
     }
 }
+

@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - UI Component (Styles Partial)
 // HeatupValidationVisual.Styles.cs - Colors, Fonts, GUIStyles, Gauge Renderer
 // ============================================================================
@@ -7,7 +7,7 @@
 //   All visual styling for the Heatup Validation Dashboard. Centralises
 //   colors, GUIStyle factories, layout constants, and the gauge arc
 //   rendering utility. No other partial should create GUIStyles or define
-//   colors — they reference fields declared here.
+//   colors â€” they reference fields declared here.
 //
 // REFERENCE:
 //   Westinghouse 4-Loop PWR control room color conventions:
@@ -28,15 +28,19 @@
 //     - All Color fields (_c* prefix)
 //     - All GUIStyle fields (_*Style suffix)
 //     - All Texture2D fields (_*Tex suffix)
-//     - InitializeStyles() — called once from Start(), creates all styles
-//     - DrawGaugeArc() — reusable arc gauge renderer
-//     - DrawMiniBar() — horizontal bar gauge
-//     - MakeTex() — 1×1 solid color texture factory
+//     - InitializeStyles() â€” called once from Start(), creates all styles
+//     - DrawGaugeArc() â€” reusable arc gauge renderer
+//     - DrawMiniBar() â€” horizontal bar gauge
+//     - MakeTex() â€” 1Ã—1 solid color texture factory
 //
 // GOLD STANDARD: Yes
 // ============================================================================
 
 using UnityEngine;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupValidationVisual
 {
@@ -47,7 +51,7 @@ public partial class HeatupValidationVisual
     private bool _stylesInitialized;
 
     // ========================================================================
-    // COLOR PALETTE — Westinghouse Control Room Conventions
+    // COLOR PALETTE â€” Westinghouse Control Room Conventions
     // ========================================================================
 
     #region Colors
@@ -99,7 +103,7 @@ public partial class HeatupValidationVisual
     #endregion
 
     // ========================================================================
-    // TEXTURES — Cached 1×1 solid color textures for GUI.DrawTexture
+    // TEXTURES â€” Cached 1Ã—1 solid color textures for GUI.DrawTexture
     // ========================================================================
 
     #region Textures
@@ -413,7 +417,7 @@ public partial class HeatupValidationVisual
     // ========================================================================
 
     /// <summary>
-    /// Create a 1×1 solid-color Texture2D for use with GUI.DrawTexture.
+    /// Create a 1Ã—1 solid-color Texture2D for use with GUI.DrawTexture.
     /// </summary>
     static Texture2D MakeTex(Color color)
     {
@@ -498,7 +502,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // GAUGE ARC RENDERER — Reusable arc gauge with colored bands
+    // GAUGE ARC RENDERER â€” Reusable arc gauge with colored bands
     //
     // Draws a half-circle arc gauge using GL lines, with:
     //   - Background arc (dim)
@@ -506,7 +510,7 @@ public partial class HeatupValidationVisual
     //   - Needle line at current value
     //   - Digital readout centered below arc
     //
-    // Arc spans 180° from left (min) to right (max), bottom-centered.
+    // Arc spans 180Â° from left (min) to right (max), bottom-centered.
     // ========================================================================
 
     /// <summary>
@@ -565,7 +569,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // MINI BAR GAUGE — Horizontal fill bar with label and value
+    // MINI BAR GAUGE â€” Horizontal fill bar with label and value
     // Used for secondary parameters within gauge groups.
     // ========================================================================
 
@@ -602,7 +606,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // GL DRAWING PRIMITIVES — Used by gauges and graphs
+    // GL DRAWING PRIMITIVES â€” Used by gauges and graphs
     // ========================================================================
 
     #region GL Primitives
@@ -724,14 +728,14 @@ public partial class HeatupValidationVisual
         GUI.DrawTexture(rect, tex, ScaleMode.StretchToFill);
     }
 
-    // v2.0.5: One-shot warning tracker — only fires once per unique uncached color
+    // v2.0.5: One-shot warning tracker â€” only fires once per unique uncached color
     #if UNITY_EDITOR || DEVELOPMENT_BUILD
     private static readonly System.Collections.Generic.HashSet<string> _warnedColors
         = new System.Collections.Generic.HashSet<string>();
     #endif
 
     /// <summary>
-    /// Get a cached 1×1 texture for the given color.
+    /// Get a cached 1Ã—1 texture for the given color.
     /// v0.9.4: CRITICAL - All colors MUST be cached to prevent memory leak.
     /// If a color is not cached, returns white texture and logs warning.
     /// </summary>
@@ -767,7 +771,7 @@ public partial class HeatupValidationVisual
         if (ColorsEqual(color, _cAnnNormal)) return _annNormalTex;
         if (ColorsEqual(color, _cAnnWarning)) return _annWarningTex;
         if (ColorsEqual(color, _cAnnAlarm)) return _annAlarmTex;
-        // v2.0.5: Gauge needle (0.95 alpha white) — was causing infinite logging loop
+        // v2.0.5: Gauge needle (0.95 alpha white) â€” was causing infinite logging loop
         if (ColorsEqual(color, _cGaugeNeedle)) return _gaugeNeedleTex;
         
         // v0.9.4: CRITICAL - DO NOT create new textures! This causes massive memory leak.
@@ -835,3 +839,6 @@ public partial class HeatupValidationVisual
         DrawStatusRow(ref y, x, w, label, value, _cTextPrimary);
     }
 }
+
+}
+

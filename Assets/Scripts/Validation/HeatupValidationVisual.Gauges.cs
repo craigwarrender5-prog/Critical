@@ -1,52 +1,56 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - UI Component (Gauges Partial)
 // HeatupValidationVisual.Gauges.cs - Instrument Gauge Panels
 // ============================================================================
 //
 // PURPOSE:
 //   Renders 5 gauge groups (~20 individual instruments) in the left column
-//   of the heatup validation dashboard. Each group contains 2–3 arc gauges
+//   of the heatup validation dashboard. Each group contains 2â€“3 arc gauges
 //   for primary parameters and mini-bar gauges for secondary parameters.
 //   All ranges, setpoints, and alarm thresholds are sourced from
 //   PlantConstants to match Westinghouse 4-Loop PWR specifications.
 //
 // READS FROM:
-//   HeatupSimEngine — T_avg, T_hot, T_cold, T_pzr, T_sat, subcooling,
+//   HeatupSimEngine â€” T_avg, T_hot, T_cold, T_pzr, T_sat, subcooling,
 //     heatupRate, pressure, pzrLevel, pzrHeaterPower, pressureRate,
 //     chargingFlow, letdownFlow, surgeFlow, rcpCount, rcpHeat,
 //     effectiveRCPHeat, rcpContribution, vctState, brsState,
 //     gridEnergy, solidPressurizer, bubbleFormed
 //
 // GAUGE GROUPS:
-//   1. TEMPERATURES — T_avg, T_hot, T_cold, T_pzr, Subcooling, Heatup Rate
-//   2. PRESSURIZER  — RCS Pressure, PZR Level, Heater Power, Pressure Rate
-//   3. CVCS FLOWS   — Charging, Letdown, Surge, Net CVCS, Seal Injection
-//   4. VCT & BRS    — VCT Level, BRS Holdup, BRS Flow (bidirectional)
-//   5. RCP / HEAT   — RCP Heat, Coupling α, Flow Fraction, Grid Energy
-//   6. HZP STAB     — v1.1.0 Steam Dump Heat, HZP Progress, Steam Press, PID Output
+//   1. TEMPERATURES â€” T_avg, T_hot, T_cold, T_pzr, Subcooling, Heatup Rate
+//   2. PRESSURIZER  â€” RCS Pressure, PZR Level, Heater Power, Pressure Rate
+//   3. CVCS FLOWS   â€” Charging, Letdown, Surge, Net CVCS, Seal Injection
+//   4. VCT & BRS    â€” VCT Level, BRS Holdup, BRS Flow (bidirectional)
+//   5. RCP / HEAT   â€” RCP Heat, Coupling Î±, Flow Fraction, Grid Energy
+//   6. HZP STAB     â€” v1.1.0 Steam Dump Heat, HZP Progress, Steam Press, PID Output
 //
 // REFERENCE:
 //   NRC HRTD Sections 4.1, 6.1, 10.2, 10.3, 19.0, 19.2
-//   Westinghouse 4-Loop FSAR — instrumentation ranges
+//   Westinghouse 4-Loop FSAR â€” instrumentation ranges
 //
 // ARCHITECTURE:
 //   Partial class of HeatupValidationVisual. Implements:
-//     - DrawGaugeColumnContent() — dispatched from Core
-//     - GetGaugeContentHeightPartial() — tells scroll view total height
+//     - DrawGaugeColumnContent() â€” dispatched from Core
+//     - GetGaugeContentHeightPartial() â€” tells scroll view total height
 //     - Per-group drawing methods (DrawTemperatureGauges, etc.)
-//     - DrawGaugeArcBidirectional() — center-zero bidirectional arc gauge
+//     - DrawGaugeArcBidirectional() â€” center-zero bidirectional arc gauge
 //
-// VERSION: 0.9.1 — Consolidated VCT & BRS into single group with bidirectional flow gauge
+// VERSION: 0.9.1 â€” Consolidated VCT & BRS into single group with bidirectional flow gauge
 // GOLD STANDARD: Yes
 // ============================================================================
 
 using UnityEngine;
 using Critical.Physics;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupValidationVisual
 {
     // ========================================================================
-    // GAUGE GROUP HEIGHTS — Pre-calculated for scroll view sizing
+    // GAUGE GROUP HEIGHTS â€” Pre-calculated for scroll view sizing
     // Each group = header + arc rows + mini-bar rows + gap
     // ========================================================================
 
@@ -65,7 +69,7 @@ public partial class HeatupValidationVisual
                                 + LIQUID_INV_GROUP_H + RCP_GROUP_H + HZP_GROUP_H + 20f;
 
     // ========================================================================
-    // PARTIAL METHOD IMPLEMENTATIONS — Called by Core
+    // PARTIAL METHOD IMPLEMENTATIONS â€” Called by Core
     // ========================================================================
 
     partial void GetGaugeContentHeightPartial(ref float height)
@@ -111,7 +115,7 @@ public partial class HeatupValidationVisual
             DrawGaugeArc(
                 new Vector2(x + cellW * 0.5f, rowY + arcR + 14f), arcR,
                 engine.T_avg, 50f, 600f, tavgC,
-                "T-AVG", $"{engine.T_avg:F1}", "°F");
+                "T-AVG", $"{engine.T_avg:F1}", "Â°F");
 
             // T_hot
             Color thotC = GetHighThresholdColor(engine.T_hot, 600f, 630f,
@@ -119,13 +123,13 @@ public partial class HeatupValidationVisual
             DrawGaugeArc(
                 new Vector2(x + cellW * 1.5f, rowY + arcR + 14f), arcR,
                 engine.T_hot, 50f, 650f, thotC,
-                "T-HOT", $"{engine.T_hot:F1}", "°F");
+                "T-HOT", $"{engine.T_hot:F1}", "Â°F");
 
             // T_cold
             DrawGaugeArc(
                 new Vector2(x + cellW * 2.5f, rowY + arcR + 14f), arcR,
                 engine.T_cold, 50f, 600f, _cTrace3,
-                "T-COLD", $"{engine.T_cold:F1}", "°F");
+                "T-COLD", $"{engine.T_cold:F1}", "Â°F");
 
             y += GAUGE_ROW_H;
         }
@@ -140,15 +144,15 @@ public partial class HeatupValidationVisual
             DrawGaugeArc(
                 new Vector2(x + cell2W * 0.5f, rowY + arcR + 14f), arcR,
                 engine.T_pzr, 50f, 700f, tpzrC,
-                "T-PZR", $"{engine.T_pzr:F1}", "°F");
+                "T-PZR", $"{engine.T_pzr:F1}", "Â°F");
 
-            // Subcooling — LOW is bad
+            // Subcooling â€” LOW is bad
             Color scC = GetLowThresholdColor(engine.subcooling, 30f, 15f,
                 _cNormalGreen, _cWarningAmber, _cAlarmRed);
             DrawGaugeArc(
                 new Vector2(x + cell2W * 1.5f, rowY + arcR + 14f), arcR,
                 engine.subcooling, 0f, 200f, scC,
-                "SUBCOOLING", $"{engine.subcooling:F1}", "°F");
+                "SUBCOOLING", $"{engine.subcooling:F1}", "Â°F");
 
             y += GAUGE_ROW_H;
         }
@@ -157,11 +161,11 @@ public partial class HeatupValidationVisual
         {
             float barH = 18f;
 
-            // Heatup Rate — HIGH is bad (Tech Spec limit 50 °F/hr)
+            // Heatup Rate â€” HIGH is bad (Tech Spec limit 50 Â°F/hr)
             Color rateC = GetHighThresholdColor(Mathf.Abs(engine.heatupRate), 40f, 50f,
                 _cNormalGreen, _cWarningAmber, _cAlarmRed);
             DrawMiniBar(new Rect(x + 2f, y, w - 4f, barH),
-                "HEATUP RATE", engine.heatupRate, 0f, 60f, rateC, "F1", "°F/hr");
+                "HEATUP RATE", engine.heatupRate, 0f, 60f, rateC, "F1", "Â°F/hr");
             y += barH + 2f;
 
             // PZR-RCS Delta T
@@ -169,12 +173,12 @@ public partial class HeatupValidationVisual
             Color dtC = Mathf.Abs(deltaT) > 200f ? _cAlarmRed :
                         Mathf.Abs(deltaT) > 100f ? _cWarningAmber : _cCyanInfo;
             DrawMiniBar(new Rect(x + 2f, y, w - 4f, barH),
-                "PZR-RCS ΔT", deltaT, -50f, 350f, dtC, "F1", "°F");
+                "PZR-RCS Î”T", deltaT, -50f, 350f, dtC, "F1", "Â°F");
             y += barH + 2f;
 
             // v0.8.0: RCS-SG Secondary Delta T (thermal lag indicator)
             float deltaTsg = engine.T_rcs - engine.T_sg_secondary;
-            // Healthy thermal lag is 10-20°F when RCPs running; warn if >30°F or <5°F (poor coupling)
+            // Healthy thermal lag is 10-20Â°F when RCPs running; warn if >30Â°F or <5Â°F (poor coupling)
             Color sgDtC;
             if (engine.rcpCount == 0)
                 sgDtC = _cTextSecondary;  // Inactive when no RCPs
@@ -183,7 +187,7 @@ public partial class HeatupValidationVisual
             else
                 sgDtC = _cCyanInfo;
             DrawMiniBar(new Rect(x + 2f, y, w - 4f, barH),
-                "RCS-SG ΔT", deltaTsg, 0f, 50f, sgDtC, "F1", "°F");
+                "RCS-SG Î”T", deltaTsg, 0f, 50f, sgDtC, "F1", "Â°F");
             y += barH + 2f;
         }
 
@@ -208,7 +212,7 @@ public partial class HeatupValidationVisual
         {
             float rowY = y;
 
-            // RCS Pressure — range depends on operating phase
+            // RCS Pressure â€” range depends on operating phase
             float pMax = engine.solidPressurizer ? 600f : 2500f;
             Color pC;
             if (engine.solidPressurizer)
@@ -229,7 +233,7 @@ public partial class HeatupValidationVisual
                 engine.pressure, 0f, pMax, pC,
                 "RCS PRESS", $"{engine.pressure:F0}", "psia");
 
-            // PZR Level — setpoint-relative coloring
+            // PZR Level â€” setpoint-relative coloring
             float lvlSetpoint = engine.pzrLevelSetpointDisplay;
             Color lvlC;
             float lvlErr = engine.pzrLevel - lvlSetpoint;
@@ -350,7 +354,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // GROUP 4: VCT & BRS — LIQUID INVENTORY (v0.9.1 Combined)
+    // GROUP 4: VCT & BRS â€” LIQUID INVENTORY (v0.9.1 Combined)
     //   Arc gauges: VCT Level, BRS Holdup, BRS Flow (bidirectional center-zero)
     //   Mini bars: VCT Boron, Mass Conservation Error
     //
@@ -360,13 +364,13 @@ public partial class HeatupValidationVisual
     //   - Needle deflects LEFT = negative flow (outflow from BRS to VCT/plant)
     //
     // Per NRC HRTD 4.1: BRS inflow (divert) and outflow (return) are mutually
-    // exclusive — VCT cannot be >70% (divert) and <27% (makeup) simultaneously.
+    // exclusive â€” VCT cannot be >70% (divert) and <27% (makeup) simultaneously.
     // ========================================================================
 
     void DrawLiquidInventoryGauges(float x, ref float y, float w)
     {
         DrawSectionHeader(new Rect(x, y, w, GAUGE_GROUP_HEADER_H),
-            "VCT & BRS — LIQUID INVENTORY");
+            "VCT & BRS â€” LIQUID INVENTORY");
         y += GAUGE_GROUP_HEADER_H;
 
         float arcR = GAUGE_ARC_SIZE / 2f;
@@ -376,7 +380,7 @@ public partial class HeatupValidationVisual
         {
             float rowY = y;
 
-            // VCT Level — band-based coloring per NRC HRTD 4.1 setpoints
+            // VCT Level â€” band-based coloring per NRC HRTD 4.1 setpoints
             float vl = engine.vctState.Level_percent;
             Color vlC;
             if (vl < PlantConstants.VCT_LEVEL_LOW_LOW || vl > PlantConstants.VCT_LEVEL_HIGH_HIGH)
@@ -410,7 +414,7 @@ public partial class HeatupValidationVisual
                 holdupPct, 0f, 100f, huC,
                 "BRS HOLDUP", $"{holdupPct:F1}", "%");
 
-            // BRS Flow — Bidirectional center-zero gauge
+            // BRS Flow â€” Bidirectional center-zero gauge
             // Positive = inflow to BRS (divert from VCT)
             // Negative = outflow from BRS (return to VCT/plant)
             float brsNetFlow = engine.brsState.InFlow_gpm - engine.brsState.ReturnFlow_gpm;
@@ -449,7 +453,7 @@ public partial class HeatupValidationVisual
     // ========================================================================
     // GROUP 5: RCP / HEAT SOURCES
     //   Arc gauge: Effective RCP Heat (MW)
-    //   Mini bars: Coupling Factor α, Total Flow Fraction, Grid Energy
+    //   Mini bars: Coupling Factor Î±, Total Flow Fraction, Grid Energy
     // ========================================================================
 
     void DrawRCPHeatGauges(float x, ref float y, float w)
@@ -489,15 +493,15 @@ public partial class HeatupValidationVisual
         {
             float barH = 18f;
 
-            // Coupling Factor α
+            // Coupling Factor Î±
             float alpha = Mathf.Min(1.0f, engine.rcpContribution.TotalFlowFraction);
             Color alphaC = alpha > 0.99f ? _cNormalGreen :
                            alpha > 0.01f ? _cCyanInfo : _cTextSecondary;
             DrawMiniBar(new Rect(x + 2f, y, w - 4f, barH),
-                "COUPLING α", alpha, 0f, 1f, alphaC, "F2", "");
+                "COUPLING Î±", alpha, 0f, 1f, alphaC, "F2", "");
             y += barH + 2f;
 
-            // Total Flow Fraction (sum across all pumps, 0.0–4.0)
+            // Total Flow Fraction (sum across all pumps, 0.0â€“4.0)
             DrawMiniBar(new Rect(x + 2f, y, w - 4f, barH),
                 "FLOW FRAC", engine.rcpContribution.TotalFlowFraction, 0f, 4f,
                 engine.rcpCount > 0 ? _cBlueAccent : _cTextSecondary, "F2", "");
@@ -514,7 +518,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // GROUP 6: HZP STABILIZATION — v1.1.0
+    // GROUP 6: HZP STABILIZATION â€” v1.1.0
     //   Arc gauges: Steam Dump Heat (MW), HZP Progress (%)
     //   Mini bars: Steam Pressure, Heater PID Output, HZP State
     // ========================================================================
@@ -608,14 +612,14 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // BIDIRECTIONAL ARC GAUGE — Center-zero with left/right deflection
+    // BIDIRECTIONAL ARC GAUGE â€” Center-zero with left/right deflection
     //
     // Draws an arc gauge where:
     //   - Zero value = needle pointing straight UP (12 o'clock)
     //   - Positive values = needle deflects RIGHT (clockwise from 12 o'clock)
     //   - Negative values = needle deflects LEFT (counter-clockwise from 12 o'clock)
     //
-    // The arc spans 270° total: from bottom-left (min) through top (zero)
+    // The arc spans 270Â° total: from bottom-left (min) through top (zero)
     // to bottom-right (max). This provides intuitive visual feedback for
     // bidirectional quantities like flow direction.
     //
@@ -666,8 +670,8 @@ public partial class HeatupValidationVisual
             arcFillColor = _cTextSecondary;
         }
 
-        // Draw arc background (full 270° sweep)
-        // Arc goes from 225° (bottom-left, min) through 90° (top, zero) to -45° (bottom-right, max)
+        // Draw arc background (full 270Â° sweep)
+        // Arc goes from 225Â° (bottom-left, min) through 90Â° (top, zero) to -45Â° (bottom-right, max)
         DrawArcSegmentBidirectional(center, radius, 0f, 1f, _cGaugeArcBg, 3f);
 
         // Draw filled arc from zero to current value
@@ -686,8 +690,8 @@ public partial class HeatupValidationVisual
         }
 
         // Calculate needle angle
-        // normalised 0 = 225° (bottom-left), 0.5 = 90° (top), 1 = -45° (bottom-right)
-        // Using radians: 225° = 5π/4, 90° = π/2, -45° = -π/4
+        // normalised 0 = 225Â° (bottom-left), 0.5 = 90Â° (top), 1 = -45Â° (bottom-right)
+        // Using radians: 225Â° = 5Ï€/4, 90Â° = Ï€/2, -45Â° = -Ï€/4
         float needleAngle = Mathf.Lerp(225f * Mathf.Deg2Rad, -45f * Mathf.Deg2Rad, normalised);
 
         // Draw needle
@@ -714,7 +718,7 @@ public partial class HeatupValidationVisual
             radius * 2f, 14f);
         GUI.Label(labelRect, label, _gaugeLabelStyle);
 
-        // Value readout below arc — show sign explicitly
+        // Value readout below arc â€” show sign explicitly
         string valueText;
         if (valueNum > 0.5f)
             valueText = $"+{valueNum:F1}";
@@ -737,8 +741,8 @@ public partial class HeatupValidationVisual
     }
 
     /// <summary>
-    /// Draw a 270° arc segment for bidirectional gauges.
-    /// Arc spans from bottom-left (225°) through top (90°) to bottom-right (-45°).
+    /// Draw a 270Â° arc segment for bidirectional gauges.
+    /// Arc spans from bottom-left (225Â°) through top (90Â°) to bottom-right (-45Â°).
     /// </summary>
     internal static void DrawArcSegmentBidirectional(Vector2 center, float radius,
         float startFrac, float endFrac, Color color, float thickness)
@@ -749,8 +753,8 @@ public partial class HeatupValidationVisual
 
         int segments = 32;
 
-        // Arc angles: 225° (5π/4) to -45° (-π/4), total 270° sweep
-        // startFrac=0 → 225°, startFrac=0.5 → 90° (top), startFrac=1 → -45°
+        // Arc angles: 225Â° (5Ï€/4) to -45Â° (-Ï€/4), total 270Â° sweep
+        // startFrac=0 â†’ 225Â°, startFrac=0.5 â†’ 90Â° (top), startFrac=1 â†’ -45Â°
         float arcStartDeg = 225f;
         float arcEndDeg = -45f;
 
@@ -776,5 +780,8 @@ public partial class HeatupValidationVisual
 
         GL.PopMatrix();
     }
+}
+
+
 }
 

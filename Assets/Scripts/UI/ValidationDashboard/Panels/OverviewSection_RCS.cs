@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Overview Section: RCS
 // OverviewSection_RCS.cs - RCS Pressure and Flow Summary
 // ============================================================================
@@ -8,7 +8,8 @@
 
 using UnityEngine;
 using Critical.Physics;
-
+
+using Critical.Validation;
 namespace Critical.UI.ValidationDashboard
 {
     public class OverviewSection_RCS : OverviewSectionBase
@@ -20,7 +21,7 @@ namespace Critical.UI.ValidationDashboard
         protected override void BuildContent()
         {
             _pressureRow = CreateRow("PRESSURE", " psia", "F0");
-            _subcoolRow = CreateRow("SUBCOOL", "°F", "F1");
+            _subcoolRow = CreateRow("SUBCOOL", "Â°F", "F1");
             _rcpRow = CreateStatusRow("RCPs");
         }
 
@@ -48,3 +49,4 @@ namespace Critical.UI.ValidationDashboard
         }
     }
 }
+

@@ -19,6 +19,8 @@ Critical/
 |   |-- Materials/
 |   |-- Models/
 |   |-- Prefabs/
+|   |   `-- Systems/
+|   |       `-- RCS/
 |   |-- Resources/
 |   |-- Scenes/
 |   |-- Settings/
@@ -30,6 +32,9 @@ Critical/
 |       |-- Core/
 |       |-- Physics/
 |       |-- Reactor/
+|       |-- ScenarioSystem/
+|       |-- Systems/
+|       |   `-- RCS/
 |       |-- Tests/
 |       |-- UI/
 |       `-- Validation/
@@ -95,6 +100,10 @@ Critical/
 - Active governance artifacts are under `Governance/`.
 - `Updates/Archive_DEPRECATED/` is retained for legacy traceability only.
 - Issue state and routing authority are in `Governance/IssueRegister/`.
+- Scenario system execution surfaces are governed under `Assets/Scripts/ScenarioSystem/`.
+- Modular RCS prefab roots are governed under `Assets/Prefabs/Systems/RCS/`.
+- Modular RCS runtime systems are governed under `Assets/Scripts/Systems/RCS/`.
+- Follow-on implementation work should not introduce alternate folder roots for scenario registry/launch or modular RCS components without a new governance amendment.
 
 ## Excluded from deep listing
 

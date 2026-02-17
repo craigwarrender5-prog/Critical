@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - RCS Primary Loop Operator Screen
 // RCSPrimaryLoopScreen.cs - Screen 2: RCS Loops, RCPs, Flow, Temperatures
 // ============================================================================
@@ -39,8 +39,8 @@
 //
 // VERSION: 2.0.0
 // DATE: 2026-02-10
-// CLASSIFICATION: UI — Operator Interface
-// CHANGE: v2.0.0 — Replaced 3D model + RenderTexture with 2D mimic diagram
+// CLASSIFICATION: UI â€” Operator Interface
+// CHANGE: v2.0.0 â€” Replaced 3D model + RenderTexture with 2D mimic diagram
 //         to match design spec and all other operator screens.
 // ============================================================================
 
@@ -50,6 +50,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+using Critical.Validation;
 namespace Critical.UI
 {
     using Controllers;
@@ -91,7 +92,7 @@ namespace Critical.UI
         private const float FLOW_GAUGE_MAX = 120000f;
         private const float TOTAL_FLOW_GAUGE_MAX = 450000f;
 
-        // Temperature color thresholds (°F)
+        // Temperature color thresholds (Â°F)
         private const float TEMP_COLD = 200f;
         private const float TEMP_WARM = 400f;
         private const float TEMP_HOT = 550f;
@@ -379,7 +380,7 @@ namespace Critical.UI
 
             if (gauge_CoreDeltaT != null)
             {
-                gauge_CoreDeltaT.CustomLabel = "CORE ΔT";
+                gauge_CoreDeltaT.CustomLabel = "CORE Î”T";
                 gauge_CoreDeltaT.UseCustomThresholds = true;
                 gauge_CoreDeltaT.CustomWarningHigh = 65f;
                 gauge_CoreDeltaT.CustomAlarmHigh = 70f;
@@ -577,13 +578,13 @@ namespace Critical.UI
             {
                 if (mimic_THotTexts != null && i < mimic_THotTexts.Length && mimic_THotTexts[i] != null)
                 {
-                    mimic_THotTexts[i].text = $"{tHot:F0}°F";
+                    mimic_THotTexts[i].text = $"{tHot:F0}Â°F";
                     mimic_THotTexts[i].color = hotLegColor;
                 }
 
                 if (mimic_TColdTexts != null && i < mimic_TColdTexts.Length && mimic_TColdTexts[i] != null)
                 {
-                    mimic_TColdTexts[i].text = $"{tCold:F0}°F";
+                    mimic_TColdTexts[i].text = $"{tCold:F0}Â°F";
                     mimic_TColdTexts[i].color = coldLegColor;
                 }
             }
@@ -596,7 +597,7 @@ namespace Critical.UI
 
             if (mimic_ReactorTavgText != null)
             {
-                mimic_ReactorTavgText.text = $"{tAvg:F0}°F";
+                mimic_ReactorTavgText.text = $"{tAvg:F0}Â°F";
             }
 
             // --- Reactor vessel color by T-avg ---
@@ -608,7 +609,7 @@ namespace Critical.UI
             // --- Pressurizer ---
             if (mimic_PZRText != null)
             {
-                float pzrPressure = 2235f; // Nominal — will be from physics when available
+                float pzrPressure = 2235f; // Nominal â€” will be from physics when available
                 float pzrLevel = 60f;
                 mimic_PZRText.text = $"{pzrPressure:F0}\npsia";
             }
@@ -654,12 +655,12 @@ namespace Critical.UI
         #region Temperature Colors
 
         /// <summary>
-        /// Map a temperature (°F) to a piping color for the mimic diagram.
+        /// Map a temperature (Â°F) to a piping color for the mimic diagram.
         /// Matches the design spec color gradient:
-        ///   Cold (&lt;200°F) = Blue
-        ///   Warm (200-400°F) = Cyan
-        ///   Hot (400-550°F) = Orange
-        ///   Very Hot (&gt;550°F) = Red
+        ///   Cold (&lt;200Â°F) = Blue
+        ///   Warm (200-400Â°F) = Cyan
+        ///   Hot (400-550Â°F) = Orange
+        ///   Very Hot (&gt;550Â°F) = Red
         /// </summary>
         private Color TemperatureToColor(float tempF)
         {
@@ -883,3 +884,4 @@ namespace Critical.UI
         Tripped
     }
 }
+

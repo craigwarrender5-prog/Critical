@@ -1,6 +1,6 @@
-// ============================================================================
-// CRITICAL: Master the Atom — Residual Heat Removal System Physics Module
-// RHRSystem.cs — RHR Thermal Model for Heatup/Cooldown Operations
+﻿// ============================================================================
+// CRITICAL: Master the Atom â€” Residual Heat Removal System Physics Module
+// RHRSystem.cs â€” RHR Thermal Model for Heatup/Cooldown Operations
 // ============================================================================
 //
 // PURPOSE:
@@ -15,40 +15,40 @@
 //
 //   1. RHR pumps take suction from Loop 4 hot leg (T_hot)
 //   2. Flow splits: fraction through HX (cooled), remainder bypasses HX
-//   3. Cooled and bypass flows recombine → return to all 4 cold legs
-//   4. Heat exchanger: Q_hx = UA_eff × LMTD (counter-flow, CCW on shell side)
+//   3. Cooled and bypass flows recombine â†’ return to all 4 cold legs
+//   4. Heat exchanger: Q_hx = UA_eff Ã— LMTD (counter-flow, CCW on shell side)
 //   5. Pump heat: ~0.5 MW per pump adds energy to RCS coolant
 //   6. Net effect = pump heat - HX removal (positive = heating RCS)
 //
 //   During heatup, HX is mostly bypassed (85% bypass), so:
 //     - HX removal is minimal (~0.1-0.5 MW)
 //     - Pump heat dominates (~1.0 MW)
-//     - Net effect is slow heating (~5-15°F/hr)
+//     - Net effect is slow heating (~5-15Â°F/hr)
 //
 //   RHR Operating Modes:
-//     STANDBY    — Aligned to ECCS, not connected to RCS
-//     COOLING    — Normal cooldown (HX fully engaged, 0% bypass)
-//     HEATUP     — HX mostly bypassed (85%), allowing temp rise
-//     ISOLATING  — Transitioning from RCS to standby (during RCP start)
+//     STANDBY    â€” Aligned to ECCS, not connected to RCS
+//     COOLING    â€” Normal cooldown (HX fully engaged, 0% bypass)
+//     HEATUP     â€” HX mostly bypassed (85%), allowing temp rise
+//     ISOLATING  â€” Transitioning from RCS to standby (during RCP start)
 //
 // TRANSITION SEQUENCE (per NRC HRTD 19.0):
 //   1. Start: RHR in HEATUP mode, pumps running, HX bypassed
 //   2. RCS heats slowly from pump heat + decay heat
-//   3. Hold at ~160°F (cold water addition accident limit)
-//   4. Bubble forms in pressurizer at ~230°F
+//   3. Hold at ~160Â°F (cold water addition accident limit)
+//   4. Bubble forms in pressurizer at ~230Â°F
 //   5. First RCP started (requires P >= 400 psig, bubble exists)
-//   6. After all RCPs running → begin RHR isolation
-//   7. Close suction valves → RHR in STANDBY (ECCS alignment)
+//   6. After all RCPs running â†’ begin RHR isolation
+//   7. Close suction valves â†’ RHR in STANDBY (ECCS alignment)
 //   8. Letdown transitions from HCV-128 to normal CVCS orifices
 //
 // SOURCES:
-//   - NRC HRTD 5.1 — Residual Heat Removal System (ML11223A219)
-//   - NRC HRTD 19.0 — Plant Operations (ML11223A342)
-//   - Byron NRC Exam 2019 (ML20054A571) — RHR HX bypass operation
+//   - NRC HRTD 5.1 â€” Residual Heat Removal System (ML11223A219)
+//   - NRC HRTD 19.0 â€” Plant Operations (ML11223A342)
+//   - Byron NRC Exam 2019 (ML20054A571) â€” RHR HX bypass operation
 //   - Technical_Documentation/RHR_SYSTEM_RESEARCH_v3.0.0.md
 //
 // UNITS:
-//   Temperature: °F | Flow: gpm | Pressure: psig
+//   Temperature: Â°F | Flow: gpm | Pressure: psig
 //   Power: MW | Heat Rate: BTU/hr | Time: hours
 //
 // ARCHITECTURE:
@@ -64,7 +64,7 @@
 
 using System;
 using UnityEngine;
-
+
 namespace Critical.Physics
 {
     // ========================================================================
@@ -80,10 +80,10 @@ namespace Critical.Physics
         /// <summary>RHR aligned to ECCS standby, not connected to RCS</summary>
         Standby,
 
-        /// <summary>Normal cooldown — HX fully engaged (0% bypass)</summary>
+        /// <summary>Normal cooldown â€” HX fully engaged (0% bypass)</summary>
         Cooling,
 
-        /// <summary>Heatup — HX mostly bypassed (85%), allowing RCS temp rise</summary>
+        /// <summary>Heatup â€” HX mostly bypassed (85%), allowing RCS temp rise</summary>
         Heatup,
 
         /// <summary>Transitioning from RCS to standby during RCP start sequence</summary>
@@ -120,25 +120,25 @@ namespace Critical.Physics
         /// </summary>
         public float HXBypassFraction;
 
-        /// <summary>RCS hot leg temperature entering RHR suction (°F)</summary>
+        /// <summary>RCS hot leg temperature entering RHR suction (Â°F)</summary>
         public float HXInletTemp_F;
 
-        /// <summary>Temperature leaving RHR HX tube side (°F) — cooled stream</summary>
+        /// <summary>Temperature leaving RHR HX tube side (Â°F) â€” cooled stream</summary>
         public float HXOutletTemp_F;
 
-        /// <summary>Mixed temperature after HX and bypass streams recombine (°F)</summary>
+        /// <summary>Mixed temperature after HX and bypass streams recombine (Â°F)</summary>
         public float MixedReturnTemp_F;
 
-        /// <summary>CCW outlet temperature from RHR HX shell side (°F)</summary>
+        /// <summary>CCW outlet temperature from RHR HX shell side (Â°F)</summary>
         public float CCWOutletTemp_F;
 
-        /// <summary>Current heat removed by RHR HX (MW) — positive = cooling</summary>
+        /// <summary>Current heat removed by RHR HX (MW) â€” positive = cooling</summary>
         public float HeatRemoval_MW;
 
         /// <summary>Current heat removed by RHR HX (BTU/hr)</summary>
         public float HeatRemoval_BTUhr;
 
-        /// <summary>Heat added by RHR pumps (MW) — always positive when running</summary>
+        /// <summary>Heat added by RHR pumps (MW) â€” always positive when running</summary>
         public float PumpHeatInput_MW;
 
         /// <summary>
@@ -157,10 +157,10 @@ namespace Critical.Physics
         /// <summary>Letdown flow via HCV-128 cross-connect to CVCS (gpm)</summary>
         public float LetdownFlow_gpm;
 
-        /// <summary>LMTD of RHR HX at current conditions (°F)</summary>
+        /// <summary>LMTD of RHR HX at current conditions (Â°F)</summary>
         public float LMTD_F;
 
-        /// <summary>Effective UA being used (after fouling and bypass) in BTU/(hr·°F)</summary>
+        /// <summary>Effective UA being used (after fouling and bypass) in BTU/(hrÂ·Â°F)</summary>
         public float EffectiveUA;
     }
 
@@ -188,7 +188,7 @@ namespace Critical.Physics
         /// <summary>Heat added by pumps (MW)</summary>
         public float PumpHeatInput_MW;
 
-        /// <summary>Mixed return temperature to RCS cold legs (°F)</summary>
+        /// <summary>Mixed return temperature to RCS cold legs (Â°F)</summary>
         public float MixedReturnTemp_F;
 
         /// <summary>Current operating mode</summary>
@@ -223,27 +223,27 @@ namespace Critical.Physics
         private const float MW_TO_BTU_HR = 3.412e6f;
 
         /// <summary>
-        /// Water specific heat approximation for RHR LMTD calculation (BTU/(lb·°F)).
-        /// At 100-350°F range, cp ≈ 1.0 BTU/(lb·°F) for subcooled water.
+        /// Water specific heat approximation for RHR LMTD calculation (BTU/(lbÂ·Â°F)).
+        /// At 100-350Â°F range, cp â‰ˆ 1.0 BTU/(lbÂ·Â°F) for subcooled water.
         /// Slight variation (~0.998-1.012) is negligible for RHR HX calculation.
         /// </summary>
         private const float CP_WATER_APPROX = 1.0f;
 
         /// <summary>
         /// Water density approximation for flow-to-mass conversion (lb/gal).
-        /// At 100-200°F: ~8.2 lb/gal. At 300°F: ~7.6 lb/gal.
+        /// At 100-200Â°F: ~8.2 lb/gal. At 300Â°F: ~7.6 lb/gal.
         /// Using ~8.0 as reasonable average for cold shutdown conditions.
         /// </summary>
         private const float WATER_DENSITY_LB_PER_GAL = 8.0f;
 
         /// <summary>
-        /// Minimum LMTD for HX calculation (°F).
+        /// Minimum LMTD for HX calculation (Â°F).
         /// Below this, HX heat transfer is negligible. Prevents ln(0) issues.
         /// </summary>
         private const float MIN_LMTD = 0.1f;
 
         /// <summary>
-        /// Minimum temperature difference for meaningful HX calculation (°F).
+        /// Minimum temperature difference for meaningful HX calculation (Â°F).
         /// If RCS temp is within this range of CCW temp, HX does nothing useful.
         /// </summary>
         private const float MIN_DELTA_T_HX = 1.0f;
@@ -252,7 +252,7 @@ namespace Critical.Physics
         /// RHR isolation ramp time in hours.
         /// When isolating, flow ramps down over this duration to avoid
         /// thermal transients in the RCS.
-        /// Source: Operating practice — gradual valve closure over ~5 minutes
+        /// Source: Operating practice â€” gradual valve closure over ~5 minutes
         /// </summary>
         private const float ISOLATION_RAMP_HR = 5f / 60f;
 
@@ -269,7 +269,7 @@ namespace Critical.Physics
         /// Both trains running, HX bypassed for heatup, suction valves open.
         /// Called once at simulation start.
         /// </summary>
-        /// <param name="initialRcsTemp_F">Starting RCS temperature (°F)</param>
+        /// <param name="initialRcsTemp_F">Starting RCS temperature (Â°F)</param>
         /// <returns>Initialized RHRState for heatup mode</returns>
         public static RHRState Initialize(float initialRcsTemp_F)
         {
@@ -343,13 +343,13 @@ namespace Critical.Physics
         /// Physics sequence:
         /// 1. Check interlocks (auto-isolation on high pressure)
         /// 2. Handle mode transitions (isolation ramp-down)
-        /// 3. Calculate HX heat removal (UA × LMTD method)
+        /// 3. Calculate HX heat removal (UA Ã— LMTD method)
         /// 4. Calculate pump heat input
         /// 5. Compute net thermal effect on RCS
         /// 6. Calculate mixed return temperature
         /// </summary>
         /// <param name="state">RHR state (modified in place)</param>
-        /// <param name="T_rcs_F">Current RCS average temperature (°F)</param>
+        /// <param name="T_rcs_F">Current RCS average temperature (Â°F)</param>
         /// <param name="P_rcs_psig">Current RCS pressure (psig)</param>
         /// <param name="rcpsRunning">Number of RCPs currently running (0-4)</param>
         /// <param name="dt_hr">Timestep in hours</param>
@@ -364,11 +364,11 @@ namespace Critical.Physics
             var result = new RHRResult();
 
             // ================================================================
-            // 1. INTERLOCK CHECK — Auto-isolation on high pressure
+            // 1. INTERLOCK CHECK â€” Auto-isolation on high pressure
             // ================================================================
             if (state.SuctionValvesOpen && P_rcs_psig >= PlantConstants.RHR_SUCTION_VALVE_AUTO_CLOSE_PSIG)
             {
-                // Forced isolation — suction valves auto-close at 585 psig
+                // Forced isolation â€” suction valves auto-close at 585 psig
                 state.Mode = RHRMode.Standby;
                 state.SuctionValvesOpen = false;
                 state.PumpsRunning = false;
@@ -424,7 +424,7 @@ namespace Critical.Physics
             if (state.Mode == RHRMode.Standby) return;  // Already isolated
 
             state.Mode = RHRMode.Isolating;
-            Debug.Log("[RHR] Isolation sequence initiated — ramping down flow");
+            Debug.Log("[RHR] Isolation sequence initiated â€” ramping down flow");
         }
 
         /// <summary>
@@ -453,10 +453,10 @@ namespace Critical.Physics
             return $"RHR [{modeStr}] Pumps={state.PumpsOnline} | " +
                    $"Flow={state.FlowRate_gpm:F0} gpm | " +
                    $"Bypass={state.HXBypassFraction:P0} | " +
-                   $"T_in={state.HXInletTemp_F:F1}°F → T_out={state.HXOutletTemp_F:F1}°F → T_mix={state.MixedReturnTemp_F:F1}°F | " +
+                   $"T_in={state.HXInletTemp_F:F1}Â°F â†’ T_out={state.HXOutletTemp_F:F1}Â°F â†’ T_mix={state.MixedReturnTemp_F:F1}Â°F | " +
                    $"Q_hx={state.HeatRemoval_MW:F3} MW | Q_pump={state.PumpHeatInput_MW:F3} MW | " +
                    $"Q_net={state.NetHeatEffect_MW:+0.000;-0.000} MW | " +
-                   $"LMTD={state.LMTD_F:F1}°F | UA_eff={state.EffectiveUA:F0}";
+                   $"LMTD={state.LMTD_F:F1}Â°F | UA_eff={state.EffectiveUA:F0}";
         }
 
         #endregion
@@ -468,7 +468,7 @@ namespace Critical.Physics
         #region Private Methods
 
         /// <summary>
-        /// Update for STANDBY mode — all outputs zeroed, no thermal effect.
+        /// Update for STANDBY mode â€” all outputs zeroed, no thermal effect.
         /// </summary>
         private static void UpdateStandby(ref RHRState state)
         {
@@ -514,7 +514,7 @@ namespace Critical.Physics
             // valid hydraulic coupling exists: suction valves open AND
             // actual flow > 0 gpm. When uncoupled (no flow or valves
             // closed), pump energy is dissipated as bearing/casing heat
-            // to containment ambient — not modeled as RCS heat input.
+            // to containment ambient â€” not modeled as RCS heat input.
             //
             // This corrects the unconditional injection of 1 MW pump heat
             // that was previously applied whenever Mode != Standby
@@ -563,7 +563,7 @@ namespace Critical.Physics
                 state.PumpsOnline = 0;
                 state.LetdownFlow_gpm = 0f;
                 UpdateStandby(ref state);
-                Debug.Log("[RHR] Isolation COMPLETE — aligned to ECCS standby");
+                Debug.Log("[RHR] Isolation COMPLETE â€” aligned to ECCS standby");
                 return;
             }
 
@@ -577,7 +577,7 @@ namespace Critical.Physics
             state.HeatRemoval_MW *= flowFraction;
             state.HeatRemoval_BTUhr *= flowFraction;
 
-            // v0.3.0.0 (CS-0033): Pump heat scales with flow fraction — flow-coupled.
+            // v0.3.0.0 (CS-0033): Pump heat scales with flow fraction â€” flow-coupled.
             // As suction valves close, flow decreases and pump energy transfer
             // to coolant decreases proportionally. At zero flow, pump heat = 0.
             state.PumpHeatInput_MW = PlantConstants.RHR_PUMP_HEAT_MW_TOTAL * flowFraction;
@@ -597,21 +597,21 @@ namespace Critical.Physics
         ///   Tube side: RCS coolant (hot fluid)
         ///   Shell side: CCW (cold fluid, assumed constant inlet temperature)
         ///
-        /// Q_hx = UA_effective × LMTD
+        /// Q_hx = UA_effective Ã— LMTD
         ///
         /// Where:
-        ///   UA_effective = UA_total × fouling_factor × (1 - bypass_fraction)
+        ///   UA_effective = UA_total Ã— fouling_factor Ã— (1 - bypass_fraction)
         ///   
-        ///   LMTD = (ΔT1 - ΔT2) / ln(ΔT1 / ΔT2)
-        ///   ΔT1 = T_rcs_in - T_ccw_out    (hot end)
-        ///   ΔT2 = T_rcs_out - T_ccw_in    (cold end)
+        ///   LMTD = (Î”T1 - Î”T2) / ln(Î”T1 / Î”T2)
+        ///   Î”T1 = T_rcs_in - T_ccw_out    (hot end)
+        ///   Î”T2 = T_rcs_out - T_ccw_in    (cold end)
         ///
         /// The CCW outlet temperature is estimated from energy balance:
-        ///   T_ccw_out = T_ccw_in + Q / (m_ccw × cp)
+        ///   T_ccw_out = T_ccw_in + Q / (m_ccw Ã— cp)
         ///
         /// For the initial estimate, we use a simplified approach where
         /// CCW outlet is iteratively estimated. Since CCW flow is high
-        /// relative to heat load during heatup, T_ccw_out ≈ T_ccw_in + small δ.
+        /// relative to heat load during heatup, T_ccw_out â‰ˆ T_ccw_in + small Î´.
         ///
         /// Source: NRC HRTD 5.1, standard HX design methodology
         /// </summary>
@@ -642,7 +642,7 @@ namespace Critical.Physics
 
             if (UA_eff < 1f)
             {
-                // Essentially full bypass — no HX cooling
+                // Essentially full bypass â€” no HX cooling
                 state.HXOutletTemp_F = T_rcs_F;
                 state.MixedReturnTemp_F = T_rcs_F;
                 state.CCWOutletTemp_F = T_ccw_in;
@@ -653,7 +653,7 @@ namespace Critical.Physics
             }
 
             // ----- Iterative LMTD solution -----
-            // First estimate: assume T_ccw_out ≈ T_ccw_in (high CCW flow approximation)
+            // First estimate: assume T_ccw_out â‰ˆ T_ccw_in (high CCW flow approximation)
             // Then refine with one iteration using energy balance.
 
             // Mass flow rates for energy balance
@@ -663,7 +663,7 @@ namespace Critical.Physics
                         * PlantConstants.RHR_HX_COUNT
                         * WATER_DENSITY_LB_PER_GAL * 60f;  // lb/hr (both HXs)
 
-            // Iteration 1: estimate Q with T_ccw_out ≈ T_ccw_in
+            // Iteration 1: estimate Q with T_ccw_out â‰ˆ T_ccw_in
             float T_ccw_out_est = T_ccw_in;
             float lmtd = CalculateLMTD(T_rcs_F, T_ccw_in, T_rcs_F, T_ccw_out_est);
             float Q_est = UA_eff * lmtd;  // BTU/hr
@@ -725,13 +725,13 @@ namespace Critical.Physics
         /// <summary>
         /// Calculate Log Mean Temperature Difference for counter-flow HX.
         ///
-        /// LMTD = (ΔT1 - ΔT2) / ln(ΔT1 / ΔT2)
+        /// LMTD = (Î”T1 - Î”T2) / ln(Î”T1 / Î”T2)
         ///
         /// Where for counter-flow:
-        ///   ΔT1 = T_hot_in - T_cold_out   (hot end)
-        ///   ΔT2 = T_hot_out - T_cold_in   (cold end)
+        ///   Î”T1 = T_hot_in - T_cold_out   (hot end)
+        ///   Î”T2 = T_hot_out - T_cold_in   (cold end)
         ///
-        /// Special case: if ΔT1 ≈ ΔT2, LMTD = ΔT1 (L'Hôpital's rule)
+        /// Special case: if Î”T1 â‰ˆ Î”T2, LMTD = Î”T1 (L'HÃ´pital's rule)
         /// </summary>
         private static float CalculateLMTD(
             float T_hot_in, float T_cold_out,
@@ -744,7 +744,7 @@ namespace Critical.Physics
             dT1 = Mathf.Max(dT1, MIN_LMTD);
             dT2 = Mathf.Max(dT2, MIN_LMTD);
 
-            // Special case: equal ΔTs (avoid ln(1) = 0 → division by zero)
+            // Special case: equal Î”Ts (avoid ln(1) = 0 â†’ division by zero)
             float ratio = dT1 / dT2;
             if (Mathf.Abs(ratio - 1f) < 0.001f)
             {
@@ -770,7 +770,7 @@ namespace Critical.Physics
         {
             bool valid = true;
 
-            // Test 1: Initialize at 100°F in heatup mode
+            // Test 1: Initialize at 100Â°F in heatup mode
             var state = Initialize(100f);
             if (state.Mode != RHRMode.Heatup)
             {
@@ -788,7 +788,7 @@ namespace Critical.Physics
                 valid = false;
             }
 
-            // Test 2: One step at 150°F, heatup mode — net should be positive (heating)
+            // Test 2: One step at 150Â°F, heatup mode â€” net should be positive (heating)
             state = Initialize(150f);
             var result = Update(ref state, 150f, 350f, 0, 1f / 360f);
             if (result.NetHeatEffect_MW <= 0f)
@@ -803,7 +803,7 @@ namespace Critical.Physics
                 valid = false;
             }
 
-            // Test 3: Cooling mode (0% bypass) should remove heat (net negative at 300°F)
+            // Test 3: Cooling mode (0% bypass) should remove heat (net negative at 300Â°F)
             state = Initialize(300f);
             state.Mode = RHRMode.Cooling;
             state.HXBypassFraction = PlantConstants.RHR_HX_BYPASS_FRACTION_COOLDOWN;
@@ -814,7 +814,7 @@ namespace Critical.Physics
                 valid = false;
             }
 
-            // Test 4: Standby mode — no thermal effect
+            // Test 4: Standby mode â€” no thermal effect
             state = InitializeStandby();
             result = Update(ref state, 200f, 350f, 0, 1f / 360f);
             if (Math.Abs(result.NetHeatEffect_MW) > 0.001f)
@@ -832,17 +832,17 @@ namespace Critical.Physics
                 valid = false;
             }
 
-            // Test 6: HX heat removal sanity at 300°F with full HX engagement
-            // Expected: UA_eff = 72000 × 0.85 × 1.0 = 61,200 BTU/(hr·°F)
-            // LMTD ≈ ~170°F (300 - 95 = 205 hot end, ~150 cold end)
-            // Q ≈ 61,200 × ~170 ≈ ~10 × 10⁶ BTU/hr ≈ ~3 MW
+            // Test 6: HX heat removal sanity at 300Â°F with full HX engagement
+            // Expected: UA_eff = 72000 Ã— 0.85 Ã— 1.0 = 61,200 BTU/(hrÂ·Â°F)
+            // LMTD â‰ˆ ~170Â°F (300 - 95 = 205 hot end, ~150 cold end)
+            // Q â‰ˆ 61,200 Ã— ~170 â‰ˆ ~10 Ã— 10â¶ BTU/hr â‰ˆ ~3 MW
             state = Initialize(300f);
             state.Mode = RHRMode.Cooling;
             state.HXBypassFraction = 0f;
             Update(ref state, 300f, 350f, 0, 1f / 360f);
             if (state.HeatRemoval_MW < 1.0f || state.HeatRemoval_MW > 8.0f)
             {
-                Debug.LogWarning($"[RHR Validation] Test 6 FAIL: Q_hx={state.HeatRemoval_MW:F2} MW at 300°F cooling (expected 1-8 MW)");
+                Debug.LogWarning($"[RHR Validation] Test 6 FAIL: Q_hx={state.HeatRemoval_MW:F2} MW at 300Â°F cooling (expected 1-8 MW)");
                 valid = false;
             }
 
@@ -864,8 +864,8 @@ namespace Critical.Physics
                 valid = false;
             }
 
-            // Test 9: v0.3.0.0 (CS-0033) — Pump heat = 0 when hydraulically uncoupled
-            // Pumps online but suction valves closed → no RCS heat transfer
+            // Test 9: v0.3.0.0 (CS-0033) â€” Pump heat = 0 when hydraulically uncoupled
+            // Pumps online but suction valves closed â†’ no RCS heat transfer
             state = Initialize(100f);
             state.SuctionValvesOpen = false;
             result = Update(ref state, 100f, 200f, 0, 1f / 360f);
@@ -875,8 +875,8 @@ namespace Critical.Physics
                 valid = false;
             }
 
-            // Test 10: v0.3.0.0 (CS-0033) — Pump heat = 0 when flow = 0
-            // Suction valves open but flow somehow zero → no heat transfer
+            // Test 10: v0.3.0.0 (CS-0033) â€” Pump heat = 0 when flow = 0
+            // Suction valves open but flow somehow zero â†’ no heat transfer
             state = Initialize(100f);
             state.FlowRate_gpm = 0f;
             Update(ref state, 100f, 200f, 0, 1f / 360f);
@@ -896,7 +896,7 @@ namespace Critical.Physics
             if (valid)
                 Debug.Log("[RHR] All validation tests PASSED");
             else
-                Debug.LogError("[RHR] Validation FAILED — check warnings above");
+                Debug.LogError("[RHR] Validation FAILED â€” check warnings above");
 
             return valid;
         }
@@ -904,3 +904,5 @@ namespace Critical.Physics
         #endregion
     }
 }
+
+

@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Scene Bridge
 // SceneBridge.cs - Scene Management Controller for Operator/Validator Views
 // ============================================================================
@@ -17,29 +17,30 @@
 //   - HeatupValidationVisual finds the persistent engine via FindObjectOfType
 //
 // KEYBOARD:
-//   V key      → Load Validator overlay, hide operator Canvas
-//   1-8/Tab    → Unload Validator, show operator Canvas (ScreenManager handles screen selection)
-//   Esc        → If Validator active: return to operator screens
+//   V key      â†’ Load Validator overlay, hide operator Canvas
+//   1-8/Tab    â†’ Unload Validator, show operator Canvas (ScreenManager handles screen selection)
+//   Esc        â†’ If Validator active: return to operator screens
 //                 If operator screens active: no action (reserved for future)
-//   F1         → Toggle Validator dashboard visibility (handled by HeatupValidationVisual)
-//   F5-F9      → Time acceleration (handled by HeatupValidationVisual)
+//   F1         â†’ Toggle Validator dashboard visibility (handled by HeatupValidationVisual)
+//   F5-F9      â†’ Time acceleration (handled by HeatupValidationVisual)
 //
 // STATE MACHINE:
-//   [OperatorScreens]  ── V key ──►  [Validator]
+//   [OperatorScreens]  â”€â”€ V key â”€â”€â–º  [Validator]
 //     (Canvas visible)                  (Canvas hidden, OnGUI overlay)
 //     (Engine running)                  (Engine running)
-//          ▲                                  │
-//          └──── 1-8 / Tab / Esc ────────────┘
+//          â–²                                  â”‚
+//          â””â”€â”€â”€â”€ 1-8 / Tab / Esc â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
 // VERSION: 2.0.11
 // DATE: 2026-02-10
-// CLASSIFICATION: Core — Scene Infrastructure
+// CLASSIFICATION: Core â€” Scene Infrastructure
 // ============================================================================
 
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
+using Critical.Validation;
 namespace Critical.Core
 {
     /// <summary>
@@ -115,7 +116,7 @@ namespace Critical.Core
             if (_instance != null && _instance != this)
             {
                 if (debugLogging)
-                    Debug.Log("[SceneBridge] Duplicate found — destroying this instance");
+                    Debug.Log("[SceneBridge] Duplicate found â€” destroying this instance");
                 Destroy(gameObject);
                 return;
             }
@@ -127,7 +128,7 @@ namespace Critical.Core
             EnsureEnginePersistence();
 
             if (debugLogging)
-                Debug.Log("[SceneBridge] Initialized — DontDestroyOnLoad active");
+                Debug.Log("[SceneBridge] Initialized â€” DontDestroyOnLoad active");
         }
 
         void Start()
@@ -155,7 +156,7 @@ namespace Critical.Core
             switch (CurrentView)
             {
                 case ActiveView.OperatorScreens:
-                    // V key → switch to Validator
+                    // V key â†’ switch to Validator
                     if (kb.vKey.wasPressedThisFrame)
                     {
                         SwitchToValidator();
@@ -163,12 +164,12 @@ namespace Critical.Core
                     break;
 
                 case ActiveView.Validator:
-                    // Any screen key → return to operator screens
+                    // Any screen key â†’ return to operator screens
                     if (IsScreenKeyPressed(kb))
                     {
                         SwitchToOperatorScreens();
                     }
-                    // Esc → return to operator screens
+                    // Esc â†’ return to operator screens
                     else if (kb.escapeKey.wasPressedThisFrame)
                     {
                         SwitchToOperatorScreens();
@@ -229,7 +230,7 @@ namespace Critical.Core
                     ResolveDataBridgeSources();
 
                     if (debugLogging)
-                        Debug.Log("[SceneBridge] Validator loaded — view active");
+                        Debug.Log("[SceneBridge] Validator loaded â€” view active");
                 };
             }
             else
@@ -239,7 +240,7 @@ namespace Critical.Core
                 _sceneTransitionInProgress = false;
 
                 if (debugLogging)
-                    Debug.Log("[SceneBridge] Validator already loaded — view active");
+                    Debug.Log("[SceneBridge] Validator already loaded â€” view active");
             }
         }
 
@@ -267,13 +268,13 @@ namespace Critical.Core
 
                 if (unloadOp == null)
                 {
-                    // Scene may not be loaded — just update state
+                    // Scene may not be loaded â€” just update state
                     IsValidatorLoaded = false;
                     CurrentView = ActiveView.OperatorScreens;
                     _sceneTransitionInProgress = false;
 
                     if (debugLogging)
-                        Debug.Log("[SceneBridge] Validator was not loaded — Operator Screens active");
+                        Debug.Log("[SceneBridge] Validator was not loaded â€” Operator Screens active");
                     return;
                 }
 
@@ -284,7 +285,7 @@ namespace Critical.Core
                     _sceneTransitionInProgress = false;
 
                     if (debugLogging)
-                        Debug.Log("[SceneBridge] Validator unloaded — Operator Screens active");
+                        Debug.Log("[SceneBridge] Validator unloaded â€” Operator Screens active");
                 };
             }
             else
@@ -365,9 +366,9 @@ namespace Critical.Core
 
             if (_engine != null)
             {
-                // Engine is on our GameObject — already covered by our DontDestroyOnLoad
+                // Engine is on our GameObject â€” already covered by our DontDestroyOnLoad
                 if (debugLogging)
-                    Debug.Log("[SceneBridge] HeatupSimEngine on same GameObject — persistence inherited");
+                    Debug.Log("[SceneBridge] HeatupSimEngine on same GameObject â€” persistence inherited");
                 return;
             }
 
@@ -380,7 +381,7 @@ namespace Critical.Core
                 DontDestroyOnLoad(_engine.gameObject);
 
                 if (debugLogging)
-                    Debug.Log($"[SceneBridge] HeatupSimEngine on '{_engine.gameObject.name}' — marked DontDestroyOnLoad");
+                    Debug.Log($"[SceneBridge] HeatupSimEngine on '{_engine.gameObject.name}' â€” marked DontDestroyOnLoad");
             }
         }
 
@@ -427,3 +428,4 @@ namespace Critical.Core
         }
     }
 }
+

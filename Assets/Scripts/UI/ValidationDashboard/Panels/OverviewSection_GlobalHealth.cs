@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Overview Section: Global Health
 // OverviewSection_GlobalHealth.cs - Mass/Energy Conservation Display
 // ============================================================================
@@ -15,7 +15,8 @@
 // ============================================================================
 
 using UnityEngine;
-
+
+using Critical.Validation;
 namespace Critical.UI.ValidationDashboard
 {
     /// <summary>
@@ -67,3 +68,4 @@ namespace Critical.UI.ValidationDashboard
         }
     }
 }
+

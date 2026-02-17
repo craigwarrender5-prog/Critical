@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Time Acceleration Module
 // ============================================================================
 // 
@@ -31,7 +31,7 @@
 //   The physics timestep (dt) is NOT changed by acceleration. Instead,
 //   more physics steps are executed per real frame. This preserves numerical
 //   stability at all warp speeds. The engine's existing simTimeBudget
-//   approach already supports this — we simply feed it more sim-seconds
+//   approach already supports this â€” we simply feed it more sim-seconds
 //   per real frame.
 //
 //   At 10x on a 60fps display, we execute ~10 physics steps per frame
@@ -58,7 +58,7 @@ namespace Critical.Physics
     public static class TimeAcceleration
     {
         // ====================================================================
-        // SPEED STEPS — Discrete multipliers, MSFS-style
+        // SPEED STEPS â€” Discrete multipliers, MSFS-style
         // ====================================================================
         
         /// <summary>Available time warp multipliers. Index 0 = real-time.</summary>
@@ -144,7 +144,7 @@ namespace Critical.Physics
         }
         
         // ====================================================================
-        // PER-FRAME UPDATE — Called once per frame by the engine
+        // PER-FRAME UPDATE â€” Called once per frame by the engine
         // ====================================================================
         
         /// <summary>
@@ -232,7 +232,7 @@ namespace Critical.Physics
         }
         
         // ====================================================================
-        // FORMATTING HELPERS — For the dashboard display
+        // FORMATTING HELPERS â€” For the dashboard display
         // ====================================================================
         
         /// <summary>
@@ -284,7 +284,7 @@ namespace Critical.Physics
         }
         
         // ====================================================================
-        // SYNC HELPER — For engine integration
+        // SYNC HELPER â€” For engine integration
         // ====================================================================
         
         /// <summary>
@@ -299,3 +299,5 @@ namespace Critical.Physics
         }
     }
 }
+
+

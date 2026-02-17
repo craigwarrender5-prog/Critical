@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Overview Section: Reactor / RCS (Merged)
 // OverviewSection_ReactorRCS.cs - Combined Reactor Core + RCS Primary
 // ============================================================================
@@ -10,8 +10,8 @@
 //   OverviewSection_RCS.
 //
 // INSTRUMENTS:
-//   Top: 2×2 grid of ArcGauges (RCS Pressure, Tavg, Subcooling, ΔT)
-//   Bottom: 4× compact StatusIndicators (RCP-1 through RCP-4)
+//   Top: 2Ã—2 grid of ArcGauges (RCS Pressure, Tavg, Subcooling, Î”T)
+//   Bottom: 4Ã— compact StatusIndicators (RCP-1 through RCP-4)
 //
 // VERSION: 2.0.0
 // DATE: 2026-02-17
@@ -23,6 +23,7 @@ using UnityEngine.UI;
 using TMPro;
 using Critical.Physics;
 
+using Critical.Validation;
 namespace Critical.UI.ValidationDashboard
 {
     /// <summary>
@@ -44,7 +45,7 @@ namespace Critical.UI.ValidationDashboard
 
         protected override void BuildContent()
         {
-            // --- Gauge grid: 2×2 layout ---
+            // --- Gauge grid: 2Ã—2 layout ---
             GameObject gaugeGrid = new GameObject("GaugeGrid");
             gaugeGrid.transform.SetParent(ContentRoot, false);
 
@@ -61,18 +62,18 @@ namespace Critical.UI.ValidationDashboard
             grid.childAlignment = TextAnchor.MiddleCenter;
             grid.padding = new RectOffset(2, 2, 2, 2);
 
-            // ArcGauges — heatup ranges, not full-power ranges
+            // ArcGauges â€” heatup ranges, not full-power ranges
             _pressureGauge = ArcGauge.Create(gaugeGrid.transform,
                 "RCS PRESS", 0f, 2500f, 350f, 2300f, 300f, 2385f, " psia");
 
             _tavgGauge = ArcGauge.Create(gaugeGrid.transform,
-                "T-AVG", 50f, 650f, 100f, 550f, 70f, 600f, " °F");
+                "T-AVG", 50f, 650f, 100f, 550f, 70f, 600f, " Â°F");
 
             _subcoolGauge = ArcGauge.Create(gaugeGrid.transform,
-                "SUBCOOL", 0f, 200f, 30f, 999f, 20f, 999f, " °F");
+                "SUBCOOL", 0f, 200f, 30f, 999f, 20f, 999f, " Â°F");
 
             _deltaTGauge = ArcGauge.Create(gaugeGrid.transform,
-                "DELTA-T", 0f, 80f, 0f, 60f, 0f, 70f, " °F");
+                "DELTA-T", 0f, 80f, 0f, 60f, 0f, 70f, " Â°F");
 
             // --- RCP status row ---
             GameObject rcpRow = new GameObject("RCPRow");
@@ -125,3 +126,4 @@ namespace Critical.UI.ValidationDashboard
         }
     }
 }
+

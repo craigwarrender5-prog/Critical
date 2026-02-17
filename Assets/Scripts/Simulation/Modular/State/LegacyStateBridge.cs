@@ -1,5 +1,6 @@
-using System;
-
+﻿using System;
+
+using Critical.Validation;
 namespace Critical.Simulation.Modular.State
 {
     /// <summary>
@@ -79,3 +80,4 @@ namespace Critical.Simulation.Modular.State
         }
     }
 }
+

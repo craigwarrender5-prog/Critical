@@ -1,12 +1,25 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Heatup Simulation Engine
 // HeatupSimEngine.cs - Core State, Lifecycle, and Physics Dispatch
 // ============================================================================
 //
+// File: Assets/Scripts/Validation/HeatupSimEngine.cs
+// Module: Critical.Validation.HeatupSimEngine
+// Responsibility: Simulation lifecycle/state coordinator for PWR heatup execution.
+// Standards: GOLD v1.0, SRP/SOLID, Unity Hot-Path Guardrails
+// Version: 5.5
+// Last Updated: 2026-02-17
+// Changes:
+//   - 5.5 (2026-02-17): Added explicit SOURCES/UNITS header sections and GOLD metadata fields.
+//   - 5.4 (2026-02-17): Added deterministic idle boot baseline and startup-hold heater re-arm (IP-0048).
+//   - 5.3 (2026-02-16): Added modular coordinator integration seams and telemetry snapshot contract updates.
+//   - 5.2 (2026-02-16): Added startup-hold authority gating and pressure-rate stability controls.
+//   - 5.1 (2026-02-15): Expanded event logging and validation dashboard integration coverage.
+//
 // PURPOSE:
-//   Top-level simulation coordinator for PWR Cold Shutdown → HZP heatup.
+//   Top-level simulation coordinator for PWR Cold Shutdown â†’ HZP heatup.
 //   All physics state, lifecycle management, and timestep dispatch.
-//   No GUI code — the companion HeatupValidationVisual.cs handles all display.
+//   No GUI code â€” the companion HeatupValidationVisual.cs handles all display.
 //
 // ARCHITECTURE:
 //   This is a COORDINATOR, not a physics module.
@@ -47,6 +60,18 @@
 //   - SGSecondaryThermal    : v1.1.0 SG secondary steaming detection
 //   - RHRSystem             : v3.0.0 RHR thermal model (pump heat, HX, isolation)
 //
+// SOURCES:
+//   - NRC HRTD ML11223A342 Section 19.0/19.2 (startup sequence and heatup operations)
+//   - NRC HRTD Section 10.2 (pressurizer pressure control expectations)
+//   - Westinghouse 4-Loop FSAR references cited by delegated physics modules
+//
+// UNITS:
+//   - Pressure: psia/psig
+//   - Temperature: F
+//   - Flow: gpm
+//   - Mass: lbm
+//   - Time: hr / sec
+//
 // GUI COMPANION: HeatupValidationVisual.cs (reads public state, renders dashboard)
 //
 // PERSISTENCE:
@@ -64,12 +89,18 @@ using System.IO;
 using System.Collections;
 using System.Collections.Generic;
 using Critical.Physics;
+using UnityEngine.Scripting.APIUpdating;
+
+
+namespace Critical.Validation
+{
 
 /// <summary>
-/// Simulation engine for PWR Cold Shutdown → HZP heatup.
+/// Simulation engine for PWR Cold Shutdown â†’ HZP heatup.
 /// Coordinates physics modules. Exposes state for dashboard.
 /// No inline physics calculations (G3).
 /// </summary>
+[MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "HeatupSimEngine")]
 public partial class HeatupSimEngine : MonoBehaviour
 {
     enum SGStartupBoundaryStateMode
@@ -152,7 +183,7 @@ public partial class HeatupSimEngine : MonoBehaviour
     public int pzrOrificeDiagnosticsSampleStrideTicks = 30;
 
     // ========================================================================
-    // PUBLIC SIMULATION STATE — Read by the visual dashboard
+    // PUBLIC SIMULATION STATE â€” Read by the visual dashboard
     // All [HideInInspector] fields stay in this file for Unity serialization.
     // ========================================================================
 
@@ -191,9 +222,9 @@ public partial class HeatupSimEngine : MonoBehaviour
     
     // v1.3.0: Multi-node SG model state
     [HideInInspector] public SGMultiNodeState sgMultiNodeState;
-    [HideInInspector] public float sgTopNodeTemp;          // Top node temp (°F)
-    [HideInInspector] public float sgBottomNodeTemp;       // Bottom node temp (°F)
-    [HideInInspector] public float sgStratificationDeltaT;  // Top-Bottom ΔT (°F)
+    [HideInInspector] public float sgTopNodeTemp;          // Top node temp (Â°F)
+    [HideInInspector] public float sgBottomNodeTemp;       // Bottom node temp (Â°F)
+    [HideInInspector] public float sgStratificationDeltaT;  // Top-Bottom Î”T (Â°F)
     [HideInInspector] public float sgCirculationFraction;   // [DEPRECATED v3.0.0] Always 0
     [HideInInspector] public bool  sgCirculationActive;     // [DEPRECATED v3.0.0] Always false
     
@@ -204,9 +235,9 @@ public partial class HeatupSimEngine : MonoBehaviour
     
     // v4.3.0: SG secondary pressure model state
     [HideInInspector] public float sgSecondaryPressure_psia;  // SG secondary pressure (psia)
-    [HideInInspector] public float sgSaturationTemp_F;        // T_sat at current SG secondary pressure (°F)
-    [HideInInspector] public float sgMaxSuperheat_F;          // Max node superheat above T_sat (°F)
-    [HideInInspector] public bool  sgNitrogenIsolated;        // N₂ blanket isolation status
+    [HideInInspector] public float sgSaturationTemp_F;        // T_sat at current SG secondary pressure (Â°F)
+    [HideInInspector] public float sgMaxSuperheat_F;          // Max node superheat above T_sat (Â°F)
+    [HideInInspector] public bool  sgNitrogenIsolated;        // Nâ‚‚ blanket isolation status
     [HideInInspector] public float sgBoilingIntensity;        // Peak boiling intensity fraction (0-1)
     [HideInInspector] public string sgBoundaryMode = "OPEN";  // OPEN / ISOLATED
     [HideInInspector] public string sgPressureSourceBranch = "floor"; // floor / P_sat / inventory-derived
@@ -340,7 +371,7 @@ public partial class HeatupSimEngine : MonoBehaviour
 
     #endregion
 
-    #region BRS State (Boron Recycle System) — v0.6.0
+    #region BRS State (Boron Recycle System) â€” v0.6.0
 
     [HideInInspector] public BRSState brsState;
 
@@ -366,6 +397,9 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public string primaryMassStatus = "NOT_CHECKED";  // v0.1.0.0 Phase C: Default until first diagnostic run
 
     // IP-0016: Primary Boundary Ownership Contract (PBOC) telemetry.
+    /// <summary>
+    /// Boundary-flow bookkeeping event emitted for primary mass ledger updates.
+    /// </summary>
     public struct PrimaryBoundaryFlowEvent
     {
         public int TickIndex;
@@ -409,7 +443,7 @@ public partial class HeatupSimEngine : MonoBehaviour
 
     #endregion
 
-    #region v1.1.0 HZP Systems — Steam Dump, HZP Stabilization, Heater PID
+    #region v1.1.0 HZP Systems â€” Steam Dump, HZP Stabilization, Heater PID
 
     // Steam Dump Controller State
     [HideInInspector] public SteamDumpState steamDumpState;
@@ -599,7 +633,7 @@ public partial class HeatupSimEngine : MonoBehaviour
     // v5.4.2.0 FF-05 Fix #4: One-time ledger re-baseline after first physics step
     private bool firstStepLedgerBaselined = false;
 
-    // Solid plant state — owned by SolidPlantPressure physics module
+    // Solid plant state â€” owned by SolidPlantPressure physics module
     [HideInInspector] public SolidPlantState solidPlantState;
 
     // Solid plant display values
@@ -655,7 +689,7 @@ public partial class HeatupSimEngine : MonoBehaviour
 
     #endregion
 
-    #region History Buffers — Read by visual for graphing
+    #region History Buffers â€” Read by visual for graphing
 
     [HideInInspector] public List<float> tempHistory = new List<float>();
     [HideInInspector] public List<float> pressHistory = new List<float>();
@@ -689,7 +723,7 @@ public partial class HeatupSimEngine : MonoBehaviour
 
     #endregion
 
-    #region Event Log — Read by visual dashboard
+    #region Event Log â€” Read by visual dashboard
 
     [HideInInspector] public List<EventLogEntry> eventLog = new List<EventLogEntry>();
     const int MAX_EVENT_LOG = 200;
@@ -709,8 +743,8 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public RCPContribution rcpContribution;  // Aggregate ramp state for display
     [HideInInspector] public float effectiveRCPHeat;            // Ramped RCP heat (MW) fed to physics
 
-    // Constants — shared across partials
-    const float MAX_RATE = 50f;  // Tech Spec limit °F/hr
+    // Constants â€” shared across partials
+    const float MAX_RATE = 50f;  // Tech Spec limit Â°F/hr
     const float PZR_HEATER_POWER_MW = PlantConstants.HEATER_POWER_TOTAL / 1000f;  // 1800 kW = 1.8 MW
     const float DP0003_DETERMINISTIC_TIMESTEP_HR = 1f / 360f;  // 10-second deterministic physics step
     const float DP0003_INTERVAL_LOG_HR = 0.25f;                // 15-minute deterministic log period
@@ -771,13 +805,13 @@ public partial class HeatupSimEngine : MonoBehaviour
     [HideInInspector] public int hotPathWarningSuppressedCount = 0;
 
     // v4.4.0: Letdown orifice lineup state.
-    // Per NRC HRTD 4.1: Three parallel orifices (2×75 + 1×45 gpm).
+    // Per NRC HRTD 4.1: Three parallel orifices (2Ã—75 + 1Ã—45 gpm).
     // Operator adjusts lineup based on PZR level trend during heatup.
     // Normal lineup: one 75-gpm orifice. During thermal expansion,
     // operator opens additional orifices to control PZR level.
     [HideInInspector] public int orifice75Count = 1;      // 75-gpm orifices open (1-2)
     [HideInInspector] public bool orifice45Open = false;   // 45-gpm orifice open
-    [HideInInspector] public string orificeLineupDesc = "1×75 gpm";  // Display string
+    [HideInInspector] public string orificeLineupDesc = "1Ã—75 gpm";  // Display string
     private int pzrOrificeDiagTickCounter = 0;
     private int pzrOrificeDiagLast75Count = -1;
     private bool pzrOrificeDiagLast45Open = false;
@@ -811,7 +845,7 @@ public partial class HeatupSimEngine : MonoBehaviour
     public string LogPath => logPath;
 
     // ========================================================================
-    // TIME ACCELERATION CONTROL — Called by the visual dashboard
+    // TIME ACCELERATION CONTROL â€” Called by the visual dashboard
     // ========================================================================
 
     /// <summary>
@@ -845,8 +879,8 @@ public partial class HeatupSimEngine : MonoBehaviour
         HeatupSimEngine[] instances = FindObjectsOfType<HeatupSimEngine>();
         if (instances.Length > 1)
         {
-            // Another engine already exists (the persistent one) — destroy this duplicate
-            Debug.Log($"[HeatupSimEngine] Duplicate detected — destroying this instance on '{gameObject.name}'");
+            // Another engine already exists (the persistent one) â€” destroy this duplicate
+            Debug.Log($"[HeatupSimEngine] Duplicate detected â€” destroying this instance on '{gameObject.name}'");
             Destroy(gameObject);
             return;
         }
@@ -993,7 +1027,7 @@ public partial class HeatupSimEngine : MonoBehaviour
     }
 
     // ========================================================================
-    // MAIN SIMULATION COROUTINE — Frame-rate decoupled
+    // MAIN SIMULATION COROUTINE â€” Frame-rate decoupled
     // Initialization delegated to HeatupSimEngine.Init.cs
     // ========================================================================
 
@@ -1002,7 +1036,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         isRunning = true;
         _shutdownRequested = false;  // v0.9.5: Reset shutdown flag at start
 
-        // Initialize — delegates to Init partial
+        // Initialize â€” delegates to Init partial
         InitializeSimulation();
         PublishTelemetrySnapshot();
 
@@ -1021,7 +1055,7 @@ public partial class HeatupSimEngine : MonoBehaviour
 
         // v5.4.1 Audit Fix: Emit Interval_000 at t=0.00 for cold-start observability.
         // Captures initial pressure, CVCS state, and audit baseline before any physics steps.
-        SaveIntervalLog();  // logCount 0→1, creates Interval_001_0.00hr.txt
+        SaveIntervalLog();  // logCount 0â†’1, creates Interval_001_0.00hr.txt
         // Note: Interval numbering starts at 001 (SaveIntervalLog increments internally).
         // Subsequent interval logs continue from current logCount.
 
@@ -1079,9 +1113,9 @@ public partial class HeatupSimEngine : MonoBehaviour
                         float pzrT = solidPlantState.T_pzr;
                         float pzrDThr = solidPlantState.PzrHeatRate;
                         Debug.Log($"[STARTUP T+{simSec:F0}s] P={pressure:F1}psia  P_filt={pFilt:F1}  " +
-                                  $"SP={pSP:F0}  ΔP={dpSP:+F1;-F1}  " +
+                                  $"SP={pSP:F0}  Î”P={dpSP:+F1;-F1}  " +
                                   $"Mode={mode}  " +
-                                  $"PZR_T={pzrT:F1}°F  dT={pzrDThr:F1}°F/hr  " +
+                                  $"PZR_T={pzrT:F1}Â°F  dT={pzrDThr:F1}Â°F/hr  " +
                                   $"Htr={pzrHeaterPower:F3}MW  " +
                                   $"Chg={chargingFlow:F1}  Ltd={letdownFlow:F1}  Net={netCVCS:+F1;-F1}gpm  " +
                                   $"NetCmd={netCmd:+F2;-F2}  NetEff={netEff:+F2;-F2}  Slew={slewClamp}");
@@ -1117,7 +1151,7 @@ public partial class HeatupSimEngine : MonoBehaviour
                     logTimer = 0f;
                     if (enableHighFrequencyPerfLogs)
                     {
-                        Debug.Log($"[T+{simTime:F2}hr] T_avg={T_avg:F1}°F, P={pressure:F0}psia, Subcool={subcooling:F1}°F, PZR={pzrLevel:F1}%, RCPs={rcpCount}, Rate={heatupRate:F1}°F/hr");
+                        Debug.Log($"[T+{simTime:F2}hr] T_avg={T_avg:F1}Â°F, P={pressure:F0}psia, Subcool={subcooling:F1}Â°F, PZR={pzrLevel:F1}%, RCPs={rcpCount}, Rate={heatupRate:F1}Â°F/hr");
                     }
                 }
 
@@ -1151,7 +1185,7 @@ public partial class HeatupSimEngine : MonoBehaviour
     }
 
     // ========================================================================
-    // PHYSICS STEP — Dispatches to physics modules and partial class methods
+    // PHYSICS STEP â€” Dispatches to physics modules and partial class methods
     // ========================================================================
 
     void StepSimulation(float dt)
@@ -1167,7 +1201,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         float prevCouplingAlphaStep = smoothedRegime2Alpha;
 
         // ================================================================
-        // 1. RCP STARTUP SEQUENCE — Delegated to RCPSequencer module
+        // 1. RCP STARTUP SEQUENCE â€” Delegated to RCPSequencer module
         //    v0.4.0 Issue #3: Tracks per-pump start times for staged ramp-up.
         //    Pre-seeds PI controller at each new pump start.
         // ================================================================
@@ -1181,8 +1215,8 @@ public partial class HeatupSimEngine : MonoBehaviour
                 for (int p = rcpCount; p < targetRcpCount; p++)
                 {
                     rcpStartTimes[p] = simTime;
-                    LogEvent(EventSeverity.ACTION, $"RCP #{p + 1} START COMMAND at T_pzr={T_pzr:F1}°F, T_rcs={T_rcs:F1}°F (ramping ~{PlantConstants.RCP_TOTAL_RAMP_DURATION_HR * 60:F0} min)");
-                    Debug.Log($"[T+{simTime:F2}hr] === RCP #{p + 1} START COMMAND === T_pzr={T_pzr:F1}°F, T_rcs={T_rcs:F1}°F, ΔT={T_pzr - T_rcs:F1}°F");
+                    LogEvent(EventSeverity.ACTION, $"RCP #{p + 1} START COMMAND at T_pzr={T_pzr:F1}Â°F, T_rcs={T_rcs:F1}Â°F (ramping ~{PlantConstants.RCP_TOTAL_RAMP_DURATION_HR * 60:F0} min)");
+                    Debug.Log($"[T+{simTime:F2}hr] === RCP #{p + 1} START COMMAND === T_pzr={T_pzr:F1}Â°F, T_rcs={T_rcs:F1}Â°F, Î”T={T_pzr - T_rcs:F1}Â°F");
                 }
 
                 rcpCount = targetRcpCount;
@@ -1208,16 +1242,16 @@ public partial class HeatupSimEngine : MonoBehaviour
         }
 
         // ================================================================
-        // 1B. HEATER CONTROL — Must run BEFORE physics so throttled
+        // 1B. HEATER CONTROL â€” Must run BEFORE physics so throttled
         //     power feeds into IsolatedHeatingStep / BulkHeatupStep.
         //     Uses pressureRate from PREVIOUS timestep (one-step lag is
-        //     physically reasonable — real controllers have 1–3 s sensor
+        //     physically reasonable â€” real controllers have 1â€“3 s sensor
         //     and signal processing delay).
         //     Fix for Issue #1: Heater throttle output was previously
         //     calculated AFTER physics, so physics always consumed the
         //     full 1.8 MW regardless of controller output.
         //
-        //     v4.4.0: Added PRESSURIZE_AUTO → AUTOMATIC_PID transition.
+        //     v4.4.0: Added PRESSURIZE_AUTO â†’ AUTOMATIC_PID transition.
         //     When pressure reaches ~2200 psia, the 20% minimum power
         //     floor is no longer appropriate. PID control takes over
         //     with proportional + backup heater staging at 2235 psig.
@@ -1242,7 +1276,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             string requestedMode = currentHeaterMode.ToString();
 
             // ==============================================================
-            // v4.4.0: MODE TRANSITION — PRESSURIZE_AUTO → AUTOMATIC_PID
+            // v4.4.0: MODE TRANSITION â€” PRESSURIZE_AUTO â†’ AUTOMATIC_PID
             // Per NRC HRTD 10.2: Normal pressure control uses PID with
             // proportional + backup heater groups at 2235 psig setpoint.
             // Transition occurs when pressure reaches operating band.
@@ -1259,9 +1293,9 @@ public partial class HeatupSimEngine : MonoBehaviour
                 heaterPIDActive = true;
 
                 LogEvent(EventSeverity.ACTION,
-                    $"HEATER MODE: PRESSURIZE_AUTO → AUTOMATIC_PID at {pressure:F0} psia ({currentPressure_psig:F0} psig)");
+                    $"HEATER MODE: PRESSURIZE_AUTO â†’ AUTOMATIC_PID at {pressure:F0} psia ({currentPressure_psig:F0} psig)");
                 LogEvent(EventSeverity.INFO,
-                    $"PID heater control active — setpoint {PlantConstants.PZR_OPERATING_PRESSURE_PSIG:F0} psig");
+                    $"PID heater control active â€” setpoint {PlantConstants.PZR_OPERATING_PRESSURE_PSIG:F0} psig");
             }
 
             // ==============================================================
@@ -1370,7 +1404,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         // 1B-SPRAY: PRESSURIZER SPRAY SYSTEM (v4.4.0)
         //     Spray modulates above 2260 psig to condense PZR steam.
         //     Uses T_cold from PREVIOUS timestep (1-step lag, same
-        //     approach as pressureRate — physically reasonable).
+        //     approach as pressureRate â€” physically reasonable).
         //     Spray system enabled when heater PID is active (AUTOMATIC_PID).
         //     Per NRC HRTD 10.2: spray and heaters are coordinated by
         //     the same master pressure controller.
@@ -1391,7 +1425,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             if (sprayState.IsActive && !sprayActive)
             {
                 LogEvent(EventSeverity.ACTION,
-                    $"SPRAY ACTIVATED at {pressure:F0} psia — valve {sprayState.ValvePosition * 100:F0}%");
+                    $"SPRAY ACTIVATED at {pressure:F0} psia â€” valve {sprayState.ValvePosition * 100:F0}%");
             }
             
             // Sync display fields
@@ -1441,7 +1475,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         }
 
         // ================================================================
-        // 2. PHYSICS CALCULATIONS — Using actual modules
+        // 2. PHYSICS CALCULATIONS â€” Using actual modules
         // ================================================================
         float pzrWaterMass_lb = pzrWaterVolume * WaterProperties.WaterDensity(T_pzr, pressure);
         float pzrHeatCap = ThermalMass.FluidHeatCapacity(pzrWaterMass_lb, T_pzr, pressure);
@@ -1457,11 +1491,11 @@ public partial class HeatupSimEngine : MonoBehaviour
 
         // ================================================================
         // v0.4.0 Issue #3: Three-regime physics model
-        //   Regime 1: No RCPs (flow fraction = 0) — PZR/RCS thermally isolated
-        //   Regime 2: RCPs ramping (0 < α < 1) — blended isolated/coupled
-        //   Regime 3: All started pumps fully running (α = 1) — fully coupled
+        //   Regime 1: No RCPs (flow fraction = 0) â€” PZR/RCS thermally isolated
+        //   Regime 2: RCPs ramping (0 < Î± < 1) â€” blended isolated/coupled
+        //   Regime 3: All started pumps fully running (Î± = 1) â€” fully coupled
         //
-        // Coupling factor α = min(1.0, totalFlowFraction) represents the
+        // Coupling factor Î± = min(1.0, totalFlowFraction) represents the
         // degree of thermal coupling between PZR and RCS via surge line.
         // This smoothly transitions the physics from isolated to coupled
         // over ~40 min per pump, preventing convergence discontinuities.
@@ -1478,11 +1512,11 @@ public partial class HeatupSimEngine : MonoBehaviour
         if (rcpCount == 0 || alpha < 0.001f)
         {
             // ============================================================
-            // REGIME 1: No RCPs — PZR and RCS thermally isolated
+            // REGIME 1: No RCPs â€” PZR and RCS thermally isolated
             // ============================================================
 
             // v3.0.0: Update SG model even with no RCPs (for display state)
-            // Heat transfer is negligible (HTC_NO_RCPS ≈ 8), but this keeps
+            // Heat transfer is negligible (HTC_NO_RCPS â‰ˆ 8), but this keeps
             // thermocline and boiling state current for the dashboard.
             ApplySGBoundaryAuthority();
             var sgResult_r1 = SGMultiNodeThermal.Update(ref sgMultiNodeState, T_rcs, 0, pressure, dt);
@@ -1501,7 +1535,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             sgNitrogenIsolated = sgResult_r1.NitrogenIsolated;
             sgBoilingIntensity = sgResult_r1.BoilingIntensity;
             UpdateSGBoundaryDiagnostics(sgResult_r1, dt);
-            // v5.4.2: SG draining/level display sync (forensic fix — 7 fields)
+            // v5.4.2: SG draining/level display sync (forensic fix â€” 7 fields)
             sgDrainingActive       = sgMultiNodeState.DrainingActive;
             sgDrainingComplete     = sgMultiNodeState.DrainingComplete;
             sgDrainingRate_gpm     = sgMultiNodeState.DrainingRate_gpm;
@@ -1561,7 +1595,7 @@ public partial class HeatupSimEngine : MonoBehaviour
                 chargingFlow = solidPlantState.ChargingFlow;
                 surgeFlow = solidPlantState.SurgeFlow;
 
-                // RCS INVENTORY UPDATE — CVCS net flow during solid ops
+                // RCS INVENTORY UPDATE â€” CVCS net flow during solid ops
                 float rho_rcs = WaterProperties.WaterDensity(T_rcs, pressure);
                 ApplyPrimaryBoundaryFlowPBOC(dt, rho_rcs, 0, "SOLID");
                 rcsWaterMass = physicsState.RCSWaterMass;
@@ -1587,20 +1621,20 @@ public partial class HeatupSimEngine : MonoBehaviour
             else
             {
                 // ============================================================
-                // REGIME 1: Bubble exists, no RCPs — Isolated PZR heating
+                // REGIME 1: Bubble exists, no RCPs â€” Isolated PZR heating
                 // Delegated to RCSHeatup.IsolatedHeatingStep()
                 //
                 // ---- v0.3.0.0 Phase B: AUTHORITY OWNERSHIP (CS-0026/0029/0030) ----
                 // Field Authority:
-                //   TotalPrimaryMass_lb  → ENGINE (mutated only by CVCS boundary flows)
-                //   RCSWaterMass         → PHYSICS (BubbleFormation state machine)
-                //   PZRWaterMass/Steam   → PHYSICS (BubbleFormation state machine)
+                //   TotalPrimaryMass_lb  â†’ ENGINE (mutated only by CVCS boundary flows)
+                //   RCSWaterMass         â†’ PHYSICS (BubbleFormation state machine)
+                //   PZRWaterMass/Steam   â†’ PHYSICS (BubbleFormation state machine)
                 // Order of Operations:
-                //   1. IsolatedHeatingStep → thermal updates (T_pzr, T_rcs, surgeFlow)
+                //   1. IsolatedHeatingStep â†’ thermal updates (T_pzr, T_rcs, surgeFlow)
                 //      v0.3.2.0: When two-phase active, PZR dT bypassed (CS-0043 fix)
-                //   2. CVCS boundary flow → mutate TotalPrimaryMass_lb
-                //   3. BubbleFormation state machine → mutate component masses (step 3 below)
-                //   4. Post-step assertion → component sum vs ledger
+                //   2. CVCS boundary flow â†’ mutate TotalPrimaryMass_lb
+                //   3. BubbleFormation state machine â†’ mutate component masses (step 3 below)
+                //   4. Post-step assertion â†’ component sum vs ledger
                 // ============================================================
 
                 // v0.3.2.0 CS-0043: Determine two-phase state BEFORE calling IsolatedHeatingStep.
@@ -1632,7 +1666,7 @@ public partial class HeatupSimEngine : MonoBehaviour
                 // v0.3.2.0 CS-0043: Psat override REMOVED.
                 // Previously (v0.3.0.0 Fix 3.2), two-phase pressure was set to Psat(T_pzr).
                 // This created a ratchet: conduction/insulation losses pulled T_pzr below
-                // T_sat(P_old), so Psat(T_pzr) < P_old — monotonic decline.
+                // T_sat(P_old), so Psat(T_pzr) < P_old â€” monotonic decline.
                 // With the two-phase bypass, IsolatedHeatingStep returns T_pzr = T_sat(P)
                 // and P unchanged. Psat(T_sat(P)) = P (identity, no ratchet).
                 // Pressure during two-phase is now stable by construction.
@@ -1677,7 +1711,7 @@ public partial class HeatupSimEngine : MonoBehaviour
                 if (enableHighFrequencyPerfLogs && (simTime < 0.02f || (simTime % 0.25f < dt)))
                 {
                     float netHeat_MW = isoResult.ConductionHeat_MW - heatLoss_MW;
-                    Debug.Log($"[Phase1 Heat Balance] T_pzr={T_pzr:F1}°F, T_rcs={T_rcs:F1}°F, DeltaT={T_pzr - T_rcs:F2}°F");
+                    Debug.Log($"[Phase1 Heat Balance] T_pzr={T_pzr:F1}Â°F, T_rcs={T_rcs:F1}Â°F, DeltaT={T_pzr - T_rcs:F2}Â°F");
                     Debug.Log($"  Surge line natural convection: {isoResult.ConductionHeat_MW * 1000:F3} kW");
                     Debug.Log($"  RCS insulation heat loss: {heatLoss_MW * 1000:F3} kW");
                     Debug.Log($"  Net heat to RCS: {netHeat_MW * 1000:F3} kW ({(netHeat_MW >= 0 ? "warming" : "cooling")})");
@@ -1688,9 +1722,9 @@ public partial class HeatupSimEngine : MonoBehaviour
         if (!IsLegacyPressurizerControlBypassedForCoordinatorStep())
         {
             // ============================================================
-            // REGIME 2: RCPs Ramping — Blended isolated/coupled physics
+            // REGIME 2: RCPs Ramping â€” Blended isolated/coupled physics
             // v0.4.0 Issue #3: Runs BOTH physics paths and blends results
-            // by coupling factor α, smoothly transitioning from isolated
+            // by coupling factor Î±, smoothly transitioning from isolated
             // to coupled over ~40 min as pumps ramp up.
             //
             // v0.9.6 FIX: Must sync physicsState PZR volumes from engine state
@@ -1700,33 +1734,33 @@ public partial class HeatupSimEngine : MonoBehaviour
             //
             // ---- v0.1.0.0 Phase D: AUTHORITY OWNERSHIP (CS-0004) ----
             // Field Authority:
-            //   TotalPrimaryMass_lb  → ENGINE (mutated only by CVCS boundary flows)
-            //   RCSWaterMass         → SOLVER (derived as remainder = Total - PZR)
-            //   PZRWaterMass/Steam   → SOLVER (distributed by CoupledThermo)
+            //   TotalPrimaryMass_lb  â†’ ENGINE (mutated only by CVCS boundary flows)
+            //   RCSWaterMass         â†’ SOLVER (derived as remainder = Total - PZR)
+            //   PZRWaterMass/Steam   â†’ SOLVER (distributed by CoupledThermo)
             // Order of Operations:
             //   1. Rebase ledger (first step only)
-            //   2. CVCS boundary flow → mutate TotalPrimaryMass_lb
+            //   2. CVCS boundary flow â†’ mutate TotalPrimaryMass_lb
             //   3. Spray condensation (internal PZR transfer)
-            //   4. BulkHeatupStep → CoupledThermo distributes canonical mass
-            //   5. Blend with isolated result by α
+            //   4. BulkHeatupStep â†’ CoupledThermo distributes canonical mass
+            //   5. Blend with isolated result by Î±
             // ============================================================
 
             float prevPzrLevel_pct = pzrLevel;
 
-            // --- Run isolated path (weighted by 1-α) ---
+            // --- Run isolated path (weighted by 1-Î±) ---
             var isoResult = RCSHeatup.IsolatedHeatingStep(
                 T_pzr, T_rcs, pressure,
                 pzrHeaterPower, pzrWaterVolume,
                 pzrHeatCap, rcsHeatCap, dt,
                 pzrSteamVolume: pzrSteamVolume);
 
-            // --- Run coupled path (weighted by α) ---
+            // --- Run coupled path (weighted by Î±) ---
             // Use effective ramped heat, not full binary heat
             physicsState.Temperature = T_rcs;
             physicsState.Pressure = pressure;
             
             // IP-0016 PBOC/CS-0050: Sync PZR volumes for solver continuity
-            // without re-deriving canonical masses from V×ρ here.
+            // without re-deriving canonical masses from VÃ—Ï here.
             physicsState.PZRWaterVolume = pzrWaterVolume;
             physicsState.PZRSteamVolume = pzrSteamVolume;
 
@@ -1759,7 +1793,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             }
 
             // ============================================================
-            // v4.4.0: SPRAY CONDENSATION — Apply BEFORE CoupledThermo solver
+            // v4.4.0: SPRAY CONDENSATION â€” Apply BEFORE CoupledThermo solver
             // Spray condenses PZR steam, transferring mass from steam to water.
             // This directly reduces pressure by shrinking the steam bubble.
             // Must be applied before solver so it computes equilibrium with
@@ -1788,7 +1822,7 @@ public partial class HeatupSimEngine : MonoBehaviour
                 sgResult_r2.TotalHeatRemoval_MW, sgMultiNodeState.BulkAverageTemp_F,
                 physicsState.TotalPrimaryMass_lb);
 
-            // --- Blend results using coupling factor α ---
+            // --- Blend results using coupling factor Î± ---
             float oneMinusAlpha = 1.0f - alpha;
             // IP-0019 transient stabilization: early startup coupling is nonlinear.
             // Low RCP flow fractions should not immediately force full PZR/RCS mass exchange.
@@ -1819,7 +1853,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             // v0.9.6 FIX: Use incremental change blending for PZR volume instead of
             // absolute blending. This prevents discontinuities at regime transitions.
             // 
-            // Old (problematic): pzrWaterVolume = pzrWaterVolume * (1-α) + physicsState.PZRWaterVolume * α
+            // Old (problematic): pzrWaterVolume = pzrWaterVolume * (1-Î±) + physicsState.PZRWaterVolume * Î±
             // This blended between current volume and a "target" that could be very different.
             //
             // New: Blend the DELTA (change) from each physics path, then apply to current volume.
@@ -1855,7 +1889,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             sgNitrogenIsolated = sgResult_r2.NitrogenIsolated;
             sgBoilingIntensity = sgResult_r2.BoilingIntensity;
             UpdateSGBoundaryDiagnostics(sgResult_r2, dt);
-            // v5.4.2: SG draining/level display sync (forensic fix — 7 fields)
+            // v5.4.2: SG draining/level display sync (forensic fix â€” 7 fields)
             sgDrainingActive       = sgMultiNodeState.DrainingActive;
             sgDrainingComplete     = sgMultiNodeState.DrainingComplete;
             sgDrainingRate_gpm     = sgMultiNodeState.DrainingRate_gpm;
@@ -1870,7 +1904,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             physicsState.PZRWaterVolume = pzrWaterVolume;
             physicsState.PZRSteamVolume = pzrSteamVolume;
             // PZRLevel is a computed property (PZRWaterVolume / PZR_TOTAL_VOLUME * 100)
-            // — automatically correct once PZRWaterVolume is set above
+            // â€” automatically correct once PZRWaterVolume is set above
             rcsWaterMass = physicsState.RCSWaterMass;
 
             if (!coupledResult.Converged &&
@@ -1884,12 +1918,12 @@ public partial class HeatupSimEngine : MonoBehaviour
             {
                 float rcpBaseTime = bubbleFormationTime + RCP1_START_TIME;
                 float timeToNext = RCP_START_INTERVAL - ((simTime - rcpBaseTime) % RCP_START_INTERVAL);
-                statusMessage = $"RCPs: {rcpCount}/4 RAMPING (α={alpha:F2}) - NEXT IN {timeToNext * 60:F0} MIN";
+                statusMessage = $"RCPs: {rcpCount}/4 RAMPING (Î±={alpha:F2}) - NEXT IN {timeToNext * 60:F0} MIN";
                 heatupPhaseDesc = $"RCS HEATUP - {rcpCount} RCPs RAMPING ({effectiveRCPHeat:F1}/{rcpCount * PlantConstants.RCP_HEAT_MW_EACH:F1} MW)";
             }
             else
             {
-                statusMessage = $"ALL 4 RCPs RAMPING (α={alpha:F2}, {rcpContribution.PumpsFullyRunning}/4 at rated)";
+                statusMessage = $"ALL 4 RCPs RAMPING (Î±={alpha:F2}, {rcpContribution.PumpsFullyRunning}/4 at rated)";
                 heatupPhaseDesc = $"HEATUP - 4 RCPs RAMPING ({effectiveRCPHeat:F1}/{PlantConstants.RCP_HEAT_MW:F0} MW)";
             }
 
@@ -1901,25 +1935,25 @@ public partial class HeatupSimEngine : MonoBehaviour
         else
         {
             // ============================================================
-            // REGIME 3: All Started Pumps Fully Running — Full CoupledThermo
+            // REGIME 3: All Started Pumps Fully Running â€” Full CoupledThermo
             // v0.9.6: Added PZR state sync for consistency with REGIME 2 fix
             //
             // ---- v0.1.0.0 Phase D: AUTHORITY OWNERSHIP (CS-0004) ----
             // Field Authority:
-            //   TotalPrimaryMass_lb  → ENGINE (mutated only by CVCS boundary flows)
-            //   RCSWaterMass         → SOLVER (derived as remainder = Total - PZR)
-            //   PZRWaterMass/Steam   → SOLVER (distributed by CoupledThermo)
+            //   TotalPrimaryMass_lb  â†’ ENGINE (mutated only by CVCS boundary flows)
+            //   RCSWaterMass         â†’ SOLVER (derived as remainder = Total - PZR)
+            //   PZRWaterMass/Steam   â†’ SOLVER (distributed by CoupledThermo)
             // Order of Operations:
             //   1. Rebase ledger (first step only)
-            //   2. CVCS boundary flow → mutate TotalPrimaryMass_lb
+            //   2. CVCS boundary flow â†’ mutate TotalPrimaryMass_lb
             //   3. Spray condensation (internal PZR transfer)
-            //   4. BulkHeatupStep → CoupledThermo distributes canonical mass
+            //   4. BulkHeatupStep â†’ CoupledThermo distributes canonical mass
             // ============================================================
             physicsState.Temperature = T_rcs;
             physicsState.Pressure = pressure;
             
             // IP-0016 PBOC/CS-0050: Sync PZR volumes for solver continuity
-            // without re-deriving canonical masses from V×ρ here.
+            // without re-deriving canonical masses from VÃ—Ï here.
             physicsState.PZRWaterVolume = pzrWaterVolume;
             physicsState.PZRSteamVolume = pzrSteamVolume;
 
@@ -1952,7 +1986,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             }
 
             // ============================================================
-            // v4.4.0: SPRAY CONDENSATION — Apply BEFORE CoupledThermo solver
+            // v4.4.0: SPRAY CONDENSATION â€” Apply BEFORE CoupledThermo solver
             // Spray condenses PZR steam, transferring mass from steam to water.
             // This directly reduces pressure by shrinking the steam bubble.
             // The CoupledThermo solver then computes new equilibrium P/T/V
@@ -2012,7 +2046,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             sgNitrogenIsolated = sgResult_r3.NitrogenIsolated;
             sgBoilingIntensity = sgResult_r3.BoilingIntensity;
             UpdateSGBoundaryDiagnostics(sgResult_r3, dt);
-            // v5.4.2: SG draining/level display sync (forensic fix — 7 fields)
+            // v5.4.2: SG draining/level display sync (forensic fix â€” 7 fields)
             sgDrainingActive       = sgMultiNodeState.DrainingActive;
             sgDrainingComplete     = sgMultiNodeState.DrainingComplete;
             sgDrainingRate_gpm     = sgMultiNodeState.DrainingRate_gpm;
@@ -2055,7 +2089,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         }
 
         // ================================================================
-        // 3. FINAL UPDATES — Temperature averaging, rates, mode
+        // 3. FINAL UPDATES â€” Temperature averaging, rates, mode
         // v0.7.1: Corrected T_avg calculation to Westinghouse definition
         // ================================================================
 
@@ -2064,7 +2098,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         // ensuring the canonical ledger starts from a clean component-sum baseline.
         // See: Regime 2 (~line 1171) and Regime 3 (~line 1325) rebase blocks.
 
-        // T_HOT / T_COLD — Delegated to LoopThermodynamics module (calculate FIRST)
+        // T_HOT / T_COLD â€” Delegated to LoopThermodynamics module (calculate FIRST)
         {
             var loopTemps = LoopThermodynamics.CalculateLoopTemperatures(
                 T_rcs, pressure, rcpCount, rcpHeat, T_pzr);
@@ -2073,9 +2107,9 @@ public partial class HeatupSimEngine : MonoBehaviour
         }
 
         // T_avg per Westinghouse definition: simple average of loop temperatures
-        // Per PlantConstants.T_AVG = 588.5°F = (T_HOT + T_COLD) / 2 = (619 + 558) / 2
+        // Per PlantConstants.T_AVG = 588.5Â°F = (T_HOT + T_COLD) / 2 = (619 + 558) / 2
         // The pressurizer is NOT included in T_avg (it's tracked separately)
-        // This ensures T_COLD ≤ T_AVG ≤ T_HOT in all operating regimes
+        // This ensures T_COLD â‰¤ T_AVG â‰¤ T_HOT in all operating regimes
         T_avg = (T_hot + T_cold) / 2.0f;
 
         pzrHeatRate = (T_pzr - prevT_pzr) / dt;
@@ -2089,12 +2123,12 @@ public partial class HeatupSimEngine : MonoBehaviour
         rcsWaterMass = physicsState.RCSWaterMass;
 
         // ================================================================
-        // 4. BUBBLE FORMATION STATE MACHINE — Delegated to BubbleFormation partial
+        // 4. BUBBLE FORMATION STATE MACHINE â€” Delegated to BubbleFormation partial
         // ================================================================
         bool bubbleDrainActive = UpdateBubbleFormation(dt);
 
         // ================================================================
-        // 5. CVCS, RCS INVENTORY, VCT — Delegated to CVCS partial
+        // 5. CVCS, RCS INVENTORY, VCT â€” Delegated to CVCS partial
         // ================================================================
         UpdateCVCSFlows(dt, bubbleDrainActive);
         AssignThermoWriterByInvariants();
@@ -2111,7 +2145,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         // ================================================================
         // 5a. v0.3.0.0 Phase B (Fix 3.1): REGIME 1 MASS LEDGER ASSERTION
         // Diagnostic check: component sum must match ledger.
-        // This assertion detects bugs — it does NOT correct them.
+        // This assertion detects bugs â€” it does NOT correct them.
         // The ledger remains authoritative (v0.1.0.0 Article III).
         // Only active during Regime 1 two-phase (DRAIN/STABILIZE/PRESSURIZE).
         // ================================================================
@@ -2136,7 +2170,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         simTime += dt;
 
         // ================================================================
-        // 6. RVLIS & ANNUNCIATORS — Delegated to Alarms partial
+        // 6. RVLIS & ANNUNCIATORS â€” Delegated to Alarms partial
         // ================================================================
         UpdateRVLIS();
         UpdateAnnunciators();
@@ -3379,5 +3413,8 @@ public partial class HeatupSimEngine : MonoBehaviour
         int regimeId = GetCurrentPhysicsRegimeId(smoothedRegime2Alpha);
         return GetPhysicsRegimeLabel(regimeId, smoothedRegime2Alpha);
     }
+}
+
+
 }
 

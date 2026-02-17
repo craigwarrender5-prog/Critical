@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Validation Dashboard Launcher
 // ValidationDashboardLauncher.cs - Runtime Dashboard Instantiation
 // ============================================================================
@@ -30,6 +30,7 @@
 
 using UnityEngine;
 
+using Critical.Validation;
 namespace Critical.UI.ValidationDashboard
 {
     /// <summary>
@@ -164,3 +165,4 @@ namespace Critical.UI.ValidationDashboard
         }
     }
 }
+

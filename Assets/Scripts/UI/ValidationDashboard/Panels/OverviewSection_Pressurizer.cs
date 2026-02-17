@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Overview Section: Pressurizer
 // OverviewSection_Pressurizer.cs - PZR Level Gauge and Status Summary
 // ============================================================================
@@ -10,8 +10,8 @@
 //
 // INSTRUMENTS:
 //   Top: ArcGauge (PZR Level 0-100%)
-//   Middle: 2× StatusIndicators (BUBBLE, HEATERS)
-//   Bottom: 2× DigitalReadouts (PZR Temp, Surge Flow)
+//   Middle: 2Ã— StatusIndicators (BUBBLE, HEATERS)
+//   Bottom: 2Ã— DigitalReadouts (PZR Temp, Surge Flow)
 //
 // VERSION: 2.0.0
 // DATE: 2026-02-17
@@ -23,6 +23,7 @@ using UnityEngine.UI;
 using TMPro;
 using Critical.Physics;
 
+using Critical.Validation;
 namespace Critical.UI.ValidationDashboard
 {
     public class OverviewSection_Pressurizer : OverviewSectionBase
@@ -86,7 +87,7 @@ namespace Critical.UI.ValidationDashboard
             readoutLayout.childForceExpandWidth = true;
             readoutLayout.spacing = 4;
 
-            _tempReadout = DigitalReadout.Create(readoutRow.transform, "PZR TEMP", "°F", "F1", 16f);
+            _tempReadout = DigitalReadout.Create(readoutRow.transform, "PZR TEMP", "Â°F", "F1", 16f);
             _surgeReadout = DigitalReadout.Create(readoutRow.transform, "SURGE", "gpm", "F1", 16f);
         }
 
@@ -122,3 +123,4 @@ namespace Critical.UI.ValidationDashboard
         }
     }
 }
+

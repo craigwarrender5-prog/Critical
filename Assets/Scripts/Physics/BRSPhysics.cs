@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Physics Module
 // BRSPhysics.cs - Boron Recycle System Physics
 // ============================================================================
@@ -7,36 +7,36 @@
 //   Models the Boron Recycle System (BRS) as a simplified buffer tank and
 //   batch evaporator system. Closes the primary coolant inventory loop by
 //   providing a destination for VCT divert flow (LCV-112A) and a return
-//   path for processed water (distillate → VCT makeup, concentrate → BAT).
+//   path for processed water (distillate â†’ VCT makeup, concentrate â†’ BAT).
 //
 // PHYSICS:
 //   Holdup tank mass balance:
 //     dV_holdup/dt = Q_divert_in - Q_evaporator_out
 //   Boron mass balance (mixing equation):
-//     C_holdup = (V_holdup × C_holdup + Q_in × dt × C_in) / (V_holdup + Q_in × dt)
+//     C_holdup = (V_holdup Ã— C_holdup + Q_in Ã— dt Ã— C_in) / (V_holdup + Q_in Ã— dt)
 //   Evaporator mass/boron balance:
 //     F = D + C  (feed = distillate + concentrate, mass basis)
-//     F × Cf = D × Cd + C × Cc
-//     where Cd ≈ 0 ppm (demineralised condensate), Cc ≈ 7000 ppm (4 wt%)
+//     F Ã— Cf = D Ã— Cd + C Ã— Cc
+//     where Cd â‰ˆ 0 ppm (demineralised condensate), Cc â‰ˆ 7000 ppm (4 wt%)
 //     Distillate fraction: D/F = 1 - Cf / Cc
 //     Concentrate fraction: C/F = Cf / Cc
 //
 // SOURCES:
-//   - NRC HRTD 4.1 (ML11223A214) — Sections 4.1.2.6 (BRS description),
+//   - NRC HRTD 4.1 (ML11223A214) â€” Sections 4.1.2.6 (BRS description),
 //     4.1.3.1 (LCV-112A), Fig 4.1-3 (BRS flow), Fig 4.1-4 (evaporator)
-//   - Callaway FSAR Chapter 11 (ML21195A182) — Fig 11.1A-2 (BRS design
+//   - Callaway FSAR Chapter 11 (ML21195A182) â€” Fig 11.1A-2 (BRS design
 //     parameters: 56,000 gal holdup, 21,600 gpd evaporator, DFs)
-//   - NRC HRTD 15.1 (ML11223A332) — Table 15.1-2 (evaporator capacities)
+//   - NRC HRTD 15.1 (ML11223A332) â€” Table 15.1-2 (evaporator capacities)
 //
 // UNITS:
 //   Volume: gallons | Flow: gpm | Concentration: ppm | Mass: lb
-//   Time: hours (dt parameter) | Boron mass: lb (ppm × gal × 8.34e-6)
+//   Time: hours (dt parameter) | Boron mass: lb (ppm Ã— gal Ã— 8.34e-6)
 //
 // ARCHITECTURE:
-//   - Called by: HeatupSimEngine.CVCS.cs (coordinates VCT↔BRS transfers)
+//   - Called by: HeatupSimEngine.CVCS.cs (coordinates VCTâ†”BRS transfers)
 //   - Delegates to: PlantConstants.BRS.cs (all design constants)
 //   - State owned: BRSState struct (holdup volume, processing, products)
-//   - No direct coupling to VCTPhysics — engine coordinates all transfers
+//   - No direct coupling to VCTPhysics â€” engine coordinates all transfers
 //
 // GOLD STANDARD: Yes
 // ============================================================================
@@ -59,30 +59,30 @@ namespace Critical.Physics
     public struct BRSState
     {
         // --- Holdup Tank State ---
-        public float HoldupVolume_gal;          // gal — Current water volume in holdup tanks
-        public float HoldupBoronConc_ppm;       // ppm — Boron concentration of holdup inventory
-        public float HoldupBoronMass_lb;        // lb  — Boron mass in holdup tanks
+        public float HoldupVolume_gal;          // gal â€” Current water volume in holdup tanks
+        public float HoldupBoronConc_ppm;       // ppm â€” Boron concentration of holdup inventory
+        public float HoldupBoronMass_lb;        // lb  â€” Boron mass in holdup tanks
 
         // --- Evaporator Processing State ---
         public bool ProcessingActive;           // Evaporator feed pump running
-        public float EvaporatorFeedRate_gpm;    // gpm — Current feed rate to evaporator
-        public float DistillateRate_gpm;        // gpm — Clean water output rate
-        public float ConcentrateRate_gpm;       // gpm — Concentrated boric acid output rate
+        public float EvaporatorFeedRate_gpm;    // gpm â€” Current feed rate to evaporator
+        public float DistillateRate_gpm;        // gpm â€” Clean water output rate
+        public float ConcentrateRate_gpm;       // gpm â€” Concentrated boric acid output rate
 
         // --- Processed Inventory (Available for Return) ---
-        public float DistillateAvailable_gal;   // gal — Clean water in monitor tanks
-        public float ConcentrateAvailable_gal;  // gal — Concentrated boric acid in BAT
-        public float DistillateBoron_ppm;       // ppm — Should be ≈ 0 (clean condensate)
-        public float ConcentrateBoron_ppm;      // ppm — Should be ≈ 7000 (4 wt% boric acid)
+        public float DistillateAvailable_gal;   // gal â€” Clean water in monitor tanks
+        public float ConcentrateAvailable_gal;  // gal â€” Concentrated boric acid in BAT
+        public float DistillateBoron_ppm;       // ppm â€” Should be â‰ˆ 0 (clean condensate)
+        public float ConcentrateBoron_ppm;      // ppm â€” Should be â‰ˆ 7000 (4 wt% boric acid)
 
         // --- Flow Tracking ---
-        public float InFlow_gpm;                // gpm — Current inflow from VCT divert
-        public float ReturnFlow_gpm;            // gpm — Current return to VCT
-        public float CumulativeIn_gal;          // gal — Total received from VCT divert
-        public float CumulativeProcessed_gal;   // gal — Total processed through evaporator
-        public float CumulativeDistillate_gal;  // gal — Total clean water produced
-        public float CumulativeConcentrate_gal; // gal — Total boric acid concentrate produced
-        public float CumulativeReturned_gal;    // gal — Total returned to plant systems
+        public float InFlow_gpm;                // gpm â€” Current inflow from VCT divert
+        public float ReturnFlow_gpm;            // gpm â€” Current return to VCT
+        public float CumulativeIn_gal;          // gal â€” Total received from VCT divert
+        public float CumulativeProcessed_gal;   // gal â€” Total processed through evaporator
+        public float CumulativeDistillate_gal;  // gal â€” Total clean water produced
+        public float CumulativeConcentrate_gal; // gal â€” Total boric acid concentrate produced
+        public float CumulativeReturned_gal;    // gal â€” Total returned to plant systems
 
         // --- Alarms ---
         public bool HoldupHighLevel;            // Holdup tanks approaching capacity
@@ -110,9 +110,9 @@ namespace Critical.Physics
         #region Constants
 
         /// <summary>
-        /// Boron-to-mass conversion factor: ppm × gallons × factor = lb boron.
-        /// 1 ppm = 1 mg/kg. Water density ≈ 8.34 lb/gal.
-        /// Mass_lb = ppm × gal × 8.34 / 1,000,000 = ppm × gal × 8.34e-6.
+        /// Boron-to-mass conversion factor: ppm Ã— gallons Ã— factor = lb boron.
+        /// 1 ppm = 1 mg/kg. Water density â‰ˆ 8.34 lb/gal.
+        /// Mass_lb = ppm Ã— gal Ã— 8.34 / 1,000,000 = ppm Ã— gal Ã— 8.34e-6.
         /// Source: Standard chemistry unit conversion.
         /// </summary>
         private const float BORON_MASS_FACTOR = 8.34e-6f;
@@ -192,13 +192,13 @@ namespace Critical.Physics
 
             if (actualReceived <= 0f)
             {
-                // Holdup tanks full — cannot accept divert flow
+                // Holdup tanks full â€” cannot accept divert flow
                 state.InFlow_gpm = 0f;
                 return;
             }
 
             // Mixing equation for boron concentration
-            // C_new = (V_old × C_old + V_add × C_add) / (V_old + V_add)
+            // C_new = (V_old Ã— C_old + V_add Ã— C_add) / (V_old + V_add)
             float oldBoronMass = state.HoldupVolume_gal * state.HoldupBoronConc_ppm;
             float addBoronMass = actualReceived * divertBoronConc_ppm;
             float newVolume = state.HoldupVolume_gal + actualReceived;
@@ -216,8 +216,8 @@ namespace Critical.Physics
         /// <summary>
         /// Advance evaporator batch processing by one timestep.
         /// When holdup volume exceeds minimum batch threshold, evaporator runs
-        /// at rated capacity, splitting feed into distillate (≈ 0 ppm) and
-        /// concentrate (≈ 7000 ppm). Products accumulate in monitor tanks / BAT.
+        /// at rated capacity, splitting feed into distillate (â‰ˆ 0 ppm) and
+        /// concentrate (â‰ˆ 7000 ppm). Products accumulate in monitor tanks / BAT.
         /// Called every timestep by the engine.
         /// </summary>
         /// <param name="state">BRS state (modified in place)</param>
@@ -244,14 +244,14 @@ namespace Critical.Physics
             {
                 // Evaporator feed rate: rated capacity or limited by available volume
                 float maxProcessVolume = state.HoldupVolume_gal;
-                float ratedVolume = PlantConstants.BRS_EVAPORATOR_RATE_GPM * dt * 60f; // gpm × hr × 60 min/hr = gal
+                float ratedVolume = PlantConstants.BRS_EVAPORATOR_RATE_GPM * dt * 60f; // gpm Ã— hr Ã— 60 min/hr = gal
                 float processVolume = Mathf.Min(ratedVolume, maxProcessVolume);
                 float effectiveRate = processVolume / (dt * 60f); // back-calculate effective gpm
 
                 state.EvaporatorFeedRate_gpm = effectiveRate;
 
                 // Evaporator mass/boron balance:
-                // Feed at C_holdup → Distillate at ≈ 0 ppm + Concentrate at 7000 ppm
+                // Feed at C_holdup â†’ Distillate at â‰ˆ 0 ppm + Concentrate at 7000 ppm
                 // Distillate fraction = 1 - C_holdup / C_concentrate
                 // Concentrate fraction = C_holdup / C_concentrate
                 float concBoron = PlantConstants.BRS_CONCENTRATE_BORON_PPM;
@@ -272,7 +272,7 @@ namespace Critical.Physics
                 state.HoldupVolume_gal = Mathf.Max(0f, state.HoldupVolume_gal);
 
                 // Holdup boron concentration unchanged by removal (well-mixed assumption
-                // per NRC HRTD 4.1 — recirculation pump maintains homogeneity)
+                // per NRC HRTD 4.1 â€” recirculation pump maintains homogeneity)
                 state.HoldupBoronMass_lb = state.HoldupBoronConc_ppm * state.HoldupVolume_gal * BORON_MASS_FACTOR;
 
                 // Accumulate products
@@ -361,3 +361,5 @@ namespace Critical.Physics
         #endregion
     }
 }
+
+

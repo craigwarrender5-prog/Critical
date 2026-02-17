@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - UI Component (Tab SG/RHR Partial)
 // HeatupValidationVisual.TabSGRHR.cs - Tab 4: Steam Generators / RHR
 // ============================================================================
@@ -10,17 +10,17 @@
 //   graph which includes T_SG_SEC and T_SAT traces.
 //
 //   Layout (2-column):
-//     ┌───────────────────────┬──────────────────────────────┐
-//     │ SG ARC GAUGES         │  TREND GRAPHS                │
-//     │  - SG Pressure arc    │  (TEMPS graph — top)          │
-//     │  - SG Heat Xfer arc   │  (RATES graph — bottom)       │
-//     │─────────────────────  │                              │
-//     │ SG/RHR STATUS PANEL   │                              │
-//     │  (full DrawSGRHRPanel)│                              │
-//     │  - SG secondary state │                              │
-//     │  - Boiling/N2/superheat│                             │
-//     │  - RHR mode/HX/pump   │                              │
-//     └───────────────────────┴──────────────────────────────┘
+//     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+//     â”‚ SG ARC GAUGES         â”‚  TREND GRAPHS                â”‚
+//     â”‚  - SG Pressure arc    â”‚  (TEMPS graph â€” top)          â”‚
+//     â”‚  - SG Heat Xfer arc   â”‚  (RATES graph â€” bottom)       â”‚
+//     â”‚â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€  â”‚                              â”‚
+//     â”‚ SG/RHR STATUS PANEL   â”‚                              â”‚
+//     â”‚  (full DrawSGRHRPanel)â”‚                              â”‚
+//     â”‚  - SG secondary state â”‚                              â”‚
+//     â”‚  - Boiling/N2/superheatâ”‚                             â”‚
+//     â”‚  - RHR mode/HX/pump   â”‚                              â”‚
+//     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
 // READS FROM:
 //   Delegates rendering to existing partial methods:
@@ -29,22 +29,26 @@
 //   Plus new inline arc gauges using DrawGaugeArc() from Gauges partial.
 //
 // REFERENCE:
-//   NRC HRTD 5.1 — Steam Generator design and operation
-//   NRC HRTD 19.2.2 — SG secondary side during heatup
-//   NRC HRTD 11.2 — Residual Heat Removal System
-//   Westinghouse 4-Loop PWR FSAR Chapter 5.4 — SGs, Chapter 5.5 — RHR
+//   NRC HRTD 5.1 â€” Steam Generator design and operation
+//   NRC HRTD 19.2.2 â€” SG secondary side during heatup
+//   NRC HRTD 11.2 â€” Residual Heat Removal System
+//   Westinghouse 4-Loop PWR FSAR Chapter 5.4 â€” SGs, Chapter 5.5 â€” RHR
 //
 // ARCHITECTURE:
 //   Partial class of HeatupValidationVisual. Implements:
-//     - DrawSGRHRTab(Rect) — dispatched from Core tab switch
+//     - DrawSGRHRTab(Rect) â€” dispatched from Core tab switch
 //   Contains layout orchestration + 2 new arc gauges (SG-specific).
 //
 // GOLD STANDARD: Yes
-// v5.0.0: New file — SG/RHR tab for multi-tab dashboard redesign
+// v5.0.0: New file â€” SG/RHR tab for multi-tab dashboard redesign
 // ============================================================================
 
 using UnityEngine;
 using Critical.Physics;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupValidationVisual
 {
@@ -126,17 +130,17 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // SG TAB GAUGES — SG Secondary Pressure + SG Heat Transfer
+    // SG TAB GAUGES â€” SG Secondary Pressure + SG Heat Transfer
     //
     // These arc gauges provide at-a-glance SG status that complements
     // the detailed text in DrawSGRHRPanel().
     //
-    // SG Secondary Pressure: 0–1100 psig range
+    // SG Secondary Pressure: 0â€“1100 psig range
     //   Per NRC HRTD 5.1: SG secondary pressure rises from atmospheric
     //   during heatup as primary heats the secondary side through the
     //   U-tubes. At HZP, SG pressure reaches ~1000-1050 psig.
     //
-    // SG Heat Transfer: 0–25 MW range
+    // SG Heat Transfer: 0â€“25 MW range
     //   Total heat transfer from primary to SG secondaries via natural
     //   circulation and forced flow (with RCPs). During heatup the SGs
     //   absorb thermal energy as a heat sink.
@@ -174,7 +178,7 @@ public partial class HeatupValidationVisual
             y += GAUGE_ROW_H;
         }
 
-        // Mini bars: RCS-SG ΔT and Superheat
+        // Mini bars: RCS-SG Î”T and Superheat
         {
             float barH = 18f;
 
@@ -188,17 +192,20 @@ public partial class HeatupValidationVisual
             else
                 sgDtC = _cCyanInfo;
             DrawMiniBar(new Rect(x + 2f, y, w - 4f, barH),
-                "RCS-SG ΔT", deltaTsg, 0f, 50f, sgDtC, "F1", "°F");
+                "RCS-SG Î”T", deltaTsg, 0f, 50f, sgDtC, "F1", "Â°F");
             y += barH + 2f;
 
-            // SG Superheat (°F above T_sat)
+            // SG Superheat (Â°F above T_sat)
             Color shC = engine.sgMaxSuperheat_F > 10f ? _cOrangeAccent :
                         engine.sgMaxSuperheat_F > 0f ? _cWarningAmber : _cTextSecondary;
             DrawMiniBar(new Rect(x + 2f, y, w - 4f, barH),
-                "SUPERHEAT", engine.sgMaxSuperheat_F, 0f, 50f, shC, "F1", "°F");
+                "SUPERHEAT", engine.sgMaxSuperheat_F, 0f, 50f, shC, "F1", "Â°F");
             y += barH + 2f;
         }
 
         y += GAUGE_GROUP_GAP;
     }
 }
+
+}
+

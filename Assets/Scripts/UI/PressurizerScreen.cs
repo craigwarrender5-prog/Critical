@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Pressurizer Operator Screen
 // PressurizerScreen.cs - Screen 3: Pressurizer Pressure, Level, Heaters, Spray
 // ============================================================================
@@ -59,6 +59,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+using Critical.Validation;
 namespace Critical.UI
 {
     public class PressurizerScreen : OperatorScreen
@@ -488,3 +489,4 @@ namespace Critical.UI
         #endregion
     }
 }
+

@@ -1,6 +1,19 @@
 // CRITICAL: Master the Atom - Phase 1 Core Physics Engine
 // CVCSController.cs - CVCS Charging/Letdown Flow Control
 //
+// File: Assets/Scripts/Physics/CVCSController.cs
+// Module: Critical.Physics.CVCSController
+// Responsibility: CVCS flow/heater control laws and seal-demand accounting.
+// Standards: GOLD v1.0, SRP/SOLID
+// Version: 2.3
+// Last Updated: 2026-02-17
+// Changes:
+//   - 2.3 (2026-02-17): Added GOLD metadata fields and bounded change history section.
+//   - 2.2 (2026-02-17): Confirmed PRESSURIZE_AUTO startup minimum power constraints for IP-0048.
+//   - 2.1 (2026-02-16): Expanded startup-hold heater mode support and authority reasons.
+//   - 2.0 (2026-02-15): Integrated PI charging/letdown control contract.
+//   - 1.0 (2026-02-14): Initial CVCS controller extraction from engine inline logic.
+//
 // Implements: Engine Architecture Audit Fix 7.2
 //   - PI controller for charging flow in normal (two-phase) operations
 //   - Mirrors SolidPlantPressure CVCS controller pattern for consistency

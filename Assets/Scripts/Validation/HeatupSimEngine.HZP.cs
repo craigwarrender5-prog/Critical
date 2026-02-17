@@ -1,10 +1,10 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Simulation Engine (HZP Partial)
 // HeatupSimEngine.HZP.cs - Hot Zero Power Stabilization and Handoff
 // ============================================================================
 //
 // PURPOSE:
-//   v1.1.0 Stage 6 — Integration of HZP stabilization systems:
+//   v1.1.0 Stage 6 â€” Integration of HZP stabilization systems:
 //     - Steam Dump Controller: Removes excess RCP heat to maintain T_avg
 //     - HZP Stabilization State Machine: Manages transition to stable HZP
 //     - Heater PID Controller: Smooth pressure control at HZP
@@ -19,15 +19,15 @@
 //
 // ARCHITECTURE:
 //   Partial class of HeatupSimEngine. This file owns:
-//     - InitializeHZPSystems() — Called when approaching HZP
-//     - UpdateHZPSystems(dt) — Called each timestep during HZP approach
-//     - InitiateReactorStartup() — Called by Reactor Operator GUI
-//     - GetStartupReadiness() — Returns prerequisites check
+//     - InitializeHZPSystems() â€” Called when approaching HZP
+//     - UpdateHZPSystems(dt) â€” Called each timestep during HZP approach
+//     - InitiateReactorStartup() â€” Called by Reactor Operator GUI
+//     - GetStartupReadiness() â€” Returns prerequisites check
 //
 // SOURCES:
-//   - NRC HRTD 19.0 — Plant Operations at HZP
-//   - NRC HRTD 10.2 — Pressurizer Pressure Control
-//   - NRC HRTD 11.2 — Steam Dump System
+//   - NRC HRTD 19.0 â€” Plant Operations at HZP
+//   - NRC HRTD 10.2 â€” Pressurizer Pressure Control
+//   - NRC HRTD 11.2 â€” Steam Dump System
 //
 // GOLD STANDARD: Yes
 // VERSION: 1.1.0 Stage 6
@@ -36,6 +36,10 @@
 using UnityEngine;
 using System;
 using Critical.Physics;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupSimEngine
 {
@@ -45,7 +49,7 @@ public partial class HeatupSimEngine
     
     /// <summary>
     /// Initialize HZP stabilization systems.
-    /// Called when T_avg approaches HZP approach temperature (550°F).
+    /// Called when T_avg approaches HZP approach temperature (550Â°F).
     /// </summary>
     void InitializeHZPSystems()
     {
@@ -73,7 +77,7 @@ public partial class HeatupSimEngine
         handoffInitiated = false;
         
         LogEvent(EventSeverity.ACTION, "HZP SYSTEMS INITIALIZED - Approaching Hot Zero Power");
-        Debug.Log($"[T+{simTime:F2}hr] HZP Systems initialized at T_avg={T_avg:F1}°F");
+        Debug.Log($"[T+{simTime:F2}hr] HZP Systems initialized at T_avg={T_avg:F1}Â°F");
     }
     
     // Flag to track if HZP systems have been initialized
@@ -126,12 +130,12 @@ public partial class HeatupSimEngine
         if (!shouldBeActive && hzpLifecycleActive)
         {
             hzpLifecycleActive = false;
-            LogEvent(EventSeverity.INFO, $"HZP systems standby - T_avg={T_avg:F1}°F, RCPs={rcpCount}");
+            LogEvent(EventSeverity.INFO, $"HZP systems standby - T_avg={T_avg:F1}Â°F, RCPs={rcpCount}");
         }
     }
     
     // ========================================================================
-    // HZP SYSTEM UPDATE — Called each timestep
+    // HZP SYSTEM UPDATE â€” Called each timestep
     // ========================================================================
     
     /// <summary>
@@ -173,7 +177,7 @@ public partial class HeatupSimEngine
             steamDumpState.Mode == SteamDumpMode.OFF)
         {
             SteamDumpController.EnableSteamPressureMode(ref steamDumpState, simTime);
-            LogEvent(EventSeverity.ACTION, $"STEAM DUMP AUTO-ENABLED at T_avg={T_avg:F1}°F, P_steam={steamPressure_psig:F0} psig");
+            LogEvent(EventSeverity.ACTION, $"STEAM DUMP AUTO-ENABLED at T_avg={T_avg:F1}Â°F, P_steam={steamPressure_psig:F0} psig");
         }
         
         // Update steam dump controller
@@ -188,7 +192,7 @@ public partial class HeatupSimEngine
         // ================================================================
         // 3. HEATER PID CONTROLLER (at HZP)
         // v4.4.0: PID activation and update now handled in Section 1B of
-        // StepSimulation() via the PRESSURIZE_AUTO → AUTOMATIC_PID mode
+        // StepSimulation() via the PRESSURIZE_AUTO â†’ AUTOMATIC_PID mode
         // transition at 2200 psia. This section is retained as a fallback
         // for edge cases where HZP systems initialize before Section 1B
         // has triggered the transition (should not normally occur).
@@ -255,7 +259,7 @@ public partial class HeatupSimEngine
         }
         else if (hzpState.State == HZPState.APPROACHING)
         {
-            statusMessage = $"APPROACHING HZP - T_avg={T_avg:F1}°F → 557°F";
+            statusMessage = $"APPROACHING HZP - T_avg={T_avg:F1}Â°F â†’ 557Â°F";
             heatupPhaseDesc = "APPROACHING HOT ZERO POWER";
         }
         
@@ -272,7 +276,7 @@ public partial class HeatupSimEngine
     }
     
     // ========================================================================
-    // REACTOR STARTUP HANDOFF — Called by Reactor Operator GUI
+    // REACTOR STARTUP HANDOFF â€” Called by Reactor Operator GUI
     // ========================================================================
     
     /// <summary>
@@ -311,11 +315,11 @@ public partial class HeatupSimEngine
         {
             handoffInitiated = true;
             LogEvent(EventSeverity.ACTION, "=== REACTOR STARTUP INITIATED ===");
-            LogEvent(EventSeverity.INFO, $"  T_avg={T_avg:F1}°F, P={pressure - 14.7f:F0} psig, Level={pzrLevel:F1}%");
+            LogEvent(EventSeverity.INFO, $"  T_avg={T_avg:F1}Â°F, P={pressure - 14.7f:F0} psig, Level={pzrLevel:F1}%");
             LogEvent(EventSeverity.INFO, $"  All 4 RCPs running, Boron={rcsBoronConcentration:F0} ppm");
             LogEvent(EventSeverity.INFO, "  Handoff to ReactorController ready");
             
-            Debug.Log($"[T+{simTime:F2}hr] === REACTOR STARTUP INITIATED === T_avg={T_avg:F1}°F");
+            Debug.Log($"[T+{simTime:F2}hr] === REACTOR STARTUP INITIATED === T_avg={T_avg:F1}Â°F");
         }
         
         return success;
@@ -337,7 +341,7 @@ public partial class HeatupSimEngine
     {
         if (!hzpSystemsInitialized)
         {
-            return $"HEATUP IN PROGRESS - T_avg={T_avg:F1}°F";
+            return $"HEATUP IN PROGRESS - T_avg={T_avg:F1}Â°F";
         }
         
         return hzpState.StatusMessage;
@@ -395,5 +399,8 @@ public partial class HeatupSimEngine
         
         return heaterPIDState.StatusMessage;
     }
+}
+
+
 }
 

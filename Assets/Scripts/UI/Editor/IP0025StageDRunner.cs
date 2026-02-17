@@ -1,9 +1,10 @@
-using System;
+﻿using System;
 using System.IO;
 using System.Text;
 using UnityEditor;
 using UnityEngine;
-
+
+using Critical.Validation;
 namespace Critical.Validation
 {
     public static class IP0025StageDRunner
@@ -66,3 +67,4 @@ namespace Critical.Validation
         }
     }
 }
+

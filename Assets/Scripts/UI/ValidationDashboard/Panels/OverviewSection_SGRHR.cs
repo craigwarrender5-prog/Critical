@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Overview Section: SG/RHR
 // OverviewSection_SGRHR.cs - Steam Generator and RHR System Display
 // ============================================================================
@@ -16,7 +16,8 @@
 
 using UnityEngine;
 using Critical.Physics;
-
+
+using Critical.Validation;
 namespace Critical.UI.ValidationDashboard
 {
     /// <summary>
@@ -92,3 +93,4 @@ namespace Critical.UI.ValidationDashboard
         }
     }
 }
+

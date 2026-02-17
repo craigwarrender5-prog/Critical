@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - CVCS Operator Screen
 // CVCSScreen.cs - Screen 4: Chemical and Volume Control System
 // ============================================================================
@@ -61,6 +61,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+using Critical.Validation;
 namespace Critical.UI
 {
     public class CVCSScreen : OperatorScreen
@@ -244,7 +245,7 @@ namespace Critical.UI
                 float lf = _data.GetLetdownFlow();
                 SetGaugeText(text_LetdownFlow, lf, "F1", " gpm");
             }
-            // Seal Injection Flow — PLACEHOLDER
+            // Seal Injection Flow â€” PLACEHOLDER
             if (text_SealInjectionFlow != null)
             {
                 text_SealInjectionFlow.text = "---";
@@ -274,19 +275,19 @@ namespace Critical.UI
                     else if (vl <= VCT_NORMAL_LEVEL_LOW_PCT || vl >= VCT_NORMAL_LEVEL_HIGH_PCT) text_VCTLevel.color = COLOR_WARNING;
                 }
             }
-            // VCT Temperature — PLACEHOLDER
+            // VCT Temperature â€” PLACEHOLDER
             if (text_VCTTemperature != null)
             {
                 text_VCTTemperature.text = "---";
                 text_VCTTemperature.color = COLOR_PLACEHOLDER;
             }
-            // VCT Pressure — PLACEHOLDER
+            // VCT Pressure â€” PLACEHOLDER
             if (text_VCTPressure != null)
             {
                 text_VCTPressure.text = "---";
                 text_VCTPressure.color = COLOR_PLACEHOLDER;
             }
-            // CCP Discharge Pressure — PLACEHOLDER
+            // CCP Discharge Pressure â€” PLACEHOLDER
             if (text_CCPDischargePressure != null)
             {
                 text_CCPDischargePressure.text = "---";
@@ -312,17 +313,17 @@ namespace Critical.UI
                 float vb = _data.GetVCTBoronConcentration();
                 SetGaugeText(text_VCTBoronConc, vb, "F0", " ppm");
             }
-            // Boration Flow — PLACEHOLDER
+            // Boration Flow â€” PLACEHOLDER
             if (text_BorationFlow != null) { text_BorationFlow.text = "---"; text_BorationFlow.color = COLOR_PLACEHOLDER; }
-            // Dilution Flow — PLACEHOLDER
+            // Dilution Flow â€” PLACEHOLDER
             if (text_DilutionFlow != null) { text_DilutionFlow.text = "---"; text_DilutionFlow.color = COLOR_PLACEHOLDER; }
-            // Boron Worth — PLACEHOLDER
+            // Boron Worth â€” PLACEHOLDER
             if (text_BoronWorth != null) { text_BoronWorth.text = "---"; text_BoronWorth.color = COLOR_PLACEHOLDER; }
-            // Letdown Temperature — PLACEHOLDER
+            // Letdown Temperature â€” PLACEHOLDER
             if (text_LetdownTemp != null) { text_LetdownTemp.text = "---"; text_LetdownTemp.color = COLOR_PLACEHOLDER; }
-            // Charging Temperature — PLACEHOLDER
+            // Charging Temperature â€” PLACEHOLDER
             if (text_ChargingTemp != null) { text_ChargingTemp.text = "---"; text_ChargingTemp.color = COLOR_PLACEHOLDER; }
-            // Purification Flow — PLACEHOLDER
+            // Purification Flow â€” PLACEHOLDER
             if (text_PurificationFlow != null) { text_PurificationFlow.text = "---"; text_PurificationFlow.color = COLOR_PLACEHOLDER; }
         }
         #endregion
@@ -360,22 +361,22 @@ namespace Critical.UI
             if (diagram_LetdownLine != null)
                 diagram_LetdownLine.color = letdownActive ? COLOR_FLOW_ACTIVE : COLOR_FLOW_INACTIVE;
 
-            // Seal injection lines — active when charging is active (fed from CCP discharge)
+            // Seal injection lines â€” active when charging is active (fed from CCP discharge)
             for (int i = 0; i < diagram_SealInjectionLines.Length; i++)
                 if (diagram_SealInjectionLines[i] != null)
                     diagram_SealInjectionLines[i].color = chargingActive ? new Color(0.3f, 0.8f, 0.6f, 0.6f) : COLOR_FLOW_INACTIVE;
 
-            // Boration/dilution paths — PLACEHOLDER (no boration model, show inactive)
+            // Boration/dilution paths â€” PLACEHOLDER (no boration model, show inactive)
             if (diagram_BorationPath != null) diagram_BorationPath.color = COLOR_FLOW_INACTIVE;
             if (diagram_DilutionPath != null) diagram_DilutionPath.color = COLOR_FLOW_INACTIVE;
 
-            // Demineralizer and HX — active with letdown
+            // Demineralizer and HX â€” active with letdown
             if (diagram_Demineralizer != null)
                 diagram_Demineralizer.color = letdownActive ? COLOR_EQUIPMENT : new Color(0.15f, 0.15f, 0.18f);
             if (diagram_LetdownHX != null)
                 diagram_LetdownHX.color = letdownActive ? COLOR_EQUIPMENT : new Color(0.15f, 0.15f, 0.18f);
 
-            // RCS connection indicator — active when either flow path is running
+            // RCS connection indicator â€” active when either flow path is running
             if (diagram_RCSConnection != null)
                 diagram_RCSConnection.color = (chargingActive || letdownActive)
                     ? new Color(0.6f, 0.2f, 0.2f, 0.8f) : COLOR_FLOW_INACTIVE;
@@ -383,7 +384,7 @@ namespace Critical.UI
 
         private void UpdateCCPIndicators()
         {
-            // CCP status — infer from charging flow: if charging > 0, at least one CCP running
+            // CCP status â€” infer from charging flow: if charging > 0, at least one CCP running
             float cf = _data.GetChargingFlow();
             bool anyRunning = !float.IsNaN(cf) && cf > 1f;
 
@@ -453,7 +454,7 @@ namespace Critical.UI
                 float ts = Time.timeScale;
                 text_TimeCompression.text = ts <= 0f ? "PAUSED" : ts >= 1000f ? $"{ts / 1000f:F1}kx" : $"{ts:F0}x";
             }
-            // Boron mode — PLACEHOLDER (no boration/dilution controller yet)
+            // Boron mode â€” PLACEHOLDER (no boration/dilution controller yet)
             if (text_BoronMode != null)
             {
                 text_BoronMode.text = "MANUAL";
@@ -481,3 +482,4 @@ namespace Critical.UI
         #endregion
     }
 }
+

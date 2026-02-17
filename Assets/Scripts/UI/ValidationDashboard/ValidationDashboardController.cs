@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Validation Dashboard Controller
 // ValidationDashboardController.cs - Main Controller for uGUI Dashboard
 // ============================================================================
@@ -16,10 +16,10 @@
 //   - All gauge animations interpolate between data updates
 //
 // KEYBOARD:
-//   Ctrl+1-7   → Switch tabs (when visible)
-//   F5-F9      → Time acceleration
-//   +/-        → Increment/decrement time acceleration
-//   NOTE: F1 is reserved for future help feature — NOT used here.
+//   Ctrl+1-7   â†’ Switch tabs (when visible)
+//   F5-F9      â†’ Time acceleration
+//   +/-        â†’ Increment/decrement time acceleration
+//   NOTE: F1 is reserved for future help feature â€” NOT used here.
 //   Dashboard visibility is managed by SceneBridge (V key).
 //
 // RELATIONSHIP TO EXISTING SYSTEM:
@@ -41,6 +41,7 @@ using UnityEngine.InputSystem;
 using TMPro;
 using Critical.Physics;
 
+using Critical.Validation;
 namespace Critical.UI.ValidationDashboard
 {
     /// <summary>
@@ -420,7 +421,7 @@ namespace Critical.UI.ValidationDashboard
 
         private void HandleInput()
         {
-            // NOTE: F1 is reserved for future help feature — NOT used here.
+            // NOTE: F1 is reserved for future help feature â€” NOT used here.
             // Dashboard visibility is managed by SceneBridge (V key loads/unloads
             // the Validator scene). This controller only handles tab switching
             // and time acceleration while the dashboard is visible.
@@ -557,3 +558,4 @@ namespace Critical.UI.ValidationDashboard
         void SetVisible(bool visible);
     }
 }
+

@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -9,6 +9,7 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 
+using Critical.Validation;
 namespace Critical.Validation
 {
     public static class PzrBubbleInvestigationRunner
@@ -376,3 +377,4 @@ namespace Critical.Validation
         }
     }
 }
+

@@ -1,4 +1,4 @@
-using UnityEngine;
+﻿using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
@@ -10,6 +10,10 @@ using Critical.Simulation.Modular;
 using Critical.Simulation.Modular.Modules.PZR;
 using Critical.Simulation.Modular.State;
 using Critical.Simulation.Modular.Transfer;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupSimEngine
 {
@@ -471,3 +475,6 @@ public partial class HeatupSimEngine
         return queueEmptyAfterWait;
     }
 }
+
+}
+

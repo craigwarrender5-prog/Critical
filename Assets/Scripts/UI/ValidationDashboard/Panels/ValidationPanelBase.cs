@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Validation Dashboard Base Panel
 // ValidationPanelBase.cs - Abstract Base Class for All Dashboard Panels
 // ============================================================================
@@ -26,6 +26,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using Critical.Physics;
 
+using Critical.Validation;
 namespace Critical.UI.ValidationDashboard
 {
     /// <summary>
@@ -319,3 +320,4 @@ namespace Critical.UI.ValidationDashboard
         }
     }
 }
+

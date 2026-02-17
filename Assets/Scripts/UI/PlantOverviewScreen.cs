@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Plant Overview Screen
 // PlantOverviewScreen.cs - Screen Tab: Plant-Wide Overview & Mimic Diagram
 // ============================================================================
@@ -41,7 +41,7 @@
 //
 // VERSION: 4.3.0
 // DATE: 2026-02-11
-// CLASSIFICATION: UI — Operator Interface
+// CLASSIFICATION: UI â€” Operator Interface
 // ============================================================================
 
 using System;
@@ -49,6 +49,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 
+using Critical.Validation;
 namespace Critical.UI
 {
     /// <summary>
@@ -97,12 +98,12 @@ namespace Critical.UI
         #endregion
 
         // ====================================================================
-        // SERIALIZED FIELDS — Left Panel (Nuclear/Primary)
+        // SERIALIZED FIELDS â€” Left Panel (Nuclear/Primary)
         // ====================================================================
 
         #region Inspector Fields - Left Panel
 
-        [Header("=== LEFT PANEL — NUCLEAR/PRIMARY ===")]
+        [Header("=== LEFT PANEL â€” NUCLEAR/PRIMARY ===")]
         [SerializeField] private TextMeshProUGUI text_ReactorPower;
         [SerializeField] private TextMeshProUGUI text_Tavg;
         [SerializeField] private TextMeshProUGUI text_RCSPressure;
@@ -115,12 +116,12 @@ namespace Critical.UI
         #endregion
 
         // ====================================================================
-        // SERIALIZED FIELDS — Right Panel (Secondary/Output)
+        // SERIALIZED FIELDS â€” Right Panel (Secondary/Output)
         // ====================================================================
 
         #region Inspector Fields - Right Panel
 
-        [Header("=== RIGHT PANEL — SECONDARY/OUTPUT ===")]
+        [Header("=== RIGHT PANEL â€” SECONDARY/OUTPUT ===")]
         [SerializeField] private TextMeshProUGUI text_SGLevelAvg;
         [SerializeField] private TextMeshProUGUI text_SteamPressure;
         [SerializeField] private TextMeshProUGUI text_FeedwaterFlow;
@@ -133,7 +134,7 @@ namespace Critical.UI
         #endregion
 
         // ====================================================================
-        // SERIALIZED FIELDS — Center Panel (Mimic Diagram)
+        // SERIALIZED FIELDS â€” Center Panel (Mimic Diagram)
         // ====================================================================
 
         #region Inspector Fields - Mimic Diagram
@@ -167,12 +168,12 @@ namespace Critical.UI
         #endregion
 
         // ====================================================================
-        // SERIALIZED FIELDS — Bottom Panel (Status)
+        // SERIALIZED FIELDS â€” Bottom Panel (Status)
         // ====================================================================
 
         #region Inspector Fields - Bottom Panel
 
-        [Header("=== BOTTOM PANEL — STATUS ===")]
+        [Header("=== BOTTOM PANEL â€” STATUS ===")]
         [SerializeField] private TextMeshProUGUI text_ReactorMode;
         [SerializeField] private TextMeshProUGUI text_SimTime;
         [SerializeField] private TextMeshProUGUI text_TimeCompression;
@@ -266,7 +267,7 @@ namespace Critical.UI
         #endregion
 
         // ====================================================================
-        // GAUGE UPDATES — Left Panel (Nuclear/Primary)
+        // GAUGE UPDATES â€” Left Panel (Nuclear/Primary)
         // ====================================================================
 
         #region Left Panel Updates
@@ -283,7 +284,7 @@ namespace Critical.UI
             // T-avg
             if (text_Tavg != null)
             {
-                SetGaugeText(text_Tavg, _data.GetTavg(), "F1", "°F");
+                SetGaugeText(text_Tavg, _data.GetTavg(), "F1", "Â°F");
             }
 
             // RCS Pressure
@@ -357,7 +358,7 @@ namespace Critical.UI
         #endregion
 
         // ====================================================================
-        // GAUGE UPDATES — Right Panel (Secondary/Output)
+        // GAUGE UPDATES â€” Right Panel (Secondary/Output)
         // ====================================================================
 
         #region Right Panel Updates
@@ -371,48 +372,48 @@ namespace Critical.UI
                 SetGaugeText(text_SGLevelAvg, sgLevel, "F1", "%");
             }
 
-            // Steam Pressure — v4.3.0: Use tracked SG secondary pressure
+            // Steam Pressure â€” v4.3.0: Use tracked SG secondary pressure
             if (text_SteamPressure != null)
             {
                 SetGaugeText(text_SteamPressure, _data.GetSGSecondaryPressure_psig(), "F0", " psig");
             }
 
-            // PLACEHOLDER — Feedwater Flow
+            // PLACEHOLDER â€” Feedwater Flow
             if (text_FeedwaterFlow != null)
             {
                 text_FeedwaterFlow.text = "---";
                 text_FeedwaterFlow.color = COLOR_PLACEHOLDER;
             }
 
-            // PLACEHOLDER — Turbine Power
+            // PLACEHOLDER â€” Turbine Power
             if (text_TurbinePower != null)
             {
                 text_TurbinePower.text = "---";
                 text_TurbinePower.color = COLOR_PLACEHOLDER;
             }
 
-            // PLACEHOLDER — Generator Output
+            // PLACEHOLDER â€” Generator Output
             if (text_GeneratorOutput != null)
             {
                 text_GeneratorOutput.text = "---";
                 text_GeneratorOutput.color = COLOR_PLACEHOLDER;
             }
 
-            // PLACEHOLDER — Condenser Vacuum
+            // PLACEHOLDER â€” Condenser Vacuum
             if (text_CondenserVacuum != null)
             {
                 text_CondenserVacuum.text = "---";
                 text_CondenserVacuum.color = COLOR_PLACEHOLDER;
             }
 
-            // PLACEHOLDER — Feedwater Temperature
+            // PLACEHOLDER â€” Feedwater Temperature
             if (text_FeedwaterTemp != null)
             {
                 text_FeedwaterTemp.text = "---";
                 text_FeedwaterTemp.color = COLOR_PLACEHOLDER;
             }
 
-            // PLACEHOLDER — Main Steam Flow
+            // PLACEHOLDER â€” Main Steam Flow
             if (text_MainSteamFlow != null)
             {
                 text_MainSteamFlow.text = "---";
@@ -509,14 +510,14 @@ namespace Critical.UI
                     mimic_SteamGenerators[i].color = sgColor;
                 }
 
-                // SG level fill (lumped model — all SGs same)
+                // SG level fill (lumped model â€” all SGs same)
                 if (i < mimic_SGLevelFills.Length && mimic_SGLevelFills[i] != null)
                 {
                     float level = _data.GetSGLevel(i);
                     mimic_SGLevelFills[i].fillAmount = float.IsNaN(level) ? 0.5f : level / 100f;
                 }
 
-                // SG label — v4.3.0: Use tracked SG secondary pressure
+                // SG label â€” v4.3.0: Use tracked SG secondary pressure
                 if (i < mimic_SGLabels.Length && mimic_SGLabels[i] != null)
                 {
                     string letter = ((char)('A' + i)).ToString();
@@ -529,7 +530,7 @@ namespace Critical.UI
 
         private void UpdateTurbineGenerator()
         {
-            // PLACEHOLDER — No turbine model. Show static text.
+            // PLACEHOLDER â€” No turbine model. Show static text.
             if (mimic_TurbineText != null)
             {
                 mimic_TurbineText.text = "---\nMWt";
@@ -597,7 +598,7 @@ namespace Critical.UI
                 }
             }
 
-            // PLACEHOLDER — Turbine status
+            // PLACEHOLDER â€” Turbine status
             if (indicator_TurbineStatus != null)
             {
                 indicator_TurbineStatus.color = COLOR_STOPPED;
@@ -608,7 +609,7 @@ namespace Critical.UI
                 text_TurbineStatus.color = COLOR_STOPPED;
             }
 
-            // PLACEHOLDER — Generator breaker
+            // PLACEHOLDER â€” Generator breaker
             if (indicator_GeneratorBreaker != null)
             {
                 indicator_GeneratorBreaker.color = COLOR_STOPPED;
@@ -666,14 +667,14 @@ namespace Critical.UI
 
         /// <summary>
         /// Map a temperature to a color for the mimic diagram.
-        /// Cold (100°F) → blue, Warm (400°F) → yellow, Hot (650°F) → red.
+        /// Cold (100Â°F) â†’ blue, Warm (400Â°F) â†’ yellow, Hot (650Â°F) â†’ red.
         /// </summary>
         private Color GetTemperatureColor(float tempF)
         {
             if (tempF <= COLD_TEMP_F) return new Color(0.2f, 0.3f, 0.8f);   // Cool blue
             if (tempF >= HOT_TEMP_F) return new Color(0.9f, 0.2f, 0.1f);    // Hot red
 
-            // Interpolate through blue → cyan → yellow → orange → red
+            // Interpolate through blue â†’ cyan â†’ yellow â†’ orange â†’ red
             float t = Mathf.InverseLerp(COLD_TEMP_F, HOT_TEMP_F, tempF);
 
             if (t < 0.33f)
@@ -699,3 +700,4 @@ namespace Critical.UI
         #endregion
     }
 }
+

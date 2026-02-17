@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Simulation Engine (CVCS Partial)
 // HeatupSimEngine.CVCS.cs - CVCS Flow Control, RCS Inventory, VCT Update
 // ============================================================================
@@ -9,36 +9,40 @@
 //   Consolidates the post-physics-step flow control logic.
 //
 // PHYSICS:
-//   CVCS mass balance: dm_rcs/dt = (charging - letdown) × ρ × conversion
+//   CVCS mass balance: dm_rcs/dt = (charging - letdown) Ã— Ï Ã— conversion
 //   PI level controller via CVCSController module
 //   VCT mass conservation tracking via VCTPhysics module
 //   Heater control via CVCSController multi-mode controller
 //
 // SOURCES:
-//   - NRC HRTD 4.1 — CVCS flow balance, purification
-//   - NRC HRTD 6.1 — Pressurizer heater control
-//   - NRC HRTD 10.2 — Pressure control setpoints
-//   - NRC HRTD 10.3 — Letdown isolation interlock
-//   - NRC HRTD 19.0 — RHR letdown path, letdown path selection
-//   - NRC IN 93-84 — RCP seal injection requirements
+//   - NRC HRTD 4.1 â€” CVCS flow balance, purification
+//   - NRC HRTD 6.1 â€” Pressurizer heater control
+//   - NRC HRTD 10.2 â€” Pressure control setpoints
+//   - NRC HRTD 10.3 â€” Letdown isolation interlock
+//   - NRC HRTD 19.0 â€” RHR letdown path, letdown path selection
+//   - NRC IN 93-84 â€” RCP seal injection requirements
 //
 // ARCHITECTURE:
 //   Partial class of HeatupSimEngine. This file owns:
-//     - UpdateCVCSFlows() — CVCS flow control, PI controller, heater dispatch
-//     - UpdateRCSInventory() — Mass conservation for two-phase operations
-//     - UpdateVCT() — VCT physics update and mass conservation check
-//     - UpdateLetdownPath() — Letdown path state for display
+//     - UpdateCVCSFlows() â€” CVCS flow control, PI controller, heater dispatch
+//     - UpdateRCSInventory() â€” Mass conservation for two-phase operations
+//     - UpdateVCT() â€” VCT physics update and mass conservation check
+//     - UpdateLetdownPath() â€” Letdown path state for display
 //
 // GOLD STANDARD: Yes
 // ============================================================================
 
 using UnityEngine;
 using Critical.Physics;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupSimEngine
 {
     // ========================================================================
-    // CVCS FLOW CONTROL — Per NRC HRTD 4.1, 10.3, 19.0
+    // CVCS FLOW CONTROL â€” Per NRC HRTD 4.1, 10.3, 19.0
     // Called each timestep after physics and bubble formation updates.
     // ========================================================================
 
@@ -50,13 +54,13 @@ public partial class HeatupSimEngine
     /// <param name="bubbleDrainActive">True if DRAIN phase is active</param>
     void UpdateCVCSFlows(float dt, bool bubbleDrainActive)
     {
-        // SEAL FLOWS — Owned by CVCSController module
+        // SEAL FLOWS â€” Owned by CVCSController module
         // Per NRC IN 93-84: Each RCP requires seal injection from charging
         var sealFlows = CVCSController.CalculateSealFlows(rcpCount);
         float sealInjection = sealFlows.SealInjection;
         float sealReturnToVCT = sealFlows.SealReturnToVCT;
 
-        // LOW-LEVEL INTERLOCK — Owned by CVCSController (with hysteresis)
+        // LOW-LEVEL INTERLOCK â€” Owned by CVCSController (with hysteresis)
         // Per NRC HRTD 10.3: PZR level < 17% isolates letdown and trips heaters
         bool letdownIsolated = false;
 
@@ -73,13 +77,13 @@ public partial class HeatupSimEngine
         // ================================================================
         if (solidPressurizer || bubblePreDrainPhase)
         {
-            // Flows already set by SolidPlantPressure.Update() — do not override
+            // Flows already set by SolidPlantPressure.Update() â€” do not override
             // v1.3.1.0: Also applies during DETECTION/VERIFICATION
         }
         else if (bubbleDrainActive)
         {
             // During DRAIN phase: flows set by bubble formation procedure
-            // v0.2.0: Flows set in UpdateDrainPhase() — do not override
+            // v0.2.0: Flows set in UpdateDrainPhase() â€” do not override
         }
         else
         {
@@ -99,8 +103,8 @@ public partial class HeatupSimEngine
         }
         else
         {
-            // v0.4.0 Issue #2 fix: Was GetPZRLevelProgram (at-power only, clamps to 25% below 557°F).
-            // Unified function uses heatup program below 557°F, at-power program above.
+            // v0.4.0 Issue #2 fix: Was GetPZRLevelProgram (at-power only, clamps to 25% below 557Â°F).
+            // Unified function uses heatup program below 557Â°F, at-power program above.
             pzrLevelSetpoint = PlantConstants.GetPZRLevelSetpointUnified(T_avg);
         }
 
@@ -110,7 +114,7 @@ public partial class HeatupSimEngine
         // ================================================================
         if (solidPressurizer || bubblePreDrainPhase)
         {
-            // Flows already set by SolidPlantPressure.Update() — do not override
+            // Flows already set by SolidPlantPressure.Update() â€” do not override
         }
         else if (bubbleDrainActive)
         {
@@ -118,7 +122,7 @@ public partial class HeatupSimEngine
         }
         else
         {
-            // v4.4.0: Update CVCS controller with orifice lineup — calculates
+            // v4.4.0: Update CVCS controller with orifice lineup â€” calculates
             // charging flow via PI control and letdown based on lineup.
             CVCSController.Update(
                 ref cvcsControllerState,
@@ -141,31 +145,31 @@ public partial class HeatupSimEngine
 
         // HEATER CONTROL: Now runs in Section 1B of StepSimulation()
         // (before physics) so throttled power reaches physics calculations.
-        // See Issue #1 fix — v0.4.0.
+        // See Issue #1 fix â€” v0.4.0.
 
         chargingActive = chargingFlow > 0.1f;
         letdownActive = letdownFlow > 0.1f;
         sealInjectionOK = (rcpCount == 0) || (sealInjection >= rcpCount * 7f);
 
         // ================================================================
-        // RCS INVENTORY UPDATE — Two-Phase Operations (Bug #2 Fix)
+        // RCS INVENTORY UPDATE â€” Two-Phase Operations (Bug #2 Fix)
         // ================================================================
         UpdateRCSInventory(dt, bubbleDrainActive);
 
         // ================================================================
-        // VCT PHYSICS UPDATE — Per NRC HRTD Section 4.1
+        // VCT PHYSICS UPDATE â€” Per NRC HRTD Section 4.1
         // ================================================================
         UpdateVCT(dt, bubbleDrainActive, sealReturnToVCT);
         ApplyCvcsThermalMixing(dt, sealInjection);
 
         // ================================================================
-        // LETDOWN PATH STATE — For display
+        // LETDOWN PATH STATE â€” For display
         // ================================================================
         UpdateLetdownPath(pzrLevelSetpoint, letdownIsolated, sealInjection);
     }
 
     // ========================================================================
-    // RCS INVENTORY UPDATE — Mass conservation tracking
+    // RCS INVENTORY UPDATE â€” Mass conservation tracking
     // Per NRC HRTD 4.1: CVCS net flow changes RCS water mass.
     // ========================================================================
 
@@ -187,7 +191,7 @@ public partial class HeatupSimEngine
     }
 
     // ========================================================================
-    // VCT PHYSICS UPDATE — Per NRC HRTD Section 4.1
+    // VCT PHYSICS UPDATE â€” Per NRC HRTD Section 4.1
     // v0.6.0: Now coordinates BRS divert inflow, processing, and return.
     // ========================================================================
 
@@ -210,10 +214,10 @@ public partial class HeatupSimEngine
             sealReturnToVCT, rcpCount, brsState.DistillateAvailable_gal);
 
         // ==============================================================
-        // v0.6.0: BRS COORDINATION — Divert → BRS → Processing → Return
+        // v0.6.0: BRS COORDINATION â€” Divert â†’ BRS â†’ Processing â†’ Return
         // Per NRC HRTD 4.1 Section 4.1.2.6: LCV-112A diverts excess
         // letdown to BRS recycle holdup tanks. Evaporator processes
-        // holdup into distillate (≈ 0 ppm) and concentrate (≈ 7000 ppm).
+        // holdup into distillate (â‰ˆ 0 ppm) and concentrate (â‰ˆ 7000 ppm).
         // Distillate is first-priority VCT makeup source.
         // ==============================================================
 
@@ -281,7 +285,7 @@ public partial class HeatupSimEngine
         // losses) change the total. BRS closes the divert/return loop.
         // ==============================================================
         {
-            // v5.4.1 Fix B: Use tracked mass values (not recomputed from V×ρ)
+            // v5.4.1 Fix B: Use tracked mass values (not recomputed from VÃ—Ï)
             // for RCS and PZR. Recomputing from volume would mask CVCS transfers.
             float rhoVCT = rhoAux;
 
@@ -295,8 +299,8 @@ public partial class HeatupSimEngine
 
             totalSystemMass_lbm = rcsMass + pzrWaterMassNow + pzrSteamMassNow + vctMass + brsMass;
 
-            // External boundary crossings (converted to mass) — plant-wide,
-            // excludes internal transfers such as VCT↔BRS and seal leakoff.
+            // External boundary crossings (converted to mass) â€” plant-wide,
+            // excludes internal transfers such as VCTâ†”BRS and seal leakoff.
             float externalNetGal = plantExternalNet_gal;
             externalNetMass_lbm = (externalNetGal / PlantConstants.FT3_TO_GAL) * rhoVCT;
 
@@ -333,12 +337,12 @@ public partial class HeatupSimEngine
     }
 
     // ========================================================================
-    // LETDOWN ORIFICE LINEUP MANAGEMENT — v4.4.0
+    // LETDOWN ORIFICE LINEUP MANAGEMENT â€” v4.4.0
     // Per NRC HRTD 4.1: Operator adjusts orifice lineup during heatup
     // to manage RCS thermal expansion volume removal.
     //
     // Logic: Simulates operator actions based on PZR level error:
-    //   1. Normal: 1×75 gpm orifice (default)
+    //   1. Normal: 1Ã—75 gpm orifice (default)
     //   2. Level > setpoint + 5%: Open 45-gpm orifice
     //   3. Level > setpoint + 10%: Open second 75-gpm orifice
     //   4. Close additional orifices when level controlled (with hysteresis)
@@ -411,22 +415,22 @@ public partial class HeatupSimEngine
 
         // Update display string
         if (orifice75Count == 2 && orifice45Open)
-            orificeLineupDesc = "2×75 + 1×45 gpm";
+            orificeLineupDesc = "2Ã—75 + 1Ã—45 gpm";
         else if (orifice75Count == 2)
-            orificeLineupDesc = "2×75 gpm";
+            orificeLineupDesc = "2Ã—75 gpm";
         else if (orifice45Open)
-            orificeLineupDesc = "1×75 + 1×45 gpm";
+            orificeLineupDesc = "1Ã—75 + 1Ã—45 gpm";
         else
-            orificeLineupDesc = "1×75 gpm";
+            orificeLineupDesc = "1Ã—75 gpm";
     }
 
     // ========================================================================
-    // LETDOWN PATH STATE — For display variables
+    // LETDOWN PATH STATE â€” For display variables
     // ========================================================================
 
     void UpdateLetdownPath(float pzrLevelSetpoint, bool letdownIsolated, float sealInjection)
     {
-        // LETDOWN PATH SELECTION — Owned by CVCSController module
+        // LETDOWN PATH SELECTION â€” Owned by CVCSController module
         // Per NRC HRTD 19.0: Path depends on RCS temperature and interlock status
         var letdownPathState = CVCSController.GetLetdownPath(
             T_rcs, pressure, solidPressurizer || bubblePreDrainPhase, letdownIsolated);
@@ -562,3 +566,6 @@ public partial class HeatupSimEngine
             $"lineup_desc={orificeLineupDesc} stride={stride} reason={(stateChanged ? "ORIFICE_CHANGE" : "SAMPLED")}");
     }
 }
+
+}
+

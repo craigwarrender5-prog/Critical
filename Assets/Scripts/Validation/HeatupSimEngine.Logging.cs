@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Simulation Engine (Logging Partial)
 // HeatupSimEngine.Logging.cs - Event Log, History Buffers, File Output
 // ============================================================================
@@ -12,11 +12,11 @@
 // ARCHITECTURE:
 //   Partial class of HeatupSimEngine. This file owns:
 //     - EventSeverity enum and EventLogEntry struct
-//     - LogEvent() — called by all other partials for state transitions
-//     - AddHistory() — rolling graph buffer updates (called from main loop)
-//     - SaveIntervalLog() — detailed periodic log files
-//     - SaveReport() — final simulation summary report
-//     - InventoryAudit — comprehensive mass balance tracking (v1.1.0 Stage 5)
+//     - LogEvent() â€” called by all other partials for state transitions
+//     - AddHistory() â€” rolling graph buffer updates (called from main loop)
+//     - SaveIntervalLog() â€” detailed periodic log files
+//     - SaveReport() â€” final simulation summary report
+//     - InventoryAudit â€” comprehensive mass balance tracking (v1.1.0 Stage 5)
 //
 //   History buffers and event log list declarations remain in the main
 //   HeatupSimEngine.cs for Unity serialization ([HideInInspector] fields).
@@ -36,6 +36,10 @@ using System;
 using System.IO;
 using System.Text;
 using Critical.Physics;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupSimEngine
 {
@@ -86,7 +90,7 @@ public partial class HeatupSimEngine
     }
 
     // ========================================================================
-    // INVENTORY AUDIT — v1.1.0 Stage 5: Comprehensive Mass Balance Tracking
+    // INVENTORY AUDIT â€” v1.1.0 Stage 5: Comprehensive Mass Balance Tracking
     // ========================================================================
     //
     // Per NRC HRTD 4.1 / 10.3: The operator must maintain awareness of RCS
@@ -94,14 +98,14 @@ public partial class HeatupSimEngine
     // volumes and reports conservation errors.
     //
     // Tracked Volumes:
-    //   - RCS (Reactor Coolant System) — loops, vessel, piping
-    //   - PZR (Pressurizer) — water and steam space
-    //   - VCT (Volume Control Tank) — CVCS surge tank
-    //   - BRS (Boron Recycle System) — holdup tanks, evaporator
-    //   - Seal System — RCP seal injection/return
+    //   - RCS (Reactor Coolant System) â€” loops, vessel, piping
+    //   - PZR (Pressurizer) â€” water and steam space
+    //   - VCT (Volume Control Tank) â€” CVCS surge tank
+    //   - BRS (Boron Recycle System) â€” holdup tanks, evaporator
+    //   - Seal System â€” RCP seal injection/return
     //
     // Conservation Law:
-    //   Total_Mass(t) = Total_Mass(t=0) + ∑(Inflows) - ∑(Outflows) - Losses
+    //   Total_Mass(t) = Total_Mass(t=0) + âˆ‘(Inflows) - âˆ‘(Outflows) - Losses
     //   Conservation_Error = |Calculated - Actual| / Actual * 100%
     //
     // ========================================================================
@@ -265,8 +269,8 @@ public partial class HeatupSimEngine
         // ================================================================
         
         // RCS inventory (excluding PZR)
-        // RCS volume is approximately 12,700 ft³ at operating conditions
-        // Convert from ft³ to gallons: 1 ft³ = 7.48052 gal
+        // RCS volume is approximately 12,700 ftÂ³ at operating conditions
+        // Convert from ftÂ³ to gallons: 1 ftÂ³ = 7.48052 gal
         float rcsVolume_ft3 = PlantConstants.RCS_WATER_VOLUME - PlantConstants.PZR_TOTAL_VOLUME;
         inventoryAudit.RCS_Inventory_gal = rcsVolume_ft3 * 7.48052f;
         
@@ -287,11 +291,11 @@ public partial class HeatupSimEngine
         // ================================================================
         
         // Water density at current conditions
-        // v5.0.3: rcsWaterDensity, pzrWaterDensity, pzrSteamDensity removed —
-        // no longer needed after eliminating V×ρ recalculation in both branches.
+        // v5.0.3: rcsWaterDensity, pzrWaterDensity, pzrSteamDensity removed â€”
+        // no longer needed after eliminating VÃ—Ï recalculation in both branches.
         // RCS/PZR masses now read directly from canonical physicsState fields.
-        float vctWaterDensity = WaterProperties.WaterDensity(100f, 14.7f);  // VCT at ~100°F, atmospheric
-        float brsWaterDensity = WaterProperties.WaterDensity(100f, 14.7f);  // BRS at ~100°F, atmospheric
+        float vctWaterDensity = WaterProperties.WaterDensity(100f, 14.7f);  // VCT at ~100Â°F, atmospheric
+        float brsWaterDensity = WaterProperties.WaterDensity(100f, 14.7f);  // BRS at ~100Â°F, atmospheric
         
         // v5.0.3: Regime-aware canonical mass source selection.
         // During solid ops, PZRWaterMassSolid and TotalPrimaryMassSolid are canonical
@@ -299,7 +303,7 @@ public partial class HeatupSimEngine
         // After bubble formation, physicsState.PZRWaterMass/PZRSteamMass are canonical
         // (maintained by CoupledThermo solver) and RCSWaterMass is canonical
         // (maintained by CVCS boundary flow pre-application in all three regimes).
-        // The audit is a pure consumer of canonical state — no V×ρ recalculation.
+        // The audit is a pure consumer of canonical state â€” no VÃ—Ï recalculation.
         if (solidPressurizer && !bubbleFormed)
         {
             // Solid ops: canonical fields maintained by SolidPlantPressure
@@ -312,7 +316,7 @@ public partial class HeatupSimEngine
         else
         {
             // Two-phase: canonical fields maintained by CoupledThermo solver
-            // v5.0.3: Replaces defective V×ρ recalculation that used fixed geometric
+            // v5.0.3: Replaces defective VÃ—Ï recalculation that used fixed geometric
             // volume constants, ignoring cumulative CVCS boundary flow effects.
             inventoryAudit.RCS_Mass_lbm = physicsState.RCSWaterMass;
             inventoryAudit.PZR_Water_Mass_lbm = physicsState.PZRWaterMass;
@@ -320,7 +324,7 @@ public partial class HeatupSimEngine
             inventoryAudit.AuditMassSource = "CANONICAL_TWO_PHASE";
         }
         
-        // VCT mass (convert gal to ft³, then multiply by density)
+        // VCT mass (convert gal to ftÂ³, then multiply by density)
         float vctVolume_ft3 = vctState.Volume_gal / 7.48052f;
         inventoryAudit.VCT_Mass_lbm = vctVolume_ft3 * vctWaterDensity;
         
@@ -420,11 +424,11 @@ public partial class HeatupSimEngine
         
         if (inventoryAudit.Conservation_Alarm)
         {
-            inventoryAudit.StatusMessage = $"ALARM: Δ={inventoryAudit.Conservation_Error_lbm:F0} lbm";
+            inventoryAudit.StatusMessage = $"ALARM: Î”={inventoryAudit.Conservation_Error_lbm:F0} lbm";
         }
         else if (inventoryAudit.Conservation_Error_pct > 0.1f)
         {
-            inventoryAudit.StatusMessage = $"WARN: Δ={inventoryAudit.Conservation_Error_lbm:F0} lbm";
+            inventoryAudit.StatusMessage = $"WARN: Î”={inventoryAudit.Conservation_Error_lbm:F0} lbm";
         }
         else
         {
@@ -466,7 +470,7 @@ public partial class HeatupSimEngine
     /// </summary>
     void UpdatePrimaryMassLedgerDiagnostics()
     {
-        // Skip during solid ops — ledger and components are managed differently
+        // Skip during solid ops â€” ledger and components are managed differently
         // and drift calculation is not meaningful until bubble formation.
         if (solidPressurizer && !bubbleFormed)
         {
@@ -552,7 +556,7 @@ public partial class HeatupSimEngine
             primaryMassStatus = "OK";
         }
         
-        // 9. Log alarm edge — one-time event on threshold crossing
+        // 9. Log alarm edge â€” one-time event on threshold crossing
         // Uses edge detection state variables from main HeatupSimEngine.cs partial
         if (primaryMassAlarm && !_previousMassAlarmState)
         {
@@ -774,7 +778,7 @@ public partial class HeatupSimEngine
                   $"RCS={physicsState.RCSWaterMass:F1}lb PZR_w={physicsState.PZRWaterMass:F1}lb PZR_s={physicsState.PZRSteamMass:F1}lb | " +
                   $"Sum={componentSum:F1}lb Delta={ledgerDelta:F2}lb");
         
-        // Line 3: Densities (key for V×ρ calculations)
+        // Line 3: Densities (key for VÃ—Ï calculations)
         Debug.Log($"[RCP_SPIKE_DIAG] {phase} | DENSITY: rho_RCS={rho_rcs:F2}lb/ft3 | " +
                   $"rho_PZR_water={rho_pzr_water:F2}lb/ft3 rho_PZR_steam={rho_pzr_steam:F4}lb/ft3");
         
@@ -818,7 +822,7 @@ public partial class HeatupSimEngine
     /// <summary>
     /// v5.4.0 Stage 0: Update surge flow tracking in physicsState.
     /// Called each timestep to accumulate surge flow statistics.
-    /// This is diagnostic only — does not modify physics behavior.
+    /// This is diagnostic only â€” does not modify physics behavior.
     /// </summary>
     /// <param name="surgeFlow_gpm">Current surge flow in gpm (positive = into PZR)</param>
     /// <param name="dt_hr">Timestep in hours</param>
@@ -840,7 +844,7 @@ public partial class HeatupSimEngine
     }
 
     // ========================================================================
-    // HISTORY BUFFER UPDATE — Capped to MAX_HISTORY for rolling graph window
+    // HISTORY BUFFER UPDATE â€” Capped to MAX_HISTORY for rolling graph window
     // Called every 5 sim-minutes from the main simulation loop.
     // ========================================================================
 
@@ -948,7 +952,7 @@ public partial class HeatupSimEngine
     }
 
     // ========================================================================
-    // INTERVAL LOG — Detailed snapshot every 30 sim-minutes
+    // INTERVAL LOG â€” Detailed snapshot every 30 sim-minutes
     // Per NRC HRTD operating log requirements
     // ========================================================================
 
@@ -972,24 +976,24 @@ public partial class HeatupSimEngine
         sb.AppendLine($"  Interval Log:     {DP0003_INTERVAL_LOG_HR:F2} hr");
         sb.AppendLine();
         sb.AppendLine("THERMAL STATE:");
-        sb.AppendLine($"  T_avg:            {T_avg,10:F2} °F");
-        sb.AppendLine($"  T_hot:            {T_hot,10:F2} °F");
-        sb.AppendLine($"  T_cold:           {T_cold,10:F2} °F");
-        sb.AppendLine($"  T_rcs:            {T_rcs,10:F2} °F");
-        sb.AppendLine($"  T_pzr:            {T_pzr,10:F2} °F");
-        sb.AppendLine($"  T_sat:            {T_sat,10:F2} °F");
-        sb.AppendLine($"  T_sg_secondary:   {T_sg_secondary,10:F2} °F");
-        sb.AppendLine($"  Subcooling:       {subcooling,10:F2} °F");
-        sb.AppendLine($"  Heatup Rate:      {heatupRate,10:F2} °F/hr");
-        sb.AppendLine($"  PZR Heat Rate:    {pzrHeatRate,10:F2} °F/hr");
-        sb.AppendLine($"  RCS Heat Rate:    {rcsHeatRate,10:F2} °F/hr");
+        sb.AppendLine($"  T_avg:            {T_avg,10:F2} Â°F");
+        sb.AppendLine($"  T_hot:            {T_hot,10:F2} Â°F");
+        sb.AppendLine($"  T_cold:           {T_cold,10:F2} Â°F");
+        sb.AppendLine($"  T_rcs:            {T_rcs,10:F2} Â°F");
+        sb.AppendLine($"  T_pzr:            {T_pzr,10:F2} Â°F");
+        sb.AppendLine($"  T_sat:            {T_sat,10:F2} Â°F");
+        sb.AppendLine($"  T_sg_secondary:   {T_sg_secondary,10:F2} Â°F");
+        sb.AppendLine($"  Subcooling:       {subcooling,10:F2} Â°F");
+        sb.AppendLine($"  Heatup Rate:      {heatupRate,10:F2} Â°F/hr");
+        sb.AppendLine($"  PZR Heat Rate:    {pzrHeatRate,10:F2} Â°F/hr");
+        sb.AppendLine($"  RCS Heat Rate:    {rcsHeatRate,10:F2} Â°F/hr");
         sb.AppendLine($"  Pressure Rate:    {pressureRate,10:F2} psi/hr");
         sb.AppendLine();
         sb.AppendLine("PRESSURE / LEVEL:");
         sb.AppendLine($"  RCS Pressure:     {pressure,10:F1} psia ({pressure - 14.7f:F1} psig)");
         sb.AppendLine($"  PZR Level:        {pzrLevel,10:F1} %");
-        sb.AppendLine($"  PZR Water Vol:    {pzrWaterVolume,10:F1} ftÂ³");
-        sb.AppendLine($"  PZR Steam Vol:    {pzrSteamVolume,10:F1} ftÂ³");
+        sb.AppendLine($"  PZR Water Vol:    {pzrWaterVolume,10:F1} ftÃ‚Â³");
+        sb.AppendLine($"  PZR Steam Vol:    {pzrSteamVolume,10:F1} ftÃ‚Â³");
         sb.AppendLine($"  Surge Flow:       {surgeFlow,10:F1} gpm");
         sb.AppendLine($"  PZR Setpoint:     {pzrLevelSetpointDisplay,10:F1} %");
         sb.AppendLine();
@@ -1050,7 +1054,7 @@ public partial class HeatupSimEngine
         if (bubbleFormed)
         {
             sb.AppendLine($"  Formation Time:   {bubbleFormationTime,10:F2} hr");
-            sb.AppendLine($"  Formation Temp:   {bubbleFormationTemp,10:F1} °F");
+            sb.AppendLine($"  Formation Temp:   {bubbleFormationTemp,10:F1} Â°F");
         }
         if (solidPressurizer)
         {
@@ -1092,12 +1096,12 @@ public partial class HeatupSimEngine
         sb.AppendLine($"    Seal Inj (total): {(rcpCount * PlantConstants.SEAL_INJECTION_PER_PUMP_GPM),10:F1} gpm");
         for (int i = 0; i < rcpCount; i++)
         {
-            sb.AppendLine($"      → RCP #{i + 1}:     {PlantConstants.SEAL_INJECTION_PER_PUMP_GPM,10:F1} gpm");
+            sb.AppendLine($"      â†’ RCP #{i + 1}:     {PlantConstants.SEAL_INJECTION_PER_PUMP_GPM,10:F1} gpm");
         }
         sb.AppendLine($"    Seal Ret (total): {(rcpCount * PlantConstants.SEAL_LEAKOFF_PER_PUMP_GPM),10:F1} gpm");
         for (int i = 0; i < rcpCount; i++)
         {
-            sb.AppendLine($"      → RCP #{i + 1}:     {PlantConstants.SEAL_LEAKOFF_PER_PUMP_GPM,10:F1} gpm");
+            sb.AppendLine($"      â†’ RCP #{i + 1}:     {PlantConstants.SEAL_LEAKOFF_PER_PUMP_GPM,10:F1} gpm");
         }
         sb.AppendLine();
         sb.AppendLine("  VCT (Volume Control Tank):");
@@ -1111,7 +1115,7 @@ public partial class HeatupSimEngine
         sb.AppendLine($"    RWST Suction:     {(vctState.RWSTSuctionActive ? "YES" : "NO"),10}");
         sb.AppendLine($"    Makeup Source:    {(vctState.MakeupFromBRS ? "BRS DISTILLATE" : (vctState.RWSTSuctionActive ? "RWST" : (vctState.AutoMakeupActive ? "RMS" : "NONE"))),10}");
         sb.AppendLine();
-        sb.AppendLine("  BRS (Boron Recycle System) — Per NRC HRTD 4.1 / Callaway FSAR Ch.11:");
+        sb.AppendLine("  BRS (Boron Recycle System) â€” Per NRC HRTD 4.1 / Callaway FSAR Ch.11:");
         float brsHoldupPct = BRSPhysics.GetHoldupLevelPercent(brsState);
         sb.AppendLine($"    Status:           {BRSPhysics.GetStatusString(brsState),10}");
         sb.AppendLine($"    Holdup Volume:    {brsState.HoldupVolume_gal,10:F0} / {PlantConstants.BRS_HOLDUP_USABLE_CAPACITY_GAL:F0} gal ({brsHoldupPct:F1}%)");
@@ -1144,7 +1148,7 @@ public partial class HeatupSimEngine
         sb.AppendLine($"    Gross Heat Input: {rcpHeat + pzrHeaterPower,10:F2} MW");
         float currentHeatLoss = HeatTransfer.InsulationHeatLoss_MW(T_rcs);
         sb.AppendLine($"    Heat Losses:      {currentHeatLoss,10:F2} MW (temp dependent)");
-        sb.AppendLine($"    SG Secondary Loss: {sgHeatTransfer_MW,10:F2} MW");  // v0.8.0 — Heat sink to SG secondary
+        sb.AppendLine($"    SG Secondary Loss: {sgHeatTransfer_MW,10:F2} MW");  // v0.8.0 â€” Heat sink to SG secondary
         sb.AppendLine($"    Net Plant Heat:   {netPlantHeat_MW,10:F2} MW");
         sb.AppendLine("    IP-0018 Energy Artifact:");
         sb.AppendLine($"      Primary Heat:      {stageE_PrimaryHeatInput_MW,10:F3} MW");
@@ -1166,21 +1170,21 @@ public partial class HeatupSimEngine
         sb.AppendLine($"    Cumulative Energy:{gridEnergy,10:F1} MWh");
         sb.AppendLine();
         // v1.3.0: SG Multi-Node Thermal Model (replaces v0.8.0 lumped model)
-        sb.AppendLine("  SG SECONDARY SIDE (v1.3.0 / v4.3.0 — Multi-Node Stratified Model):");
-        sb.AppendLine($"    Bulk Avg Temp:    {T_sg_secondary,10:F2} °F");
-        sb.AppendLine($"    Top Node Temp:    {sgTopNodeTemp,10:F2} °F");
-        sb.AppendLine($"    Bottom Node Temp: {sgBottomNodeTemp,10:F2} °F");
-        sb.AppendLine($"    Stratification:   {sgStratificationDeltaT,10:F2} °F (top-bottom)");
-        sb.AppendLine($"    T_RCS - T_SG_top: {T_rcs - sgTopNodeTemp,10:F2} °F");
-        sb.AppendLine($"    T_RCS - T_SG_avg: {T_rcs - T_sg_secondary,10:F2} °F");
+        sb.AppendLine("  SG SECONDARY SIDE (v1.3.0 / v4.3.0 â€” Multi-Node Stratified Model):");
+        sb.AppendLine($"    Bulk Avg Temp:    {T_sg_secondary,10:F2} Â°F");
+        sb.AppendLine($"    Top Node Temp:    {sgTopNodeTemp,10:F2} Â°F");
+        sb.AppendLine($"    Bottom Node Temp: {sgBottomNodeTemp,10:F2} Â°F");
+        sb.AppendLine($"    Stratification:   {sgStratificationDeltaT,10:F2} Â°F (top-bottom)");
+        sb.AppendLine($"    T_RCS - T_SG_top: {T_rcs - sgTopNodeTemp,10:F2} Â°F");
+        sb.AppendLine($"    T_RCS - T_SG_avg: {T_rcs - T_sg_secondary,10:F2} Â°F");
         sb.AppendLine($"    Heat to SG Sec:   {sgHeatTransfer_MW,10:F2} MW");
         sb.AppendLine($"    Heat to SG Sec:   {sgHeatTransfer_MW * PlantConstants.MW_TO_BTU_HR / 1e6f,10:F2} MBTU/hr");
         // v4.3.0: SG secondary pressure model
         sb.AppendLine($"    SG Sec Pressure:  {sgSecondaryPressure_psia,10:F1} psia ({sgSecondaryPressure_psia - 14.7f:F1} psig)");
-        sb.AppendLine($"    SG T_sat:         {sgSaturationTemp_F,10:F1} °F");
-        sb.AppendLine($"    SG Max Superheat:  {sgMaxSuperheat_F,10:F1} °F");
+        sb.AppendLine($"    SG T_sat:         {sgSaturationTemp_F,10:F1} Â°F");
+        sb.AppendLine($"    SG Max Superheat:  {sgMaxSuperheat_F,10:F1} Â°F");
         sb.AppendLine($"    Boiling Intensity: {sgBoilingIntensity,10:F3} (0=subcooled, 1=full boil)");
-        sb.AppendLine($"    N₂ Blanket:       {(sgNitrogenIsolated ? "ISOLATED" : "BLANKETED"),10}");
+        sb.AppendLine($"    Nâ‚‚ Blanket:       {(sgNitrogenIsolated ? "ISOLATED" : "BLANKETED"),10}");
         sb.AppendLine($"    SG Boundary Mode: {sgBoundaryMode,10}");
         sb.AppendLine($"    Pressure Source:  {sgPressureSourceBranch,10}");
         sb.AppendLine($"    SteamInventory:   {sgSteamInventory_lb,10:F1} lb");
@@ -1247,9 +1251,9 @@ public partial class HeatupSimEngine
         sb.AppendLine($"    Upper Range:      {rvlisUpper,10:F1} % {(rvlisUpperValid ? "(VALID - RCPs OFF)" : "(INVALID - RCPs ON)")}");
         sb.AppendLine();
         sb.AppendLine("  SMM (Subcooling Margin Monitor):");
-        sb.AppendLine($"    Subcooling Margin:{subcooling,10:F1} °F");
-        sb.AppendLine($"    Low Margin (<15°F):{(smmLowMargin ? "ALARM" : "OK"),10}");
-        sb.AppendLine($"    No Margin (≤0°F): {(smmNoMargin ? "ALARM" : "OK"),10}");
+        sb.AppendLine($"    Subcooling Margin:{subcooling,10:F1} Â°F");
+        sb.AppendLine($"    Low Margin (<15Â°F):{(smmLowMargin ? "ALARM" : "OK"),10}");
+        sb.AppendLine($"    No Margin (â‰¤0Â°F): {(smmNoMargin ? "ALARM" : "OK"),10}");
         sb.AppendLine();
         sb.AppendLine("  VALIDATION STATUS:");
         sb.AppendLine($"    Subcooling >=30F: {(subcooling >= 30f ? "PASS" : "FAIL")}");
@@ -1294,7 +1298,7 @@ public partial class HeatupSimEngine
         sb.AppendLine();
         
         // v1.1.0 Stage 5: Comprehensive Inventory Audit
-        sb.AppendLine("  INVENTORY AUDIT (v1.1.0 — Comprehensive Mass Balance):");
+        sb.AppendLine("  INVENTORY AUDIT (v1.1.0 â€” Comprehensive Mass Balance):");
         sb.AppendLine($"    RCS Mass:           {inventoryAudit.RCS_Mass_lbm,10:F0} lbm");
         sb.AppendLine($"    PZR Water Mass:     {inventoryAudit.PZR_Water_Mass_lbm,10:F0} lbm");
         sb.AppendLine($"    PZR Steam Mass:     {inventoryAudit.PZR_Steam_Mass_lbm,10:F0} lbm");
@@ -1355,7 +1359,7 @@ public partial class HeatupSimEngine
     }
 
     // ========================================================================
-    // FINAL REPORT — Written when simulation completes or is stopped.
+    // FINAL REPORT â€” Written when simulation completes or is stopped.
     // ========================================================================
 
     void SaveReport()
@@ -1369,17 +1373,17 @@ public partial class HeatupSimEngine
         sb.AppendLine($"Wall-Clock Duration: {TimeAcceleration.FormatTime(wallClockTime)}");
         sb.AppendLine($"Effective Speed: {TimeAcceleration.EffectiveMultiplier:F1}x average");
         sb.AppendLine();
-        sb.AppendLine($"Final T_avg: {T_avg:F1}°F");
+        sb.AppendLine($"Final T_avg: {T_avg:F1}Â°F");
         sb.AppendLine($"Final Pressure: {pressure:F0} psia");
-        sb.AppendLine($"Final Subcooling: {subcooling:F1}°F");
+        sb.AppendLine($"Final Subcooling: {subcooling:F1}Â°F");
         sb.AppendLine($"Final PZR Level: {pzrLevel:F1}%");
         sb.AppendLine($"Grid Energy: {gridEnergy:F0} MWh");
         sb.AppendLine();
         sb.AppendLine("VALIDATION:");
-        sb.AppendLine($"  Subcooling ≥30°F: {(subcooling >= 30f ? "PASS" : "FAIL")}");
-        sb.AppendLine($"  Rate ≤50°F/hr: {(heatupRate <= MAX_RATE + 5f ? "PASS" : "FAIL")}");
+        sb.AppendLine($"  Subcooling â‰¥30Â°F: {(subcooling >= 30f ? "PASS" : "FAIL")}");
+        sb.AppendLine($"  Rate â‰¤50Â°F/hr: {(heatupRate <= MAX_RATE + 5f ? "PASS" : "FAIL")}");
         sb.AppendLine($"  Temp target: {(T_avg >= targetTemperature - 10f ? "PASS" : "FAIL")}");
-        sb.AppendLine($"  Mass conservation ≤{PlantConstants.STAGE_E_CONSERVATION_LBM_LIMIT:F0} lbm: {(massError_lbm <= PlantConstants.STAGE_E_CONSERVATION_LBM_LIMIT ? "PASS" : "FAIL")} ({massError_lbm:F1} lbm)");
+        sb.AppendLine($"  Mass conservation â‰¤{PlantConstants.STAGE_E_CONSERVATION_LBM_LIMIT:F0} lbm: {(massError_lbm <= PlantConstants.STAGE_E_CONSERVATION_LBM_LIMIT ? "PASS" : "FAIL")} ({massError_lbm:F1} lbm)");
         sb.AppendLine($"  RTCC telemetry present: {(rtccTelemetryPresent ? "PASS" : "FAIL")}");
         sb.AppendLine($"  RTCC assertion failures: {(rtccAssertionFailureCount == 0 ? "PASS" : "FAIL")} ({rtccAssertionFailureCount})");
         sb.AppendLine($"  PBOC events recorded: {(pbocEventCount > 0 ? "PASS" : "FAIL")} ({pbocEventCount})");
@@ -1454,7 +1458,7 @@ public partial class HeatupSimEngine
         sb.AppendLine($"  PressWindow Active:   {(sgPressurizationWindowActive ? "YES" : "NO")}");
         sb.AppendLine($"  PressWindow Start:    {sgPressurizationWindowStartTime_hr:F3} hr");
         sb.AppendLine($"  PressWindow Rise:     {sgPressurizationWindowNetPressureRise_psia:F2} psia");
-        sb.AppendLine($"  PressWindow Tsat Δ:   {sgPressurizationWindowTsatDelta_F:F2} F");
+        sb.AppendLine($"  PressWindow Tsat Î”:   {sgPressurizationWindowTsatDelta_F:F2} F");
         sb.AppendLine($"  P Rise Streak:        {sgPressurizationConsecutivePressureRiseIntervals}");
         sb.AppendLine($"  Tsat Rise Streak:     {sgPressurizationConsecutiveTsatRiseIntervals}");
         sb.AppendLine($"  PreBoil |T-Tsat|:     {sgPreBoilTempApproachToTsat_F:F2} F");
@@ -1500,3 +1504,6 @@ public partial class HeatupSimEngine
         Debug.Log($"Report saved: {file}");
     }
 }
+
+}
+

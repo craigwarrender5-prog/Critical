@@ -1,11 +1,12 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using Critical.Simulation.Modular.Modules;
 using Critical.Simulation.Modular.Modules.PZR;
 using Critical.Simulation.Modular.State;
 using Critical.Simulation.Modular.Transfer;
 using Critical.Simulation.Modular.Validation;
-
+
+using Critical.Validation;
 namespace Critical.Simulation.Modular
 {
     /// <summary>
@@ -234,3 +235,4 @@ namespace Critical.Simulation.Modular
         }
     }
 }
+

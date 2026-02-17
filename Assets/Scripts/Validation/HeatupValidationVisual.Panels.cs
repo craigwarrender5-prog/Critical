@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - UI Component (Panels Partial)
 // HeatupValidationVisual.Panels.cs - Status Information Panels
 // ============================================================================
@@ -13,7 +13,7 @@
 //     - System Inventory Conservation (RCS+PZR+VCT+BRS mass balance)
 //
 // READS FROM:
-//   HeatupSimEngine — plantMode, heatupPhaseDesc, simTime, wallClockTime,
+//   HeatupSimEngine â€” plantMode, heatupPhaseDesc, simTime, wallClockTime,
 //     bubblePhase, bubblePhaseStartTime, rcpContribution, rcpRunning,
 //     rcpCount, effectiveRCPHeat, rvlisDynamic/Full/Upper + validity,
 //     vctState, brsState, totalSystemMass_lbm, massError_lbm,
@@ -21,15 +21,15 @@
 //     solidPressurizer, bubbleFormed, currentHeaterMode, timeToBubble
 //
 // REFERENCE:
-//   NRC HRTD 19.2.2 — Bubble formation procedure phases
-//   NRC HRTD 3.2 — RCP staged startup sequence
-//   NRC HRTD 4.1 — RVLIS instrumentation ranges
-//   NRC ML11223A342 — Plant mode definitions
+//   NRC HRTD 19.2.2 â€” Bubble formation procedure phases
+//   NRC HRTD 3.2 â€” RCP staged startup sequence
+//   NRC HRTD 4.1 â€” RVLIS instrumentation ranges
+//   NRC ML11223A342 â€” Plant mode definitions
 //
 // ARCHITECTURE:
 //   Partial class of HeatupValidationVisual. Implements:
-//     - DrawStatusColumnContent() — dispatched from Core
-//     - GetStatusContentHeightPartial() — tells scroll view total height
+//     - DrawStatusColumnContent() â€” dispatched from Core
+//     - GetStatusContentHeightPartial() â€” tells scroll view total height
 //     - Per-panel drawing methods (DrawPlantOverview, DrawRCPGrid, etc.)
 //
 // GOLD STANDARD: Yes
@@ -37,11 +37,15 @@
 
 using UnityEngine;
 using Critical.Physics;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupValidationVisual
 {
     // ========================================================================
-    // STATUS PANEL HEIGHTS — Pre-calculated for scroll view
+    // STATUS PANEL HEIGHTS â€” Pre-calculated for scroll view
     // ========================================================================
 
     const float OVERVIEW_PANEL_H   = 220f;  // v0.9.4: Added memory tracking row
@@ -59,7 +63,7 @@ public partial class HeatupValidationVisual
                                  + STATUS_SECTION_GAP * 8 + 40f;
 
     // ========================================================================
-    // PARTIAL METHOD IMPLEMENTATIONS — Called by Core
+    // PARTIAL METHOD IMPLEMENTATIONS â€” Called by Core
     // ========================================================================
 
     partial void GetStatusContentHeightPartial(ref float height)
@@ -93,7 +97,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // PLANT OVERVIEW — Mode, phase, temperatures, targets
+    // PLANT OVERVIEW â€” Mode, phase, temperatures, targets
     // ========================================================================
 
     void DrawPlantOverview(float x, ref float y, float w)
@@ -116,10 +120,10 @@ public partial class HeatupValidationVisual
             TimeAcceleration.FormatTime(engine.wallClockTime));
 
         // Current temperatures summary
-        DrawStatusRow(ref y, x, w, "T_RCS", $"{engine.T_rcs:F1} °F",
+        DrawStatusRow(ref y, x, w, "T_RCS", $"{engine.T_rcs:F1} Â°F",
             GetHighThresholdColor(engine.T_rcs, 545f, 570f,
                 _cNormalGreen, _cWarningAmber, _cAlarmRed));
-        DrawStatusRow(ref y, x, w, "T_PZR", $"{engine.T_pzr:F1} °F", _cTrace4);
+        DrawStatusRow(ref y, x, w, "T_PZR", $"{engine.T_pzr:F1} Â°F", _cTrace4);
 
         // Pressure
         DrawStatusRow(ref y, x, w, "RCS PRESS", $"{engine.pressure:F0} psia");
@@ -137,7 +141,7 @@ public partial class HeatupValidationVisual
                          (engine.targetTemperature - engine.startTemperature) * 100f;
         progress = Mathf.Clamp(progress, 0f, 100f);
         DrawStatusRow(ref y, x, w, "HEATUP",
-            $"{progress:F0}% ({engine.T_rcs:F0} → {engine.targetTemperature:F0} °F)", _cNormalGreen);
+            $"{progress:F0}% ({engine.T_rcs:F0} â†’ {engine.targetTemperature:F0} Â°F)", _cNormalGreen);
 
         // Time to bubble (during solid PZR phase)
         if (engine.solidPressurizer && engine.timeToBubble > 0f)
@@ -160,7 +164,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // RCP STAGED RAMP GRID — 4 pumps + aggregate status
+    // RCP STAGED RAMP GRID â€” 4 pumps + aggregate status
     // Per NRC HRTD 3.2: Each pump ramps through 4 stages over ~40 min
     // ========================================================================
 
@@ -211,13 +215,13 @@ public partial class HeatupValidationVisual
             $"{engine.rcpContribution.TotalFlowFraction:F2} ({engine.rcpContribution.EffectiveFlow_gpm:F0} gpm)",
             engine.rcpCount > 0 ? _cBlueAccent : _cTextSecondary);
 
-        DrawStatusRow(ref y, x, w, "COUPLING α",
+        DrawStatusRow(ref y, x, w, "COUPLING Î±",
             $"{Mathf.Min(1f, engine.rcpContribution.TotalFlowFraction):F3}",
             engine.rcpContribution.AllFullyRunning ? _cNormalGreen : _cCyanInfo);
     }
 
     // ========================================================================
-    // BUBBLE FORMATION STATE MACHINE — 7-phase tracker with progress
+    // BUBBLE FORMATION STATE MACHINE â€” 7-phase tracker with progress
     // Per NRC HRTD 19.2.2
     // ========================================================================
 
@@ -299,7 +303,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // HEATER MODE STATUS — Current operating mode and power
+    // HEATER MODE STATUS â€” Current operating mode and power
     // Per NRC HRTD 6.1 / 10.2
     // ========================================================================
 
@@ -360,8 +364,8 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // RVLIS — Reactor Vessel Level Indication System
-    // Per NRC HRTD 4.1 — Three ranges with flow-dependent validity
+    // RVLIS â€” Reactor Vessel Level Indication System
+    // Per NRC HRTD 4.1 â€” Three ranges with flow-dependent validity
     // ========================================================================
 
     void DrawRVLISPanel(float x, ref float y, float w)
@@ -377,7 +381,7 @@ public partial class HeatupValidationVisual
             : $"({engine.rvlisDynamic:F1}%) INVALID";
         DrawStatusRow(ref y, x, w, "DYNAMIC", dynVal, dynC);
 
-        // Full Range (valid without RCPs — natural circ)
+        // Full Range (valid without RCPs â€” natural circ)
         Color fullC = engine.rvlisFullValid ? _cNormalGreen : _cTextSecondary;
         string fullVal = engine.rvlisFullValid
             ? $"{engine.rvlisFull:F1}%"
@@ -401,7 +405,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // SYSTEM INVENTORY CONSERVATION — RCS + PZR + VCT + BRS mass balance
+    // SYSTEM INVENTORY CONSERVATION â€” RCS + PZR + VCT + BRS mass balance
     // ========================================================================
 
     void DrawInventoryPanel(float x, ref float y, float w)
@@ -457,7 +461,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // SG PRESSURE + RHR THERMAL BALANCE — v4.3.0
+    // SG PRESSURE + RHR THERMAL BALANCE â€” v4.3.0
     // Per NRC HRTD 19.2.2, 5.1
     // ========================================================================
 
@@ -468,7 +472,7 @@ public partial class HeatupValidationVisual
         y += GAUGE_GROUP_HEADER_H + 2f;
 
         // SG section
-        DrawStatusRow(ref y, x, w, "━ SG SECONDARY", "", _cTextPrimary);
+        DrawStatusRow(ref y, x, w, "â” SG SECONDARY", "", _cTextPrimary);
 
         // SG pressure
         float sgP = engine.sgSecondaryPressure_psia;
@@ -511,7 +515,7 @@ public partial class HeatupValidationVisual
         y += 4f;
 
         // RHR section
-        DrawStatusRow(ref y, x, w, "━ RHR SYSTEM", "", _cTextPrimary);
+        DrawStatusRow(ref y, x, w, "â” RHR SYSTEM", "", _cTextPrimary);
 
         string rhrMode = engine.rhrModeString;
         Color rhrC = engine.rhrActive ? _cNormalGreen : _cTextSecondary;
@@ -534,7 +538,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // HZP STABILIZATION PANEL — v1.1.0
+    // HZP STABILIZATION PANEL â€” v1.1.0
     // Steam dump, HZP state machine, heater PID, startup readiness
     // Per NRC HRTD 10.2, 11.2, 19.0
     // ========================================================================
@@ -574,7 +578,7 @@ public partial class HeatupValidationVisual
         y += 4f;
 
         // Steam Dump Section
-        DrawStatusRow(ref y, x, w, "━ STEAM DUMP", "", _cTextPrimary);
+        DrawStatusRow(ref y, x, w, "â” STEAM DUMP", "", _cTextPrimary);
 
         // Steam dump mode/status
         string sdStatus = engine.GetSteamDumpStatus();
@@ -594,7 +598,7 @@ public partial class HeatupValidationVisual
         y += 4f;
 
         // Heater PID Section
-        DrawStatusRow(ref y, x, w, "━ HEATER PID", "", _cTextPrimary);
+        DrawStatusRow(ref y, x, w, "â” HEATER PID", "", _cTextPrimary);
 
         // PID status
         string pidStatus = engine.GetHeaterPIDStatus();
@@ -617,7 +621,7 @@ public partial class HeatupValidationVisual
         y += 4f;
 
         // Startup Readiness Section
-        DrawStatusRow(ref y, x, w, "━ STARTUP READY", "", _cTextPrimary);
+        DrawStatusRow(ref y, x, w, "â” STARTUP READY", "", _cTextPrimary);
 
         // Individual prerequisites
         if (engine.IsHZPActive())
@@ -648,3 +652,6 @@ public partial class HeatupValidationVisual
         }
     }
 }
+
+}
+

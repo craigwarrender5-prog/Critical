@@ -1,28 +1,28 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - UI Component (Tab Validation Partial)
 // HeatupValidationVisual.TabValidation.cs - Tab 7: Validation
 // ============================================================================
 //
 // PURPOSE:
-//   Renders the Validation/Debug tab — all PASS/FAIL checks, RVLIS panel,
+//   Renders the Validation/Debug tab â€” all PASS/FAIL checks, RVLIS panel,
 //   inventory audit detail, conservation error tracking, and memory/performance
 //   monitoring. This tab is primarily for developer validation and debugging,
 //   not typical operator monitoring.
 //
 //   Layout (single scrollable column, full width):
-//     ┌─────────────────────────────────────────────────┐
-//     │ RVLIS PANEL                                     │
-//     │ (Dynamic/Full/Upper ranges + validity)          │
-//     ├─────────────────────────────────────────────────┤
-//     │ INVENTORY PANEL                                 │
-//     │ (RCS + PZR + VCT + BRS mass balance)            │
-//     ├─────────────────────────────────────────────────┤
-//     │ MEMORY / PERFORMANCE                            │
-//     │ (reserved + graphics memory usage)              │
-//     ├─────────────────────────────────────────────────┤
-//     │ PASS/FAIL VALIDATION CHECKS (scrollable)        │
-//     │ (all engine validation checks with status)      │
-//     └─────────────────────────────────────────────────┘
+//     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+//     â”‚ RVLIS PANEL                                     â”‚
+//     â”‚ (Dynamic/Full/Upper ranges + validity)          â”‚
+//     â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+//     â”‚ INVENTORY PANEL                                 â”‚
+//     â”‚ (RCS + PZR + VCT + BRS mass balance)            â”‚
+//     â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+//     â”‚ MEMORY / PERFORMANCE                            â”‚
+//     â”‚ (reserved + graphics memory usage)              â”‚
+//     â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+//     â”‚ PASS/FAIL VALIDATION CHECKS (scrollable)        â”‚
+//     â”‚ (all engine validation checks with status)      â”‚
+//     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
 // READS FROM:
 //   Delegates rendering to existing partial methods:
@@ -30,20 +30,24 @@
 //   Plus inline memory and validation check rendering.
 //
 // REFERENCE:
-//   NRC HRTD 4.1 — RVLIS instrumentation
-//   NRC HRTD 19.0 — Plant operations validation criteria
+//   NRC HRTD 4.1 â€” RVLIS instrumentation
+//   NRC HRTD 19.0 â€” Plant operations validation criteria
 //
 // ARCHITECTURE:
 //   Partial class of HeatupValidationVisual. Implements:
-//     - DrawValidationTab(Rect) — dispatched from Core tab switch
+//     - DrawValidationTab(Rect) â€” dispatched from Core tab switch
 //
 // GOLD STANDARD: Yes
-// v5.0.0: New file — Validation tab for multi-tab dashboard redesign
+// v5.0.0: New file â€” Validation tab for multi-tab dashboard redesign
 // ============================================================================
 
 using UnityEngine;
 using Critical.Physics;
 using Critical.Simulation.Modular.Transfer;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupValidationVisual
 {
@@ -152,7 +156,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // VALIDATION CHECKS — All PASS/FAIL criteria
+    // VALIDATION CHECKS â€” All PASS/FAIL criteria
     // Aggregates checks from v0.9.6, v1.1.0, v4.4.0 validation systems.
     // ========================================================================
 
@@ -162,9 +166,9 @@ public partial class HeatupValidationVisual
             "VALIDATION CHECKS");
         y += GAUGE_GROUP_HEADER_H + 2f;
 
-        // Physics Conservation — canonical mass-based check is primary
+        // Physics Conservation â€” canonical mass-based check is primary
         // v5.4.2: Primary mass conservation uses canonical lbm ledger (Section 3, Constitution)
-        // Thresholds: PASS < 100 lbm, WARN 100–500 lbm, FAIL > 500 lbm
+        // Thresholds: PASS < 100 lbm, WARN 100â€“500 lbm, FAIL > 500 lbm
         DrawCheckRowThreeState(ref y, x, w, "Primary Mass Conservation",
             engine.massError_lbm, 100f, 500f,
             $"Error: {engine.massError_lbm:F1} lbm");
@@ -186,15 +190,15 @@ public partial class HeatupValidationVisual
                 ? stepSnapshot.TransferLedger.UnledgeredMutationReason
                 : "No unledgered mutation detected");
 
-        // VCT cumulative flow imbalance — CVCS loop-level diagnostic, not primary conservation
+        // VCT cumulative flow imbalance â€” CVCS loop-level diagnostic, not primary conservation
         // This tracks VCT gallon-based flow accounting and may drift due to density approximations.
-        // Thresholds: PASS < 10 gal, WARN 10–50 gal, FAIL > 50 gal
+        // Thresholds: PASS < 10 gal, WARN 10â€“50 gal, FAIL > 50 gal
         DrawCheckRowThreeState(ref y, x, w, "VCT Flow Imbalance",
             engine.massConservationError, 10f, 50f,
             $"Imbalance: {engine.massConservationError:F1} gal");
 
-        // v0.1.0.0 Phase C: Primary ledger drift — canonical ledger vs solver component sum (CS-0007)
-        // Thresholds: PASS < 100 lb, WARN 100–1000 lb, FAIL > 1000 lb
+        // v0.1.0.0 Phase C: Primary ledger drift â€” canonical ledger vs solver component sum (CS-0007)
+        // Thresholds: PASS < 100 lb, WARN 100â€“1000 lb, FAIL > 1000 lb
         if (engine.primaryMassStatus == "NOT_CHECKED")
         {
             DrawCheckRow(ref y, x, w, "Primary Ledger Drift",
@@ -208,13 +212,13 @@ public partial class HeatupValidationVisual
         }
 
         // Temperature Limits
-        DrawCheckRow(ref y, x, w, "Heatup Rate ≤ 50 °F/hr",
+        DrawCheckRow(ref y, x, w, "Heatup Rate â‰¤ 50 Â°F/hr",
             Mathf.Abs(engine.heatupRate) <= 50f,
-            $"Current: {engine.heatupRate:F1} °F/hr");
+            $"Current: {engine.heatupRate:F1} Â°F/hr");
 
-        DrawCheckRow(ref y, x, w, "Subcooling ≥ 15 °F",
+        DrawCheckRow(ref y, x, w, "Subcooling â‰¥ 15 Â°F",
             engine.subcooling >= 15f,
-            $"Current: {engine.subcooling:F1} °F");
+            $"Current: {engine.subcooling:F1} Â°F");
 
         // PZR Checks
         DrawCheckRow(ref y, x, w, "PZR Level In Band",
@@ -349,3 +353,6 @@ public partial class HeatupValidationVisual
         y += rowH;
     }
 }
+
+}
+

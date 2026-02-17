@@ -1,10 +1,11 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Validation Dashboard Test Setup
 // ValidationDashboardTestSetup.cs - Minimal test to verify compilation
 // ============================================================================
 
 using UnityEngine;
-
+
+using Critical.Validation;
 /// <summary>
 /// Minimal test component to verify ValidationDashboard compilation.
 /// If this component can be added, the namespace/class resolution is working.
@@ -30,3 +31,4 @@ public class ValidationDashboardTestSetup : MonoBehaviour
         }
     }
 }
+

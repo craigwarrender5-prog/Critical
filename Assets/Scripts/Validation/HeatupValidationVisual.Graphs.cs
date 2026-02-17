@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - UI Component (Graphs Partial)
 // HeatupValidationVisual.Graphs.cs - Trend Graph Rendering
 // ============================================================================
@@ -9,16 +9,16 @@
 //   from the engine's 240-point buffers (1 sim-minute samples, 4-hour window).
 //
 // TABS:
-//   0. TEMPS     — T_RCS, T_HOT, T_COLD, T_PZR, T_SAT, T_SG_SEC (6 traces, v0.9.0)
-//   1. PRESSURE  — RCS Pressure + PZR Level (dual Y-axis)
-//   2. CVCS      — Charging, Letdown, Surge (3 traces)
-//   3. VCT/BRS   — VCT Level, BRS Holdup, BRS Distillate (3 traces)
-//   4. RATES     — Heatup Rate, Pressure Rate, Subcooling (v0.9.0: added pressure rate)
-//   5. RCP HEAT  — Heatup Rate replot with RCP count annotations
-//   6. HZP       — v1.1.0: Steam dump heat, steam pressure, heater PID output, HZP progress
+//   0. TEMPS     â€” T_RCS, T_HOT, T_COLD, T_PZR, T_SAT, T_SG_SEC (6 traces, v0.9.0)
+//   1. PRESSURE  â€” RCS Pressure + PZR Level (dual Y-axis)
+//   2. CVCS      â€” Charging, Letdown, Surge (3 traces)
+//   3. VCT/BRS   â€” VCT Level, BRS Holdup, BRS Distillate (3 traces)
+//   4. RATES     â€” Heatup Rate, Pressure Rate, Subcooling (v0.9.0: added pressure rate)
+//   5. RCP HEAT  â€” Heatup Rate replot with RCP count annotations
+//   6. HZP       â€” v1.1.0: Steam dump heat, steam pressure, heater PID output, HZP progress
 //
 // READS FROM:
-//   HeatupSimEngine — All history buffers including:
+//   HeatupSimEngine â€” All history buffers including:
 //     v0.9.0 NEW: tPzrHistory, tSatHistory, pressureRateHistory
 //     Existing: tempHistory, tHotHistory, tColdHistory, tSgSecondaryHistory,
 //       pressHistory, pzrLevelHistory, chargingHistory, letdownHistory, surgeFlowHistory,
@@ -34,8 +34,8 @@
 //
 // ARCHITECTURE:
 //   Partial class of HeatupValidationVisual. Implements:
-//     - DrawGraphContent(Rect, int) — dispatched from Core per tab index
-//     - DrawPlotArea() — shared graph renderer (axes, grid, traces, legend)
+//     - DrawGraphContent(Rect, int) â€” dispatched from Core per tab index
+//     - DrawPlotArea() â€” shared graph renderer (axes, grid, traces, legend)
 //     - Per-tab configuration methods defining traces and ranges
 //
 // v0.9.0 CHANGES:
@@ -49,6 +49,10 @@
 using UnityEngine;
 using System.Collections.Generic;
 using Critical.Physics;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupValidationVisual
 {
@@ -68,7 +72,7 @@ public partial class HeatupValidationVisual
     const float GRAPH_MARGIN_RIGHT_DUAL = 60f;
 
     // ========================================================================
-    // TRACE DESCRIPTOR — Defines a single graph trace
+    // TRACE DESCRIPTOR â€” Defines a single graph trace
     // ========================================================================
 
     struct TraceDescriptor
@@ -91,7 +95,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // PARTIAL METHOD IMPLEMENTATION — Called by Core
+    // PARTIAL METHOD IMPLEMENTATION â€” Called by Core
     // ========================================================================
 
     partial void DrawGraphContent(Rect area, int tabIndex)
@@ -119,7 +123,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // TAB 0: TEMPERATURES — All 6 temperatures as historical traces
+    // TAB 0: TEMPERATURES â€” All 6 temperatures as historical traces
     // v0.9.0: T_PZR and T_SAT now use history buffers (no more live annotations)
     // ========================================================================
 
@@ -128,12 +132,12 @@ public partial class HeatupValidationVisual
         // v0.9.0: All 6 temperatures now have proper history buffers
         var traces = new TraceDescriptor[]
         {
-            new TraceDescriptor("T_RCS",    _cTrace1, engine.tempHistory,           "F1", "°F"),
-            new TraceDescriptor("T_HOT",    _cTrace2, engine.tHotHistory,           "F1", "°F"),
-            new TraceDescriptor("T_COLD",   _cTrace3, engine.tColdHistory,          "F1", "°F"),
-            new TraceDescriptor("T_PZR",    _cTrace4, engine.tPzrHistory,           "F1", "°F"),  // v0.9.0: Now from history!
-            new TraceDescriptor("T_SAT",    _cTrace5, engine.tSatHistory,           "F1", "°F"),  // v0.9.0: Now from history!
-            new TraceDescriptor("T_SG_SEC", _cTrace6, engine.tSgSecondaryHistory,   "F1", "°F"),
+            new TraceDescriptor("T_RCS",    _cTrace1, engine.tempHistory,           "F1", "Â°F"),
+            new TraceDescriptor("T_HOT",    _cTrace2, engine.tHotHistory,           "F1", "Â°F"),
+            new TraceDescriptor("T_COLD",   _cTrace3, engine.tColdHistory,          "F1", "Â°F"),
+            new TraceDescriptor("T_PZR",    _cTrace4, engine.tPzrHistory,           "F1", "Â°F"),  // v0.9.0: Now from history!
+            new TraceDescriptor("T_SAT",    _cTrace5, engine.tSatHistory,           "F1", "Â°F"),  // v0.9.0: Now from history!
+            new TraceDescriptor("T_SG_SEC", _cTrace6, engine.tSgSecondaryHistory,   "F1", "Â°F"),
         };
 
         // Auto-range Y from all trace data
@@ -144,13 +148,13 @@ public partial class HeatupValidationVisual
         yMin = Mathf.Max(yMin, 50f);
         yMax = Mathf.Min(yMax, 650f);
 
-        DrawPlotArea(area, timeData, traces, yMin, yMax, "TEMP (°F)", false, 0f, 0f, "");
+        DrawPlotArea(area, timeData, traces, yMin, yMax, "TEMP (Â°F)", false, 0f, 0f, "");
         
         // No more DrawLiveAnnotation needed - T_PZR and T_SAT are now proper traces!
     }
 
     // ========================================================================
-    // TAB 1: PRESSURE — Dual Y-axis: RCS Pressure + PZR Level
+    // TAB 1: PRESSURE â€” Dual Y-axis: RCS Pressure + PZR Level
     // ========================================================================
 
     void DrawPressureGraph(Rect area, List<float> timeData)
@@ -180,7 +184,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // TAB 2: CVCS — Charging, Letdown, Surge, Net
+    // TAB 2: CVCS â€” Charging, Letdown, Surge, Net
     // ========================================================================
 
     void DrawCVCSGraph(Rect area, List<float> timeData)
@@ -202,7 +206,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // TAB 3: VCT/BRS — VCT Level, BRS Holdup volume, BRS Distillate
+    // TAB 3: VCT/BRS â€” VCT Level, BRS Holdup volume, BRS Distillate
     // ========================================================================
 
     void DrawVCTBRSGraph(Rect area, List<float> timeData)
@@ -215,7 +219,7 @@ public partial class HeatupValidationVisual
 
         float vYMin = 0f, vYMax = 100f;
 
-        // Secondary: BRS volumes (gal) — different scale
+        // Secondary: BRS volumes (gal) â€” different scale
         var brsTraces = new TraceDescriptor[]
         {
             new TraceDescriptor("BRS HOLDUP",  _cOrangeAccent, engine.brsHoldupHistory,     "F0", "gal"),
@@ -239,7 +243,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // TAB 4: RATES — Heatup Rate, Pressure Rate, Subcooling
+    // TAB 4: RATES â€” Heatup Rate, Pressure Rate, Subcooling
     // v0.9.0: Added pressureRateHistory trace
     // ========================================================================
 
@@ -248,7 +252,7 @@ public partial class HeatupValidationVisual
         // Dual axis: Heatup Rate + Pressure Rate (left) + Subcooling (right)
         var rateTraces = new TraceDescriptor[]
         {
-            new TraceDescriptor("HEATUP RATE", _cTrace1, engine.heatRateHistory,      "F1", "°F/hr"),
+            new TraceDescriptor("HEATUP RATE", _cTrace1, engine.heatRateHistory,      "F1", "Â°F/hr"),
             new TraceDescriptor("PRESS RATE",  _cTrace4, engine.pressureRateHistory,  "F0", "psi/hr"),  // v0.9.0
         };
 
@@ -259,20 +263,20 @@ public partial class HeatupValidationVisual
 
         var scTrace = new TraceDescriptor[]
         {
-            new TraceDescriptor("SUBCOOLING", _cTrace3, engine.subcoolHistory, "F1", "°F"),
+            new TraceDescriptor("SUBCOOLING", _cTrace3, engine.subcoolHistory, "F1", "Â°F"),
         };
 
         float sYMin, sYMax;
         AutoRangeY(scTrace, out sYMin, out sYMax, 0f, 200f, 10f);
 
         DrawPlotArea(area, timeData, rateTraces, rYMin, rYMax, "RATE",
-            true, sYMin, sYMax, "SUBCOOL (°F)");
+            true, sYMin, sYMax, "SUBCOOL (Â°F)");
 
         DrawTracesOnSecondaryAxis(area, timeData, scTrace, sYMin, sYMax);
 
         // Tech Spec 50 F/hr limit line (on primary axis)
         DrawHorizontalRef(area, timeData, rYMin, rYMax,
-            50f, _cAlarmRed, "TECH SPEC 50°F/hr");
+            50f, _cAlarmRed, "TECH SPEC 50Â°F/hr");
             
         // Zero reference line for rates
         DrawHorizontalRef(area, timeData, rYMin, rYMax,
@@ -301,7 +305,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // TAB 5: RCP HEAT — Heatup Rate with RCP count context
+    // TAB 5: RCP HEAT â€” Heatup Rate with RCP count context
     // ========================================================================
 
     void DrawRCPHeatGraph(Rect area, List<float> timeData)
@@ -333,7 +337,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // SHARED GRAPH RENDERER — Axes, grid, traces, legend
+    // SHARED GRAPH RENDERER â€” Axes, grid, traces, legend
     // ========================================================================
 
     void DrawPlotArea(Rect area, List<float> timeData, TraceDescriptor[] traces,
@@ -503,7 +507,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // TRACE RENDERING — GL line strip for each data series
+    // TRACE RENDERING â€” GL line strip for each data series
     // ========================================================================
 
     void DrawTrace(Rect plotRect, List<float> timeData, List<float> valueData,
@@ -564,7 +568,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // SECONDARY AXIS TRACES — Draw traces scaled to the right Y-axis
+    // SECONDARY AXIS TRACES â€” Draw traces scaled to the right Y-axis
     // ========================================================================
 
     void DrawTracesOnSecondaryAxis(Rect area, List<float> timeData,
@@ -586,7 +590,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // LEGEND — Color-coded trace labels above the plot
+    // LEGEND â€” Color-coded trace labels above the plot
     // ========================================================================
 
     void DrawLegend(Rect area, TraceDescriptor[] traces, bool dualAxis, string y2Label)
@@ -621,7 +625,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // REFERENCE LINES — Horizontal reference / limit lines
+    // REFERENCE LINES â€” Horizontal reference / limit lines
     // ========================================================================
 
     void DrawHorizontalRef(Rect area, List<float> timeData,
@@ -650,7 +654,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // LIVE ANNOTATION — Show current value as a horizontal marker for
+    // LIVE ANNOTATION â€” Show current value as a horizontal marker for
     // parameters that lack history buffers (T_pzr, T_sat, etc.)
     // ========================================================================
 
@@ -691,7 +695,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // UTILITY — Plot rect calculation, auto-ranging
+    // UTILITY â€” Plot rect calculation, auto-ranging
     // ========================================================================
 
     /// <summary>
@@ -776,7 +780,7 @@ public partial class HeatupValidationVisual
     }
 
     // ========================================================================
-    // TAB 6: HZP — v1.1.0 Steam Dump, Heater PID, HZP Progress
+    // TAB 6: HZP â€” v1.1.0 Steam Dump, Heater PID, HZP Progress
     // Dual Y-axis: Heat (MW) + Progress (%)
     // ========================================================================
 
@@ -842,8 +846,11 @@ public partial class HeatupValidationVisual
             var prevC = GUI.contentColor;
             GUI.contentColor = _cNormalGreen;
             GUI.Label(new Rect(plotRect.x + 4f, plotRect.y + 18f, plotRect.width - 8f, 16f),
-                "✓ READY FOR REACTOR STARTUP", _graphLabelStyle);
+                "âœ“ READY FOR REACTOR STARTUP", _graphLabelStyle);
             GUI.contentColor = prevC;
         }
     }
 }
+
+}
+

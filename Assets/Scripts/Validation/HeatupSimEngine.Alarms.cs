@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Simulation Engine (Alarms Partial)
 // HeatupSimEngine.Alarms.cs - Annunciator Update & RVLIS
 // ============================================================================
@@ -10,26 +10,30 @@
 //
 // ARCHITECTURE:
 //   Partial class of HeatupSimEngine. This file owns:
-//     - UpdateAnnunciators() — alarm state update via AlarmManager module
+//     - UpdateAnnunciators() â€” alarm state update via AlarmManager module
 //     - Alarm edge detection with table-driven pattern (G10 deduplication)
-//     - UpdateRVLIS() — delegates to RVLISPhysics module
+//     - UpdateRVLIS() â€” delegates to RVLISPhysics module
 //     - Previous-frame alarm state tracking fields
 //
 // SOURCES:
-//   - NRC HRTD 10.2 — Pressure control setpoints
-//   - NRC HRTD 19.2.1 — Solid plant alarm suppression
-//   - NUREG-0737 Supp. 1 — RVLIS requirements
+//   - NRC HRTD 10.2 â€” Pressure control setpoints
+//   - NRC HRTD 19.2.1 â€” Solid plant alarm suppression
+//   - NUREG-0737 Supp. 1 â€” RVLIS requirements
 //
 // GOLD STANDARD: Yes
 // ============================================================================
 
 using UnityEngine;
 using Critical.Physics;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupSimEngine
 {
     // ========================================================================
-    // PREVIOUS-FRAME ALARM STATES — For edge detection
+    // PREVIOUS-FRAME ALARM STATES â€” For edge detection
     // ========================================================================
 
     #region Alarm Edge Detection State
@@ -51,7 +55,7 @@ public partial class HeatupSimEngine
     #endregion
 
     // ========================================================================
-    // TABLE-DRIVEN ALARM EDGE DETECTION (G10 — eliminates 15 duplicate pairs)
+    // TABLE-DRIVEN ALARM EDGE DETECTION (G10 â€” eliminates 15 duplicate pairs)
     //
     // Each alarm is defined as a descriptor with:
     //   - A getter for the current alarm state
@@ -82,14 +86,14 @@ public partial class HeatupSimEngine
     /// </summary>
     private void ProcessAlarmEdges()
     {
-        // Plant mode transitions (special — not boolean alarm)
+        // Plant mode transitions (special â€” not boolean alarm)
         if (plantMode != prev_plantMode && prev_plantMode >= 0)
         {
             LogEvent(EventSeverity.INFO, $"MODE CHANGE: Mode {prev_plantMode} -> Mode {plantMode}");
         }
         prev_plantMode = plantMode;
 
-        // Build alarm descriptor table — one entry per alarm
+        // Build alarm descriptor table â€” one entry per alarm
         var alarms = new AlarmEdgeDescriptor[]
         {
             new AlarmEdgeDescriptor {
@@ -189,11 +193,11 @@ public partial class HeatupSimEngine
         // Process all alarm edges in a single loop
         for (int i = 0; i < alarms.Length; i++)
         {
-            // Rising edge — alarm activating
+            // Rising edge â€” alarm activating
             if (alarms[i].CurrentValue && !alarms[i].PreviousValue)
                 LogEvent(alarms[i].RisingSeverity, alarms[i].RisingMessage);
 
-            // Falling edge — alarm clearing (only if message defined)
+            // Falling edge â€” alarm clearing (only if message defined)
             if (!alarms[i].CurrentValue && alarms[i].PreviousValue && alarms[i].FallingMessage != null)
                 LogEvent(EventSeverity.INFO, alarms[i].FallingMessage);
         }
@@ -219,7 +223,7 @@ public partial class HeatupSimEngine
     #endregion
 
     // ========================================================================
-    // RVLIS — Reactor Vessel Level Indication System
+    // RVLIS â€” Reactor Vessel Level Indication System
     // Delegated to RVLISPhysics module per NUREG-0737 Supp. 1
     // ========================================================================
 
@@ -237,7 +241,7 @@ public partial class HeatupSimEngine
     }
 
     // ========================================================================
-    // ANNUNCIATOR UPDATE — Delegates alarm checking to AlarmManager module,
+    // ANNUNCIATOR UPDATE â€” Delegates alarm checking to AlarmManager module,
     // then processes edge detection for event logging.
     // ========================================================================
 
@@ -246,7 +250,7 @@ public partial class HeatupSimEngine
         for (int i = 0; i < 4; i++)
             rcpRunning[i] = (i < rcpCount);
 
-        // ALARM CHECKING — Owned by AlarmManager module
+        // ALARM CHECKING â€” Owned by AlarmManager module
         // Per NRC HRTD: Centralized setpoint checking for all annunciators
         var alarmInputs = new AlarmInputs
         {
@@ -290,3 +294,6 @@ public partial class HeatupSimEngine
         ProcessAlarmEdges();
     }
 }
+
+}
+

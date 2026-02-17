@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Event Log Panel Component
 // EventLogPanel.cs - Scrollable Severity-Filtered Event Log
 // ============================================================================
@@ -9,16 +9,16 @@
 //   Supports severity filtering (ALL/INFO/ALERT/ALARM) with color coding.
 //
 // VISUAL DESIGN:
-//   ┌─────────────────────────────────────────────────────┐
-//   │  [ALL] [INFO] [ALERT] [ALARM]        27 events     │
-//   ├─────────────────────────────────────────────────────┤
-//   │  12:15:30 INFO   Phase → HEATUP                    │
-//   │  12:15:35 ALERT  PZR Level Low                     │
-//   │  12:16:01 ALARM  Subcool < 20°F                    │
-//   │  12:16:05 INFO   RCP #1 START COMMAND              │
-//   │  12:16:10 ACTION HEATER MODE: STARTUP → BUBBLE     │
-//   │  ...                                     ▼ scroll  │
-//   └─────────────────────────────────────────────────────┘
+//   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+//   â”‚  [ALL] [INFO] [ALERT] [ALARM]        27 events     â”‚
+//   â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+//   â”‚  12:15:30 INFO   Phase â†’ HEATUP                    â”‚
+//   â”‚  12:15:35 ALERT  PZR Level Low                     â”‚
+//   â”‚  12:16:01 ALARM  Subcool < 20Â°F                    â”‚
+//   â”‚  12:16:05 INFO   RCP #1 START COMMAND              â”‚
+//   â”‚  12:16:10 ACTION HEATER MODE: STARTUP â†’ BUBBLE     â”‚
+//   â”‚  ...                                     â–¼ scroll  â”‚
+//   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
 // ARCHITECTURE:
 //   Uses a pool of pre-created TextMeshProUGUI rows for visible-only
@@ -35,11 +35,11 @@ using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
 using System.Collections.Generic;
+using Critical.Validation;
 
 // Alias nested engine types for clean access
-using EventSeverity = HeatupSimEngine.EventSeverity;
-using EventLogEntry = HeatupSimEngine.EventLogEntry;
-
+using EventSeverity = Critical.Validation.HeatupSimEngine.EventSeverity;
+using EventLogEntry = Critical.Validation.HeatupSimEngine.EventLogEntry;
 namespace Critical.UI.ValidationDashboard
 {
     /// <summary>
@@ -346,7 +346,7 @@ namespace Critical.UI.ValidationDashboard
             panel._visibleRowCount = Mathf.Min(MAX_VISIBLE_ROWS,
                 Mathf.FloorToInt(contentHeight / ROW_HEIGHT));
 
-            // Create row text objects (pooled — reused each frame)
+            // Create row text objects (pooled â€” reused each frame)
             panel._rowTexts = new TextMeshProUGUI[panel._visibleRowCount];
             for (int i = 0; i < panel._visibleRowCount; i++)
             {
@@ -415,3 +415,4 @@ namespace Critical.UI.ValidationDashboard
         }
     }
 }
+

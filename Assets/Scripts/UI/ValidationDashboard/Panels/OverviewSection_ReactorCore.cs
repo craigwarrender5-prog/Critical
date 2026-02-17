@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Overview Section: Reactor Core
 // OverviewSection_ReactorCore.cs - Temperature and Mode Display
 // ============================================================================
@@ -8,7 +8,8 @@
 
 using UnityEngine;
 using Critical.Physics;
-
+
+using Critical.Validation;
 namespace Critical.UI.ValidationDashboard
 {
     public class OverviewSection_ReactorCore : OverviewSectionBase
@@ -20,9 +21,9 @@ namespace Critical.UI.ValidationDashboard
 
         protected override void BuildContent()
         {
-            _tAvgRow = CreateRow("T-AVG", "°F", "F1");
-            _tHotRow = CreateRow("T-HOT", "°F", "F1");
-            _tColdRow = CreateRow("T-COLD", "°F", "F1");
+            _tAvgRow = CreateRow("T-AVG", "Â°F", "F1");
+            _tHotRow = CreateRow("T-HOT", "Â°F", "F1");
+            _tColdRow = CreateRow("T-COLD", "Â°F", "F1");
             _modeRow = CreateStatusRow("MODE");
         }
 
@@ -48,3 +49,4 @@ namespace Critical.UI.ValidationDashboard
         }
     }
 }
+

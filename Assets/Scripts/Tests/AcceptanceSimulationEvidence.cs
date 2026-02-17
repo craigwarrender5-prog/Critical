@@ -1,5 +1,6 @@
-using System;
-
+﻿using System;
+
+using Critical.Validation;
 namespace Critical.Physics.Tests
 {
     /// <summary>
@@ -63,3 +64,4 @@ namespace Critical.Physics.Tests
         }
     }
 }
+

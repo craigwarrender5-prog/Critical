@@ -1,22 +1,35 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - UI Component
 // HeatupValidationVisual.cs - Heatup Validation Dashboard Core
 // ============================================================================
 //
+// File: Assets/Scripts/Validation/HeatupValidationVisual.cs
+// Module: Critical.Validation.HeatupValidationVisual
+// Responsibility: Legacy OnGUI validation dashboard coordination and tab dispatch.
+// Standards: GOLD v1.0, SRP/SOLID, Unity Hot-Path Guardrails
+// Version: 5.3
+// Last Updated: 2026-02-17
+// Changes:
+//   - 5.3 (2026-02-17): Added GOLD metadata fields and bounded change-history ledger.
+//   - 5.2 (2026-02-16): Added Critical tab and keyboard navigation updates.
+//   - 5.1 (2026-02-16): Expanded telemetry snapshot integration and diagnostics.
+//   - 5.0 (2026-02-15): Multi-tab dashboard redesign replacing legacy 3-column layout.
+//   - 4.9 (2026-02-14): Added performance throttling and dashboard visibility controls.
+//
 // PURPOSE:
-//   Top-level OnGUI coordinator for the PWR Cold Shutdown → HZP heatup
+//   Top-level OnGUI coordinator for the PWR Cold Shutdown â†’ HZP heatup
 //   validation dashboard. Manages layout skeleton, engine binding, scroll
 //   state, dashboard tab state, time acceleration controls, and partial
 //   dispatch to per-tab rendering methods.
-//   Contains no rendering logic beyond the layout frame — all visual
+//   Contains no rendering logic beyond the layout frame â€” all visual
 //   content is delegated to partial class files.
 //
 // READS FROM:
-//   HeatupSimEngine — all public state fields, history buffers, event log
+//   HeatupSimEngine â€” all public state fields, history buffers, event log
 //
 // REFERENCE:
 //   Westinghouse 4-Loop PWR control room instrumentation layout
-//   NRC HRTD Section 19 — Plant Operations monitoring requirements
+//   NRC HRTD Section 19 â€” Plant Operations monitoring requirements
 //
 // ARCHITECTURE:
 //   This is the CORE partial. Companion partials (single responsibility):
@@ -25,30 +38,30 @@
 //     - HeatupValidationVisual.Panels.cs              : Status/info panels
 //     - HeatupValidationVisual.Graphs.cs              : Trend graph rendering
 //     - HeatupValidationVisual.Annunciators.cs        : Alarm tiles + event log
-//     - HeatupValidationVisual.TabOverview.cs         : Tab 1 — Overview
-//     - HeatupValidationVisual.TabPressurizer.cs      : Tab 2 — Pressurizer
-//     - HeatupValidationVisual.TabCVCS.cs             : Tab 3 — CVCS / Inventory
-//     - HeatupValidationVisual.TabSGRHR.cs            : Tab 4 — SG / RHR
-//     - HeatupValidationVisual.TabRCPElectrical.cs    : Tab 5 — RCP / Electrical
-//     - HeatupValidationVisual.TabEventLog.cs         : Tab 6 — Event Log
-//     - HeatupValidationVisual.TabValidation.cs       : Tab 7 — Validation
-//     - HeatupValidationVisual.TabCritical.cs          : Tab 8 — Critical (v5.2.0)
+//     - HeatupValidationVisual.TabOverview.cs         : Tab 1 â€” Overview
+//     - HeatupValidationVisual.TabPressurizer.cs      : Tab 2 â€” Pressurizer
+//     - HeatupValidationVisual.TabCVCS.cs             : Tab 3 â€” CVCS / Inventory
+//     - HeatupValidationVisual.TabSGRHR.cs            : Tab 4 â€” SG / RHR
+//     - HeatupValidationVisual.TabRCPElectrical.cs    : Tab 5 â€” RCP / Electrical
+//     - HeatupValidationVisual.TabEventLog.cs         : Tab 6 â€” Event Log
+//     - HeatupValidationVisual.TabValidation.cs       : Tab 7 â€” Validation
+//     - HeatupValidationVisual.TabCritical.cs          : Tab 8 â€” Critical (v5.2.0)
 //
 //   v5.0.0 Layout (multi-tab, replacing v0.9.3 3-column):
-//     ┌──────────────────────────────────────────────────────┐
-//     │  HEADER BAR: Mode │ Phase │ Sim Time │ Time Accel    │
-//     ├──────────────────────────────────────────────────────┤
-//     │  TAB BAR: OV│PZR│CVCS│SG/RHR│RCP│LOG│VAL│CRIT     │
-//     ├──────────────────────────────────────────────────────┤
-//     │                                                      │
-//     │  TAB CONTENT AREA                                    │
-//     │  (layout varies per tab — see Tab* partials)         │
-//     │                                                      │
-//     └──────────────────────────────────────────────────────┘
+//     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+//     â”‚  HEADER BAR: Mode â”‚ Phase â”‚ Sim Time â”‚ Time Accel    â”‚
+//     â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+//     â”‚  TAB BAR: OVâ”‚PZRâ”‚CVCSâ”‚SG/RHRâ”‚RCPâ”‚LOGâ”‚VALâ”‚CRIT     â”‚
+//     â”œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¤
+//     â”‚                                                      â”‚
+//     â”‚  TAB CONTENT AREA                                    â”‚
+//     â”‚  (layout varies per tab â€” see Tab* partials)         â”‚
+//     â”‚                                                      â”‚
+//     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
 // GOLD STANDARD: Yes
 // v0.9.6 PERF FIX: OnGUI refresh throttle to respect refreshRate setting
-// v5.0.0: Multi-tab dashboard redesign (Ctrl+1–7 tab switching)
+// v5.0.0: Multi-tab dashboard redesign (Ctrl+1â€“7 tab switching)
 // v5.2.0: Added CRITICAL tab (Tab 8, Ctrl+8) for at-a-glance validation
 // ============================================================================
 
@@ -57,12 +70,18 @@ using UnityEngine.InputSystem;
 using System;
 using Critical.Physics;
 using Critical.Simulation.Modular.State;
+using UnityEngine.Scripting.APIUpdating;
+
+
+namespace Critical.Validation
+{
 
 /// <summary>
-/// Heatup Validation Dashboard — OnGUI coordinator.
+/// Heatup Validation Dashboard â€” OnGUI coordinator.
 /// Reads HeatupSimEngine public state. Contains no physics (G3).
 /// All rendering delegated to partials (Styles, Gauges, Panels, Graphs, Annunciators, Tab*).
 /// </summary>
+[MovedFrom(true, sourceNamespace: "", sourceAssembly: "Assembly-CSharp", sourceClassName: "HeatupValidationVisual")]
 public partial class HeatupValidationVisual : MonoBehaviour
 {
     // ========================================================================
@@ -85,7 +104,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
     public bool enableFrameTimeDiagnosticsLogs = false;
 
     // ========================================================================
-    // PUBLIC STATE — Toggling, visibility
+    // PUBLIC STATE â€” Toggling, visibility
     // ========================================================================
 
     [HideInInspector] public bool dashboardVisible = true;
@@ -100,12 +119,12 @@ public partial class HeatupValidationVisual : MonoBehaviour
     // v5.0.0: Dashboard tab bar height (px)
     const float TAB_BAR_H = 28f;
 
-    // Minimum dimensions (px) for readability — used by tab layouts
+    // Minimum dimensions (px) for readability â€” used by tab layouts
     const float MIN_GAUGE_WIDTH = 180f;
     const float MIN_GRAPH_WIDTH = 400f;
 
     // ========================================================================
-    // INTERNAL STATE — Dashboard tabs, graph tabs, scroll, timing
+    // INTERNAL STATE â€” Dashboard tabs, graph tabs, scroll, timing
     // ========================================================================
 
     // v5.0.0: Dashboard tab selection (0-indexed, persists across F1 toggles)
@@ -147,7 +166,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
     // Refresh throttle
     private float _lastRefreshTime;
 
-    // v0.3.0.0 Phase A (CS-0032): Cached header strings — avoid per-frame string allocations
+    // v0.3.0.0 Phase A (CS-0032): Cached header strings â€” avoid per-frame string allocations
     private string _cachedModeStr;
     private string _cachedPhaseStr;
     private string _cachedSimTimeStr;
@@ -164,7 +183,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
     private HeatupSimEngine.RuntimeTelemetrySnapshot _telemetrySnapshot;
     private StepSnapshot _stepSnapshot = StepSnapshot.Empty;
 
-    // v0.3.0.0 Phase A (CS-0032): Frame time diagnostic — lightweight probe
+    // v0.3.0.0 Phase A (CS-0032): Frame time diagnostic â€” lightweight probe
     private float _frameTimeAccum;
     private int _frameTimeCount;
     private float _frameTimeMax;
@@ -269,7 +288,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
         // ============================================================
         // v0.3.0.0 Phase A (CS-0032): Frame time diagnostic probe.
         // Logs average and max frame time every 5 seconds to Unity console.
-        // Measurement only — no behavioral change.
+        // Measurement only â€” no behavioral change.
         // ============================================================
         {
             float frameDelta = Time.unscaledDeltaTime * 1000f;  // ms
@@ -337,21 +356,21 @@ public partial class HeatupValidationVisual : MonoBehaviour
             // Increment with + or = key (same physical key on US keyboard)
             if (kb.equalsKey.wasPressedThisFrame || kb.numpadPlusKey.wasPressedThisFrame)
             {
-                int newIndex = (engine.currentSpeedIndex + 1) % 5;  // Wrap: 0→1→2→3→4→0
+                int newIndex = (engine.currentSpeedIndex + 1) % 5;  // Wrap: 0â†’1â†’2â†’3â†’4â†’0
                 engine.SetTimeAcceleration(newIndex);
             }
             
             // Decrement with - key
             if (kb.minusKey.wasPressedThisFrame || kb.numpadMinusKey.wasPressedThisFrame)
             {
-                int newIndex = (engine.currentSpeedIndex - 1 + 5) % 5;  // Wrap: 4→3→2→1→0→4
+                int newIndex = (engine.currentSpeedIndex - 1 + 5) % 5;  // Wrap: 4â†’3â†’2â†’1â†’0â†’4
                 engine.SetTimeAcceleration(newIndex);
             }
         }
     }
 
     // ========================================================================
-    // OnGUI — MAIN DISPATCH
+    // OnGUI â€” MAIN DISPATCH
     // v0.9.6 PERF FIX: Throttle to refreshRate (eliminates 94% of redraws)
     // v5.0.0: Multi-tab dispatch replaces 3-column layout
     // ========================================================================
@@ -363,7 +382,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
         // v0.3.0.0 Phase A (CS-0032): Layout-only throttle.
         // Throttle Layout events at refreshRate Hz to reduce per-frame computation
         // (string formatting, data reads, GUILayout calculations).
-        // Repaint is NEVER skipped — it must always draw to avoid blue-screen flicker.
+        // Repaint is NEVER skipped â€” it must always draw to avoid blue-screen flicker.
         // The header caching (DrawHeaderBar) ensures Repaint is cheap even at full
         // frame rate: cached strings are reused, no allocations on stable values.
         if (Event.current.type == EventType.Layout)
@@ -402,7 +421,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
         _dashboardTab = GUI.Toolbar(tabBarRect, _dashboardTab, _dashboardTabLabels, _tabStyle);
 
         // ================================================================
-        // v5.0.0: TAB CONTENT AREA — dispatched to per-tab partial methods
+        // v5.0.0: TAB CONTENT AREA â€” dispatched to per-tab partial methods
         // ================================================================
         float contentY = headerH + TAB_BAR_H;
         float contentH = _sh - contentY;
@@ -422,7 +441,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
     }
 
     // ========================================================================
-    // HEADER BAR — Plant mode, phase, times, time acceleration
+    // HEADER BAR â€” Plant mode, phase, times, time acceleration
     // ========================================================================
 
     void DrawHeaderBar(Rect area)
@@ -443,7 +462,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
         // per OnGUI cycle for stable values.
         // ============================================================
 
-        // MODE indicator — changes with plant mode transitions
+        // MODE indicator â€” changes with plant mode transitions
         int currentPlantMode = snap.PlantMode;
         if (currentPlantMode != _cachedPlantMode)
         {
@@ -453,7 +472,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
         }
         DrawHeaderCell(ref x, y, 140f, cellH, _cachedModeStr ?? "---", _cachedModeColor);
 
-        // Phase description — changes with heatup phase transitions
+        // Phase description â€” changes with heatup phase transitions
         string currentPhaseDesc = snap.HeatupPhaseDesc;
         if (currentPhaseDesc != _cachedPhaseDesc)
         {
@@ -462,7 +481,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
         }
         DrawHeaderCell(ref x, y, 260f, cellH, _cachedPhaseStr ?? "INITIALIZING", _cNormalGreen);
 
-        // Sim time — changes every physics step, but display only needs ~1s resolution
+        // Sim time â€” changes every physics step, but display only needs ~1s resolution
         float simTimeTrunc = Mathf.Floor(snap.SimTime * 3600f);  // Truncate to 1 sim-second
         if (simTimeTrunc != _cachedSimTime)
         {
@@ -471,7 +490,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
         }
         DrawHeaderCell(ref x, y, 140f, cellH, _cachedSimTimeStr ?? "SIM: 0:00:00", _cTextPrimary);
 
-        // Wall time — changes every real second
+        // Wall time â€” changes every real second
         float wallTimeTrunc = Mathf.Floor(snap.WallClockTime * 3600f);
         if (wallTimeTrunc != _cachedWallTime)
         {
@@ -480,7 +499,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
         }
         DrawHeaderCell(ref x, y, 140f, cellH, _cachedWallTimeStr ?? "WALL: 0:00:00", _cTextPrimary);
 
-        // Time acceleration — changes only on hotkey press
+        // Time acceleration â€” changes only on hotkey press
         if (snap.CurrentSpeedIndex != _cachedSpeedIndex)
         {
             _cachedSpeedIndex = snap.CurrentSpeedIndex;
@@ -532,60 +551,60 @@ public partial class HeatupValidationVisual : MonoBehaviour
     }
 
     // ========================================================================
-    // PARTIAL METHOD DECLARATIONS — Tab content (implemented in Tab* partials)
+    // PARTIAL METHOD DECLARATIONS â€” Tab content (implemented in Tab* partials)
     // v5.0.0: Each tab has its own partial file
     // ========================================================================
 
     /// <summary>
-    /// Tab 1 — Overview: key parameters, primary graphs, critical alarms.
+    /// Tab 1 â€” Overview: key parameters, primary graphs, critical alarms.
     /// Implemented in HeatupValidationVisual.TabOverview.cs
     /// </summary>
     partial void DrawOverviewTab(Rect area);
 
     /// <summary>
-    /// Tab 2 — Pressurizer: PZR gauges, heater control, bubble state, PZR graphs.
+    /// Tab 2 â€” Pressurizer: PZR gauges, heater control, bubble state, PZR graphs.
     /// Implemented in HeatupValidationVisual.TabPressurizer.cs
     /// </summary>
     partial void DrawPressurizerTab(Rect area);
 
     /// <summary>
-    /// Tab 3 — CVCS / Inventory: charging/letdown, VCT/BRS, mass conservation.
+    /// Tab 3 â€” CVCS / Inventory: charging/letdown, VCT/BRS, mass conservation.
     /// Implemented in HeatupValidationVisual.TabCVCS.cs
     /// </summary>
     partial void DrawCVCSTab(Rect area);
 
     /// <summary>
-    /// Tab 4 — SG / RHR: steam generator thermal, RHR system, SG graphs.
+    /// Tab 4 â€” SG / RHR: steam generator thermal, RHR system, SG graphs.
     /// Implemented in HeatupValidationVisual.TabSGRHR.cs
     /// </summary>
     partial void DrawSGRHRTab(Rect area);
 
     /// <summary>
-    /// Tab 5 — RCP / Electrical: pump status, HZP stabilization, RCP/HZP graphs.
+    /// Tab 5 â€” RCP / Electrical: pump status, HZP stabilization, RCP/HZP graphs.
     /// Implemented in HeatupValidationVisual.TabRCPElectrical.cs
     /// </summary>
     partial void DrawRCPElectricalTab(Rect area);
 
     /// <summary>
-    /// Tab 6 — Event Log: annunciator tiles + full scrollable event log.
+    /// Tab 6 â€” Event Log: annunciator tiles + full scrollable event log.
     /// Implemented in HeatupValidationVisual.TabEventLog.cs
     /// </summary>
     partial void DrawEventLogTab(Rect area);
 
     /// <summary>
-    /// Tab 7 — Validation: RVLIS, inventory audit, PASS/FAIL checks, debug.
+    /// Tab 7 â€” Validation: RVLIS, inventory audit, PASS/FAIL checks, debug.
     /// Implemented in HeatupValidationVisual.TabValidation.cs
     /// </summary>
     partial void DrawValidationTab(Rect area);
 
     /// <summary>
-    /// Tab 8 — Critical: At-a-glance overview of RCS, PZR, CVCS, VCT, SG.
+    /// Tab 8 â€” Critical: At-a-glance overview of RCS, PZR, CVCS, VCT, SG.
     /// v5.2.0: Implemented in HeatupValidationVisual.TabCritical.cs
     /// </summary>
     partial void DrawCriticalTab(Rect area);
 
     // ========================================================================
-    // PARTIAL METHOD DECLARATIONS — Rendering components (existing partials)
+    // PARTIAL METHOD DECLARATIONS â€” Rendering components (existing partials)
     // These are called BY the Tab* partials to render individual components
     // ========================================================================
 
@@ -615,7 +634,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
     partial void DrawEventLogContent(Rect area);
 
     // ========================================================================
-    // LAYOUT HELPERS — Used by Tab* partials to build consistent layouts
+    // LAYOUT HELPERS â€” Used by Tab* partials to build consistent layouts
     // v5.0.0: Shared framing methods for gauge columns and graph areas
     // ========================================================================
 
@@ -687,11 +706,11 @@ public partial class HeatupValidationVisual : MonoBehaviour
         DrawGraphContent(bottomRect, bottomGraphIndex);
     }
 
-    // NOTE: DrawStatusPanelFrame removed in v5.0.0 cleanup — each Tab* partial
+    // NOTE: DrawStatusPanelFrame removed in v5.0.0 cleanup â€” each Tab* partial
     // handles its own scrollable panel layout inline for cleaner separation.
 
     // ========================================================================
-    // HEIGHT HELPERS — Used by existing partials for scroll sizing
+    // HEIGHT HELPERS â€” Used by existing partials for scroll sizing
     // ========================================================================
 
     /// <summary>
@@ -719,7 +738,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
     }
 
     // ========================================================================
-    // UTILITY — Shared helpers for all partials
+    // UTILITY â€” Shared helpers for all partials
     // ========================================================================
 
     /// <summary>
@@ -764,3 +783,6 @@ public partial class HeatupValidationVisual : MonoBehaviour
         return TimeAcceleration.FormatTime(hours);
     }
 }
+
+}
+

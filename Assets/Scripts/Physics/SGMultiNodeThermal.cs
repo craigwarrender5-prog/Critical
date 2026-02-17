@@ -1,61 +1,74 @@
+﻿// ============================================================================
+// CRITICAL: Master the Atom â€” Multi-Node Steam Generator Thermal Model
+// SGMultiNodeThermal.cs â€” Three-Regime SG Secondary Side Model
 // ============================================================================
-// CRITICAL: Master the Atom — Multi-Node Steam Generator Thermal Model
-// SGMultiNodeThermal.cs — Three-Regime SG Secondary Side Model
-// ============================================================================
+//
+// File: Assets/Scripts/Physics/SGMultiNodeThermal.cs
+// Module: Critical.Physics.SGMultiNodeThermal
+// Responsibility: SG secondary thermodynamic regime/state evolution and heat-transfer accounting.
+// Standards: GOLD v1.0, SRP/SOLID, Unity Hot-Path Guardrails
+// Version: 5.5
+// Last Updated: 2026-02-17
+// Changes:
+//   - 5.5 (2026-02-17): Added GOLD metadata fields and bounded change-history ledger.
+//   - 5.4 (2026-02-16): Added steam-inventory pressure mode for isolated SG scenarios.
+//   - 5.1 (2026-02-15): Added saturation tracking and steam-line warming support.
+//   - 5.0 (2026-02-15): Introduced three-regime open-system boiling model.
+//   - 4.3 (2026-02-14): Added secondary pressure tracking for startup validation.
 //
 // PURPOSE:
 //   Models the SG secondary side as N vertical nodes with THREE distinct
 //   thermodynamic regimes during heatup. This corrects the fundamental
-//   physics error in v3.0.0–v4.3.0 which treated the secondary as a
+//   physics error in v3.0.0â€“v4.3.0 which treated the secondary as a
 //   closed system throughout all phases.
 //
 // PHYSICS BREAKTHROUGH (v5.0.0):
 //   After 2000+ simulation runs across 6 model architectures, analysis
 //   proved that NO closed-system model can simultaneously hit both the
-//   45-55°F/hr heatup rate AND 20-40°F stratification targets. The
-//   secondary thermal mass (1.76M BTU/°F, 1.82× primary) creates an
+//   45-55Â°F/hr heatup rate AND 20-40Â°F stratification targets. The
+//   secondary thermal mass (1.76M BTU/Â°F, 1.82Ã— primary) creates an
 //   impossible energy balance when treated as a sealed pool.
 //
 //   Full review of NRC HRTD 19.0 confirmed that real Westinghouse plants
 //   do NOT try to heat 1.66 million pounds of stagnant water. The heatup
 //   has three distinct thermodynamic phases:
 //
-//   REGIME 1 — SUBCOOLED (100→220°F, ~2.4 hours):
-//     SG secondary is a closed stagnant pool at ~17 psia (N₂ blanket).
+//   REGIME 1 â€” SUBCOOLED (100â†’220Â°F, ~2.4 hours):
+//     SG secondary is a closed stagnant pool at ~17 psia (Nâ‚‚ blanket).
 //     Only upper tube bundle participates (thermocline model). Heat goes
 //     to sensible heating of secondary water near tube surfaces.
-//     This is the SHORT phase — only 26% of total heatup temperature range.
+//     This is the SHORT phase â€” only 26% of total heatup temperature range.
 //
-//   REGIME 2 — BOILING / OPEN SYSTEM (220→557°F, ~6.7 hours):
-//     Once steam forms at ~220°F, the SG becomes an OPEN system. Energy
+//   REGIME 2 â€” BOILING / OPEN SYSTEM (220â†’557Â°F, ~6.7 hours):
+//     Once steam forms at ~220Â°F, the SG becomes an OPEN system. Energy
 //     goes to latent heat of vaporization and EXITS as steam through open
 //     MSIVs. Secondary temperature tracks T_sat(P_secondary), NOT sensible
-//     temperature. The 1.66M lb thermal mass is irrelevant — you're boiling
+//     temperature. The 1.66M lb thermal mass is irrelevant â€” you're boiling
 //     a thin film at tube surfaces, not heating a swimming pool.
 //     THIS IS HOW REAL PLANTS OVERCOME THE THERMAL MASS RATIO.
 //
-//   REGIME 3 — STEAM DUMP CONTROLLED (at 1092 psig):
-//     Steam dumps open in steam pressure mode. T_sat(1092 psig) = 557°F =
+//   REGIME 3 â€” STEAM DUMP CONTROLLED (at 1092 psig):
+//     Steam dumps open in steam pressure mode. T_sat(1092 psig) = 557Â°F =
 //     no-load T_avg. All excess RCP heat dumped to condenser as steam.
-//     Primary temperature stabilizes at 557°F (Hot Standby / HZP).
+//     Primary temperature stabilizes at 557Â°F (Hot Standby / HZP).
 //
 //   Energy balance validation:
-//     Q_rcp = 24 MW | Q_primary_heatup = 14.3 MW (at 50�F/hr)
+//     Q_rcp = 24 MW | Q_primary_heatup = 14.3 MW (at 50°F/hr)
 //     Q_losses = 1.5 MW | Q_steam_exit = 8.2 MW
 //     Total heatup time: ~9.1 hours (consistent with NRC HRTD)
 //
 // HISTORY:
-//   v2.x: Circulation-onset model (WRONG — treated stratification as
-//          circulation trigger, caused 14-19 MW absorption, 26°F/hr rate)
+//   v2.x: Circulation-onset model (WRONG â€” treated stratification as
+//          circulation trigger, caused 14-19 MW absorption, 26Â°F/hr rate)
 //   v3.0.0: Thermocline model (correct for subcooled phase only)
 //   v4.3.0: Added secondary pressure tracking (closed-system, quasi-static)
 //   v5.0.0: Three-regime model with open-system boiling
 //           Stage 1: Regime framework + subcooled phase isolation
-//           Stage 2: Boiling/open system — energy exits as steam
+//           Stage 2: Boiling/open system â€” energy exits as steam
 //           Stage 3: Steam dump termination + HZP wiring
 //   v5.0.1: Regime continuity blend + delta clamp
-//           NodeRegimeBlend[] ramps HTC/area/ΔT over 60 sim-seconds
-//           Delta clamp: |ΔQ| ≤ 5 MW/timestep with bypass conditions
+//           NodeRegimeBlend[] ramps HTC/area/Î”T over 60 sim-seconds
+//           Delta clamp: |Î”Q| â‰¤ 5 MW/timestep with bypass conditions
 //           Eliminates MW-scale step changes at regime transitions
 //   v5.1.0: Saturation tracking, reversion guard, steam line warming,
 //           wall superheat boiling driver
@@ -64,20 +77,20 @@
 //           When SteamIsolated=true, pressure uses P = mRT/V instead of P_sat
 //
 // SOURCES:
-//   - NRC HRTD ML11223A342 Section 19.0 — Three-phase heatup, steam dumps
-//   - NRC HRTD ML11223A294 Section 11.2 — Steam dumps at 1092 psig
-//   - NRC HRTD ML11223A244 Section 7.1 — SG safety valves
-//   - WCAP-8530 / WCAP-12700 — Westinghouse Model F SG design
-//   - NRC HRTD ML11223A213 Section 5.0 — Steam Generators
-//   - NRC HRTD ML11251A016 — SG wet layup conditions
-//   - NUREG/CR-5426 — PWR SG natural circulation phenomena
-//   - NRC Bulletin 88-11 — Thermal stratification in PWR systems
-//   - Incropera & DeWitt Ch. 5, 9, 10 — Conduction, Natural convection, Boiling
-//   - SG_HEATUP_BREAKTHROUGH_HANDOFF.md — 2000+ run analysis
+//   - NRC HRTD ML11223A342 Section 19.0 â€” Three-phase heatup, steam dumps
+//   - NRC HRTD ML11223A294 Section 11.2 â€” Steam dumps at 1092 psig
+//   - NRC HRTD ML11223A244 Section 7.1 â€” SG safety valves
+//   - WCAP-8530 / WCAP-12700 â€” Westinghouse Model F SG design
+//   - NRC HRTD ML11223A213 Section 5.0 â€” Steam Generators
+//   - NRC HRTD ML11251A016 â€” SG wet layup conditions
+//   - NUREG/CR-5426 â€” PWR SG natural circulation phenomena
+//   - NRC Bulletin 88-11 â€” Thermal stratification in PWR systems
+//   - Incropera & DeWitt Ch. 5, 9, 10 â€” Conduction, Natural convection, Boiling
+//   - SG_HEATUP_BREAKTHROUGH_HANDOFF.md â€” 2000+ run analysis
 //
 // UNITS:
-//   Temperature: °F | Heat Rate: BTU/hr | Heat Capacity: BTU/°F
-//   Mass: lb | Area: ft² | HTC: BTU/(hr·ft²·°F) | Time: hr
+//   Temperature: Â°F | Heat Rate: BTU/hr | Heat Capacity: BTU/Â°F
+//   Mass: lb | Area: ftÂ² | HTC: BTU/(hrÂ·ftÂ²Â·Â°F) | Time: hr
 //
 // ARCHITECTURE:
 //   - Called by: RCSHeatup.BulkHeatupStep(), HeatupSimEngine.StepSimulation()
@@ -90,16 +103,16 @@
 
 using System;
 using UnityEngine;
-
+
 namespace Critical.Physics
 {
     // ========================================================================
     // THERMAL REGIME ENUM (v5.0.0)
     // Identifies the current thermodynamic phase of the SG secondary side.
-    // Transitions are one-directional during heatup (Subcooled → Boiling → SteamDump).
+    // Transitions are one-directional during heatup (Subcooled â†’ Boiling â†’ SteamDump).
     // Reverse transitions handled for cooldown scenarios.
     //
-    // Source: NRC HRTD ML11223A342 Section 19.0 — three-phase heatup sequence
+    // Source: NRC HRTD ML11223A342 Section 19.0 â€” three-phase heatup sequence
     // ========================================================================
 
     /// <summary>
@@ -110,27 +123,27 @@ namespace Critical.Physics
     public enum SGThermalRegime
     {
         /// <summary>
-        /// All secondary nodes below T_sat — closed stagnant pool.
+        /// All secondary nodes below T_sat â€” closed stagnant pool.
         /// Energy goes to sensible heating of secondary water.
         /// Thermocline model governs effective area and HTC.
-        /// Duration: ~2.4 hours (100→220°F at 50°F/hr).
+        /// Duration: ~2.4 hours (100â†’220Â°F at 50Â°F/hr).
         /// </summary>
         Subcooled,
 
         /// <summary>
-        /// At least one node at or above T_sat — open system.
+        /// At least one node at or above T_sat â€” open system.
         /// Energy primarily goes to latent heat of vaporization.
         /// Steam produced at tube surfaces exits via open MSIVs.
         /// Secondary temperature tracks T_sat(P_secondary).
-        /// Duration: ~6.7 hours (220→557°F at 50°F/hr).
+        /// Duration: ~6.7 hours (220â†’557Â°F at 50Â°F/hr).
         /// </summary>
         Boiling,
 
         /// <summary>
-        /// P_secondary ≥ steam dump setpoint (1092 psig).
+        /// P_secondary â‰¥ steam dump setpoint (1092 psig).
         /// Steam dumps modulate to hold pressure constant.
         /// All excess RCP heat dumped to condenser as steam.
-        /// T_rcs stabilizes at T_sat(1092 psig) = 557°F.
+        /// T_rcs stabilizes at T_sat(1092 psig) = 557Â°F.
         /// </summary>
         SteamDump
     }
@@ -157,7 +170,7 @@ namespace Critical.Physics
     /// </summary>
     public struct SGMultiNodeState
     {
-        /// <summary>Per-node temperatures (°F), index 0 = top, N-1 = bottom</summary>
+        /// <summary>Per-node temperatures (Â°F), index 0 = top, N-1 = bottom</summary>
         public float[] NodeTemperatures;
 
         /// <summary>Per-node heat transfer rate (BTU/hr), last computed</summary>
@@ -166,7 +179,7 @@ namespace Critical.Physics
         /// <summary>Per-node effective area fraction, last computed</summary>
         public float[] NodeEffectiveAreaFractions;
 
-        /// <summary>Per-node HTC (BTU/(hr·ft²·°F)), last computed</summary>
+        /// <summary>Per-node HTC (BTU/(hrÂ·ftÂ²Â·Â°F)), last computed</summary>
         public float[] NodeHTCs;
 
         /// <summary>Total heat absorption across all 4 SGs (MW)</summary>
@@ -175,16 +188,16 @@ namespace Critical.Physics
         /// <summary>Total heat absorption (BTU/hr)</summary>
         public float TotalHeatAbsorption_BTUhr;
 
-        /// <summary>Bulk average secondary temperature (°F) — weighted by mass</summary>
+        /// <summary>Bulk average secondary temperature (Â°F) â€” weighted by mass</summary>
         public float BulkAverageTemp_F;
 
-        /// <summary>Top node temperature (°F) — hottest node</summary>
+        /// <summary>Top node temperature (Â°F) â€” hottest node</summary>
         public float TopNodeTemp_F;
 
-        /// <summary>Bottom node temperature (°F) — coldest node</summary>
+        /// <summary>Bottom node temperature (Â°F) â€” coldest node</summary>
         public float BottomNodeTemp_F;
 
-        /// <summary>ΔT between top and bottom nodes (°F)</summary>
+        /// <summary>Î”T between top and bottom nodes (Â°F)</summary>
         public float StratificationDeltaT_F;
 
         /// <summary>
@@ -219,10 +232,10 @@ namespace Critical.Physics
         /// <summary>True once nitrogen blanket has been isolated (steam onset)</summary>
         public bool NitrogenIsolated;
 
-        /// <summary>Current saturation temperature at secondary pressure in °F</summary>
+        /// <summary>Current saturation temperature at secondary pressure in Â°F</summary>
         public float SaturationTemp_F;
 
-        /// <summary>Superheat of hottest node above T_sat in °F (0 if subcooled)</summary>
+        /// <summary>Superheat of hottest node above T_sat in Â°F (0 if subcooled)</summary>
         public float MaxSuperheat_F;
 
         // ----- Three-Regime Model (v5.0.0) -----
@@ -245,7 +258,7 @@ namespace Critical.Physics
 
         /// <summary>
         /// Steam production expressed as equivalent thermal power in MW.
-        /// = SteamProductionRate_lbhr × h_fg / 3.412e6
+        /// = SteamProductionRate_lbhr Ã— h_fg / 3.412e6
         /// Represents the energy that EXITS the system as steam.
         /// </summary>
         public float SteamProductionRate_MW;
@@ -258,8 +271,8 @@ namespace Critical.Physics
 
         /// <summary>
         /// Current total secondary water mass across all 4 SGs in lb.
-        /// Starts at 1,660,000 lb (4 × 415,000 wet layup).
-        /// Decreases from: SG draining at ~200°F, steam boiloff in Regime 2.
+        /// Starts at 1,660,000 lb (4 Ã— 415,000 wet layup).
+        /// Decreases from: SG draining at ~200Â°F, steam boiloff in Regime 2.
         /// </summary>
         public float SecondaryWaterMass_lb;
 
@@ -274,14 +287,14 @@ namespace Critical.Physics
 
         /// <summary>
         /// Per-node regime transition blend factor (0 = subcooled, 1 = boiling).
-        /// When a node crosses T_sat, this ramps from 0→1 over ~60 sim-seconds
+        /// When a node crosses T_sat, this ramps from 0â†’1 over ~60 sim-seconds
         /// instead of switching instantaneously. Applied to HTC, effective area,
-        /// and driving ΔT to eliminate MW-scale step changes at regime transitions.
+        /// and driving Î”T to eliminate MW-scale step changes at regime transitions.
         ///
-        /// v5.0.1: Eliminates the compound step change where HTC jumps ~10×,
-        /// effective area jumps 2–5×, and driving ΔT changes basis simultaneously.
+        /// v5.0.1: Eliminates the compound step change where HTC jumps ~10Ã—,
+        /// effective area jumps 2â€“5Ã—, and driving Î”T changes basis simultaneously.
         /// Physical basis: real nucleate boiling onset is gradual (Incropera &
-        /// DeWitt Ch. 10 — transition from onset of nucleate boiling through
+        /// DeWitt Ch. 10 â€” transition from onset of nucleate boiling through
         /// fully developed regime).
         ///
         /// Source: Implementation Plan v5.0.1, Stage 3
@@ -298,9 +311,9 @@ namespace Critical.Physics
 
         /// <summary>
         /// True if SG blowdown draining is in progress.
-        /// Draining starts when T_rcs reaches SG_DRAINING_START_TEMP_F (~200°F)
+        /// Draining starts when T_rcs reaches SG_DRAINING_START_TEMP_F (~200Â°F)
         /// and continues until mass reaches SG_DRAINING_TARGET_MASS_FRAC of initial.
-        /// Source: NRC HRTD 2.3 / 19.0 — SG startup draining procedures
+        /// Source: NRC HRTD 2.3 / 19.0 â€” SG startup draining procedures
         /// </summary>
         public bool DrainingActive;
 
@@ -313,14 +326,14 @@ namespace Critical.Physics
         /// <summary>
         /// Cumulative mass drained from all 4 SGs via blowdown in lb.
         /// = (Initial mass - post-drain mass). Expected ~747,000 lb total
-        /// (1,660,000 × 0.45 = 747,000 lb removed to reach 55% target).
+        /// (1,660,000 Ã— 0.45 = 747,000 lb removed to reach 55% target).
         /// </summary>
         public float TotalMassDrained_lb;
 
         /// <summary>
         /// Current per-SG draining rate in gpm (0 when not draining).
         /// Nominal: 150 gpm per SG via normal blowdown system.
-        /// Source: NRC HRTD 2.3 — 150 gpm normal blowdown rate
+        /// Source: NRC HRTD 2.3 â€” 150 gpm normal blowdown rate
         /// </summary>
         public float DrainingRate_gpm;
 
@@ -329,18 +342,18 @@ namespace Critical.Physics
         /// References the full SG secondary volume from tubesheet to steam dome.
         /// 100% WR = wet layup (full of water). During heatup, trends down from
         /// 100% as draining removes water, then continues down from steam boiloff.
-        /// Source: Westinghouse FSAR — SG level instrumentation
+        /// Source: Westinghouse FSAR â€” SG level instrumentation
         /// </summary>
         public float WideRangeLevel_pct;
 
         /// <summary>
         /// SG Narrow Range level in percent (0-100%).
         /// References the operating range around the feedwater nozzle.
-        /// 100% NR ≈ 55% of wet layup mass. 33% NR is normal operating level.
+        /// 100% NR â‰ˆ 55% of wet layup mass. 33% NR is normal operating level.
         /// During wet layup (100% WR), NR reads off-scale high (~182%).
         /// During heatup draining, NR transitions from off-scale to ~33% at
         /// the end of draining.
-        /// Source: Westinghouse FSAR — SG level instrumentation
+        /// Source: Westinghouse FSAR â€” SG level instrumentation
         /// </summary>
         public float NarrowRangeLevel_pct;
 
@@ -352,7 +365,7 @@ namespace Critical.Physics
         // ----- Steam Line Warming Model (v5.1.0 Stage 3) -----
 
         /// <summary>
-        /// Current average temperature of the main steam line piping in °F.
+        /// Current average temperature of the main steam line piping in Â°F.
         /// Lumped model: all 4 steam lines treated as a single thermal mass.
         ///
         /// During early boiling, cold steam lines condense steam and absorb
@@ -360,8 +373,8 @@ namespace Critical.Physics
         /// condensation rate drops and the energy sink diminishes.
         ///
         /// Initialized at simulation start temperature (same as RCS).
-        /// Evolves via: dT/dt = Q_condensation / (M_metal × Cp)
-        /// Capped at T_sat(P_secondary) — cannot exceed steam temperature.
+        /// Evolves via: dT/dt = Q_condensation / (M_metal Ã— Cp)
+        /// Capped at T_sat(P_secondary) â€” cannot exceed steam temperature.
         ///
         /// Source: Implementation Plan v5.1.0 Stage 3
         /// </summary>
@@ -392,20 +405,20 @@ namespace Critical.Physics
         /// Steam outflow rate from the SG secondary in lb/hr (all 4 SGs).
         /// v5.4.0 Stage 6: Tracks steam exiting through MSIVs/steam dumps.
         ///
-        /// In normal open-system heatup: SteamOutflow_lbhr ≈ SteamProductionRate_lbhr
-        /// (steam exits as fast as it's produced — quasi-steady-state).
+        /// In normal open-system heatup: SteamOutflow_lbhr â‰ˆ SteamProductionRate_lbhr
+        /// (steam exits as fast as it's produced â€” quasi-steady-state).
         /// In isolated SG: SteamOutflow_lbhr = 0 (MSIVs closed, no steam dump).
         /// </summary>
         public float SteamOutflow_lbhr;
 
         /// <summary>
-        /// Current steam space volume in ft³ (all 4 SGs).
+        /// Current steam space volume in ftÂ³ (all 4 SGs).
         /// v5.4.0 Stage 6: Computed from water mass and total SG volume.
         ///
-        /// V_steam = V_total - (SecondaryWaterMass_lb / ρ_water)
+        /// V_steam = V_total - (SecondaryWaterMass_lb / Ï_water)
         /// where V_total is the total SG secondary volume.
         ///
-        /// Initial value: 0 ft³ (wet layup, SGs full of water).
+        /// Initial value: 0 ftÂ³ (wet layup, SGs full of water).
         /// During boiling: increases as water boils off.
         /// </summary>
         public float SteamSpaceVolume_ft3;
@@ -423,7 +436,7 @@ namespace Critical.Physics
         /// <summary>
         /// Pressure computed from steam inventory in psia (diagnostic).
         /// v5.4.0 Stage 6: Uses ideal gas approximation for steam:
-        ///   P = (m_steam × R × T) / V_steam
+        ///   P = (m_steam Ã— R Ã— T) / V_steam
         /// where R is the specific gas constant for steam.
         ///
         /// This is computed for diagnostics even when SteamIsolated=false.
@@ -474,13 +487,13 @@ namespace Critical.Physics
         /// <summary>Total heat removed from RCS (BTU/hr)</summary>
         public float TotalHeatRemoval_BTUhr;
 
-        /// <summary>Bulk average SG secondary temperature (°F)</summary>
+        /// <summary>Bulk average SG secondary temperature (Â°F)</summary>
         public float BulkAverageTemp_F;
 
-        /// <summary>Top node temperature (°F)</summary>
+        /// <summary>Top node temperature (Â°F)</summary>
         public float TopNodeTemp_F;
 
-        /// <summary>RCS - SG_top ΔT (°F)</summary>
+        /// <summary>RCS - SG_top Î”T (Â°F)</summary>
         public float RCS_SG_DeltaT_F;
 
         /// <summary>Thermocline height from tubesheet (ft)</summary>
@@ -497,7 +510,7 @@ namespace Critical.Physics
         /// <summary>SG secondary pressure in psia</summary>
         public float SecondaryPressure_psia;
 
-        /// <summary>Saturation temperature at current secondary pressure in °F</summary>
+        /// <summary>Saturation temperature at current secondary pressure in Â°F</summary>
         public float SaturationTemp_F;
 
         /// <summary>True if nitrogen blanket has been isolated</summary>
@@ -561,7 +574,7 @@ namespace Critical.Physics
 
     /// <summary>
     /// Multi-node vertically-stratified SG secondary side thermal model.
-    /// Models all 4 SGs as identical (single set of nodes × 4).
+    /// Models all 4 SGs as identical (single set of nodes Ã— 4).
     ///
     /// v3.0.0: Thermocline-based stratification model replaces broken
     /// circulation-onset model. See file header for physics basis.
@@ -581,44 +594,44 @@ namespace Critical.Physics
         private const float MW_TO_BTU_HR = 3.412e6f;
 
         /// <summary>
-        /// Minimum ΔT for heat transfer calculation (°F).
+        /// Minimum Î”T for heat transfer calculation (Â°F).
         /// Below this, heat transfer is negligible.
         /// </summary>
         private const float MIN_DELTA_T = 0.01f;
 
         /// <summary>
-        /// HTC when no RCPs are running in BTU/(hr·ft²·°F).
+        /// HTC when no RCPs are running in BTU/(hrÂ·ftÂ²Â·Â°F).
         /// Both primary and secondary sides are stagnant natural convection.
         /// Series resistance: 1/U = 1/h_primary_nc + 1/h_secondary_nc
-        /// h_primary_nc ≈ 10-50, h_secondary_nc ≈ 20-50
-        /// U ≈ 7-25 BTU/(hr·ft²·°F)
-        /// Using 8 BTU/(hr·ft²·°F) (conservative, near-stagnant).
+        /// h_primary_nc â‰ˆ 10-50, h_secondary_nc â‰ˆ 20-50
+        /// U â‰ˆ 7-25 BTU/(hrÂ·ftÂ²Â·Â°F)
+        /// Using 8 BTU/(hrÂ·ftÂ²Â·Â°F) (conservative, near-stagnant).
         ///
         /// Source: Incropera & DeWitt Ch. 9, natural convection in tubes
         /// </summary>
         private const float HTC_NO_RCPS = 8f;
 
         /// <summary>
-        /// Inter-node conduction UA in BTU/(hr·°F) for stagnant conditions.
+        /// Inter-node conduction UA in BTU/(hrÂ·Â°F) for stagnant conditions.
         /// Represents slow thermal diffusion between adjacent nodes.
         /// In stagnant stratified conditions, mixing is suppressed by the
         /// stable density gradient (Richardson number >> 1).
         /// Only thermal diffusion through water and tube metal contributes.
         ///
-        /// Estimate: k_eff × A_cross / Δx ≈ 0.4 × 200 / 5 ≈ 16 BTU/(hr·°F·ft)
-        /// Per SG, with 4 inter-node boundaries: ~500 BTU/(hr·°F) total
+        /// Estimate: k_eff Ã— A_cross / Î”x â‰ˆ 0.4 Ã— 200 / 5 â‰ˆ 16 BTU/(hrÂ·Â°FÂ·ft)
+        /// Per SG, with 4 inter-node boundaries: ~500 BTU/(hrÂ·Â°F) total
         ///
         /// Source: Thermal diffusivity analysis, SG_THERMAL_MODEL_RESEARCH_v3.0.0.md
         /// </summary>
         private const float INTERNODE_UA_STAGNANT = 500f;
 
         /// <summary>
-        /// Inter-node mixing UA when boiling is active in BTU/(hr·°F).
+        /// Inter-node mixing UA when boiling is active in BTU/(hrÂ·Â°F).
         /// Boiling in the upper region creates agitation and local circulation
         /// that enhances mixing with adjacent nodes. Much less than the old
         /// v2.x INTERNODE_UA_CIRCULATING (50,000) which was far too high.
         ///
-        /// Source: Engineering estimate — boiling enhances local mixing 10×
+        /// Source: Engineering estimate â€” boiling enhances local mixing 10Ã—
         /// </summary>
         private const float INTERNODE_UA_BOILING = 5000f;
 
@@ -633,9 +646,9 @@ namespace Critical.Physics
         // v5.0.0 Stage 2: Boiling regime constants
 
         /// <summary>
-        /// Nucleate boiling HTC at low pressure (~atmospheric) in BTU/(hr·ft²·°F).
-        /// At boiling onset (~220°F, ~0 psig), nucleate boiling HTCs are typically
-        /// 2,000–5,000 BTU/(hr·ft²·°F) depending on surface condition and geometry.
+        /// Nucleate boiling HTC at low pressure (~atmospheric) in BTU/(hrÂ·ftÂ²Â·Â°F).
+        /// At boiling onset (~220Â°F, ~0 psig), nucleate boiling HTCs are typically
+        /// 2,000â€“5,000 BTU/(hrÂ·ftÂ²Â·Â°F) depending on surface condition and geometry.
         /// Using 2,000 as the low-pressure baseline.
         ///
         /// Note: In the boiling regime, secondary-side HTC is so high that
@@ -647,7 +660,7 @@ namespace Critical.Physics
         private const float HTC_BOILING_LOW_PRESSURE = 2000f;
 
         /// <summary>
-        /// Nucleate boiling HTC at high pressure (~1100 psia) in BTU/(hr·ft²·°F).
+        /// Nucleate boiling HTC at high pressure (~1100 psia) in BTU/(hrÂ·ftÂ²Â·Â°F).
         /// At PWR SG operating pressures, nucleate boiling is very efficient.
         /// Using 8,000 as the high-pressure value.
         ///
@@ -669,7 +682,7 @@ namespace Critical.Physics
         // v5.0.1: Regime continuity blend constants
 
         /// <summary>
-        /// Time in hours for a node's regime blend to ramp from 0→1 (60 sim-seconds).
+        /// Time in hours for a node's regime blend to ramp from 0â†’1 (60 sim-seconds).
         /// Physical basis: real nucleate boiling onset is gradual, not instantaneous.
         /// The thermal boundary layer on the tube exterior transitions from single-
         /// phase natural convection to nucleate boiling over a finite time as local
@@ -692,7 +705,7 @@ namespace Critical.Physics
         #endregion
 
         // ====================================================================
-        // STATIC TRACKING FIELDS (v5.0.1 — delta clamp bypass detection)
+        // STATIC TRACKING FIELDS (v5.0.1 â€” delta clamp bypass detection)
         // ====================================================================
 
         /// <summary>Previous timestep TotalHeatAbsorption_MW for delta clamp.</summary>
@@ -719,7 +732,7 @@ namespace Critical.Physics
         /// Thermocline starts at top of tube bundle (no active area yet).
         /// Called once at simulation start.
         /// </summary>
-        /// <param name="initialTempF">Starting temperature (°F), same as RCS</param>
+        /// <param name="initialTempF">Starting temperature (Â°F), same as RCS</param>
         /// <returns>Initialized SGMultiNodeState</returns>
         public static SGMultiNodeState Initialize(float initialTempF)
         {
@@ -746,7 +759,7 @@ namespace Critical.Physics
             state.BottomNodeTemp_F = initialTempF;
             state.StratificationDeltaT_F = 0f;
 
-            // Thermocline starts at top — only U-bend is initially active
+            // Thermocline starts at top â€” only U-bend is initially active
             state.ThermoclineHeight_ft = PlantConstants.SG_TUBE_TOTAL_HEIGHT_FT;
             state.ActiveAreaFraction = PlantConstants.SG_UBEND_AREA_FRACTION;
             state.ElapsedHeatupTime_hr = 0f;
@@ -797,8 +810,8 @@ namespace Critical.Physics
             // Initial level: 100% WR (wet layup, SGs full of water)
             state.WideRangeLevel_pct = 100f;
 
-            // NR is off-scale high at wet layup: 100% NR ≈ 55% of wet layup
-            // mass, so at 100% mass, NR ≈ 100/0.55 = 182%
+            // NR is off-scale high at wet layup: 100% NR â‰ˆ 55% of wet layup
+            // mass, so at 100% mass, NR â‰ˆ 100/0.55 = 182%
             state.NarrowRangeLevel_pct = 100f / PlantConstants.SG_DRAINING_TARGET_MASS_FRAC;
 
             // v5.4.0 Stage 6: Steam inventory model initialization
@@ -845,18 +858,18 @@ namespace Critical.Physics
         /// v5.0.0 Stage 3: SteamDump regime active. Secondary pressure capped
         /// at steam dump setpoint (1092 psig). Steam dump controller in
         /// HeatupSimEngine.HZP handles valve modulation. Primary temperature
-        /// stabilizes at T_sat(1092 psig) = 557°F.
+        /// stabilizes at T_sat(1092 psig) = 557Â°F.
         ///
         /// v5.0.1: Per-node NodeRegimeBlend ramp replaces binary boiling switch.
-        /// HTC, effective area, and driving ΔT are blended over ~60 sim-seconds.
-        /// Section 8b: Delta clamp limits |ΔQ| to 5 MW/timestep with bypass.
+        /// HTC, effective area, and driving Î”T are blended over ~60 sim-seconds.
+        /// Section 8b: Delta clamp limits |Î”Q| to 5 MW/timestep with bypass.
         ///
         /// v5.1.0: Saturation tracking (Stage 1), reversion guard (Stage 2),
         /// steam line condensation energy sink (Stage 3), wall superheat
         /// boiling driver (Stage 4). See IMPLEMENTATION_PLAN_v5.1.0.md.
         /// </summary>
         /// <param name="state">SG state (modified in place)</param>
-        /// <param name="T_rcs">Current RCS bulk temperature (°F)</param>
+        /// <param name="T_rcs">Current RCS bulk temperature (Â°F)</param>
         /// <param name="rcpsRunning">Number of RCPs operating (0-4)</param>
         /// <param name="pressurePsia">System pressure (psia)</param>
         /// <param name="dt_hr">Timestep in hours</param>
@@ -881,7 +894,7 @@ namespace Critical.Physics
             }
 
             // Thermocline position: descends from top via thermal diffusion
-            // z_therm = H_total - √(4 × α_eff × t)
+            // z_therm = H_total - âˆš(4 Ã— Î±_eff Ã— t)
             float descent = (float)Math.Sqrt(
                 4f * PlantConstants.SG_THERMOCLINE_ALPHA_EFF * state.ElapsedHeatupTime_hr);
             state.ThermoclineHeight_ft = PlantConstants.SG_TUBE_TOTAL_HEIGHT_FT - descent;
@@ -900,12 +913,12 @@ namespace Critical.Physics
             // 3. DETERMINE THERMAL REGIME (v5.0.0)
             // ================================================================
             // Three-regime detection based on NRC HRTD 19.0:
-            //   Subcooled: all nodes below T_sat(P_secondary) — closed system
-            //   Boiling:   at least one node at/above T_sat — open system
-            //   SteamDump: P_secondary >= steam dump setpoint — heat rejection
+            //   Subcooled: all nodes below T_sat(P_secondary) â€” closed system
+            //   Boiling:   at least one node at/above T_sat â€” open system
+            //   SteamDump: P_secondary >= steam dump setpoint â€” heat rejection
             //
             // Stage 2: Boiling regime now has distinct physics path.
-            // Steps 5–7 are regime-dependent (subcooled vs boiling).
+            // Steps 5â€“7 are regime-dependent (subcooled vs boiling).
             // ================================================================
 
             // Check per-node boiling status
@@ -952,7 +965,7 @@ namespace Critical.Physics
             // because the primary-side thermal resistance drops T across the wall.
             // This reduces boiling heat transfer to physically correct levels.
             //
-            // The energy computed as Q_i does NOT heat the node — it produces
+            // The energy computed as Q_i does NOT heat the node â€” it produces
             // steam at rate m_dot = Q_i / h_fg. The steam EXITS the system.
             // This is the fundamental open-system correction.
             // ================================================================
@@ -983,8 +996,8 @@ namespace Critical.Physics
                 // v5.0.1: REGIME CONTINUITY BLEND
                 // Instead of instantaneously switching from subcooled to boiling
                 // physics when a node crosses T_sat, ramp NodeRegimeBlend[i]
-                // from 0→1 over REGIME_BLEND_RAMP_HR (~60 sim-seconds).
-                // All three parameters (HTC, area, driving ΔT) are blended
+                // from 0â†’1 over REGIME_BLEND_RAMP_HR (~60 sim-seconds).
+                // All three parameters (HTC, area, driving Î”T) are blended
                 // using this single factor to ensure smooth transition.
                 //
                 // Physical basis: nucleate boiling onset is gradual. The tube
@@ -1001,7 +1014,7 @@ namespace Critical.Physics
                 }
                 else
                 {
-                    // Node is subcooled — reset blend to 0.0
+                    // Node is subcooled â€” reset blend to 0.0
                     // (instant reset on cooldown; reverse ramp deferred to v5.2.0)
                     blend = 0f;
                 }
@@ -1024,9 +1037,9 @@ namespace Critical.Physics
                 // v5.1.0 Stage 4: Wall superheat boiling driver
                 // Nucleate boiling is driven by T_wall - T_sat, NOT T_rcs - T_sat.
                 // T_wall is algebraically estimated from previous timestep Q:
-                //   T_wall = T_rcs - Q_prev / (h_primary × A_node)
+                //   T_wall = T_rcs - Q_prev / (h_primary Ã— A_node)
                 // Using previous timestep Q avoids implicit coupling.
-                // Clamped: T_sat ≤ T_wall ≤ T_rcs
+                // Clamped: T_sat â‰¤ T_wall â‰¤ T_rcs
                 float T_wall_boil;
                 float Q_prev_node = state.NodeHeatRates[i];  // Previous timestep (BTU/hr)
                 float A_node_outer = area_boil * totalArea * PlantConstants.SG_BUNDLE_PENALTY_FACTOR;
@@ -1042,7 +1055,7 @@ namespace Critical.Physics
                 }
                 else
                 {
-                    // No RCPs or zero area — wall at T_sat (no boiling drive)
+                    // No RCPs or zero area â€” wall at T_sat (no boiling drive)
                     T_wall_boil = T_sat;
                 }
 
@@ -1079,10 +1092,10 @@ namespace Critical.Physics
                 state.NodeEffectiveAreaFractions[i] = areaFrac;
                 totalActiveAreaFrac += areaFrac;
 
-                // Effective area (ft²) with bundle penalty
+                // Effective area (ftÂ²) with bundle penalty
                 float A_eff = areaFrac * totalArea * PlantConstants.SG_BUNDLE_PENALTY_FACTOR;
 
-                // Heat transfer: Q_i = h_i × A_eff_i × ΔT_i
+                // Heat transfer: Q_i = h_i Ã— A_eff_i Ã— Î”T_i
                 float Q_i = htc * A_eff * deltaTNode;
                 state.NodeHeatRates[i] = Q_i;
                 totalQ_BTUhr += Q_i;
@@ -1126,7 +1139,7 @@ namespace Critical.Physics
                 bool boilingAtInterface = (upperBoiling || lowerBoiling);
                 float ua = boilingAtInterface ? INTERNODE_UA_BOILING : INTERNODE_UA_STAGNANT;
 
-                // Mix heat per SG × 4 SGs
+                // Mix heat per SG Ã— 4 SGs
                 float Q_mix = ua * dT * PlantConstants.SG_COUNT;
                 mixingHeat[i] -= Q_mix;      // Upper node loses heat
                 mixingHeat[i + 1] += Q_mix;  // Lower node gains heat
@@ -1136,7 +1149,7 @@ namespace Critical.Physics
             // 7. UPDATE NODE TEMPERATURES (regime-dependent)
             // ================================================================
             // v5.0.0 Stage 2: Two paths per node:
-            //   SUBCOOLED: dT = Q × dt / (m × cp)  [energy heats water]
+            //   SUBCOOLED: dT = Q Ã— dt / (m Ã— cp)  [energy heats water]
             //   BOILING:   T = T_sat(P_secondary)   [energy produces steam]
             //
             // v5.0.1: Blended nodes get partial sensible heating. The (1-blend)
@@ -1277,14 +1290,14 @@ namespace Critical.Physics
             // the piping toward T_sat. This energy is subtracted from the
             // boiling energy budget BEFORE computing steam production.
             //
-            // Q_condensation = UA × (T_sat - T_steamLine)
-            // dT_steamLine/dt = Q_condensation / (M_metal × Cp)
+            // Q_condensation = UA Ã— (T_sat - T_steamLine)
+            // dT_steamLine/dt = Q_condensation / (M_metal Ã— Cp)
             // T_steamLine capped at T_sat (cannot exceed steam temperature)
             //
-            // Effect: Early boiling → cold lines absorb significant energy →
-            //         less net steam production → slower node heating →
+            // Effect: Early boiling â†’ cold lines absorb significant energy â†’
+            //         less net steam production â†’ slower node heating â†’
             //         slower pressure rise (physical damping).
-            //         As lines warm → condensation drops → pure sat tracking.
+            //         As lines warm â†’ condensation drops â†’ pure sat tracking.
             //
             // CRITICAL: This model NEVER modifies pressure directly.
             // Pressure is always P_sat(T_hottest). The steam line model
@@ -1299,7 +1312,7 @@ namespace Critical.Physics
 
                 if (dT_steamLine > 0.1f)
                 {
-                    // Condensation heat transfer: Q = UA × ΔT
+                    // Condensation heat transfer: Q = UA Ã— Î”T
                     float Q_condensation = PlantConstants.SG_STEAM_LINE_UA * dT_steamLine;
 
                     // Cannot remove more energy than is available from boiling
@@ -1311,7 +1324,7 @@ namespace Critical.Physics
                     float dT_metal = Q_condensation * dt_hr / steamLineHeatCap;
                     state.SteamLineTempF += dT_metal;
 
-                    // Cap at T_sat — steam line cannot exceed steam temperature
+                    // Cap at T_sat â€” steam line cannot exceed steam temperature
                     state.SteamLineTempF = Mathf.Min(state.SteamLineTempF, T_steam);
 
                     // Subtract condensation energy from boiling budget
@@ -1323,13 +1336,13 @@ namespace Critical.Physics
                 }
                 else
                 {
-                    // Steam lines at or above T_sat — no condensation
+                    // Steam lines at or above T_sat â€” no condensation
                     state.SteamLineCondensationRate_BTUhr = 0f;
                 }
             }
             else
             {
-                // Not boiling — no condensation energy sink
+                // Not boiling â€” no condensation energy sink
                 state.SteamLineCondensationRate_BTUhr = 0f;
             }
 
@@ -1359,7 +1372,7 @@ namespace Critical.Physics
             // ================================================================
             // Per NRC HRTD 2.3 / 19.0: SG draining from wet layup (100% WR)
             // to operating level (~33% NR) via normal blowdown system.
-            // Draining starts at T_rcs ≈ 200°F and runs at 150 gpm per SG.
+            // Draining starts at T_rcs â‰ˆ 200Â°F and runs at 150 gpm per SG.
             //
             // The draining is triggered externally by the engine (which knows
             // T_rcs). This section only processes the mass removal if draining
@@ -1374,18 +1387,18 @@ namespace Critical.Physics
                                   * PlantConstants.SG_COUNT;
                 float targetMass = initialMass * PlantConstants.SG_DRAINING_TARGET_MASS_FRAC;
 
-                // Convert gpm to lb/hr: gpm × (1 min/60 sec × 1 hr/60 min) = gph
-                // gpm × 60 = gph, then gph × ft³/gal × ρ = lb/hr
-                // At ~200°F secondary water: ρ ≈ 60.1 lb/ft³
+                // Convert gpm to lb/hr: gpm Ã— (1 min/60 sec Ã— 1 hr/60 min) = gph
+                // gpm Ã— 60 = gph, then gph Ã— ftÂ³/gal Ã— Ï = lb/hr
+                // At ~200Â°F secondary water: Ï â‰ˆ 60.1 lb/ftÂ³
                 float rho_secondary = WaterProperties.WaterDensity(
                     state.BulkAverageTemp_F, state.SecondaryPressure_psia);
                 float totalDrainRate_gpm = PlantConstants.SG_DRAINING_RATE_GPM
                                          * PlantConstants.SG_COUNT;
-                // gpm × (ft³/7.48052 gal) × (60 min/hr) × ρ (lb/ft³) = lb/hr
+                // gpm Ã— (ftÂ³/7.48052 gal) Ã— (60 min/hr) Ã— Ï (lb/ftÂ³) = lb/hr
                 float drainRate_lbhr = totalDrainRate_gpm / 7.48052f * 60f * rho_secondary;
                 float drainThisStep_lb = drainRate_lbhr * dt_hr;
 
-                // Don’t drain below target
+                // Donâ€™t drain below target
                 float massAfterDrain = state.SecondaryWaterMass_lb - drainThisStep_lb;
                 if (massAfterDrain <= targetMass)
                 {
@@ -1413,7 +1426,7 @@ namespace Critical.Physics
             //
             // Narrow Range (NR): References operating band.
             //   100% NR = SG_DRAINING_TARGET_MASS_FRAC of wet layup (55%).
-            //   0% NR = tubes uncovered (critical low — not modelled here).
+            //   0% NR = tubes uncovered (critical low â€” not modelled here).
             //   33% NR = normal operating level.
             //   During wet layup (100% WR), NR reads off-scale high (~182%).
             //
@@ -1423,7 +1436,7 @@ namespace Critical.Physics
             // detailed collapsed/indicated level model is deferred to the
             // Screen 5 SG display implementation (Future Features Priority 5).
             //
-            // Source: Westinghouse FSAR — SG level instrumentation
+            // Source: Westinghouse FSAR â€” SG level instrumentation
             // ================================================================
             {
                 float initialMassTotal = PlantConstants.SG_SECONDARY_WATER_PER_SG_LB
@@ -1450,9 +1463,9 @@ namespace Critical.Physics
             // When isolated, steam accumulates and pressure rises based on
             // inventory rather than saturation tracking.
             //
-            // Steam space volume: V_steam = V_total - (m_water / ρ_water)
+            // Steam space volume: V_steam = V_total - (m_water / Ï_water)
             // Steam inventory: dm/dt = SteamProductionRate - SteamOutflow
-            // Inventory pressure: P = (m × R × T) / V (ideal gas)
+            // Inventory pressure: P = (m Ã— R Ã— T) / V (ideal gas)
             //
             // Default: SteamIsolated = false (open system, sat tracking).
             // When SteamIsolated = true, inventory-based pressure is used.
@@ -1550,7 +1563,7 @@ namespace Critical.Physics
         /// Called by HeatupSimEngine when T_rcs reaches SG_DRAINING_START_TEMP_F.
         /// Draining proceeds automatically until target mass fraction is reached.
         ///
-        /// Per NRC HRTD 2.3 / 19.0: "At approximately 200°F, SG draining is
+        /// Per NRC HRTD 2.3 / 19.0: "At approximately 200Â°F, SG draining is
         /// commenced to reduce level from wet layup (100% WR) to approximately
         /// 33% narrow range (operating level)."
         ///
@@ -1649,7 +1662,7 @@ namespace Critical.Physics
                 // v5.0.1: Include blend value in diagnostics
                 string blendStr = (state.NodeRegimeBlend != null && state.NodeRegimeBlend.Length > i)
                     ? $"  B={state.NodeRegimeBlend[i]:F2}" : "";
-                s += $"  {label}: T={state.NodeTemperatures[i]:F1}°F  ΔT={dT:F1}°F  " +
+                s += $"  {label}: T={state.NodeTemperatures[i]:F1}Â°F  Î”T={dT:F1}Â°F  " +
                      $"Q={state.NodeHeatRates[i] / MW_TO_BTU_HR:F3}MW  " +
                      $"h={state.NodeHTCs[i]:F0}  Af={state.NodeEffectiveAreaFractions[i]:F3}  " +
                      $"[{posStr}]{boilMark}{blendStr}\n";
@@ -1674,33 +1687,33 @@ namespace Critical.Physics
         ///
         /// v4.3.0: Boiling enhancement now uses superheat-based smoothstep
         /// relative to the dynamic saturation temperature T_sat(P_secondary),
-        /// rather than a step function at a fixed 220°F threshold. This
-        /// prevents the cliff behavior where HTC jumps 5× in one timestep.
+        /// rather than a step function at a fixed 220Â°F threshold. This
+        /// prevents the cliff behavior where HTC jumps 5Ã— in one timestep.
         ///
         /// With RCPs running:
         ///   1/U = 1/h_primary + R_wall + 1/h_secondary
-        ///   h_primary ≈ 800-3000 BTU/(hr·ft²·°F) (forced convection inside tubes)
-        ///   R_wall ≈ negligible (thin Inconel, high k)
-        ///   h_secondary ≈ 30-60 BTU/(hr·ft²·°F) (stagnant NC with bundle penalty)
-        ///   h_secondary ≈ 150-300 if boiling (nucleate boiling enhancement)
-        ///   → U is controlled by h_secondary
+        ///   h_primary â‰ˆ 800-3000 BTU/(hrÂ·ftÂ²Â·Â°F) (forced convection inside tubes)
+        ///   R_wall â‰ˆ negligible (thin Inconel, high k)
+        ///   h_secondary â‰ˆ 30-60 BTU/(hrÂ·ftÂ²Â·Â°F) (stagnant NC with bundle penalty)
+        ///   h_secondary â‰ˆ 150-300 if boiling (nucleate boiling enhancement)
+        ///   â†’ U is controlled by h_secondary
         ///
         /// Without RCPs:
         ///   h_primary drops to ~10-50 (natural convection inside tubes too)
-        ///   → U ≈ 7-25 BTU/(hr·ft²·°F) — negligible heat transfer
+        ///   â†’ U â‰ˆ 7-25 BTU/(hrÂ·ftÂ²Â·Â°F) â€” negligible heat transfer
         /// </summary>
         /// <param name="nodeIndex">Node index (0 = top)</param>
         /// <param name="nodeCount">Total number of nodes</param>
-        /// <param name="nodeTemp_F">Node secondary temperature (°F)</param>
+        /// <param name="nodeTemp_F">Node secondary temperature (Â°F)</param>
         /// <param name="rcpsRunning">Number of RCPs operating (0-4)</param>
-        /// <param name="Tsat_F">Saturation temperature at current SG secondary pressure (°F)</param>
+        /// <param name="Tsat_F">Saturation temperature at current SG secondary pressure (Â°F)</param>
         /// <param name="boilingIntensity">Output: boiling intensity fraction for this node (0-1)</param>
         private static float GetNodeHTC(int nodeIndex, int nodeCount,
             float nodeTemp_F, int rcpsRunning, float Tsat_F, out float boilingIntensity)
         {
             boilingIntensity = 0f;
 
-            // No RCPs → negligible heat transfer (both sides natural convection)
+            // No RCPs â†’ negligible heat transfer (both sides natural convection)
             if (rcpsRunning == 0)
                 return HTC_NO_RCPS;
 
@@ -1708,7 +1721,7 @@ namespace Critical.Physics
             float h_secondary = PlantConstants.SG_MULTINODE_HTC_STAGNANT;
 
             // Temperature effect: at low temperatures, fluid properties
-            // reduce natural convection effectiveness (higher viscosity, lower β)
+            // reduce natural convection effectiveness (higher viscosity, lower Î²)
             float tempFactor = GetTemperatureEfficiencyFactor(nodeTemp_F);
             h_secondary *= tempFactor;
 
@@ -1725,7 +1738,7 @@ namespace Critical.Physics
                 h_secondary *= htcMultiplier;
             }
 
-            // Primary side: forced convection with RCPs — very high h
+            // Primary side: forced convection with RCPs â€” very high h
             // Scale with RCP count (each pump provides ~25% of flow)
             float primaryFactor = Mathf.Min(1f, rcpsRunning / 4f);
             float h_primary = 1000f * primaryFactor + 10f * (1f - primaryFactor);
@@ -1737,16 +1750,16 @@ namespace Critical.Physics
         }
 
         /// <summary>
-        /// Get the overall HTC for a boiling node in BTU/(hr·ft²·°F).
+        /// Get the overall HTC for a boiling node in BTU/(hrÂ·ftÂ²Â·Â°F).
         ///
         /// v5.0.0: For nodes that are at T_sat and actively boiling, the
-        /// secondary-side HTC is dominated by nucleate boiling (h ≈ 2,000–10,000).
+        /// secondary-side HTC is dominated by nucleate boiling (h â‰ˆ 2,000â€“10,000).
         /// The overall U is then limited by the primary-side forced convection:
         ///   1/U = 1/h_primary + 1/h_boiling
         ///
-        /// Since h_boiling >> h_primary, U ≈ h_primary.
+        /// Since h_boiling >> h_primary, U â‰ˆ h_primary.
         /// This means the exact boiling HTC value matters much less than
-        /// getting the regime right — the energy transfer is primary-limited.
+        /// getting the regime right â€” the energy transfer is primary-limited.
         ///
         /// HTC increases with pressure (more vigorous nucleation, smaller
         /// departing bubbles, thinner thermal boundary layer). Linear ramp
@@ -1758,10 +1771,10 @@ namespace Critical.Physics
         /// </summary>
         /// <param name="rcpsRunning">Number of RCPs operating (0-4)</param>
         /// <param name="secondaryPressure_psia">Current SG secondary pressure (psia)</param>
-        /// <returns>Overall HTC in BTU/(hr·ft²·°F)</returns>
+        /// <returns>Overall HTC in BTU/(hrÂ·ftÂ²Â·Â°F)</returns>
         private static float GetBoilingNodeHTC(int rcpsRunning, float secondaryPressure_psia)
         {
-            // No RCPs → no primary-side flow → negligible heat transfer
+            // No RCPs â†’ no primary-side flow â†’ negligible heat transfer
             // (even though secondary is boiling, no energy delivery from primary)
             if (rcpsRunning == 0)
                 return HTC_NO_RCPS;
@@ -1794,13 +1807,13 @@ namespace Critical.Physics
         /// thermocline position determines what fraction of each node's
         /// tube area is "active" (above the thermocline in the hot layer).
         ///
-        /// Node above thermocline: full geometric area × stagnant effectiveness
+        /// Node above thermocline: full geometric area Ã— stagnant effectiveness
         /// Node containing thermocline: linearly interpolated
         /// Node below thermocline: residual only (SG_BELOW_THERMOCLINE_EFF)
         ///
         /// The stagnant effectiveness array (from PlantConstants.SG) is still
         /// used because even above the thermocline, the hot boundary layer
-        /// reduces the effective driving ΔT at different vertical positions.
+        /// reduces the effective driving Î”T at different vertical positions.
         /// </summary>
         private static float GetNodeEffectiveAreaFraction(int nodeIndex, int nodeCount,
             float thermoclineHeight_ft)
@@ -1823,17 +1836,17 @@ namespace Critical.Physics
 
             if (nodeBotElev >= thermTop)
             {
-                // Entire node is above thermocline — fully active
+                // Entire node is above thermocline â€” fully active
                 aboveFraction = 1f;
             }
             else if (nodeTopElev <= thermBot)
             {
-                // Entire node is below thermocline — residual only
+                // Entire node is below thermocline â€” residual only
                 aboveFraction = 0f;
             }
             else
             {
-                // Node straddles the thermocline — linear interpolation
+                // Node straddles the thermocline â€” linear interpolation
                 // Clamp thermocline zone to node boundaries
                 float overlapTop = Mathf.Min(nodeTopElev, thermTop);
                 float overlapBot = Mathf.Max(nodeBotElev, thermBot);
@@ -1869,8 +1882,8 @@ namespace Critical.Physics
         ///
         /// Physics: The secondary pressure depends on the thermodynamic regime:
         ///
-        ///   SUBCOOLED (pre-steam): Pressure = N₂ blanket value (17 psia).
-        ///     N₂ supply maintains slight positive pressure. No steam production.
+        ///   SUBCOOLED (pre-steam): Pressure = Nâ‚‚ blanket value (17 psia).
+        ///     Nâ‚‚ supply maintains slight positive pressure. No steam production.
         ///
         ///   BOILING (open system): Pressure tracks saturation directly.
         ///     P_secondary = P_sat(T_hottest_boiling_node)
@@ -1887,12 +1900,12 @@ namespace Critical.Physics
         ///   STEAM DUMP: Pressure capped at steam dump setpoint (1092 psig).
         ///     Steam dumps modulate to hold pressure constant.
         ///
-        /// Source: NRC HRTD ML11223A342 Section 19.0 — steam onset at ~220°F,
-        ///         NRC HRTD ML11223A294 Section 11.2 — steam dumps at 1092 psig,
+        /// Source: NRC HRTD ML11223A342 Section 19.0 â€” steam onset at ~220Â°F,
+        ///         NRC HRTD ML11223A294 Section 11.2 â€” steam dumps at 1092 psig,
         ///         Implementation Plan v5.1.0 Stage 1
         /// </summary>
         /// <param name="state">SG state (modified in place)</param>
-        /// <param name="T_rcs">Current RCS bulk temperature (°F)</param>
+        /// <param name="T_rcs">Current RCS bulk temperature (Â°F)</param>
         /// <param name="dt_hr">Timestep in hours</param>
         private static void UpdateSecondaryPressure(ref SGMultiNodeState state,
             float T_rcs, float dt_hr)
@@ -1905,7 +1918,7 @@ namespace Critical.Physics
                     T_hottest = state.NodeTemperatures[i];
             }
 
-            // Check for nitrogen isolation (one-time event at ~220°F RCS)
+            // Check for nitrogen isolation (one-time event at ~220Â°F RCS)
             if (!state.NitrogenIsolated && T_rcs >= PlantConstants.SG_NITROGEN_ISOLATION_TEMP_F)
             {
                 state.NitrogenIsolated = true;
@@ -1928,20 +1941,20 @@ namespace Critical.Physics
 
             // Pressure evolution depends on regime
             //
-            // v5.1.0 Stage 2: Guard for boiling→subcooled reversion.
+            // v5.1.0 Stage 2: Guard for boilingâ†’subcooled reversion.
             // The condition for pre-steaming requires BOTH:
-            //   (a) N₂ is not yet isolated, OR
+            //   (a) Nâ‚‚ is not yet isolated, OR
             //   (b) T_hottest is below T_sat AND current pressure is at or
-            //       below the N₂ blanket value.
+            //       below the Nâ‚‚ blanket value.
             //
             // Without guard (b), a transient dip where T_hottest drops just
             // below T_sat would snap pressure from P_sat(T_hottest) back to
-            // 17 psia instantly — a potentially large discontinuity mid-heatup.
+            // 17 psia instantly â€” a potentially large discontinuity mid-heatup.
             //
-            // With guard (b), once pressure has risen above the N₂ blanket,
+            // With guard (b), once pressure has risen above the Nâ‚‚ blanket,
             // the boiling branch continues to track P_sat(T_hottest) downward
-            // smoothly. Pressure only returns to the N₂ blanket value when
-            // P_sat(T_hottest) naturally falls to that level — which means
+            // smoothly. Pressure only returns to the Nâ‚‚ blanket value when
+            // P_sat(T_hottest) naturally falls to that level â€” which means
             // the secondary has genuinely cooled back to pre-steaming conditions.
             bool presteaming = !state.NitrogenIsolated ||
                                (T_hottest < T_sat_current &&
@@ -1950,11 +1963,11 @@ namespace Critical.Physics
             if (presteaming)
             {
                 // ============================================================
-                // PRE-STEAMING: N₂ blanket pressure
+                // PRE-STEAMING: Nâ‚‚ blanket pressure
                 // ============================================================
-                // Either N₂ is still connected (maintains blanket pressure)
+                // Either Nâ‚‚ is still connected (maintains blanket pressure)
                 // or all nodes are genuinely subcooled at near-atmospheric
-                // conditions (pressure has not risen above the N₂ blanket).
+                // conditions (pressure has not risen above the Nâ‚‚ blanket).
                 state.SecondaryPressure_psia = state.InventoryPressure_psia;
                 state.PressureSourceMode =
                     (state.SecondaryPressure_psia <= PlantConstants.SG_MIN_STEAMING_PRESSURE_PSIA + 0.1f)
@@ -1974,9 +1987,9 @@ namespace Critical.Physics
                 // exact for a boiling system with steam present.
                 //
                 // Self-regulating feedback:
-                //   Higher T_hottest → higher P_secondary → higher T_sat
-                //   → smaller (T_rcs - T_sat) → less boiling heat transfer
-                //   → T_hottest rises more slowly
+                //   Higher T_hottest â†’ higher P_secondary â†’ higher T_sat
+                //   â†’ smaller (T_rcs - T_sat) â†’ less boiling heat transfer
+                //   â†’ T_hottest rises more slowly
                 //
                 // No artificial rate limiting. Physical damping provided by
                 // steam line condensation energy sink (Section 8c, v5.1.0 Stage 3).
@@ -1985,7 +1998,7 @@ namespace Critical.Physics
                 float P_new = WaterProperties.SaturationPressure(T_hottest);
 
                 // Clamp to physical limits:
-                //   Lower: cannot go below N₂ blanket / atmospheric
+                //   Lower: cannot go below Nâ‚‚ blanket / atmospheric
                 //   Upper: safety valve ceiling (backup protection)
                 float P_min = PlantConstants.SG_MIN_STEAMING_PRESSURE_PSIA;
                 float P_safetyValve = PlantConstants.SG_SAFETY_VALVE_SETPOINT_PSIG + 14.7f;
@@ -1993,7 +2006,7 @@ namespace Critical.Physics
 
                 // Cap at steam dump setpoint during normal operation.
                 // When SG pressure reaches 1092 psig, steam dumps modulate to
-                // hold pressure constant. T_sat(1092 psig) = 557°F = no-load T_avg.
+                // hold pressure constant. T_sat(1092 psig) = 557Â°F = no-load T_avg.
                 // The steam dump controller in HeatupSimEngine.HZP handles the
                 // actual valve modulation and heat removal calculation.
                 float P_steamDump = PlantConstants.SG_STEAM_DUMP_SETPOINT_PSIG + 14.7f;
@@ -2113,26 +2126,26 @@ namespace Critical.Physics
         /// Calculate boiling intensity fraction for a node based on local
         /// superheat above the dynamic saturation temperature.
         ///
-        /// Uses a Hermite smoothstep (3t² - 2t³) to ramp from 0 to 1 over
-        /// the superheat range SG_BOILING_SUPERHEAT_RANGE_F (20°F).
+        /// Uses a Hermite smoothstep (3tÂ² - 2tÂ³) to ramp from 0 to 1 over
+        /// the superheat range SG_BOILING_SUPERHEAT_RANGE_F (20Â°F).
         ///
-        /// f_boil = smoothstep(ΔT_superheat / SG_BOILING_SUPERHEAT_RANGE_F)
-        /// where ΔT_superheat = max(0, T_node - T_sat(P_secondary))
+        /// f_boil = smoothstep(Î”T_superheat / SG_BOILING_SUPERHEAT_RANGE_F)
+        /// where Î”T_superheat = max(0, T_node - T_sat(P_secondary))
         ///
         /// Returns 0.0 if subcooled (node below T_sat).
-        /// Returns 0.5 at 10°F superheat (half of 20°F range).
-        /// Returns 1.0 at 20°F+ superheat (fully developed nucleate boiling).
+        /// Returns 0.5 at 10Â°F superheat (half of 20Â°F range).
+        /// Returns 1.0 at 20Â°F+ superheat (fully developed nucleate boiling).
         ///
         /// The key physics insight: as secondary pressure rises with temperature,
-        /// T_sat rises too, so the superheat ΔT remains small even as absolute
+        /// T_sat rises too, so the superheat Î”T remains small even as absolute
         /// temperatures increase. This creates the self-limiting feedback that
         /// prevents cliff behavior.
         ///
-        /// Source: Incropera & DeWitt Ch. 10 — boiling curve transition,
+        /// Source: Incropera & DeWitt Ch. 10 â€” boiling curve transition,
         ///         onset of nucleate boiling through fully developed regime
         /// </summary>
-        /// <param name="nodeTemp_F">Node secondary temperature (°F)</param>
-        /// <param name="Tsat_F">Saturation temperature at current SG secondary pressure (°F)</param>
+        /// <param name="nodeTemp_F">Node secondary temperature (Â°F)</param>
+        /// <param name="Tsat_F">Saturation temperature at current SG secondary pressure (Â°F)</param>
         /// <returns>Boiling intensity fraction (0.0 - 1.0)</returns>
         private static float GetBoilingIntensityFraction(float nodeTemp_F, float Tsat_F)
         {
@@ -2143,7 +2156,7 @@ namespace Critical.Physics
             float t = superheat / PlantConstants.SG_BOILING_SUPERHEAT_RANGE_F;
             t = Mathf.Clamp01(t);
 
-            // Hermite smoothstep: 3t² - 2t³
+            // Hermite smoothstep: 3tÂ² - 2tÂ³
             // Smooth onset and smooth approach to full boiling
             return t * t * (3f - 2f * t);
         }
@@ -2153,7 +2166,7 @@ namespace Critical.Physics
         /// Used by GetDiagnosticString() to report T_wall.
         ///
         /// Uses the same algebraic formula as the main Update() loop:
-        ///   T_wall = T_rcs - Q_node_prev / (h_primary × A_node)
+        ///   T_wall = T_rcs - Q_node_prev / (h_primary Ã— A_node)
         ///   Clamped to [T_sat, T_rcs]
         ///
         /// Returns T_rcs if no nodes are boiling (wall superheat not applicable).
@@ -2191,13 +2204,13 @@ namespace Critical.Physics
         /// coefficient is lower, reducing Rayleigh number and HTC.
         ///
         /// Based on Churchill-Chu correlation property dependence:
-        ///   h ~ (gβΔT/να)^(1/4) for laminar, ^(1/3) for turbulent
-        ///   At 100°F: ν = 0.739×10^-5 ft²/s, β = 0.00022/°F
-        ///   At 300°F: ν = 0.204×10^-5 ft²/s, β = 0.00043/°F
-        ///   Ratio of (β/ν²): 300°F is ~16× higher than 100°F
+        ///   h ~ (gÎ²Î”T/Î½Î±)^(1/4) for laminar, ^(1/3) for turbulent
+        ///   At 100Â°F: Î½ = 0.739Ã—10^-5 ftÂ²/s, Î² = 0.00022/Â°F
+        ///   At 300Â°F: Î½ = 0.204Ã—10^-5 ftÂ²/s, Î² = 0.00043/Â°F
+        ///   Ratio of (Î²/Î½Â²): 300Â°F is ~16Ã— higher than 100Â°F
         ///   Ra ratio: ~16, Nu ratio: ~2.5 (1/4 power), h ratio: ~2.5
         ///
-        /// Using a smoother scaling: factor ranges from 0.5 at 100°F to 1.0 at 400°F
+        /// Using a smoother scaling: factor ranges from 0.5 at 100Â°F to 1.0 at 400Â°F
         /// </summary>
         private static float GetTemperatureEfficiencyFactor(float T_F)
         {
@@ -2225,7 +2238,7 @@ namespace Critical.Physics
         {
             bool valid = true;
 
-            // Test 1: Initialize at 100°F — all nodes equal, thermocline at top
+            // Test 1: Initialize at 100Â°F â€” all nodes equal, thermocline at top
             var state = Initialize(100f);
             if (state.NodeCount != PlantConstants.SG_NODE_COUNT) valid = false;
             for (int i = 0; i < state.NodeCount; i++)
@@ -2238,7 +2251,7 @@ namespace Critical.Physics
                 valid = false;
             }
 
-            // Test 2: One step with T_rcs=120°F, 4 RCPs — total Q should be < 2 MW
+            // Test 2: One step with T_rcs=120Â°F, 4 RCPs â€” total Q should be < 2 MW
             // (thermocline model: only ~12% of area active, bundle penalty 0.40)
             var result = Update(ref state, 120f, 4, 400f, 1f / 360f);
             if (result.TotalHeatRemoval_MW < 0.01f || result.TotalHeatRemoval_MW > 3f)
@@ -2254,7 +2267,7 @@ namespace Critical.Physics
                 valid = false;
             }
 
-            // Test 4: Run 100 steps (~17 min) — Q should remain realistic
+            // Test 4: Run 100 steps (~17 min) â€” Q should remain realistic
             state = Initialize(100f);
             for (int step = 0; step < 100; step++)
             {
@@ -2273,7 +2286,7 @@ namespace Critical.Physics
                 valid = false;
             }
 
-            // Test 5: No RCPs → very low heat transfer
+            // Test 5: No RCPs â†’ very low heat transfer
             var stateNoRCP = Initialize(100f);
             var resultNoRCP = Update(ref stateNoRCP, 200f, 0, 400f, 1f / 360f);
             if (resultNoRCP.TotalHeatRemoval_MW > 0.5f)
@@ -2315,7 +2328,7 @@ namespace Critical.Physics
                                 $"(initial={initialThermocline:F2}, after 1hr={state.ThermoclineHeight_ft:F2})");
                 valid = false;
             }
-            // After 1 hour: descent ≈ √(4 × 0.08 × 1) ≈ 0.57 ft
+            // After 1 hour: descent â‰ˆ âˆš(4 Ã— 0.08 Ã— 1) â‰ˆ 0.57 ft
             float expectedDescent = (float)Math.Sqrt(4f * PlantConstants.SG_THERMOCLINE_ALPHA_EFF * 1f);
             float actualDescent = initialThermocline - state.ThermoclineHeight_ft;
             if (Math.Abs(actualDescent - expectedDescent) > 0.1f)
@@ -2331,12 +2344,12 @@ namespace Critical.Physics
             Update(ref state, 250f, 4, 400f, 1f / 360f);
             if (!state.BoilingActive)
             {
-                Debug.LogWarning("[SGMultiNode Validation] Test 9 FAIL: Boiling not detected at 225°F top node");
+                Debug.LogWarning("[SGMultiNode Validation] Test 9 FAIL: Boiling not detected at 225Â°F top node");
                 valid = false;
             }
 
             // Test 10: Long-term energy absorption check (simulate 2 hours)
-            // With 4 RCPs at ~150°F, thermocline model should keep Q < 3 MW average
+            // With 4 RCPs at ~150Â°F, thermocline model should keep Q < 3 MW average
             state = Initialize(100f);
             float totalEnergy_BTU = 0f;
             int totalSteps = 720;  // 2 hours at 10-sec steps
@@ -2352,7 +2365,7 @@ namespace Critical.Physics
                 valid = false;
             }
 
-            // Test 11: v5.0.0 regime detection — starts Subcooled
+            // Test 11: v5.0.0 regime detection â€” starts Subcooled
             state = Initialize(100f);
             if (state.CurrentRegime != SGThermalRegime.Subcooled)
             {
@@ -2372,7 +2385,7 @@ namespace Critical.Physics
 
             // Test 12: v5.0.0 regime transitions to Boiling when top node >= T_sat
             state = Initialize(100f);
-            state.NodeTemperatures[0] = 225f;  // Above T_sat at 17 psia (~220°F)
+            state.NodeTemperatures[0] = 225f;  // Above T_sat at 17 psia (~220Â°F)
             Update(ref state, 250f, 4, 400f, 1f / 360f);
             if (state.CurrentRegime != SGThermalRegime.Boiling)
             {
@@ -2385,7 +2398,7 @@ namespace Critical.Physics
                 valid = false;
             }
 
-            // Test 13: v5.0.0 Stage 2 — boiling node produces steam (rate > 0)
+            // Test 13: v5.0.0 Stage 2 â€” boiling node produces steam (rate > 0)
             // Test 12 already put us in boiling regime with top node at ~T_sat
             if (state.SteamProductionRate_lbhr <= 0f)
             {
@@ -2393,18 +2406,18 @@ namespace Critical.Physics
                 valid = false;
             }
 
-            // Test 14: v5.0.0 Stage 2 — boiling node temperature clamped to T_sat
-            // The top node was set to 225°F (above T_sat ~220°F at 17 psia).
+            // Test 14: v5.0.0 Stage 2 â€” boiling node temperature clamped to T_sat
+            // The top node was set to 225Â°F (above T_sat ~220Â°F at 17 psia).
             // After Update(), it should be clamped to T_sat, NOT allowed to rise above.
             float expectedTsat = WaterProperties.SaturationTemperature(state.SecondaryPressure_psia);
             if (Math.Abs(state.NodeTemperatures[0] - expectedTsat) > 2f)
             {
-                Debug.LogWarning($"[SGMultiNode Validation] Test 14 FAIL: Boiling node T={state.NodeTemperatures[0]:F1}°F " +
-                                $"(expected T_sat={expectedTsat:F1}°F)");
+                Debug.LogWarning($"[SGMultiNode Validation] Test 14 FAIL: Boiling node T={state.NodeTemperatures[0]:F1}Â°F " +
+                                $"(expected T_sat={expectedTsat:F1}Â°F)");
                 valid = false;
             }
 
-            // Test 15: v5.0.0 Stage 2 — secondary water mass decreases during boiling
+            // Test 15: v5.0.0 Stage 2 â€” secondary water mass decreases during boiling
             float initialMass = PlantConstants.SG_SECONDARY_WATER_PER_SG_LB * PlantConstants.SG_COUNT;
             if (state.SecondaryWaterMass_lb >= initialMass)
             {
@@ -2413,23 +2426,23 @@ namespace Critical.Physics
                 valid = false;
             }
 
-            // Test 16: v5.1.0 — pressure tracks saturation directly (no rate limit)
-            // Initialize at 100°F, force top node to 350°F (P_sat ≈ 135 psia).
-            // After one timestep, pressure should jump directly to P_sat(350°F)
+            // Test 16: v5.1.0 â€” pressure tracks saturation directly (no rate limit)
+            // Initialize at 100Â°F, force top node to 350Â°F (P_sat â‰ˆ 135 psia).
+            // After one timestep, pressure should jump directly to P_sat(350Â°F)
             // because saturation tracking is now instantaneous (v5.1.0 Stage 1).
             state = Initialize(100f);
-            state.NitrogenIsolated = true;  // Force N₂ isolated
+            state.NitrogenIsolated = true;  // Force Nâ‚‚ isolated
             state.NodeTemperatures[0] = 350f;
             Update(ref state, 400f, 4, 500f, 1f / 360f);
             float P_sat_350 = WaterProperties.SaturationPressure(350f);
             if (Math.Abs(state.SecondaryPressure_psia - P_sat_350) > 5f)
             {
                 Debug.LogWarning($"[SGMultiNode Validation] Test 16 FAIL: Pressure={state.SecondaryPressure_psia:F1} psia " +
-                                $"(expected P_sat(350°F)={P_sat_350:F1} psia — saturation tracking)");
+                                $"(expected P_sat(350Â°F)={P_sat_350:F1} psia â€” saturation tracking)");
                 valid = false;
             }
 
-            // Test 17: v5.0.0 Stage 2 — energy balance in boiling regime
+            // Test 17: v5.0.0 Stage 2 â€” energy balance in boiling regime
             // Boiling node energy should go to steam, not sensible heat.
             // Run 100 steps with top node at boiling. Track steam produced.
             state = Initialize(200f);
@@ -2450,11 +2463,11 @@ namespace Critical.Physics
             float currentTsat = WaterProperties.SaturationTemperature(state.SecondaryPressure_psia);
             if (state.NodeTemperatures[0] > currentTsat + 5f)
             {
-                Debug.LogWarning($"[SGMultiNode Validation] Test 17 FAIL: Top node {state.NodeTemperatures[0]:F1}°F >> T_sat {currentTsat:F1}°F");
+                Debug.LogWarning($"[SGMultiNode Validation] Test 17 FAIL: Top node {state.NodeTemperatures[0]:F1}Â°F >> T_sat {currentTsat:F1}Â°F");
                 valid = false;
             }
 
-            // Test 18: v5.0.0 Stage 3 — pressure caps at steam dump setpoint
+            // Test 18: v5.0.0 Stage 3 â€” pressure caps at steam dump setpoint
             // Run many steps with high T_rcs to let pressure ramp up.
             // Pressure should never exceed 1092 psig (1106.7 psia).
             state = Initialize(200f);
@@ -2480,23 +2493,23 @@ namespace Critical.Physics
                 valid = false;
             }
 
-            // Test 19: v5.0.0 Stage 3 — T_sat at steam dump pressure = ~557°F
+            // Test 19: v5.0.0 Stage 3 â€” T_sat at steam dump pressure = ~557Â°F
             float Tsat_at_steamDump = WaterProperties.SaturationTemperature(steamDumpP_psia);
             if (Math.Abs(Tsat_at_steamDump - 557f) > 5f)
             {
-                Debug.LogWarning($"[SGMultiNode Validation] Test 19 FAIL: T_sat at steam dump P = {Tsat_at_steamDump:F1}°F " +
-                                $"(expected ~557°F)");
+                Debug.LogWarning($"[SGMultiNode Validation] Test 19 FAIL: T_sat at steam dump P = {Tsat_at_steamDump:F1}Â°F " +
+                                $"(expected ~557Â°F)");
                 valid = false;
             }
-            // Boiling nodes should be at T_sat = ~557°F
+            // Boiling nodes should be at T_sat = ~557Â°F
             if (Math.Abs(state.NodeTemperatures[0] - Tsat_at_steamDump) > 3f)
             {
-                Debug.LogWarning($"[SGMultiNode Validation] Test 19 FAIL: Top node={state.NodeTemperatures[0]:F1}°F " +
-                                $"(expected T_sat={Tsat_at_steamDump:F1}°F)");
+                Debug.LogWarning($"[SGMultiNode Validation] Test 19 FAIL: Top node={state.NodeTemperatures[0]:F1}Â°F " +
+                                $"(expected T_sat={Tsat_at_steamDump:F1}Â°F)");
                 valid = false;
             }
 
-            // Test 20: v5.0.1 — NodeRegimeBlend initializes to zero and ramps gradually
+            // Test 20: v5.0.1 â€” NodeRegimeBlend initializes to zero and ramps gradually
             // Force a node to boiling and verify blend does NOT jump to 1.0 immediately.
             // With dt = 1/360 hr (10 sec) and ramp = 60/3600 hr, one step adds 10/60 = 0.167.
             // Blend reaches 1.0 after 6 steps (60 sim-seconds). Test uses 11 total steps
@@ -2543,53 +2556,53 @@ namespace Critical.Physics
                 }
             }
 
-            // Test 21: v5.0.1 — Delta clamp prevents >5 MW/step jumps
+            // Test 21: v5.0.1 â€” Delta clamp prevents >5 MW/step jumps
             // Start with a large instantaneous Q difference (cold SG, hot RCS)
             // and verify the output is clamped.
             state = Initialize(100f);
             // Run a baseline step to initialize the clamp tracker
             Update(ref state, 120f, 4, 400f, 1f / 360f);
             float baselineQ = state.TotalHeatAbsorption_MW;
-            // Now force a massive driving ΔT increase by jumping T_rcs
+            // Now force a massive driving Î”T increase by jumping T_rcs
             var result21 = Update(ref state, 500f, 4, 2235f, 1f / 360f);
             float deltaQ21 = Math.Abs(state.TotalHeatAbsorption_MW - baselineQ);
             if (deltaQ21 > DELTA_Q_CLAMP_MW + 0.1f)
             {
-                Debug.LogWarning($"[SGMultiNode Validation] Test 21 FAIL: |ΔQ| = {deltaQ21:F2} MW " +
-                                $"(expected ≤ {DELTA_Q_CLAMP_MW} MW from delta clamp)");
+                Debug.LogWarning($"[SGMultiNode Validation] Test 21 FAIL: |Î”Q| = {deltaQ21:F2} MW " +
+                                $"(expected â‰¤ {DELTA_Q_CLAMP_MW} MW from delta clamp)");
                 valid = false;
             }
 
-            // Test 22: v5.1.0 Stage 2 — boiling→subcooled reversion guard
-            // Once pressure has risen above N₂ blanket (boiling active), a transient
+            // Test 22: v5.1.0 Stage 2 â€” boilingâ†’subcooled reversion guard
+            // Once pressure has risen above Nâ‚‚ blanket (boiling active), a transient
             // dip of T_hottest just below T_sat must NOT snap pressure back to 17 psia.
             // Instead, pressure should continue tracking P_sat(T_hottest) downward.
             state = Initialize(100f);
             state.NitrogenIsolated = true;
-            state.NodeTemperatures[0] = 350f;  // Force boiling, P_sat(350) ≈ 135 psia
+            state.NodeTemperatures[0] = 350f;  // Force boiling, P_sat(350) â‰ˆ 135 psia
             Update(ref state, 400f, 4, 500f, 1f / 360f);
             float P_after_boiling = state.SecondaryPressure_psia;  // Should be ~135 psia
             // Now cool the hottest node to just below current T_sat
-            // T_sat at 135 psia ≈ 350°F, so set to 348°F (just below)
+            // T_sat at 135 psia â‰ˆ 350Â°F, so set to 348Â°F (just below)
             float T_sat_at_current_P = WaterProperties.SaturationTemperature(P_after_boiling);
             state.NodeTemperatures[0] = T_sat_at_current_P - 2f;
             Update(ref state, 400f, 4, 500f, 1f / 360f);
-            // Pressure should track P_sat(348°F) ≈ ~131 psia, NOT snap to 17 psia
+            // Pressure should track P_sat(348Â°F) â‰ˆ ~131 psia, NOT snap to 17 psia
             if (state.SecondaryPressure_psia < 50f)
             {
                 Debug.LogWarning($"[SGMultiNode Validation] Test 22 FAIL: Pressure snapped to " +
                                 $"{state.SecondaryPressure_psia:F1} psia after T_hottest dipped below T_sat " +
-                                $"(expected ~P_sat({T_sat_at_current_P - 2f:F0}°F), not 17 psia)");
+                                $"(expected ~P_sat({T_sat_at_current_P - 2f:F0}Â°F), not 17 psia)");
                 valid = false;
             }
 
-            // Test 23: v5.1.0 Stage 3 — steam line warming model
+            // Test 23: v5.1.0 Stage 3 â€” steam line warming model
             // During boiling, cold steam lines should absorb condensation energy.
             // After several steps, steam line temperature should rise above initial.
             state = Initialize(100f);
             state.NitrogenIsolated = true;
             state.NodeTemperatures[0] = 300f;  // Force boiling
-            float steamLineInitial = state.SteamLineTempF;  // Should be 100°F
+            float steamLineInitial = state.SteamLineTempF;  // Should be 100Â°F
             // Run 50 steps to let condensation warm the steam lines
             for (int step = 0; step < 50; step++)
             {
@@ -2598,24 +2611,24 @@ namespace Critical.Physics
             if (state.SteamLineTempF <= steamLineInitial + 1f)
             {
                 Debug.LogWarning($"[SGMultiNode Validation] Test 23 FAIL: Steam line did not warm " +
-                                $"(initial={steamLineInitial:F1}°F, after 50 steps={state.SteamLineTempF:F1}°F)");
+                                $"(initial={steamLineInitial:F1}Â°F, after 50 steps={state.SteamLineTempF:F1}Â°F)");
                 valid = false;
             }
             // Steam line should still be below T_sat (cap enforced)
             float T_sat_23 = state.SaturationTemp_F;
             if (state.SteamLineTempF > T_sat_23 + 1f)
             {
-                Debug.LogWarning($"[SGMultiNode Validation] Test 23 FAIL: Steam line T={state.SteamLineTempF:F1}°F " +
-                                $"exceeds T_sat={T_sat_23:F1}°F");
+                Debug.LogWarning($"[SGMultiNode Validation] Test 23 FAIL: Steam line T={state.SteamLineTempF:F1}Â°F " +
+                                $"exceeds T_sat={T_sat_23:F1}Â°F");
                 valid = false;
             }
 
-            // Test 24: v5.1.0 Stage 3 — steam line initialization
+            // Test 24: v5.1.0 Stage 3 â€” steam line initialization
             state = Initialize(150f);
             if (Math.Abs(state.SteamLineTempF - 150f) > 0.01f)
             {
-                Debug.LogWarning($"[SGMultiNode Validation] Test 24 FAIL: Steam line init T={state.SteamLineTempF:F1}°F " +
-                                $"(expected 150°F)");
+                Debug.LogWarning($"[SGMultiNode Validation] Test 24 FAIL: Steam line init T={state.SteamLineTempF:F1}Â°F " +
+                                $"(expected 150Â°F)");
                 valid = false;
             }
             if (state.SteamLineCondensationRate_BTUhr != 0f)
@@ -2625,8 +2638,8 @@ namespace Critical.Physics
                 valid = false;
             }
 
-            // Test 25: v5.1.0 Stage 4 — wall temperature bounds during boiling
-            // T_wall must satisfy: T_sat ≤ T_wall ≤ T_rcs
+            // Test 25: v5.1.0 Stage 4 â€” wall temperature bounds during boiling
+            // T_wall must satisfy: T_sat â‰¤ T_wall â‰¤ T_rcs
             state = Initialize(100f);
             state.NitrogenIsolated = true;
             state.NodeTemperatures[0] = 350f;
@@ -2638,33 +2651,33 @@ namespace Critical.Physics
             float T_sat_25 = state.SaturationTemp_F;
             if (T_wall_diag < T_sat_25 - 0.1f)
             {
-                Debug.LogWarning($"[SGMultiNode Validation] Test 25 FAIL: T_wall={T_wall_diag:F1}°F " +
-                                $"< T_sat={T_sat_25:F1}°F");
+                Debug.LogWarning($"[SGMultiNode Validation] Test 25 FAIL: T_wall={T_wall_diag:F1}Â°F " +
+                                $"< T_sat={T_sat_25:F1}Â°F");
                 valid = false;
             }
             if (T_wall_diag > 400.1f)
             {
-                Debug.LogWarning($"[SGMultiNode Validation] Test 25 FAIL: T_wall={T_wall_diag:F1}°F " +
-                                $"> T_rcs=400°F");
+                Debug.LogWarning($"[SGMultiNode Validation] Test 25 FAIL: T_wall={T_wall_diag:F1}Â°F " +
+                                $"> T_rcs=400Â°F");
                 valid = false;
             }
             if (T_wall_diag >= 399.9f)
             {
-                Debug.LogWarning($"[SGMultiNode Validation] Test 25 WARN: T_wall={T_wall_diag:F1}°F ≈ T_rcs " +
+                Debug.LogWarning($"[SGMultiNode Validation] Test 25 WARN: T_wall={T_wall_diag:F1}Â°F â‰ˆ T_rcs " +
                                 $"(no wall drop detected)");
             }
 
-            // Test 26: v5.1.0 Stage 4 — primary HTC constant sanity
+            // Test 26: v5.1.0 Stage 4 â€” primary HTC constant sanity
             if (PlantConstants.SG_PRIMARY_FORCED_CONVECTION_HTC <= 0f)
             {
-                Debug.LogWarning("[SGMultiNode Validation] Test 26 FAIL: SG_PRIMARY_FORCED_CONVECTION_HTC ≤ 0");
+                Debug.LogWarning("[SGMultiNode Validation] Test 26 FAIL: SG_PRIMARY_FORCED_CONVECTION_HTC â‰¤ 0");
                 valid = false;
             }
 
             if (valid)
-                Debug.Log("[SGMultiNode] All validation tests PASSED (v5.1.0 — saturation + steam line + wall superheat)");
+                Debug.Log("[SGMultiNode] All validation tests PASSED (v5.1.0 â€” saturation + steam line + wall superheat)");
             else
-                Debug.LogError("[SGMultiNode] Validation FAILED — check warnings above");
+                Debug.LogError("[SGMultiNode] Validation FAILED â€” check warnings above");
 
             return valid;
         }
@@ -2672,4 +2685,9 @@ namespace Critical.Physics
         #endregion
     }
 }
+
+
+
+
+
 

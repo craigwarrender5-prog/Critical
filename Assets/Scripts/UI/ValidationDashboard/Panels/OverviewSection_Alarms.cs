@@ -1,17 +1,17 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Overview Section: Alarm Annunciator
 // OverviewSection_Alarms.cs - ISA-18.1 Annunciator Tile Grid
 // ============================================================================
 //
 // PURPOSE:
 //   MosaicAlarmPanel-style annunciator grid with ISA-18.1 state machine
-//   for alarm/warning tiles. 6×2 grid of 12 tiles covering key heatup
+//   for alarm/warning tiles. 6Ã—2 grid of 12 tiles covering key heatup
 //   alarm conditions and system status.
 //
 // VISUAL STANDARD:
 //   Adopted from MosaicAlarmPanel.cs and NRC HRTD Section 4:
 //   - 4-edge borders, instrument font, dim/lit/flash states
-//   - INACTIVE → ALERTING (3 Hz) → ACKNOWLEDGED → CLEARING (0.7 Hz)
+//   - INACTIVE â†’ ALERTING (3 Hz) â†’ ACKNOWLEDGED â†’ CLEARING (0.7 Hz)
 //   - Status tiles (green) are simple on/off, no state machine
 //
 // VERSION: 2.0.0
@@ -24,6 +24,7 @@ using UnityEngine.UI;
 using TMPro;
 using Critical.Physics;
 
+using Critical.Validation;
 namespace Critical.UI.ValidationDashboard
 {
     /// <summary>
@@ -54,7 +55,7 @@ namespace Critical.UI.ValidationDashboard
 
         protected override void BuildContent()
         {
-            // --- Annunciator grid: 6×2 ---
+            // --- Annunciator grid: 6Ã—2 ---
             GameObject gridGO = new GameObject("AnnunciatorGrid");
             gridGO.transform.SetParent(ContentRoot, false);
 
@@ -141,7 +142,7 @@ namespace Critical.UI.ValidationDashboard
         {
             if (engine == null || _tiles == null) return;
 
-            // Alarm tiles (red) — use ISA-18.1 state machine
+            // Alarm tiles (red) â€” use ISA-18.1 state machine
             _tiles[PRESS_HIGH]?.UpdateCondition(engine.pressureHigh);
             _tiles[PRESS_LOW]?.UpdateCondition(engine.pressureLow);
             _tiles[LVL_LOW]?.UpdateCondition(engine.pzrLevelLow);
@@ -149,12 +150,12 @@ namespace Critical.UI.ValidationDashboard
             _tiles[MASS_CONS]?.UpdateCondition(engine.primaryMassAlarm);
             _tiles[FLOW_LOW]?.UpdateCondition(engine.rcsFlowLow);
 
-            // Warning tiles (amber) — use ISA-18.1 state machine
+            // Warning tiles (amber) â€” use ISA-18.1 state machine
             _tiles[LVL_HIGH]?.UpdateCondition(engine.pzrLevelHigh);
             _tiles[VCT_LEVEL]?.UpdateCondition(engine.vctLevelHigh || engine.vctLevelLow);
             _tiles[SG_PRESS_HIGH]?.UpdateCondition(engine.sgSecondaryPressureHigh);
 
-            // Status tiles (green) — simple on/off, no state machine
+            // Status tiles (green) â€” simple on/off, no state machine
             _tiles[PZR_HTRS_ON]?.UpdateCondition(engine.pzrHeatersOn);
             _tiles[SPRAY_ACTIVE]?.UpdateCondition(engine.sprayActive);
             _tiles[BUBBLE_FORMED]?.UpdateCondition(engine.bubbleFormed);
@@ -170,7 +171,7 @@ namespace Critical.UI.ValidationDashboard
         // ====================================================================
 
         /// <summary>
-        /// Acknowledge all alerting tiles (ALERTING → ACKNOWLEDGED).
+        /// Acknowledge all alerting tiles (ALERTING â†’ ACKNOWLEDGED).
         /// </summary>
         private void AcknowledgeAll()
         {
@@ -182,7 +183,7 @@ namespace Critical.UI.ValidationDashboard
         }
 
         /// <summary>
-        /// Reset all clearing tiles (CLEARING → INACTIVE).
+        /// Reset all clearing tiles (CLEARING â†’ INACTIVE).
         /// Called automatically by auto-reset timer in DashboardAnnunciatorTile.
         /// </summary>
         public void ResetAll()
@@ -195,3 +196,4 @@ namespace Critical.UI.ValidationDashboard
         }
     }
 }
+

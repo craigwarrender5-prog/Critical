@@ -1,4 +1,4 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - Validation Dashboard Builder
 // ValidationDashboardBuilder.cs - Runtime UI Hierarchy Constructor
 // ============================================================================
@@ -12,18 +12,18 @@
 //   Creates the following hierarchy:
 //
 //   ValidationDashboardCanvas (Screen Space Overlay, Sort Order 100)
-//   ├── Background (full-screen dark panel)
-//   ├── HeaderPanel (top bar: mode, phase, time, speed)
-//   ├── TabNavigation (tab buttons with indicator)
-//   ├── MainContent (tab content area)
-//   │   ├── OverviewPanel (tab 0)
-//   │   ├── PrimaryPanel (tab 1)
-//   │   ├── PressurizerPanel (tab 2)
-//   │   ├── CVCSPanel (tab 3)
-//   │   ├── SGRHRPanel (tab 4)
-//   │   ├── AlarmsPanel (tab 5)
-//   │   └── ValidationPanel (tab 6)
-//   └── MiniTrendsPanel (right edge, always visible)
+//   â”œâ”€â”€ Background (full-screen dark panel)
+//   â”œâ”€â”€ HeaderPanel (top bar: mode, phase, time, speed)
+//   â”œâ”€â”€ TabNavigation (tab buttons with indicator)
+//   â”œâ”€â”€ MainContent (tab content area)
+//   â”‚   â”œâ”€â”€ OverviewPanel (tab 0)
+//   â”‚   â”œâ”€â”€ PrimaryPanel (tab 1)
+//   â”‚   â”œâ”€â”€ PressurizerPanel (tab 2)
+//   â”‚   â”œâ”€â”€ CVCSPanel (tab 3)
+//   â”‚   â”œâ”€â”€ SGRHRPanel (tab 4)
+//   â”‚   â”œâ”€â”€ AlarmsPanel (tab 5)
+//   â”‚   â””â”€â”€ ValidationPanel (tab 6)
+//   â””â”€â”€ MiniTrendsPanel (right edge, always visible)
 //
 // USAGE:
 //   Call ValidationDashboardBuilder.Build() from a MonoBehaviour to create
@@ -37,7 +37,8 @@
 using UnityEngine;
 using UnityEngine.UI;
 using TMPro;
-
+
+using Critical.Validation;
 namespace Critical.UI.ValidationDashboard
 {
     /// <summary>
@@ -327,3 +328,4 @@ namespace Critical.UI.ValidationDashboard
         }
     }
 }
+

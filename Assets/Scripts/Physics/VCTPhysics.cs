@@ -1,6 +1,16 @@
-// CRITICAL: Master the Atom - Phase 1 Core Physics Engine
+﻿// CRITICAL: Master the Atom - Phase 1 Core Physics Engine
 // VCTPhysics.cs - Volume Control Tank Physics Module
 // 
+// File: Assets/Scripts/Physics/VCTPhysics.cs
+// Module: Critical.Physics.VCTPhysics
+// Responsibility: VCT inventory/boron/flow balance state transitions for CVCS operations.
+// Standards: GOLD v1.0, SRP/SOLID, Unity Hot-Path Guardrails
+// Version: 1.1
+// Last Updated: 2026-02-17
+// Changes:
+//   - 1.1 (2026-02-17): Added GOLD header metadata fields and bounded file-level change ledger.
+//   - 1.0 (2026-02-14): Established VCT state, update loop, and alarm/control support functions.
+//
 // Sources:
 //   - NRC ML11223A214 Section 4.1 - Chemical and Volume Control System
 //   - NRC ML11223A342 Section 19.2.2 - Plant Heatup Operations
@@ -12,17 +22,18 @@
 //   buffer between letdown (RCS outlet) and charging (RCS inlet). Implements
 //   automatic level control actions and mass balance verification.
 //
-// Version: 1.0 - February 2026
-
 using UnityEngine;
 using System;
-
+
 namespace Critical.Physics
 {
     public static class VCTPhysics
     {
         #region State Structure
-        
+
+        /// <summary>
+        /// Snapshot of VCT process state, alarms, and cumulative inventory accounting.
+        /// </summary>
         public struct VCTState
         {
             public float Level_percent;
@@ -59,11 +70,11 @@ namespace Critical.Physics
         
         #endregion
         
-        #region Constants — Delegated to PlantConstants (Issue #1 consolidation)
+        #region Constants â€” Delegated to PlantConstants (Issue #1 consolidation)
         
         // All VCT constants now reference PlantConstants as the single source of truth.
         // These properties maintain the original public API while eliminating duplication.
-        // See: AUDIT_Stage1D_Support_Systems.md — Issue #1
+        // See: AUDIT_Stage1D_Support_Systems.md â€” Issue #1
         
         public static float CAPACITY_GAL => PlantConstants.VCT_CAPACITY_GAL;
         public static float LEVEL_HIGH_HIGH => PlantConstants.VCT_LEVEL_HIGH_HIGH;
@@ -201,10 +212,10 @@ namespace Critical.Physics
                 state.DivertFlow_gpm = 0f;
             }
             
-            // Low level: Auto makeup — BRS distillate preferred, then RMS
+            // Low level: Auto makeup â€” BRS distillate preferred, then RMS
             // Per NRC HRTD 4.1: RMS auto mode blends BAT + primary water
             // to match RCS boron concentration at ~80 gpm total.
-            // BRS distillate (≈ 0 ppm) is first-priority source when available
+            // BRS distillate (â‰ˆ 0 ppm) is first-priority source when available
             // (closed-loop reclaim). RMS blending is fallback.
             if (state.Level_percent <= LEVEL_MAKEUP_START && !state.RWSTSuctionActive)
             {
@@ -251,7 +262,7 @@ namespace Critical.Physics
             // External flows cross the CVCS closed-loop boundary:
             //   In:  seal return (RCP seal leakage returned) + makeup (RMS/RWST)
             //   Out: divert (to BRS holdup tanks) + CBO (controlled bleedoff)
-            // Letdown and charging are internal loop transfers (VCT↔RCS) and cancel.
+            // Letdown and charging are internal loop transfers (VCTâ†”RCS) and cancel.
             state.CumulativeExternalIn_gal  += (sealReturnFlow_gpm + state.MakeupFlow_gpm) * dt_min;
             state.CumulativeExternalOut_gal += (state.DivertFlow_gpm + cboLoss) * dt_min;
             
@@ -267,8 +278,8 @@ namespace Critical.Physics
             {
                 // Makeup boron concentration depends on source:
                 //   RWST suction:     BORON_RWST_PPM (2500 ppm)
-                //   BRS distillate:   ≈ 0 ppm (evaporator condensate)
-                //   RMS blending:     ≈ 0 ppm (simplified; real plant blends to target)
+                //   BRS distillate:   â‰ˆ 0 ppm (evaporator condensate)
+                //   RMS blending:     â‰ˆ 0 ppm (simplified; real plant blends to target)
                 float makeupBoron = state.RWSTSuctionActive ? BORON_RWST_PPM : 0f;
                 float totalVolume = state.Volume_gal;
                 float makeupVolume = state.MakeupFlow_gpm * dt_min;
@@ -355,15 +366,15 @@ namespace Critical.Physics
             // ================================================================
             // CROSS-SYSTEM MASS CONSERVATION CHECK
             // ================================================================
-            // The CVCS forms a closed loop: VCT ↔ RCS via letdown/charging.
+            // The CVCS forms a closed loop: VCT â†” RCS via letdown/charging.
             // Plant-wide external flows (aligned with inventory audit):
             //   In:  makeup not sourced from BRS (RMS/RWST)
             //   Out: CBO bleedoff to outside tracked plant
             //
             // Conservation law:
-            //   ΔV_vct + ΔV_rcs = Σ(external_in) - Σ(external_out)
+            //   Î”V_vct + Î”V_rcs = Î£(external_in) - Î£(external_out)
             //
-            // If charging > letdown → RCS gains, VCT loses (internal transfer).
+            // If charging > letdown â†’ RCS gains, VCT loses (internal transfer).
             // External flows legitimately add/remove mass from the loop.
             // Error should be near zero if mass is conserved.
             // ================================================================
@@ -372,7 +383,7 @@ namespace Critical.Physics
             float rcsChange = state.CumulativeRCSChange_gal;
             float externalNet = plantExternalIn_gal - plantExternalOut_gal;
             
-            // Conservation: vctChange + rcsChange - externalNet ≈ 0
+            // Conservation: vctChange + rcsChange - externalNet â‰ˆ 0
             float error = Mathf.Abs(vctChange + rcsChange - externalNet);
             
             // v5.4.0 Stage 5: Diagnostic logging when error exceeds 100 gal
@@ -392,7 +403,7 @@ namespace Critical.Physics
                 // Additional diagnostic: check if rcsChange is near zero (likely during solid ops)
                 if (Mathf.Abs(rcsChange) < 10f && Mathf.Abs(vctChange) > 100f)
                 {
-                    Debug.LogWarning($"[VCT_CONS_DIAG] SUSPECT: rcsChange≈0 but vctChange={vctChange:F2}. " +
+                    Debug.LogWarning($"[VCT_CONS_DIAG] SUSPECT: rcsChangeâ‰ˆ0 but vctChange={vctChange:F2}. " +
                                      $"Possibly in solid ops where RCS change not accumulated.");
                 }
             }
@@ -452,3 +463,5 @@ namespace Critical.Physics
         #endregion
     }
 }
+
+

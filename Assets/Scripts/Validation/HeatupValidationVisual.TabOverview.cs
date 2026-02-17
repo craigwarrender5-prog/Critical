@@ -1,27 +1,27 @@
-// ============================================================================
+﻿// ============================================================================
 // CRITICAL: Master the Atom - UI Component (Tab Overview Partial)
 // HeatupValidationVisual.TabOverview.cs - Tab 1: Overview
 // ============================================================================
 //
 // PURPOSE:
-//   Renders the "operator's eye" overview tab — the primary monitoring view
+//   Renders the "operator's eye" overview tab â€” the primary monitoring view
 //   for at-a-glance plant status during heatup operations. Displays the most
 //   critical parameters without requiring scrolling or tab switching.
 //
 //   Layout (3-column):
-//     ┌──────────┬──────────────────────┬────────────────────┐
-//     │ KEY      │  TREND GRAPHS        │  PLANT STATUS      │
-//     │ GAUGES   │  (Temps + Pressure,  │  (Overview panel)  │
-//     │          │   stacked vertically) │                    │
-//     │ T_avg    │                      │  ALARM SUMMARY     │
-//     │ T_hot    │                      │  (Annunciator      │
-//     │ T_cold   │                      │   tile grid)       │
-//     │ Subcool  │                      │                    │
-//     │ Pressure │                      │                    │
-//     │ PZR Lvl  │                      │                    │
-//     │ Heater   │                      │                    │
-//     │ Press Rt │                      │                    │
-//     └──────────┴──────────────────────┴────────────────────┘
+//     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”¬â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+//     â”‚ KEY      â”‚  TREND GRAPHS        â”‚  PLANT STATUS      â”‚
+//     â”‚ GAUGES   â”‚  (Temps + Pressure,  â”‚  (Overview panel)  â”‚
+//     â”‚          â”‚   stacked vertically) â”‚                    â”‚
+//     â”‚ T_avg    â”‚                      â”‚  ALARM SUMMARY     â”‚
+//     â”‚ T_hot    â”‚                      â”‚  (Annunciator      â”‚
+//     â”‚ T_cold   â”‚                      â”‚   tile grid)       â”‚
+//     â”‚ Subcool  â”‚                      â”‚                    â”‚
+//     â”‚ Pressure â”‚                      â”‚                    â”‚
+//     â”‚ PZR Lvl  â”‚                      â”‚                    â”‚
+//     â”‚ Heater   â”‚                      â”‚                    â”‚
+//     â”‚ Press Rt â”‚                      â”‚                    â”‚
+//     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”´â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 //
 // READS FROM:
 //   Delegates all rendering to existing partial methods:
@@ -31,19 +31,23 @@
 //     - Annunciators partial: DrawAnnunciatorContent()
 //
 // REFERENCE:
-//   Westinghouse 4-Loop PWR main control board — operator monitoring position
-//   NRC HRTD Section 19 — Plant Operations monitoring requirements
+//   Westinghouse 4-Loop PWR main control board â€” operator monitoring position
+//   NRC HRTD Section 19 â€” Plant Operations monitoring requirements
 //
 // ARCHITECTURE:
 //   Partial class of HeatupValidationVisual. Implements:
-//     - DrawOverviewTab(Rect) — dispatched from Core tab switch
-//   Contains layout orchestration only — no rendering logic.
+//     - DrawOverviewTab(Rect) â€” dispatched from Core tab switch
+//   Contains layout orchestration only â€” no rendering logic.
 //
 // GOLD STANDARD: Yes
-// v5.0.0: New file — Overview tab for multi-tab dashboard redesign
+// v5.0.0: New file â€” Overview tab for multi-tab dashboard redesign
 // ============================================================================
 
 using UnityEngine;
+
+
+namespace Critical.Validation
+{
 
 public partial class HeatupValidationVisual
 {
@@ -170,7 +174,7 @@ public partial class HeatupValidationVisual
 
         if (contentH <= availH)
         {
-            // Fits without scroll — draw directly
+            // Fits without scroll â€” draw directly
             float x = area.x + 4f;
             float y = area.y + labelH + 4f;
             float w = area.width - 8f;
@@ -197,3 +201,6 @@ public partial class HeatupValidationVisual
         }
     }
 }
+
+}
+
