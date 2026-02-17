@@ -159,6 +159,12 @@ namespace Critical.UI.ValidationDashboard
             graphRT.offsetMin = new Vector2(2, 2);
             graphRT.offsetMax = new Vector2(-2, -14);
 
+            // Ensure CanvasRenderer exists before MiniTrendStrip (MaskableGraphic).
+            // Unity's [RequireComponent] should add it, but GraphicRaycaster can
+            // race the registration and throw MissingComponentException.
+            if (graphGO.GetComponent<CanvasRenderer>() == null)
+                graphGO.AddComponent<CanvasRenderer>();
+
             MiniTrendStrip strip = graphGO.AddComponent<MiniTrendStrip>();
             strip.lineColor = color;
             strip.valueFormat = format;

@@ -28,9 +28,9 @@
 //   - Reads from same HeatupSimEngine public state fields
 //   - Does NOT modify any engine state (read-only consumer)
 //
-// VERSION: 1.0.0
-// DATE: 2026-02-16
-// IP: IP-0031 Stage 1
+// VERSION: 1.0.1
+// DATE: 2026-02-17
+// IP: IP-0031 Stage 1, IP-0031-A (blue screen fix)
 // ============================================================================
 
 using System;
@@ -237,8 +237,10 @@ namespace Critical.UI.ValidationDashboard
             // Find and register all panels
             RegisterPanels();
 
-            // Start hidden (additive overlay - not default startup)
-            SetVisibility(false);
+            // Visibility is controlled by the launch path:
+            //   - ValidationDashboardSceneSetup calls SetVisibility(true) after build
+            //   - ValidationDashboardLauncher manages visibility externally
+            // The controller does NOT set its own visibility during initialization.
 
             _initialized = true;
 
