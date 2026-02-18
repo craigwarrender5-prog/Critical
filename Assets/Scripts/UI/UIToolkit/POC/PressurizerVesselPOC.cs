@@ -29,9 +29,11 @@ namespace Critical.UI.POC
         private static readonly Color COLOR_VESSEL_BG = new Color(0.06f, 0.06f, 0.1f, 1f);
         private static readonly Color COLOR_VESSEL_BORDER = new Color(0.4f, 0.4f, 0.5f, 1f);
         
-        // Water - blue gradient
-        private static readonly Color COLOR_WATER_TOP = new Color(0.2f, 0.5f, 0.9f, 0.95f);
-        private static readonly Color COLOR_WATER_BOTTOM = new Color(0.1f, 0.25f, 0.5f, 0.95f);
+        // Water color transitions with temperature (cool -> hot)
+        private static readonly Color COLOR_WATER_COOL_TOP = new Color(0.2f, 0.5f, 0.9f, 0.95f);
+        private static readonly Color COLOR_WATER_COOL_BOTTOM = new Color(0.1f, 0.25f, 0.5f, 0.95f);
+        private static readonly Color COLOR_WATER_HOT_TOP = new Color(0.95f, 0.46f, 0.16f, 0.95f);
+        private static readonly Color COLOR_WATER_HOT_BOTTOM = new Color(0.58f, 0.2f, 0.09f, 0.95f);
         
         // Steam - gray/white gradient
         private static readonly Color COLOR_STEAM_TOP = new Color(0.6f, 0.6f, 0.65f, 0.7f);
@@ -67,6 +69,7 @@ namespace Critical.UI.POC
         private bool _sprayActive = false;
         private bool _showBubbleZone = false; // During bubble formation
         private float _bubbleZoneHeight = 5f; // % of vessel height
+        private float _liquidTemperature = 120f; // degF
         private float _chargingFlow = 0f;     // gpm (0 = off)
         private float _letdownFlow = 0f;      // gpm (0 = off)
         private float _flowAnimPhase = 0f;    // Animation phase for flow dots
@@ -111,6 +114,13 @@ namespace Critical.UI.POC
         { 
             get => _showBubbleZone; 
             set { _showBubbleZone = value; MarkDirtyRepaint(); } 
+        }
+
+        [UxmlAttribute]
+        public float liquidTemperature
+        {
+            get => _liquidTemperature;
+            set { _liquidTemperature = value; MarkDirtyRepaint(); }
         }
         
         [UxmlAttribute]
@@ -159,15 +169,30 @@ namespace Critical.UI.POC
             
             var painter = mgc.painter2D;
             
-            // Vessel dimensions
+            // Vessel dimensions.
+            // Keep geometry valid even in short/wide layouts by constraining width
+            // from available height so top/bottom domes do not collapse into a blob.
             float vesselMargin = 10f;
             float vesselX = vesselMargin + 20f;  // Extra left margin for scale
             float vesselY = vesselMargin + 15f;  // Extra top margin for spray nozzle
-            float vesselWidth = width - vesselMargin * 2f - 40f;  // Extra right margin for labels
-            float vesselHeight = height - vesselMargin * 2f - 30f;
-            
-            float domeHeight = vesselWidth * 0.4f;  // Hemispherical dome
-            float bodyHeight = vesselHeight - domeHeight * 2f;
+            float availableWidth = width - vesselMargin * 2f - 40f;   // Extra right margin for labels
+            float availableHeight = height - vesselMargin * 2f - 30f;
+            if (availableWidth < 20f || availableHeight < 20f) return;
+
+            // Keep the classic cylindrical body + hemispherical domes.
+            // Height factor = 2*domeRadius + bodyHeight.
+            const float bodyToWidth = 0.8f;
+            float widthByHeight = availableHeight / (1f + bodyToWidth);
+            float vesselWidth = Mathf.Clamp(Mathf.Min(availableWidth, widthByHeight), 70f, availableWidth);
+            float domeHeight = vesselWidth * 0.5f;  // Hemisphere radius
+            float bodyHeight = vesselWidth * bodyToWidth;
+            float vesselHeight = domeHeight * 2f + bodyHeight;
+
+            // Center within available space while preserving label margins.
+            float extraX = availableWidth - vesselWidth;
+            float extraY = availableHeight - vesselHeight;
+            vesselX += Mathf.Max(0f, extraX * 0.35f);
+            vesselY += Mathf.Max(0f, extraY * 0.5f);
             
             // Calculate level position
             float levelY = vesselY + vesselHeight - (vesselHeight * _level / 100f);
@@ -266,66 +291,98 @@ namespace Critical.UI.POC
             // ================================================================
             if (_level > 0f)
             {
-                painter.fillColor = COLOR_WATER_TOP;
-                painter.BeginPath();
-                
-                // Start at water surface
-                float waterTop = levelY;
-                float clampedWaterTop = Mathf.Max(waterTop, vesselY + domeHeight);
-                
-                // If water is in the dome region
-                if (waterTop < vesselY + domeHeight)
+                float waterTempNorm = Mathf.InverseLerp(70f, 650f, _liquidTemperature);
+                Color waterTopColor = Color.Lerp(COLOR_WATER_COOL_TOP, COLOR_WATER_HOT_TOP, waterTempNorm);
+                Color waterBottomColor = Color.Lerp(COLOR_WATER_COOL_BOTTOM, COLOR_WATER_HOT_BOTTOM, waterTempNorm);
+                painter.fillColor = Color.Lerp(waterBottomColor, waterTopColor, 0.55f);
+                if (_level >= 99.9f)
                 {
-                    // Calculate arc intersection
-                    float domeCenter = vesselY + domeHeight;
-                    float dy = domeCenter - waterTop;
-                    float dx = Mathf.Sqrt((vesselWidth / 2f) * (vesselWidth / 2f) - dy * dy);
-                    
-                    painter.MoveTo(new Vector2(vesselX + vesselWidth / 2f - dx, waterTop));
-                    painter.LineTo(new Vector2(vesselX + vesselWidth / 2f + dx, waterTop));
+                    painter.BeginPath();
+                    // Fully solid pressurizer: fill the entire vessel geometry
+                    // to avoid top-cap artifacts from the partial-fill path.
+                    DrawVesselShape(painter, vesselX, vesselY, vesselWidth, vesselHeight, domeHeight);
+                    painter.Fill();
                 }
                 else
                 {
-                    painter.MoveTo(new Vector2(vesselX, clampedWaterTop));
-                    painter.LineTo(new Vector2(vesselX + vesselWidth, clampedWaterTop));
-                }
-                
-                // Right side down
-                painter.LineTo(new Vector2(vesselX + vesselWidth, vesselY + vesselHeight - domeHeight));
-                
-                // Bottom dome
-                painter.Arc(new Vector2(vesselX + vesselWidth / 2f, vesselY + vesselHeight - domeHeight),
-                           vesselWidth / 2f, 0f, 180f);
-                
-                // Left side up
-                painter.LineTo(new Vector2(vesselX, clampedWaterTop));
-                painter.ClosePath();
-                painter.Fill();
-                
-                // Water surface ripple
-                if (_level < 98f)
-                {
-                    painter.strokeColor = new Color(0.4f, 0.7f, 1f, 0.6f);
-                    painter.lineWidth = 1.5f;
                     painter.BeginPath();
-                    
-                    float rippleY = waterTop + 2f;
-                    float rippleLeft = vesselX + 5f;
-                    float rippleRight = vesselX + vesselWidth - 5f;
-                    
-                    // If in dome, adjust ripple width
-                    if (waterTop < vesselY + domeHeight)
+
+                    // Start at water surface
+                    float waterTop = levelY;
+                    float domeBottomY = vesselY + domeHeight;
+                    float bodyBottomY = vesselY + vesselHeight - domeHeight;
+                    float radius = vesselWidth * 0.5f;
+                    float centerX = vesselX + radius;
+                    float topDomeCenterY = domeBottomY;
+                    bool waterInTopDome = waterTop < domeBottomY;
+
+                    if (waterInTopDome)
                     {
-                        float domeCenter = vesselY + domeHeight;
-                        float dy = domeCenter - waterTop;
-                        float dx = Mathf.Sqrt((vesselWidth / 2f) * (vesselWidth / 2f) - dy * dy);
-                        rippleLeft = vesselX + vesselWidth / 2f - dx + 3f;
-                        rippleRight = vesselX + vesselWidth / 2f + dx - 3f;
+                        // Waterline intersects the top dome; follow curved shell so
+                        // the fill never creates diagonal wedges.
+                        float dy = topDomeCenterY - waterTop;
+                        float dx2 = radius * radius - dy * dy;
+                        float dx = Mathf.Sqrt(Mathf.Max(0f, dx2));
+                        float leftWaterX = centerX - dx;
+                        float rightWaterX = centerX + dx;
+
+                        float leftAngle = Mathf.Atan2(waterTop - topDomeCenterY, leftWaterX - centerX) * Mathf.Rad2Deg;
+                        float rightAngle = Mathf.Atan2(waterTop - topDomeCenterY, rightWaterX - centerX) * Mathf.Rad2Deg;
+                        if (leftAngle < 0f) leftAngle += 360f;
+                        if (rightAngle < 0f) rightAngle += 360f;
+
+                        painter.MoveTo(new Vector2(leftWaterX, waterTop));
+                        painter.LineTo(new Vector2(rightWaterX, waterTop));
+
+                        // Right top dome shell down to body tangent.
+                        painter.Arc(new Vector2(centerX, topDomeCenterY), radius, rightAngle, 360f);
+                        painter.LineTo(new Vector2(vesselX + vesselWidth, bodyBottomY));
+
+                        // Bottom dome shell.
+                        painter.Arc(new Vector2(centerX, bodyBottomY), radius, 0f, 180f);
+                        painter.LineTo(new Vector2(vesselX, domeBottomY));
+
+                        // Left top dome shell back up to waterline.
+                        painter.Arc(new Vector2(centerX, topDomeCenterY), radius, 180f, leftAngle);
                     }
+                    else
+                    {
+                        painter.MoveTo(new Vector2(vesselX, waterTop));
+                        painter.LineTo(new Vector2(vesselX + vesselWidth, waterTop));
+                        painter.LineTo(new Vector2(vesselX + vesselWidth, bodyBottomY));
+                        painter.Arc(new Vector2(centerX, bodyBottomY), radius, 0f, 180f);
+                        painter.LineTo(new Vector2(vesselX, waterTop));
+                    }
+
+                    painter.ClosePath();
+                    painter.Fill();
                     
-                    painter.MoveTo(new Vector2(rippleLeft, rippleY));
-                    painter.LineTo(new Vector2(rippleRight, rippleY));
-                    painter.Stroke();
+                    // Water surface ripple
+                    if (_level < 98f)
+                    {
+                        painter.strokeColor = Color.Lerp(new Color(0.4f, 0.7f, 1f, 0.6f), new Color(1f, 0.63f, 0.25f, 0.65f), waterTempNorm);
+                        painter.lineWidth = 1.5f;
+                        painter.BeginPath();
+                        
+                        float rippleY = waterTop + 2f;
+                        float rippleLeft = vesselX + 5f;
+                        float rippleRight = vesselX + vesselWidth - 5f;
+                        
+                        // If in dome, adjust ripple width
+                        if (waterInTopDome)
+                        {
+                            float domeCenter = vesselY + domeHeight;
+                            float dy = domeCenter - waterTop;
+                            float dx2 = (vesselWidth / 2f) * (vesselWidth / 2f) - dy * dy;
+                            float dx = Mathf.Sqrt(Mathf.Max(0f, dx2));
+                            rippleLeft = vesselX + vesselWidth / 2f - dx + 3f;
+                            rippleRight = vesselX + vesselWidth / 2f + dx - 3f;
+                        }
+                        
+                        painter.MoveTo(new Vector2(rippleLeft, rippleY));
+                        painter.LineTo(new Vector2(rippleRight, rippleY));
+                        painter.Stroke();
+                    }
                 }
             }
             

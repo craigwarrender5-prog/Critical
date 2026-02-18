@@ -1,0 +1,375 @@
+/* ============================================================================
+   CRITICAL: Master the Atom — Annunciator Panel POC
+   AnnunciatorPanel.uss — Industrial Light Box Annunciator Styling
+   ============================================================================
+   
+   PURPOSE:
+     Styling for realistic industrial annunciator panel (APEX-style light box).
+     Follows ISA-18.1 alarm sequence conventions with authentic control room
+     visual appearance including backlit tiles, beveled frames, and proper
+     color conventions.
+   
+   REFERENCE:
+     APEX 60 Channel Light Box Indicator
+     ANSI/ISA-18.1 — Annunciator Sequences and Specifications
+     Westinghouse 4-Loop PWR main control board annunciator panel
+   
+   COLOR CONVENTION:
+     - Green:  Normal status indicators (equipment running, OK conditions)
+     - Amber:  Warning conditions (approaching limits, caution)
+     - Red:    Alarm conditions (limits exceeded, trips, failures)
+     - White:  Neutral indicators (mode status, informational)
+   
+   FLASH RATES (ISA-18.1):
+     - Fast Flash: 3 Hz (ALERTING - new unacknowledged alarm)
+     - Slow Flash: 0.7 Hz (CLEARING - condition cleared, not reset)
+     - Steady: Acknowledged or status indicator
+   
+   VERSION: 0.1.0-POC
+   DATE: 2026-02-18
+   ============================================================================ */
+
+/* ========================================================================
+   PANEL FRAME (Outer enclosure - black industrial frame)
+   ======================================================================== */
+
+.annunciator-panel {
+    background-color: rgb(15, 15, 18);
+    border-radius: 6px;
+    padding: 12px;
+    /* Subtle outer bevel effect */
+    border-width: 3px;
+    border-color: rgb(40, 40, 45);
+}
+
+.annunciator-panel__inner-frame {
+    background-color: rgb(8, 8, 10);
+    border-radius: 4px;
+    border-width: 2px;
+    border-color: rgb(25, 25, 28);
+    padding: 8px;
+    flex-grow: 1;
+}
+
+.annunciator-panel__title-bar {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    height: 28px;
+    margin-bottom: 8px;
+    padding-left: 8px;
+    padding-right: 8px;
+}
+
+.annunciator-panel__title {
+    font-size: 11px;
+    color: rgb(180, 180, 190);
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+}
+
+.annunciator-panel__status {
+    font-size: 10px;
+    color: rgb(100, 100, 110);
+}
+
+/* ========================================================================
+   TILE GRID
+   ======================================================================== */
+
+.annunciator-panel__grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    padding: 4px;
+}
+
+/* ========================================================================
+   SINGLE TILE (Light box window)
+   ======================================================================== */
+
+.annunciator-tile {
+    width: 90px;
+    height: 48px;
+    margin: 2px;
+    border-radius: 3px;
+    align-items: center;
+    justify-content: center;
+    /* Default inactive state */
+    background-color: rgb(28, 30, 35);
+    border-width: 1px;
+    border-color: rgb(45, 48, 55);
+    /* Inset shadow effect for depth */
+    transition-property: background-color, border-color;
+    transition-duration: 0.05s;
+}
+
+.annunciator-tile:hover {
+    border-color: rgb(80, 85, 95);
+}
+
+.annunciator-tile--clickable {
+    cursor: link;
+}
+
+/* ========================================================================
+   TILE INNER GLOW (Backlight simulation)
+   ======================================================================== */
+
+.annunciator-tile__glow {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    border-radius: 2px;
+    /* Subtle inner glow gradient would be done via code */
+}
+
+/* ========================================================================
+   TILE LABEL
+   ======================================================================== */
+
+.annunciator-tile__label {
+    font-size: 9px;
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+    white-space: normal;
+    color: rgb(60, 65, 75);
+    /* Slight text shadow for depth */
+    text-shadow: 0 1px 0 rgba(0, 0, 0, 0.5);
+    padding: 2px 4px;
+}
+
+/* ========================================================================
+   TILE STATES — INACTIVE (Dark / Off)
+   ======================================================================== */
+
+.annunciator-tile--inactive {
+    background-color: rgb(28, 30, 35);
+    border-color: rgb(45, 48, 55);
+}
+
+.annunciator-tile--inactive .annunciator-tile__label {
+    color: rgb(60, 65, 75);
+}
+
+/* ========================================================================
+   TILE STATES — GREEN (Normal Status)
+   ======================================================================== */
+
+.annunciator-tile--green {
+    background-color: rgb(25, 85, 35);
+    border-color: rgb(46, 217, 64);
+}
+
+.annunciator-tile--green .annunciator-tile__label {
+    color: rgb(46, 217, 64);
+    text-shadow: 0 0 8px rgba(46, 217, 64, 0.6);
+}
+
+/* Lit green (brighter) */
+.annunciator-tile--green-lit {
+    background-color: rgb(35, 120, 50);
+    border-color: rgb(80, 255, 100);
+}
+
+.annunciator-tile--green-lit .annunciator-tile__label {
+    color: rgb(180, 255, 190);
+    text-shadow: 0 0 12px rgba(46, 217, 64, 0.9);
+}
+
+/* ========================================================================
+   TILE STATES — AMBER (Warning)
+   ======================================================================== */
+
+.annunciator-tile--amber {
+    background-color: rgb(100, 70, 10);
+    border-color: rgb(255, 199, 0);
+}
+
+.annunciator-tile--amber .annunciator-tile__label {
+    color: rgb(255, 199, 0);
+    text-shadow: 0 0 8px rgba(255, 199, 0, 0.6);
+}
+
+/* Lit amber (brighter) */
+.annunciator-tile--amber-lit {
+    background-color: rgb(140, 100, 15);
+    border-color: rgb(255, 220, 80);
+}
+
+.annunciator-tile--amber-lit .annunciator-tile__label {
+    color: rgb(255, 240, 180);
+    text-shadow: 0 0 12px rgba(255, 199, 0, 0.9);
+}
+
+/* ========================================================================
+   TILE STATES — RED (Alarm)
+   ======================================================================== */
+
+.annunciator-tile--red {
+    background-color: rgb(100, 25, 25);
+    border-color: rgb(255, 70, 70);
+}
+
+.annunciator-tile--red .annunciator-tile__label {
+    color: rgb(255, 70, 70);
+    text-shadow: 0 0 8px rgba(255, 70, 70, 0.6);
+}
+
+/* Lit red (brighter) */
+.annunciator-tile--red-lit {
+    background-color: rgb(150, 35, 35);
+    border-color: rgb(255, 120, 120);
+}
+
+.annunciator-tile--red-lit .annunciator-tile__label {
+    color: rgb(255, 200, 200);
+    text-shadow: 0 0 12px rgba(255, 70, 70, 0.9);
+}
+
+/* ========================================================================
+   TILE STATES — WHITE (Neutral/Informational)
+   ======================================================================== */
+
+.annunciator-tile--white {
+    background-color: rgb(50, 52, 58);
+    border-color: rgb(200, 205, 215);
+}
+
+.annunciator-tile--white .annunciator-tile__label {
+    color: rgb(200, 205, 215);
+    text-shadow: 0 0 6px rgba(200, 205, 215, 0.4);
+}
+
+/* ========================================================================
+   TILE STATES — ACKNOWLEDGED (Muted/Dimmed)
+   ======================================================================== */
+
+.annunciator-tile--acknowledged {
+    opacity: 0.7;
+}
+
+.annunciator-tile--acknowledged .annunciator-tile__label {
+    text-shadow: none;
+}
+
+/* ========================================================================
+   TILE STATES — FLASH OFF (Momentary dark during flash)
+   ======================================================================== */
+
+.annunciator-tile--flash-off {
+    background-color: rgb(28, 30, 35);
+    border-color: rgb(45, 48, 55);
+}
+
+.annunciator-tile--flash-off .annunciator-tile__label {
+    color: rgb(60, 65, 75);
+    text-shadow: none;
+}
+
+/* ========================================================================
+   CONTROL BUTTONS (ACK, SILENCE, RESET)
+   ======================================================================== */
+
+.annunciator-panel__controls {
+    flex-direction: row;
+    justify-content: flex-end;
+    margin-top: 8px;
+    padding-right: 4px;
+}
+
+.annunciator-button {
+    min-width: 80px;
+    height: 28px;
+    margin-left: 8px;
+    border-radius: 4px;
+    border-width: 1px;
+    background-color: rgb(35, 38, 45);
+    border-color: rgb(60, 65, 75);
+    padding-left: 12px;
+    padding-right: 12px;
+}
+
+.annunciator-button:hover {
+    background-color: rgb(50, 55, 65);
+    border-color: rgb(80, 85, 95);
+}
+
+.annunciator-button:active {
+    background-color: rgb(25, 28, 35);
+}
+
+.annunciator-button__label {
+    font-size: 10px;
+    -unity-font-style: bold;
+    color: rgb(180, 185, 195);
+    letter-spacing: 0.5px;
+}
+
+/* ACK button highlight when alarms present */
+.annunciator-button--ack-active {
+    background-color: rgb(80, 50, 15);
+    border-color: rgb(255, 180, 0);
+}
+
+.annunciator-button--ack-active .annunciator-button__label {
+    color: rgb(255, 200, 100);
+}
+
+/* ========================================================================
+   SIZE VARIANTS
+   ======================================================================== */
+
+/* Compact tiles (for dense displays) */
+.annunciator-tile--compact {
+    width: 72px;
+    height: 38px;
+}
+
+.annunciator-tile--compact .annunciator-tile__label {
+    font-size: 8px;
+}
+
+/* Large tiles (for prominent alarms) */
+.annunciator-tile--large {
+    width: 110px;
+    height: 58px;
+}
+
+.annunciator-tile--large .annunciator-tile__label {
+    font-size: 11px;
+}
+
+/* ========================================================================
+   DEMO CONTAINER STYLING
+   ======================================================================== */
+
+.annunciator-demo-container {
+    flex-grow: 1;
+    background-color: rgb(20, 22, 28);
+    padding: 20px;
+}
+
+.annunciator-demo-section {
+    margin-bottom: 24px;
+}
+
+.annunciator-demo-title {
+    font-size: 14px;
+    color: rgb(200, 205, 215);
+    -unity-font-style: bold;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+}
+
+.annunciator-demo-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.annunciator-demo-label {
+    font-size: 11px;
+    color: rgb(140, 145, 155);
+    width: 120px;
+}

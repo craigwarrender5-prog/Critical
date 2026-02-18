@@ -9,13 +9,13 @@
                        "title":  "Validation Dashboard Complete Overhaul Using Unity UI Toolkit",
                        "domain":  "Operator Interface & Scenarios",
                        "severity":  "HIGH",
-                       "status":  "IN_PROGRESS",
+                       "status":  "READY",
                        "created_at":  "2026-02-18T14:00:00Z",
                        "updated_at":  "2026-02-18T15:30:00Z",
                        "current_stage":  "Stage 1 Complete",
                        "stage_detected":  "User-Request-2026-02-18",
                        "assigned_dp":  "DP-0008",
-                       "assigned_ip":  null,
+                       "assigned_ip":  "IP-0056",
                        "observations":  [
                                             "Two parallel OnGUI-based dashboards exist (HeatupValidationVisual and ValidationDashboard).",
                                             "OnGUI cannot achieve modern professional aesthetics or smooth animations.",
@@ -43,6 +43,7 @@
                        "resolution_candidate":  "Implement complete UI Toolkit-based dashboard with animated pressurizer vessel, arc gauges, strip charts, and drill-down tab structure. Replace both legacy dashboards.",
                        "links":  [
                                      "Assigned DP: DP-0008 - Operator Interface & Scenarios",
+                                     "Assigned IP: IP-0056 - Validation Dashboard UI Toolkit Overhaul and Backlog Consolidation",
                                      "Supersedes: CS-0118 (condenser telemetry), CS-0121 (visual bugs)",
                                      "Related: Documentation/UI_Documentation/ (POC materials)"
                                  ],
@@ -158,7 +159,7 @@
                        "updated_at":  "2026-02-18T04:47:40Z",
                        "stage_detected":  "Orphan-ID-Triage-2026-02-18",
                        "assigned_dp":  "DP-0008",
-                       "assigned_ip":  null,
+                       "assigned_ip":  "IP-0056",
                        "observations":  [
                                             "Condenser/feedwater telemetry is available in HeatupSimEngine but not captured in ValidationDashboard snapshot paths.",
                                             "Current SG/RHR tab lacks visibility for C-9/P-12 permissive chain and condenser vacuum progress indicators.",
@@ -181,6 +182,8 @@
                        "resolution_candidate":  "Extend dashboard snapshot/model bindings and tab rendering to include condenser/feedwater/permissive telemetry with deterministic status indicators.",
                        "links":  [
                                      "Assigned DP: DP-0008 - Operator Interface & Scenarios",
+                                     "Assigned IP: IP-0056 - Validation Dashboard UI Toolkit Overhaul and Backlog Consolidation",
+                                     "Supersession candidate: CS-0127 umbrella closure evaluation in IP-0056",
                                      "Related: CS-0115, CS-0116 (secondary-system implementation), CS-0119 (operator screen follow-on investigation)"
                                  ],
                        "tags":  [
@@ -202,7 +205,7 @@
                        "updated_at":  "2026-02-18T11:15:00Z",
                        "stage_detected":  "User-Request-2026-02-18",
                        "assigned_dp":  "DP-0008",
-                       "assigned_ip":  null,
+                       "assigned_ip":  "IP-0056",
                        "observations":  [
                                             "SOLID PZR indicator in Overview tab Pressurizer panel is not illuminated.",
                                             "Header shows 'SOLID PZR - HEATING TO TSAT (358f)' confirming solid state.",
@@ -227,6 +230,8 @@
                        "resolution_candidate":  "Locate SOLID PZR indicator in TabOverview, verify conditional logic checks for !hasBubble or equivalent solid-state condition.",
                        "links":  [
                                      "Assigned DP: DP-0008 - Operator Interface & Scenarios",
+                                     "Assigned IP: IP-0056 - Validation Dashboard UI Toolkit Overhaul and Backlog Consolidation",
+                                     "Supersession candidate: CS-0127 umbrella closure evaluation in IP-0056",
                                      "Likely impacted: Assets/Scripts/Validation/HeatupValidationVisual.TabOverview.cs"
                                  ],
                        "tags":  [

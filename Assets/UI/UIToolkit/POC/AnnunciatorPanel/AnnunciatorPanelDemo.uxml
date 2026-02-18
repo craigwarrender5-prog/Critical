@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ============================================================================
+   CRITICAL: Master the Atom — Annunciator Panel POC
+   AnnunciatorPanelDemo.uxml — Demo layout for testing annunciator elements
+   ============================================================================
+   
+   PURPOSE:
+     Demonstration and testing layout for the AnnunciatorTileElement and
+     AnnunciatorPanelElement custom controls. Shows all tile states,
+     color variants, and interactive state machine behavior.
+   
+   VERSION: 0.1.0-POC
+   DATE: 2026-02-18
+   ============================================================================ -->
+<ui:UXML xmlns:ui="UnityEngine.UIElements"
+         xmlns:critical="Critical.UI.Elements"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd"
+         editor-extension-mode="False">
+    
+    <Style src="AnnunciatorPanel.uss" />
+    
+    <ui:VisualElement class="annunciator-demo-container">
+        
+        <!-- Title -->
+        <ui:Label text="ANNUNCIATOR PANEL POC — ISA-18.1 Alarm Tiles" 
+                  style="font-size: 16px; color: rgb(235, 237, 242); -unity-font-style: bold; 
+                         margin-bottom: 20px; letter-spacing: 1px;" />
+        
+        <!-- Section 1: Individual Tile States -->
+        <ui:VisualElement class="annunciator-demo-section">
+            <ui:Label text="TILE STATES (Click to cycle)" class="annunciator-demo-title" />
+            
+            <ui:VisualElement class="annunciator-demo-row">
+                <ui:Label text="RED (Alarm)" class="annunciator-demo-label" />
+                <critical:AnnunciatorTileElement name="demo-red-inactive" label="PRESS&#10;LOW" tile-color="Red" />
+                <critical:AnnunciatorTileElement name="demo-red-alerting" label="PRESS&#10;HIGH" tile-color="Red" />
+                <critical:AnnunciatorTileElement name="demo-red-ack" label="SUBCOOL&#10;LOW" tile-color="Red" />
+                <critical:AnnunciatorTileElement name="demo-red-clearing" label="RCS FLOW&#10;LOW" tile-color="Red" />
+            </ui:VisualElement>
+            
+            <ui:VisualElement class="annunciator-demo-row">
+                <ui:Label text="AMBER (Warning)" class="annunciator-demo-label" />
+                <critical:AnnunciatorTileElement name="demo-amber-inactive" label="PZR LVL&#10;HIGH" tile-color="Amber" />
+                <critical:AnnunciatorTileElement name="demo-amber-alerting" label="T-AVG&#10;DEVIATION" tile-color="Amber" />
+                <critical:AnnunciatorTileElement name="demo-amber-ack" label="LOW PANEL&#10;PRESSURE" tile-color="Amber" />
+                <critical:AnnunciatorTileElement name="demo-amber-clearing" label="VCT LVL&#10;HIGH" tile-color="Amber" />
+            </ui:VisualElement>
+            
+            <ui:VisualElement class="annunciator-demo-row">
+                <ui:Label text="GREEN (Status)" class="annunciator-demo-label" />
+                <critical:AnnunciatorTileElement name="demo-green-off" label="PZR HTRS&#10;ON" tile-color="Green" is-status="true" />
+                <critical:AnnunciatorTileElement name="demo-green-on" label="RCP #1&#10;RUN" tile-color="Green" is-status="true" />
+                <critical:AnnunciatorTileElement name="demo-green-on2" label="CHARGING&#10;ACTIVE" tile-color="Green" is-status="true" />
+                <critical:AnnunciatorTileElement name="demo-green-on3" label="STEAM&#10;BUBBLE OK" tile-color="Green" is-status="true" />
+            </ui:VisualElement>
+            
+            <ui:VisualElement class="annunciator-demo-row">
+                <ui:Label text="WHITE (Neutral)" class="annunciator-demo-label" />
+                <critical:AnnunciatorTileElement name="demo-white-off" label="LOCAL" tile-color="White" />
+                <critical:AnnunciatorTileElement name="demo-white-on" label="REMOTE" tile-color="White" />
+                <critical:AnnunciatorTileElement name="demo-white-on2" label="MANUAL" tile-color="White" />
+                <critical:AnnunciatorTileElement name="demo-white-on3" label="VARIABLE&#10;TIME" tile-color="White" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        
+        <!-- Section 2: Full Panel Demo -->
+        <ui:VisualElement class="annunciator-demo-section" style="margin-top: 24px;">
+            <ui:Label text="FULL PANEL DEMO" class="annunciator-demo-title" />
+            
+            <critical:AnnunciatorPanelElement name="demo-panel" 
+                                               title="MAIN CONTROL BOARD — ANNUNCIATOR PANEL A" 
+                                               columns="10"
+                                               show-controls="true"
+                                               style="width: 100%; height: 280px;" />
+        </ui:VisualElement>
+        
+        <!-- Section 3: Test Controls -->
+        <ui:VisualElement class="annunciator-demo-section" style="margin-top: 16px;">
+            <ui:Label text="TEST CONTROLS" class="annunciator-demo-title" />
+            
+            <ui:VisualElement class="annunciator-demo-row">
+                <ui:Button name="btn-trigger-random" text="TRIGGER RANDOM ALARM" 
+                           style="margin-right: 8px;" />
+                <ui:Button name="btn-clear-random" text="CLEAR RANDOM ALARM" 
+                           style="margin-right: 8px;" />
+                <ui:Button name="btn-trigger-all" text="TRIGGER ALL" 
+                           style="margin-right: 8px;" />
+                <ui:Button name="btn-clear-all" text="CLEAR ALL" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        
+        <!-- State Legend -->
+        <ui:VisualElement style="flex-direction: row; margin-top: 20px; padding: 8px; 
+                                  background-color: rgb(25, 28, 35); border-radius: 4px;">
+            <ui:Label text="STATE LEGEND:" 
+                      style="color: rgb(140, 145, 155); font-size: 10px; margin-right: 16px; 
+                             -unity-font-style: bold;" />
+            <ui:Label text="INACTIVE = Dark" 
+                      style="color: rgb(80, 85, 95); font-size: 10px; margin-right: 12px;" />
+            <ui:Label text="ALERTING = Fast Flash (3Hz)" 
+                      style="color: rgb(255, 100, 100); font-size: 10px; margin-right: 12px;" />
+            <ui:Label text="ACKNOWLEDGED = Steady On" 
+                      style="color: rgb(200, 150, 100); font-size: 10px; margin-right: 12px;" />
+            <ui:Label text="CLEARING = Slow Flash (0.7Hz)" 
+                      style="color: rgb(150, 150, 100); font-size: 10px;" />
+        </ui:VisualElement>
+        
+    </ui:VisualElement>
+    
+</ui:UXML>

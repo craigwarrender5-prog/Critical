@@ -2,7 +2,7 @@
 Identifier: DP-0008
 Domain (Canonical): Operator Interface & Scenarios
 Status: Open
-Linked Issues: CS-0118, CS-0121
+Linked Issues: CS-0127, CS-0118, CS-0121
 Last Reviewed: 2026-02-18
 Authorization Status: NOT AUTHORIZED
 Mode: SPEC/DRAFT
@@ -13,28 +13,29 @@ Mode: SPEC/DRAFT
 ## A) Domain Summary
 - Canonical Domain: Operator Interface & Scenarios
 - DP Status: Open
-- Total CS Count in Domain: 2 (active)
+- Total CS Count in Domain: 3 (active)
 - Last Completed IP: IP-0051 (CS-0108, CS-0111)
 
 ## B) Severity Distribution
 | Severity | Count |
 |---|---:|
 | Critical | 0 |
-| High | 0 |
+| High | 1 |
 | Medium | 1 |
 | Low | 1 |
 
 ## C) Ordered Issue Backlog
 | CS ID | Title | Severity | Status | Blocking Dependency | Validation Outcome |
 |---|---|---|---|---|---|
+| CS-0127 | Validation Dashboard Complete Overhaul Using Unity UI Toolkit | High | READY | - | Primary overhaul scope; supersession candidate owner for CS-0118 and CS-0121 under IP-0056 |
 | CS-0118 | Validation dashboard missing condenser/feedwater telemetry coverage | Medium | READY | - | Investigation complete; dashboard telemetry integration pending |
 | CS-0121 | Dashboard visual issues: SOLID PZR indicator not lit, alarm symbol incorrectly transcoded | Low | READY | - | Pending |
 
 ## D) Execution Readiness Indicator
-**AUTHORIZED FOR IP-0053 EXECUTION PREP (EXPANDED SCOPE CANDIDATE)**
+**READY FOR AUTHORIZATION - IP-0056 EXECUTION CANDIDATE**
 
-Open backlog includes one active medium UI design scope (CS-0118) and one runtime UI behavior item (CS-0121).
-`CS-0102`, `CS-0103`, and `CS-0120` were closed as FIXED under `IP-0053`; current scope remains execution prep for remaining backlog.
+Open backlog now includes one active high umbrella overhaul scope (`CS-0127`) plus two subordinate items (`CS-0118`, `CS-0121`).
+`IP-0056` defines explicit supersession policy: `CS-0118` and `CS-0121` remain open until Stage D/E evidence confirms full coverage by `CS-0127`.
 
 ## E) Recently Closed Issues
 | CS ID | Title | Closed | Resolution | IP |
@@ -52,7 +53,9 @@ Open backlog includes one active medium UI design scope (CS-0118) and one runtim
 - CS-0077 (HeatupValidationVisual redesign) was closed as FAILED on 2026-02-15 (replaced by IP-0043 ValidationDashboard rebuild).
 - CS-0042 was withdrawn on 2026-02-15 (resolution: INVALID).
 - Investigation artifacts:
+  - `Governance/Issues/CS-0127_ValidationDashboard_UIToolkit_Overhaul_2026-02-18.md`
   - `Governance/Issues/CS-0118_Investigation_Report_2026-02-18_103000.md`
   - `Governance/Issues/CS-0121_Investigation_Report_2026-02-18_111500.md`
+  - `Governance/ImplementationPlans/IP-0056 - DP-0008 - Validation Dashboard UI Toolkit Overhaul and Backlog Consolidation.md`
   - `Governance/ImplementationPlans/IP-0053/Reports/IP-0053_StageD_DomainValidation_2026-02-18_050900.md`
   - `Governance/ImplementationPlans/IP-0053/Reports/IP-0053_StageE_SystemRegression_2026-02-18_050900.md`

@@ -1,0 +1,116 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ============================================================================
+   CRITICAL: Master the Atom — Analog Temperature Gauge POC
+   AnalogGaugeDemo.uxml — Demo layout for testing analog gauge element
+   ============================================================================
+   
+   PURPOSE:
+     Demonstration and testing layout for the AnalogGaugeElement custom control.
+     Shows multiple gauge sizes and interactive temperature adjustment.
+   
+   VERSION: 0.1.0-POC
+   DATE: 2026-02-18
+   ============================================================================ -->
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements"
+         xmlns:critical="Critical.UI.Elements"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         editor="UnityEditor.UIElements"
+         noNamespaceSchemaLocation="../../../../../UIElementsSchema/UIElements.xsd"
+         editor-extension-mode="False">
+    
+    <Style src="AnalogGauge.uss" />
+    
+    <ui:VisualElement class="gauge-demo-container">
+        
+        <!-- Title -->
+        <ui:Label text="ANALOG GAUGE POC — Bimetallic Dial Thermometer" 
+                  style="font-size: 16px; color: rgb(235, 237, 242); -unity-font-style: bold; 
+                         margin-bottom: 24px; letter-spacing: 1px;" />
+        
+        <!-- Row of gauges at different sizes -->
+        <ui:VisualElement class="gauge-demo-row">
+            
+            <!-- Small gauge -->
+            <ui:VisualElement class="gauge-demo-panel">
+                <critical:AnalogGaugeElement name="gauge-small" 
+                                              min-value="0" 
+                                              max-value="250" 
+                                              value="75"
+                                              unit="°F"
+                                              title="TI-101"
+                                              class="analog-gauge--small" />
+                <ui:Label text="SMALL (120px)" class="gauge-demo-label" />
+            </ui:VisualElement>
+            
+            <!-- Standard gauge -->
+            <ui:VisualElement class="gauge-demo-panel">
+                <critical:AnalogGaugeElement name="gauge-standard" 
+                                              min-value="0" 
+                                              max-value="250" 
+                                              value="125"
+                                              unit="°F"
+                                              title="TI-102" />
+                <ui:Label text="STANDARD (200px)" class="gauge-demo-label" />
+            </ui:VisualElement>
+            
+            <!-- Large gauge -->
+            <ui:VisualElement class="gauge-demo-panel">
+                <critical:AnalogGaugeElement name="gauge-large" 
+                                              min-value="0" 
+                                              max-value="250" 
+                                              value="180"
+                                              unit="°F"
+                                              title="TI-103"
+                                              class="analog-gauge--large" />
+                <ui:Label text="LARGE (280px)" class="gauge-demo-label" />
+            </ui:VisualElement>
+            
+        </ui:VisualElement>
+        
+        <!-- Interactive controls -->
+        <ui:VisualElement style="align-items: center; margin-top: 20px;">
+            <ui:Label text="TEMPERATURE CONTROL" 
+                      style="font-size: 11px; color: rgb(140, 148, 166); 
+                             -unity-font-style: bold; letter-spacing: 1px; margin-bottom: 8px;" />
+            <ui:Slider name="temp-slider" 
+                       low-value="0" 
+                       high-value="250" 
+                       value="125" 
+                       class="gauge-demo-slider" />
+            <ui:Label name="temp-value" text="125.0 °F" class="gauge-demo-value" />
+        </ui:VisualElement>
+        
+        <!-- Different scale demo -->
+        <ui:VisualElement class="gauge-demo-row" style="margin-top: 32px;">
+            
+            <!-- Celsius gauge -->
+            <ui:VisualElement class="gauge-demo-panel">
+                <critical:AnalogGaugeElement name="gauge-celsius" 
+                                              min-value="0" 
+                                              max-value="120" 
+                                              value="50"
+                                              unit="°C"
+                                              title="TI-201"
+                                              major-tick-interval="20"
+                                              minor-ticks-per-major="4" />
+                <ui:Label text="CELSIUS SCALE" class="gauge-demo-label" />
+            </ui:VisualElement>
+            
+            <!-- Pressure-style (wider range) -->
+            <ui:VisualElement class="gauge-demo-panel">
+                <critical:AnalogGaugeElement name="gauge-pressure" 
+                                              min-value="0" 
+                                              max-value="3000" 
+                                              value="2235"
+                                              unit="PSIG"
+                                              title="PI-455"
+                                              major-tick-interval="500"
+                                              minor-ticks-per-major="5" />
+                <ui:Label text="PRESSURE SCALE (RCS)" class="gauge-demo-label" />
+            </ui:VisualElement>
+            
+        </ui:VisualElement>
+        
+    </ui:VisualElement>
+    
+</ui:UXML>

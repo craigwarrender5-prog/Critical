@@ -1,0 +1,191 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- ============================================================================
+   CRITICAL: Master the Atom — Edgewise Meter POC
+   EdgewiseMeterDemo.uxml — Demo layout for linear bar meters
+   ============================================================================ -->
+<ui:UXML xmlns:ui="UnityEngine.UIElements"
+         xsi="http://www.w3.org/2001/XMLSchema-instance"
+         editor-extension-mode="False">
+    
+    <Style src="EdgewiseMeter.uss" />
+    
+    <ui:VisualElement class="edgewise-demo-container" style="flex-grow: 1;">
+        
+        <!-- Title -->
+        <ui:Label text="EDGEWISE METER POC — Linear Bar Indicators" 
+                  style="font-size: 16px; color: rgb(235, 237, 242); -unity-font-style: bold; 
+                         margin-bottom: 20px; letter-spacing: 1px;" />
+        
+        <!-- Section 1: Horizontal Meters -->
+        <ui:VisualElement class="edgewise-demo-section">
+            <ui:Label text="HORIZONTAL ORIENTATION" class="edgewise-demo-title" />
+            
+            <!-- Center-zero deviation meter -->
+            <ui:VisualElement class="edgewise-demo-row">
+                <ui:VisualElement class="edgewise-demo-column">
+                    <ui:VisualElement name="meter-h-deviation" class="edgewise-meter edgewise-meter--horizontal" 
+                                      style="width: 240px; height: 65px;">
+                        <ui:VisualElement class="edgewise-meter__face">
+                            <ui:Label text="kPa x10" class="edgewise-meter__unit" />
+                            <ui:VisualElement name="scale-h1" class="edgewise-meter__scale" />
+                            <ui:VisualElement name="pointer-h1" class="edgewise-meter__pointer" style="left: 50%;" />
+                        </ui:VisualElement>
+                        <ui:Label text="ΔP INDICATOR" class="edgewise-meter__title" />
+                    </ui:VisualElement>
+                    <ui:Label text="Center-Zero (-20 to +20)" class="edgewise-demo-label" />
+                </ui:VisualElement>
+                
+                <!-- Standard 0-100 meter -->
+                <ui:VisualElement class="edgewise-demo-column">
+                    <ui:VisualElement name="meter-h-standard" class="edgewise-meter edgewise-meter--horizontal" 
+                                      style="width: 240px; height: 65px;">
+                        <ui:VisualElement class="edgewise-meter__face">
+                            <ui:Label text="%" class="edgewise-meter__unit" />
+                            <ui:VisualElement name="scale-h2" class="edgewise-meter__scale" />
+                            <ui:VisualElement name="pointer-h2" class="edgewise-meter__pointer" style="left: 30%;" />
+                        </ui:VisualElement>
+                        <ui:Label text="VALVE POSITION" class="edgewise-meter__title" />
+                    </ui:VisualElement>
+                    <ui:Label text="Standard (0 to 100)" class="edgewise-demo-label" />
+                </ui:VisualElement>
+                
+                <!-- Compact meter -->
+                <ui:VisualElement class="edgewise-demo-column">
+                    <ui:VisualElement class="edgewise-meter edgewise-meter--horizontal edgewise-meter--compact" 
+                                      style="width: 160px; height: 50px;">
+                        <ui:VisualElement class="edgewise-meter__face" style="height: 28px;">
+                            <ui:VisualElement class="edgewise-meter__pointer" style="left: 65%;" />
+                        </ui:VisualElement>
+                        <ui:Label text="FLOW DEVIATION" class="edgewise-meter__title" />
+                    </ui:VisualElement>
+                    <ui:Label text="Compact Size" class="edgewise-demo-label" />
+                </ui:VisualElement>
+            </ui:VisualElement>
+        </ui:VisualElement>
+        
+        <!-- Section 2: Vertical Meters -->
+        <ui:VisualElement class="edgewise-demo-section" style="margin-top: 24px;">
+            <ui:Label text="VERTICAL ORIENTATION" class="edgewise-demo-title" />
+            
+            <ui:VisualElement class="edgewise-demo-row" style="align-items: flex-end;">
+                
+                <!-- PZR Level -->
+                <ui:VisualElement class="edgewise-demo-column">
+                    <ui:VisualElement name="meter-v-level" class="edgewise-meter edgewise-meter--vertical" 
+                                      style="width: 65px; height: 200px;">
+                        <ui:VisualElement class="edgewise-meter__face" style="width: 40px; height: 100%;">
+                            <ui:Label text="%" class="edgewise-meter__unit" style="top: 2%; left: 50%;" />
+                            <ui:VisualElement name="scale-v1" class="edgewise-meter__scale" />
+                            <!-- Setpoint marker -->
+                            <ui:VisualElement class="edgewise-meter__setpoint" style="bottom: 60%;" />
+                            <ui:VisualElement name="pointer-v1" class="edgewise-meter__pointer" style="bottom: 55%;" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label text="PZR LEVEL" class="edgewise-demo-label" />
+                </ui:VisualElement>
+                
+                <!-- SG Level -->
+                <ui:VisualElement class="edgewise-demo-column">
+                    <ui:VisualElement class="edgewise-meter edgewise-meter--vertical" 
+                                      style="width: 65px; height: 200px;">
+                        <ui:VisualElement class="edgewise-meter__face" style="width: 40px; height: 100%;">
+                            <ui:Label text="%" class="edgewise-meter__unit" style="top: 2%; left: 50%;" />
+                            <ui:VisualElement class="edgewise-meter__setpoint" style="bottom: 50%;" />
+                            <ui:VisualElement class="edgewise-meter__pointer" style="bottom: 48%;" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label text="SG 1 NR LEVEL" class="edgewise-demo-label" />
+                </ui:VisualElement>
+                
+                <!-- VCT Level -->
+                <ui:VisualElement class="edgewise-demo-column">
+                    <ui:VisualElement class="edgewise-meter edgewise-meter--vertical" 
+                                      style="width: 65px; height: 200px;">
+                        <ui:VisualElement class="edgewise-meter__face" style="width: 40px; height: 100%;">
+                            <ui:Label text="%" class="edgewise-meter__unit" style="top: 2%; left: 50%;" />
+                            <ui:VisualElement class="edgewise-meter__pointer" style="bottom: 72%;" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label text="VCT LEVEL" class="edgewise-demo-label" />
+                </ui:VisualElement>
+                
+                <!-- Temperature bar -->
+                <ui:VisualElement class="edgewise-demo-column">
+                    <ui:VisualElement class="edgewise-meter edgewise-meter--vertical" 
+                                      style="width: 65px; height: 200px;">
+                        <ui:VisualElement class="edgewise-meter__face" style="width: 40px; height: 100%;">
+                            <ui:Label text="°F" class="edgewise-meter__unit" style="top: 2%; left: 50%;" />
+                            <ui:VisualElement class="edgewise-meter__pointer" style="bottom: 35%;" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label text="T-AVG" class="edgewise-demo-label" />
+                </ui:VisualElement>
+                
+                <!-- Deviation (center-zero vertical) -->
+                <ui:VisualElement class="edgewise-demo-column">
+                    <ui:VisualElement class="edgewise-meter edgewise-meter--vertical" 
+                                      style="width: 65px; height: 200px;">
+                        <ui:VisualElement class="edgewise-meter__face" style="width: 40px; height: 100%;">
+                            <ui:Label text="°F" class="edgewise-meter__unit" style="top: 2%; left: 50%;" />
+                            <!-- Center line for zero reference -->
+                            <ui:VisualElement style="position: absolute; left: 15%; width: 70%; height: 1px; 
+                                                      bottom: 50%; background-color: rgb(100, 100, 110);" />
+                            <ui:VisualElement class="edgewise-meter__pointer" style="bottom: 62%;" />
+                        </ui:VisualElement>
+                    </ui:VisualElement>
+                    <ui:Label text="T-AVG DEVIATION" class="edgewise-demo-label" />
+                </ui:VisualElement>
+                
+            </ui:VisualElement>
+        </ui:VisualElement>
+        
+        <!-- Section 3: Interactive Control -->
+        <ui:VisualElement class="edgewise-demo-section" style="margin-top: 24px;">
+            <ui:Label text="INTERACTIVE TEST" class="edgewise-demo-title" />
+            
+            <ui:VisualElement class="edgewise-demo-row">
+                <ui:VisualElement style="margin-right: 40px;">
+                    <ui:VisualElement name="meter-interactive-h" class="edgewise-meter edgewise-meter--horizontal" 
+                                      style="width: 280px; height: 70px;">
+                        <ui:VisualElement class="edgewise-meter__face">
+                            <ui:Label text="kPa" class="edgewise-meter__unit" />
+                            <ui:VisualElement class="edgewise-meter__setpoint" style="left: 50%;" />
+                            <ui:VisualElement name="pointer-interactive-h" class="edgewise-meter__pointer" style="left: 50%;" />
+                        </ui:VisualElement>
+                        <ui:Label text="TEST METER (HORIZONTAL)" class="edgewise-meter__title" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+                
+                <ui:VisualElement name="meter-interactive-v" class="edgewise-meter edgewise-meter--vertical" 
+                                  style="width: 70px; height: 180px;">
+                    <ui:VisualElement class="edgewise-meter__face" style="width: 44px; height: 100%;">
+                        <ui:Label text="%" class="edgewise-meter__unit" style="top: 2%; left: 50%;" />
+                        <ui:VisualElement class="edgewise-meter__setpoint" style="bottom: 50%;" />
+                        <ui:VisualElement name="pointer-interactive-v" class="edgewise-meter__pointer" style="bottom: 50%;" />
+                    </ui:VisualElement>
+                </ui:VisualElement>
+            </ui:VisualElement>
+            
+            <ui:VisualElement style="margin-top: 16px; flex-direction: row; align-items: center;">
+                <ui:Label text="VALUE:" style="color: rgb(140, 145, 155); font-size: 11px; margin-right: 8px;" />
+                <ui:Slider name="value-slider" low-value="-20" high-value="20" value="0" 
+                           style="width: 300px;" />
+                <ui:Label name="value-display" text="0.0" 
+                          style="color: rgb(46, 217, 64); font-size: 14px; margin-left: 12px; min-width: 60px;" />
+            </ui:VisualElement>
+        </ui:VisualElement>
+        
+        <!-- Info -->
+        <ui:VisualElement style="flex-direction: row; margin-top: 20px; padding: 8px; 
+                                  background-color: rgb(25, 28, 35); border-radius: 4px;">
+            <ui:Label text="APPLICATIONS:" 
+                      style="color: rgb(140, 145, 155); font-size: 10px; margin-right: 12px; -unity-font-style: bold;" />
+            <ui:Label text="Horizontal: ΔP indicators, deviation meters, balance displays" 
+                      style="color: rgb(100, 105, 115); font-size: 10px; margin-right: 20px;" />
+            <ui:Label text="Vertical: Level indicators, tank displays, temperature bars" 
+                      style="color: rgb(100, 105, 115); font-size: 10px;" />
+        </ui:VisualElement>
+        
+    </ui:VisualElement>
+    
+</ui:UXML>

@@ -2059,7 +2059,7 @@
                         "status":  "READY",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0008",
-                        "assigned_ip":  null,
+                        "assigned_ip":  "IP-0056",
                         "updated_at":  "2026-02-18T04:47:40Z",
                         "closed_at":  null,
                         "resolution_type":  null,
@@ -2067,7 +2067,8 @@
                                      "ValidationDashboard",
                                      "Condenser-Feedwater",
                                      "Telemetry-Gap",
-                                     "Orphan-Triage-2026-02-18"
+                                     "Orphan-Triage-2026-02-18",
+                                     "Supersession-Candidate-CS-0127"
                                  ]
                     },
                     {
@@ -2120,7 +2121,7 @@
                         "status":  "READY",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0008",
-                        "assigned_ip":  null,
+                        "assigned_ip":  "IP-0056",
                         "updated_at":  "2026-02-18T11:15:00Z",
                         "closed_at":  null,
                         "resolution_type":  null,
@@ -2130,7 +2131,8 @@
                                      "Alarm-Symbol",
                                      "Visual-Bug",
                                      "Low-Priority",
-                                     "User-Request-2026-02-18"
+                                     "User-Request-2026-02-18",
+                                     "Supersession-Candidate-CS-0127"
                                  ]
                     },
                     {
@@ -2248,10 +2250,10 @@
                         "title":  "Validation Dashboard Complete Overhaul Using Unity UI Toolkit",
                         "domain":  "Operator Interface & Scenarios",
                         "severity":  "HIGH",
-                        "status":  "IN_PROGRESS",
+                        "status":  "READY",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0008",
-                        "assigned_ip":  null,
+                        "assigned_ip":  "IP-0056",
                         "updated_at":  "2026-02-18T14:00:00Z",
                         "closed_at":  null,
                         "resolution_type":  null,

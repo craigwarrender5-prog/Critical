@@ -1,0 +1,392 @@
+/* ============================================================================
+   CRITICAL: Master the Atom — Edgewise Meter POC
+   EdgewiseMeter.uss — Linear Bar Meter Styling
+   ============================================================================
+   
+   PURPOSE:
+     Styling for industrial edgewise panel meters (horizontal and vertical).
+     These linear bar gauges are used for deviation indicators, level displays,
+     and differential pressure readouts in nuclear plant control rooms.
+   
+   REFERENCE:
+     Bendou YE.T-101 Edgewise Panel Meter
+     Yokogawa/Westinghouse linear indicator panels
+   
+   ORIENTATION:
+     - Horizontal: Deviation meters, ΔP indicators, balance meters
+     - Vertical: Level indicators, tank displays, temperature bars
+   
+   VERSION: 0.1.0-POC
+   DATE: 2026-02-18
+   ============================================================================ */
+
+/* ========================================================================
+   METER FRAME (Industrial enclosure)
+   ======================================================================== */
+
+.edgewise-meter {
+    background-color: rgb(25, 25, 28);
+    border-radius: 4px;
+    border-width: 2px;
+    border-color: rgb(45, 45, 50);
+    padding: 4px;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Horizontal orientation (default) */
+.edgewise-meter--horizontal {
+    min-width: 200px;
+    min-height: 60px;
+    flex-direction: column;
+}
+
+/* Vertical orientation */
+.edgewise-meter--vertical {
+    min-width: 60px;
+    min-height: 200px;
+    flex-direction: row;
+}
+
+/* ========================================================================
+   METER FACE (Inner display area)
+   ======================================================================== */
+
+.edgewise-meter__face {
+    background-color: rgb(220, 225, 230);
+    border-radius: 2px;
+    border-width: 1px;
+    border-color: rgb(60, 60, 65);
+    position: relative;
+    overflow: hidden;
+}
+
+.edgewise-meter--horizontal .edgewise-meter__face {
+    width: 100%;
+    height: 40px;
+    flex-direction: column;
+}
+
+.edgewise-meter--vertical .edgewise-meter__face {
+    width: 40px;
+    height: 100%;
+    flex-direction: row;
+}
+
+/* Slight gradient for depth */
+.edgewise-meter__face-gradient {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+/* ========================================================================
+   SCALE TRACK (Background for the indicator travel)
+   ======================================================================== */
+
+.edgewise-meter__track {
+    position: absolute;
+    background-color: rgb(235, 238, 242);
+}
+
+.edgewise-meter--horizontal .edgewise-meter__track {
+    left: 8%;
+    right: 8%;
+    top: 30%;
+    bottom: 30%;
+}
+
+.edgewise-meter--vertical .edgewise-meter__track {
+    top: 8%;
+    bottom: 8%;
+    left: 30%;
+    right: 30%;
+}
+
+/* ========================================================================
+   SCALE MARKINGS CONTAINER
+   ======================================================================== */
+
+.edgewise-meter__scale {
+    position: absolute;
+}
+
+.edgewise-meter--horizontal .edgewise-meter__scale {
+    left: 8%;
+    right: 8%;
+    top: 0;
+    bottom: 0;
+}
+
+.edgewise-meter--vertical .edgewise-meter__scale {
+    top: 8%;
+    bottom: 8%;
+    left: 0;
+    right: 0;
+}
+
+/* ========================================================================
+   TICK MARKS
+   ======================================================================== */
+
+.edgewise-meter__tick {
+    position: absolute;
+    background-color: rgb(20, 20, 25);
+}
+
+.edgewise-meter__tick--major {
+    background-color: rgb(10, 10, 15);
+}
+
+/* Horizontal ticks (vertical lines) */
+.edgewise-meter--horizontal .edgewise-meter__tick {
+    width: 1px;
+    top: 10%;
+    height: 35%;
+}
+
+.edgewise-meter--horizontal .edgewise-meter__tick--major {
+    width: 2px;
+    top: 5%;
+    height: 45%;
+}
+
+/* Vertical ticks (horizontal lines) */
+.edgewise-meter--vertical .edgewise-meter__tick {
+    height: 1px;
+    left: 10%;
+    width: 35%;
+}
+
+.edgewise-meter--vertical .edgewise-meter__tick--major {
+    height: 2px;
+    left: 5%;
+    width: 45%;
+}
+
+/* ========================================================================
+   SCALE LABELS
+   ======================================================================== */
+
+.edgewise-meter__label {
+    position: absolute;
+    font-size: 9px;
+    color: rgb(20, 20, 25);
+    -unity-font-style: bold;
+    -unity-text-align: middle-center;
+}
+
+.edgewise-meter--horizontal .edgewise-meter__label {
+    bottom: 8%;
+    translate: -50% 0;
+}
+
+.edgewise-meter--vertical .edgewise-meter__label {
+    right: 8%;
+    translate: 0 50%;
+}
+
+/* Center zero emphasis */
+.edgewise-meter__label--zero {
+    font-size: 10px;
+    color: rgb(0, 0, 0);
+}
+
+/* ========================================================================
+   POINTER/NEEDLE
+   ======================================================================== */
+
+.edgewise-meter__pointer {
+    position: absolute;
+    background-color: rgb(180, 30, 30);
+    border-radius: 1px;
+}
+
+.edgewise-meter--horizontal .edgewise-meter__pointer {
+    width: 3px;
+    top: 5%;
+    height: 90%;
+    translate: -50% 0;
+}
+
+.edgewise-meter--vertical .edgewise-meter__pointer {
+    height: 3px;
+    left: 5%;
+    width: 90%;
+    translate: 0 50%;
+}
+
+/* Pointer cap (small triangle or circle at top) */
+.edgewise-meter__pointer-cap {
+    position: absolute;
+    width: 0;
+    height: 0;
+    /* Triangle effect via borders would be done in code */
+}
+
+/* ========================================================================
+   SETPOINT MARKER
+   ======================================================================== */
+
+.edgewise-meter__setpoint {
+    position: absolute;
+    background-color: rgb(50, 180, 80);
+}
+
+.edgewise-meter--horizontal .edgewise-meter__setpoint {
+    width: 2px;
+    top: 20%;
+    height: 60%;
+    translate: -50% 0;
+}
+
+.edgewise-meter--vertical .edgewise-meter__setpoint {
+    height: 2px;
+    left: 20%;
+    width: 60%;
+    translate: 0 50%;
+}
+
+/* ========================================================================
+   RANGE BANDS (Colored regions)
+   ======================================================================== */
+
+.edgewise-meter__range {
+    position: absolute;
+}
+
+.edgewise-meter--horizontal .edgewise-meter__range {
+    top: 50%;
+    height: 20%;
+}
+
+.edgewise-meter--vertical .edgewise-meter__range {
+    left: 50%;
+    width: 20%;
+}
+
+.edgewise-meter__range--normal {
+    background-color: rgba(46, 217, 64, 0.3);
+}
+
+.edgewise-meter__range--warning {
+    background-color: rgba(255, 199, 0, 0.3);
+}
+
+.edgewise-meter__range--alarm {
+    background-color: rgba(255, 70, 70, 0.3);
+}
+
+/* ========================================================================
+   UNIT/TITLE LABELS
+   ======================================================================== */
+
+.edgewise-meter__title {
+    font-size: 8px;
+    color: rgb(140, 145, 155);
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+    margin-top: 2px;
+}
+
+.edgewise-meter__unit {
+    position: absolute;
+    font-size: 7px;
+    color: rgb(60, 65, 75);
+    -unity-font-style: bold;
+}
+
+.edgewise-meter--horizontal .edgewise-meter__unit {
+    top: 5%;
+    left: 10%;
+}
+
+.edgewise-meter--vertical .edgewise-meter__unit {
+    top: 5%;
+    left: 50%;
+    translate: -50% 0;
+}
+
+/* ========================================================================
+   SIZE VARIANTS
+   ======================================================================== */
+
+/* Compact */
+.edgewise-meter--compact.edgewise-meter--horizontal {
+    min-width: 140px;
+    min-height: 45px;
+}
+
+.edgewise-meter--compact.edgewise-meter--vertical {
+    min-width: 45px;
+    min-height: 140px;
+}
+
+.edgewise-meter--compact .edgewise-meter__face {
+    height: 30px;
+}
+
+.edgewise-meter--compact .edgewise-meter__label {
+    font-size: 7px;
+}
+
+/* Large */
+.edgewise-meter--large.edgewise-meter--horizontal {
+    min-width: 280px;
+    min-height: 80px;
+}
+
+.edgewise-meter--large.edgewise-meter--vertical {
+    min-width: 80px;
+    min-height: 280px;
+}
+
+.edgewise-meter--large .edgewise-meter__face {
+    height: 55px;
+}
+
+.edgewise-meter--large .edgewise-meter__label {
+    font-size: 11px;
+}
+
+/* ========================================================================
+   DEMO CONTAINER
+   ======================================================================== */
+
+.edgewise-demo-container {
+    flex-grow: 1;
+    background-color: rgb(20, 22, 28);
+    padding: 20px;
+}
+
+.edgewise-demo-section {
+    margin-bottom: 24px;
+}
+
+.edgewise-demo-title {
+    font-size: 14px;
+    color: rgb(200, 205, 215);
+    -unity-font-style: bold;
+    margin-bottom: 12px;
+    letter-spacing: 1px;
+}
+
+.edgewise-demo-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 16px;
+}
+
+.edgewise-demo-column {
+    flex-direction: column;
+    align-items: center;
+    margin-right: 24px;
+}
+
+.edgewise-demo-label {
+    font-size: 10px;
+    color: rgb(140, 145, 155);
+    margin-top: 4px;
+    -unity-text-align: middle-center;
+}
