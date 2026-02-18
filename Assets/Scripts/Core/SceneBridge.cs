@@ -1,40 +1,39 @@
-﻿// ============================================================================
+// ============================================================================
 // CRITICAL: Master the Atom - Scene Bridge
-// SceneBridge.cs - Scene Management Controller for Operator/Validator Views
+// SceneBridge.cs - Scene Management Controller for Operator/Validation Views
 // ============================================================================
 //
 // PURPOSE:
 //   Manages switching between the Operator Screens view (MainScene) and
-//   the Heatup Validation Dashboard (Validator scene loaded additively).
+//   the UI Toolkit Validation Dashboard (Validation scene loaded additively).
 //   Ensures the HeatupSimEngine runs continuously regardless of which
 //   view is active.
 //
 // ARCHITECTURE:
 //   - Lives on a DontDestroyOnLoad GameObject alongside HeatupSimEngine
 //   - MainScene is always loaded (primary scene, build index 0)
-//   - Validator.unity is loaded/unloaded additively on demand
+//   - Validation.unity is loaded/unloaded additively on demand
 //   - HeatupSimEngine persists via DontDestroyOnLoad (never destroyed)
-//   - HeatupValidationVisual finds the persistent engine via FindObjectOfType
+//   - UITKDashboardV2Controller finds the persistent engine via FindObjectOfType
 //
 // KEYBOARD:
-//   V key      â†’ Load Validator overlay, hide operator Canvas
-//   1-8/Tab    â†’ Unload Validator, show operator Canvas (ScreenManager handles screen selection)
-//   Esc        â†’ If Validator active: return to operator screens
+//   V key      -> Load Validation overlay, hide operator Canvas
+//   1-8/Tab    -> Unload Validation, show operator Canvas (ScreenManager handles screen selection)
+//   Esc        -> If Validation active: return to operator screens
 //                 If operator screens active: no action (reserved for future)
-//   F2         â†’ Toggle validator scenario selector overlay (routed via SceneBridge)
-//   F1         â†’ Toggle Validator dashboard visibility (handled by HeatupValidationVisual)
-//   F5-F9      â†’ Time acceleration (handled by HeatupValidationVisual)
+//   F2         -> Toggle scenario selector overlay (routed via SceneBridge)
+//   F5-F9      -> Time acceleration (handled by UITKDashboardV2Controller)
 //
 // STATE MACHINE:
-//   [OperatorScreens]  â”€â”€ V key â”€â”€â–º  [Validator]
-//     (Canvas visible)                  (Canvas hidden, OnGUI overlay)
-//     (Engine running)                  (Engine running)
-//          â–²                                  â”‚
-//          â””â”€â”€â”€â”€ 1-8 / Tab / Esc â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+//   [OperatorScreens]  -- V key -->  [Validation]
+//     (Canvas visible)                 (Canvas hidden, UITK dashboard)
+//     (Engine running)                 (Engine running)
+//          ^                                  |
+//          <---- 1-8 / Tab / Esc -------------+
 //
-// VERSION: 2.0.11
-// DATE: 2026-02-10
-// CLASSIFICATION: Core â€” Scene Infrastructure
+// VERSION: 3.0.0
+// DATE: 2026-02-18
+// CLASSIFICATION: Core - Scene Infrastructure
 // ============================================================================
 
 using UnityEngine;
@@ -42,10 +41,12 @@ using UnityEngine.InputSystem;
 using UnityEngine.SceneManagement;
 
 using Critical.Validation;
+using Critical.UI.UIToolkit.ValidationDashboard;
+
 namespace Critical.Core
 {
     /// <summary>
-    /// Manages scene transitions between Operator Screens and Validator Dashboard.
+    /// Manages scene transitions between Operator Screens and Validation Dashboard.
     /// Ensures HeatupSimEngine persistence across all scene operations.
     /// </summary>
     public class SceneBridge : MonoBehaviour
@@ -60,7 +61,7 @@ namespace Critical.Core
         public enum ActiveView
         {
             OperatorScreens,
-            Validator
+            Validation
         }
 
         // ====================================================================
@@ -68,11 +69,19 @@ namespace Critical.Core
         // ====================================================================
 
         [Header("Scene Names")]
-        [Tooltip("Name of the Validator scene (must be in Build Settings)")]
-        [SerializeField] private string validatorSceneName = "Validator";
+        [Tooltip("Name of the Validation scene (must be in Build Settings)")]
+        [SerializeField] private string validationSceneName = "Validation";
 
         [Header("Debug")]
         [SerializeField] private bool debugLogging = true;
+
+        [Header("Audio")]
+        [Tooltip("If enabled, SceneBridge enforces exactly one enabled AudioListener at runtime.")]
+        [SerializeField] private bool enforceSingleAudioListener = true;
+
+        [Tooltip("How often (seconds) to re-audit AudioListeners while running.")]
+        [Range(0.1f, 2f)]
+        [SerializeField] private float audioListenerAuditInterval = 0.5f;
 
         // ====================================================================
         // PUBLIC STATE
@@ -81,8 +90,8 @@ namespace Critical.Core
         /// <summary>Current active view.</summary>
         public ActiveView CurrentView { get; private set; } = ActiveView.OperatorScreens;
 
-        /// <summary>Is the Validator scene currently loaded?</summary>
-        public bool IsValidatorLoaded { get; private set; } = false;
+        /// <summary>Is the Validation scene currently loaded?</summary>
+        public bool IsValidationLoaded { get; private set; } = false;
 
         // ====================================================================
         // PRIVATE FIELDS
@@ -100,14 +109,20 @@ namespace Critical.Core
         /// <summary>Reference to the persistent HeatupSimEngine.</summary>
         private HeatupSimEngine _engine;
 
-        /// <summary>Cached validator dashboard component for routed input actions.</summary>
-        private HeatupValidationVisual _validatorVisual;
+        /// <summary>Cached V2 dashboard controller for routed input actions.</summary>
+        private UITKDashboardV2Controller _dashboardController;
+
+        /// <summary>Timer for periodic AudioListener audits.</summary>
+        private float _audioListenerAuditTimer;
+
+        /// <summary>Fallback listener created only if no listener exists in loaded scenes.</summary>
+        private AudioListener _fallbackAudioListener;
 
         /// <summary>
-        /// True when F2 was pressed before validator availability and the selector
-        /// should be opened immediately after validator load completes.
+        /// True when F2 was pressed before dashboard availability and the selector
+        /// should be opened immediately after scene load completes.
         /// </summary>
-        private bool _openScenarioSelectorOnValidatorReady;
+        private bool _openScenarioSelectorOnDashboardReady;
 
         // ====================================================================
         // SINGLETON ACCESS
@@ -126,7 +141,7 @@ namespace Critical.Core
             if (_instance != null && _instance != this)
             {
                 if (debugLogging)
-                    Debug.Log("[SceneBridge] Duplicate found â€” destroying this instance");
+                    Debug.Log("[SceneBridge] Duplicate found - destroying this instance");
                 Destroy(gameObject);
                 return;
             }
@@ -137,8 +152,17 @@ namespace Critical.Core
             // Ensure the HeatupSimEngine on this (or sibling) GameObject also persists
             EnsureEnginePersistence();
 
+            SceneManager.sceneLoaded += OnSceneLoaded;
+            SceneManager.sceneUnloaded += OnSceneUnloaded;
+
+            if (enforceSingleAudioListener)
+            {
+                _audioListenerAuditTimer = 0f;
+                EnforceSingleAudioListener(true);
+            }
+
             if (debugLogging)
-                Debug.Log("[SceneBridge] Initialized â€” DontDestroyOnLoad active");
+                Debug.Log("[SceneBridge] Initialized - DontDestroyOnLoad active");
         }
 
         void Start()
@@ -152,11 +176,22 @@ namespace Critical.Core
 
             if (_engine == null)
                 Debug.LogWarning("[SceneBridge] No HeatupSimEngine found in scene! " +
-                                 "Validator dashboard will have no data.");
+                                 "Validation dashboard will have no data.");
         }
 
         void Update()
         {
+            // Keep listener state sane even while scene transitions are in flight.
+            if (enforceSingleAudioListener)
+            {
+                _audioListenerAuditTimer -= Time.unscaledDeltaTime;
+                if (_audioListenerAuditTimer <= 0f)
+                {
+                    _audioListenerAuditTimer = Mathf.Max(0.1f, audioListenerAuditInterval);
+                    EnforceSingleAudioListener(true);
+                }
+            }
+
             var kb = Keyboard.current;
             if (kb == null) return;
 
@@ -171,25 +206,25 @@ namespace Critical.Core
                     {
                         RequestScenarioSelectorFromAnyView();
                     }
-                    // V key â†’ switch to Validator
+                    // V key -> switch to Validation
                     else if (kb.vKey.wasPressedThisFrame)
                     {
-                        SwitchToValidator();
+                        SwitchToValidation();
                     }
                     break;
 
-                case ActiveView.Validator:
-                    // F2 â†’ toggle validator scenario selector overlay
+                case ActiveView.Validation:
+                    // F2 -> toggle scenario selector overlay
                     if (kb.f2Key.wasPressedThisFrame)
                     {
-                        ToggleValidatorScenarioSelector();
+                        ToggleScenarioSelector();
                     }
-                    // Any screen key â†’ return to operator screens
+                    // Any screen key -> return to operator screens
                     else if (IsScreenKeyPressed(kb))
                     {
                         SwitchToOperatorScreens();
                     }
-                    // Esc â†’ return to operator screens
+                    // Esc -> return to operator screens
                     else if (kb.escapeKey.wasPressedThisFrame)
                     {
                         SwitchToOperatorScreens();
@@ -200,6 +235,9 @@ namespace Critical.Core
 
         void OnDestroy()
         {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+            SceneManager.sceneUnloaded -= OnSceneUnloaded;
+
             if (_instance == this)
                 _instance = null;
         }
@@ -209,68 +247,75 @@ namespace Critical.Core
         // ====================================================================
 
         /// <summary>
-        /// Switch to Validator dashboard view.
-        /// Loads Validator scene additively and hides operator Canvas.
+        /// Switch to Validation dashboard view.
+        /// Loads Validation scene additively and hides operator Canvas.
         /// </summary>
-        public void SwitchToValidator()
+        public void SwitchToValidation()
         {
-            if (CurrentView == ActiveView.Validator || _sceneTransitionInProgress)
+            if (CurrentView == ActiveView.Validation || _sceneTransitionInProgress)
                 return;
 
             if (debugLogging)
-                Debug.Log("[SceneBridge] Switching to Validator view...");
+                Debug.Log("[SceneBridge] Switching to Validation view...");
 
             _sceneTransitionInProgress = true;
 
             // Hide operator Canvas
             SetOperatorCanvasVisible(false);
 
-            // Load Validator additively
-            if (!IsValidatorLoaded)
+            // Load Validation additively
+            if (!IsValidationLoaded)
             {
                 AsyncOperation loadOp = SceneManager.LoadSceneAsync(
-                    validatorSceneName, LoadSceneMode.Additive);
+                    validationSceneName, LoadSceneMode.Additive);
 
                 if (loadOp == null)
                 {
-                    Debug.LogError($"[SceneBridge] Failed to load scene '{validatorSceneName}'! " +
+                    Debug.LogError($"[SceneBridge] Failed to load scene '{validationSceneName}'! " +
                                    "Is it in Build Settings?");
                     SetOperatorCanvasVisible(true); // Restore Canvas
                     _sceneTransitionInProgress = false;
-                    _openScenarioSelectorOnValidatorReady = false;
+                    _openScenarioSelectorOnDashboardReady = false;
                     return;
                 }
 
                 loadOp.completed += (op) =>
                 {
-                    IsValidatorLoaded = true;
-                    CurrentView = ActiveView.Validator;
+                    IsValidationLoaded = true;
+                    CurrentView = ActiveView.Validation;
                     _sceneTransitionInProgress = false;
-                    _validatorVisual = FindObjectOfType<HeatupValidationVisual>();
+
+                    // Find the V2 dashboard controller in the loaded scene
+                    _dashboardController = FindObjectOfType<UITKDashboardV2Controller>();
+
+                    if (_dashboardController == null)
+                        Debug.LogWarning("[SceneBridge] UITKDashboardV2Controller not found in Validation scene!");
 
                     // Re-resolve ScreenDataBridge sources now that both scenes are loaded
                     ResolveDataBridgeSources();
+                    EnforceSingleAudioListener(true);
                     ProcessPendingScenarioSelectorOpen();
 
                     if (debugLogging)
-                        Debug.Log("[SceneBridge] Validator loaded â€” view active");
+                        Debug.Log("[SceneBridge] Validation loaded - view active");
                 };
             }
             else
             {
-                // Validator already loaded (shouldn't normally happen)
-                CurrentView = ActiveView.Validator;
+                // Validation already loaded (shouldn't normally happen)
+                CurrentView = ActiveView.Validation;
                 _sceneTransitionInProgress = false;
+                EnforceSingleAudioListener(true);
                 ProcessPendingScenarioSelectorOpen();
 
                 if (debugLogging)
-                    Debug.Log("[SceneBridge] Validator already loaded â€” view active");
+                    Debug.Log("[SceneBridge] Validation already loaded - view active");
             }
         }
 
         /// <summary>
         /// Switch to Operator Screens view.
-        /// Unloads Validator scene and shows operator Canvas.
+        /// Unloads Validation scene and shows operator Canvas.
         /// </summary>
         public void SwitchToOperatorScreens()
         {
@@ -285,39 +330,41 @@ namespace Critical.Core
             // Show operator Canvas
             SetOperatorCanvasVisible(true);
 
-            // Unload Validator
-            if (IsValidatorLoaded)
+            // Unload Validation
+            if (IsValidationLoaded)
             {
-                AsyncOperation unloadOp = SceneManager.UnloadSceneAsync(validatorSceneName);
+                AsyncOperation unloadOp = SceneManager.UnloadSceneAsync(validationSceneName);
 
                 if (unloadOp == null)
                 {
-                    // Scene may not be loaded â€” just update state
-                    IsValidatorLoaded = false;
+                    // Scene may not be loaded - just update state
+                    IsValidationLoaded = false;
                     CurrentView = ActiveView.OperatorScreens;
                     _sceneTransitionInProgress = false;
 
                     if (debugLogging)
-                        Debug.Log("[SceneBridge] Validator was not loaded â€” Operator Screens active");
+                        Debug.Log("[SceneBridge] Validation was not loaded - Operator Screens active");
                     return;
                 }
 
                 unloadOp.completed += (op) =>
                 {
-                    IsValidatorLoaded = false;
+                    IsValidationLoaded = false;
                     CurrentView = ActiveView.OperatorScreens;
                     _sceneTransitionInProgress = false;
-                    _validatorVisual = null;
+                    _dashboardController = null;
+                    EnforceSingleAudioListener(true);
 
                     if (debugLogging)
-                        Debug.Log("[SceneBridge] Validator unloaded â€” Operator Screens active");
+                        Debug.Log("[SceneBridge] Validation unloaded - Operator Screens active");
                 };
             }
             else
             {
                 CurrentView = ActiveView.OperatorScreens;
                 _sceneTransitionInProgress = false;
-                _validatorVisual = null;
+                _dashboardController = null;
+                EnforceSingleAudioListener(true);
             }
         }
 
@@ -392,9 +439,9 @@ namespace Critical.Core
 
             if (_engine != null)
             {
-                // Engine is on our GameObject â€” already covered by our DontDestroyOnLoad
+                // Engine is on our GameObject - already covered by our DontDestroyOnLoad
                 if (debugLogging)
-                    Debug.Log("[SceneBridge] HeatupSimEngine on same GameObject â€” persistence inherited");
+                    Debug.Log("[SceneBridge] HeatupSimEngine on same GameObject - persistence inherited");
                 return;
             }
 
@@ -407,7 +454,7 @@ namespace Critical.Core
                 DontDestroyOnLoad(_engine.gameObject);
 
                 if (debugLogging)
-                    Debug.Log($"[SceneBridge] HeatupSimEngine on '{_engine.gameObject.name}' â€” marked DontDestroyOnLoad");
+                    Debug.Log($"[SceneBridge] HeatupSimEngine on '{_engine.gameObject.name}' - marked DontDestroyOnLoad");
             }
         }
 
@@ -454,54 +501,172 @@ namespace Critical.Core
         }
 
         /// <summary>
-        /// Request scenario selector from either view. If validator is not active yet,
+        /// Request scenario selector from either view. If dashboard is not active yet,
         /// queue the selector open and switch views first.
         /// </summary>
         private void RequestScenarioSelectorFromAnyView()
         {
-            if (CurrentView == ActiveView.Validator)
+            if (CurrentView == ActiveView.Validation)
             {
-                ToggleValidatorScenarioSelector();
+                ToggleScenarioSelector();
                 return;
             }
 
-            _openScenarioSelectorOnValidatorReady = true;
-            SwitchToValidator();
+            _openScenarioSelectorOnDashboardReady = true;
+            SwitchToValidation();
         }
 
         /// <summary>
-        /// Execute queued scenario-selector open after validator becomes available.
+        /// Execute queued scenario-selector open after dashboard becomes available.
         /// </summary>
         private void ProcessPendingScenarioSelectorOpen()
         {
-            if (!_openScenarioSelectorOnValidatorReady)
+            if (!_openScenarioSelectorOnDashboardReady)
             {
                 return;
             }
 
-            _openScenarioSelectorOnValidatorReady = false;
-            ToggleValidatorScenarioSelector();
+            _openScenarioSelectorOnDashboardReady = false;
+            ToggleScenarioSelector();
         }
 
         /// <summary>
-        /// Route F2 selector toggle to the validator dashboard component.
+        /// Route F2 selector toggle to the V2 dashboard controller.
         /// </summary>
-        private void ToggleValidatorScenarioSelector()
+        private void ToggleScenarioSelector()
         {
-            if (_validatorVisual == null)
+            if (_dashboardController == null)
             {
-                _validatorVisual = FindObjectOfType<HeatupValidationVisual>();
+                _dashboardController = FindObjectOfType<UITKDashboardV2Controller>();
             }
 
-            if (_validatorVisual == null)
+            if (_dashboardController == null)
             {
                 if (debugLogging)
-                    Debug.LogWarning("[SceneBridge] F2 selector toggle ignored: HeatupValidationVisual not found.");
+                    Debug.LogWarning("[SceneBridge] F2 selector toggle ignored: UITKDashboardV2Controller not found.");
                 return;
             }
 
-            _validatorVisual.ToggleScenarioSelector();
+            _dashboardController.ToggleScenarioSelector();
+        }
+
+        // ====================================================================
+        // AUDIO LISTENER ARBITRATION
+        // ====================================================================
+
+        /// <summary>
+        /// Scene callbacks used to immediately reconcile listener state after loads/unloads.
+        /// </summary>
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            EnforceSingleAudioListener(true);
+        }
+
+        private void OnSceneUnloaded(Scene scene)
+        {
+            EnforceSingleAudioListener(true);
+        }
+
+        /// <summary>
+        /// Guarantees exactly one enabled AudioListener across all loaded scenes.
+        /// If none exist, creates a fallback listener under SceneBridge.
+        /// </summary>
+        private void EnforceSingleAudioListener(bool createFallbackIfMissing)
+        {
+            if (!enforceSingleAudioListener)
+                return;
+
+            AudioListener selected = null;
+            AudioListener[] listeners = Resources.FindObjectsOfTypeAll<AudioListener>();
+
+            // 1) Prefer MainCamera's listener if active in hierarchy.
+            Camera mainCamera = Camera.main;
+            if (mainCamera != null)
+            {
+                AudioListener mainListener = mainCamera.GetComponent<AudioListener>();
+                if (IsSceneListener(mainListener) && mainListener.gameObject.activeInHierarchy)
+                    selected = mainListener;
+            }
+
+            // 2) Prefer active listener in the currently relevant scene.
+            if (selected == null)
+            {
+                string preferredScene = (CurrentView == ActiveView.Validation && IsValidationLoaded)
+                    ? validationSceneName
+                    : SceneManager.GetActiveScene().name;
+
+                for (int i = 0; i < listeners.Length; i++)
+                {
+                    var listener = listeners[i];
+                    if (!IsSceneListener(listener)) continue;
+                    if (!listener.gameObject.activeInHierarchy) continue;
+                    if (listener.gameObject.scene.name != preferredScene) continue;
+
+                    selected = listener;
+                    break;
+                }
+            }
+
+            // 3) Fallback to any active scene listener.
+            if (selected == null)
+            {
+                for (int i = 0; i < listeners.Length; i++)
+                {
+                    var listener = listeners[i];
+                    if (!IsSceneListener(listener)) continue;
+                    if (!listener.gameObject.activeInHierarchy) continue;
+
+                    selected = listener;
+                    break;
+                }
+            }
+
+            // 4) Last resort: create a dedicated fallback listener.
+            if (selected == null && createFallbackIfMissing)
+            {
+                selected = GetOrCreateFallbackAudioListener();
+            }
+
+            if (selected == null)
+                return;
+
+            if (!selected.enabled)
+                selected.enabled = true;
+
+            // Disable all other enabled listeners so Unity never has >1 active.
+            for (int i = 0; i < listeners.Length; i++)
+            {
+                var listener = listeners[i];
+                if (!IsSceneListener(listener)) continue;
+                if (listener == selected) continue;
+                if (!listener.enabled) continue;
+
+                listener.enabled = false;
+            }
+        }
+
+        private AudioListener GetOrCreateFallbackAudioListener()
+        {
+            if (_fallbackAudioListener != null)
+                return _fallbackAudioListener;
+
+            var fallbackGo = new GameObject("SceneBridge_AudioListener_Fallback");
+            fallbackGo.transform.SetParent(transform, false);
+            _fallbackAudioListener = fallbackGo.AddComponent<AudioListener>();
+
+            if (debugLogging)
+                Debug.Log("[SceneBridge] Created fallback AudioListener.");
+
+            return _fallbackAudioListener;
+        }
+
+        private static bool IsSceneListener(AudioListener listener)
+        {
+            if (listener == null)
+                return false;
+
+            Scene scene = listener.gameObject.scene;
+            return scene.IsValid() && scene.isLoaded;
         }
     }
 }
-
