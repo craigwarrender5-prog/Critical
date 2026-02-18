@@ -1,7 +1,7 @@
 ﻿HEATUP INTERVAL LOG
 ======================================================================
 Log Entry:        #1
-Timestamp:        17/02/2026 7:15:23 p.m.
+Timestamp:        18/02/2026 3:54:37 a.m.
 Sim Time:         0.00 hours (00:00:00)
 Wall-Clock Time:  00:00:00
 Effective Speed:  1x (1x RT)
@@ -91,6 +91,24 @@ BUBBLE FORMATION STATUS:
   Closure E Res:           0.0 BTU
   Closure Hit Rate:        0.0 % (0/0)
   PZR H Total:      10120390.0 BTU
+
+CONDENSER / FEEDWATER / PERMISSIVES (IP-0046 CS-0115):
+  Vacuum Phase:     Atmospheric
+  Vacuum:                  0.0 in.Hg
+  Backpressure:          14.70 psia
+  C-9 Available:            NO
+  CW Pumps:                  0
+  Hotwell Level:          60.0 %
+  CST Level:             100.0 %
+  FW Return Flow:            0 lb/hr
+  P-12 Active:             YES
+  P-12 Bypassed:            NO
+  P-12 Blocking:           YES
+  Dump Permitted:           NO
+  Bridge State:     DumpsUnavailable
+  Permissive Msg:   Dumps unavailable — C-9 false, P-12 active
+  Cond Startup Cmd:         NO
+  P-12 Bypass Cmd:          NO
 
 RCP (Reactor Coolant Pump) STATE:
   RCPs Running:              0 / 4

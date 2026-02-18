@@ -7,9 +7,10 @@
 // Module: Critical.Validation.HeatupValidationVisual
 // Responsibility: Legacy OnGUI validation dashboard coordination and tab dispatch.
 // Standards: GOLD v1.0, SRP/SOLID, Unity Hot-Path Guardrails
-// Version: 5.3
-// Last Updated: 2026-02-17
+// Version: 5.4
+// Last Updated: 2026-02-18
 // Changes:
+//   - 5.4 (2026-02-18): Added F2 scenario selector overlay for runtime scenario start.
 //   - 5.3 (2026-02-17): Added GOLD metadata fields and bounded change-history ledger.
 //   - 5.2 (2026-02-16): Added Critical tab and keyboard navigation updates.
 //   - 5.1 (2026-02-16): Expanded telemetry snapshot integration and diagnostics.
@@ -69,6 +70,7 @@ using UnityEngine;
 using UnityEngine.InputSystem;
 using System;
 using Critical.Physics;
+using Critical.ScenarioSystem;
 using Critical.Simulation.Modular.State;
 using UnityEngine.Scripting.APIUpdating;
 
@@ -193,6 +195,12 @@ public partial class HeatupValidationVisual : MonoBehaviour
     // Cached screen dimensions for layout
     private float _sw, _sh;
 
+    // IP-0049 follow-up: F2 scenario selector overlay state.
+    private bool _scenarioMenuVisible;
+    private Vector2 _scenarioMenuScroll;
+    private string _scenarioMenuStatus = string.Empty;
+    private ScenarioDescriptor[] _scenarioDescriptors = Array.Empty<ScenarioDescriptor>();
+
     // ========================================================================
     // UNITY LIFECYCLE
     // ========================================================================
@@ -211,6 +219,7 @@ public partial class HeatupValidationVisual : MonoBehaviour
         {
             _telemetrySnapshot = engine.GetTelemetrySnapshot();
             _stepSnapshot = engine.GetStepSnapshot();
+            RefreshScenarioSelectorDescriptors();
         }
 
         // Note: Styles are initialized lazily in OnGUI (GUI.skin requires OnGUI context)
@@ -318,6 +327,9 @@ public partial class HeatupValidationVisual : MonoBehaviour
         if (kb.f1Key.wasPressedThisFrame)
             dashboardVisible = !dashboardVisible;
 
+        // F2 scenario selector toggle is routed through SceneBridge while
+        // validator view is active to keep scene-level input ownership centralized.
+
         // Force quit with ESC (in builds only)
         #if !UNITY_EDITOR
         if (kb.escapeKey.wasPressedThisFrame)
@@ -377,7 +389,8 @@ public partial class HeatupValidationVisual : MonoBehaviour
 
     void OnGUI()
     {
-        if (!dashboardVisible || engine == null) return;
+        if (engine == null) return;
+        if (!dashboardVisible && !_scenarioMenuVisible) return;
 
         // v0.3.0.0 Phase A (CS-0032): Layout-only throttle.
         // Throttle Layout events at refreshRate Hz to reduce per-frame computation
@@ -401,42 +414,50 @@ public partial class HeatupValidationVisual : MonoBehaviour
         if (!_stylesInitialized)
             InitializeStyles();
 
-        // ================================================================
-        // FULL-SCREEN BACKGROUND
-        // ================================================================
-        GUI.DrawTexture(new Rect(0, 0, _sw, _sh), _bgTex, ScaleMode.StretchToFill);
-
-        // ================================================================
-        // HEADER BAR
-        // ================================================================
-        float headerH = Mathf.Max(_sh * HEADER_FRAC, 40f);
-        Rect headerRect = new Rect(0, 0, _sw, headerH);
-        DrawHeaderBar(headerRect);
-
-        // ================================================================
-        // v5.0.0: DASHBOARD TAB BAR
-        // ================================================================
-        float tabBarY = headerH;
-        Rect tabBarRect = new Rect(4f, tabBarY + 2f, _sw - 8f, TAB_BAR_H - 4f);
-        _dashboardTab = GUI.Toolbar(tabBarRect, _dashboardTab, _dashboardTabLabels, _tabStyle);
-
-        // ================================================================
-        // v5.0.0: TAB CONTENT AREA â€” dispatched to per-tab partial methods
-        // ================================================================
-        float contentY = headerH + TAB_BAR_H;
-        float contentH = _sh - contentY;
-        Rect contentArea = new Rect(0, contentY, _sw, contentH);
-
-        switch (_dashboardTab)
+        if (dashboardVisible)
         {
-            case 0: DrawOverviewTab(contentArea);        break;
-            case 1: DrawPressurizerTab(contentArea);     break;
-            case 2: DrawCVCSTab(contentArea);             break;
-            case 3: DrawSGRHRTab(contentArea);            break;
-            case 4: DrawRCPElectricalTab(contentArea);    break;
-            case 5: DrawEventLogTab(contentArea);         break;
-            case 6: DrawValidationTab(contentArea);       break;
-            case 7: DrawCriticalTab(contentArea);         break;  // v5.2.0
+            // ================================================================
+            // FULL-SCREEN BACKGROUND
+            // ================================================================
+            GUI.DrawTexture(new Rect(0, 0, _sw, _sh), _bgTex, ScaleMode.StretchToFill);
+
+            // ================================================================
+            // HEADER BAR
+            // ================================================================
+            float headerH = Mathf.Max(_sh * HEADER_FRAC, 40f);
+            Rect headerRect = new Rect(0, 0, _sw, headerH);
+            DrawHeaderBar(headerRect);
+
+            // ================================================================
+            // v5.0.0: DASHBOARD TAB BAR
+            // ================================================================
+            float tabBarY = headerH;
+            Rect tabBarRect = new Rect(4f, tabBarY + 2f, _sw - 8f, TAB_BAR_H - 4f);
+            _dashboardTab = GUI.Toolbar(tabBarRect, _dashboardTab, _dashboardTabLabels, _tabStyle);
+
+            // ================================================================
+            // v5.0.0: TAB CONTENT AREA â€” dispatched to per-tab partial methods
+            // ================================================================
+            float contentY = headerH + TAB_BAR_H;
+            float contentH = _sh - contentY;
+            Rect contentArea = new Rect(0, contentY, _sw, contentH);
+
+            switch (_dashboardTab)
+            {
+                case 0: DrawOverviewTab(contentArea);      break;
+                case 1: DrawPressurizerTab(contentArea);   break;
+                case 2: DrawCVCSTab(contentArea);          break;
+                case 3: DrawSGRHRTab(contentArea);         break;
+                case 4: DrawRCPElectricalTab(contentArea); break;
+                case 5: DrawEventLogTab(contentArea);      break;
+                case 6: DrawValidationTab(contentArea);    break;
+                case 7: DrawCriticalTab(contentArea);      break;  // v5.2.0
+            }
+        }
+
+        if (_scenarioMenuVisible)
+        {
+            DrawScenarioSelectorOverlay();
         }
     }
 
@@ -526,6 +547,134 @@ public partial class HeatupValidationVisual : MonoBehaviour
         GUI.Label(new Rect(x, y, w, h), text, _headerLabelStyle);
         GUI.contentColor = prev;
         x += w + 6f;
+    }
+
+    /// <summary>
+    /// Toggle scenario-selector overlay visibility.
+    /// Intended to be invoked by scene-level input routing (SceneBridge).
+    /// </summary>
+    public void ToggleScenarioSelector()
+    {
+        SetScenarioSelectorVisible(!_scenarioMenuVisible);
+    }
+
+    /// <summary>
+    /// Force scenario-selector visibility and refresh state on open.
+    /// </summary>
+    public void SetScenarioSelectorVisible(bool visible)
+    {
+        _scenarioMenuVisible = visible;
+        if (_scenarioMenuVisible)
+        {
+            RefreshScenarioSelectorDescriptors();
+            _scenarioMenuStatus = string.Empty;
+        }
+    }
+
+    /// <summary>
+    /// Exposes current selector visibility for bridge diagnostics.
+    /// </summary>
+    public bool IsScenarioSelectorVisible => _scenarioMenuVisible;
+
+    /// <summary>
+    /// Draw the F2 scenario-selection overlay and start selected scenarios.
+    /// </summary>
+    void DrawScenarioSelectorOverlay()
+    {
+        Color prevColor = GUI.color;
+        GUI.color = new Color(0f, 0f, 0f, 0.55f);
+        GUI.DrawTexture(new Rect(0f, 0f, _sw, _sh), _whiteTex, ScaleMode.StretchToFill);
+        GUI.color = prevColor;
+
+        float panelW = Mathf.Min(780f, _sw - 80f);
+        float panelH = Mathf.Min(520f, _sh - 80f);
+        Rect panel = new Rect((_sw - panelW) * 0.5f, (_sh - panelH) * 0.5f, panelW, panelH);
+        GUI.Box(panel, GUIContent.none, _panelBgStyle);
+
+        Rect titleRect = new Rect(panel.x + 16f, panel.y + 10f, panel.width - 32f, 24f);
+        GUI.Label(titleRect, "SCENARIO SELECTOR (F2)", _headerLabelStyle);
+
+        Rect hintRect = new Rect(panel.x + 16f, panel.y + 34f, panel.width - 32f, 18f);
+        GUI.Label(hintRect, "Select a scenario and press START.", _statusLabelStyle);
+
+        Rect modeRect = new Rect(panel.x + 16f, panel.y + 52f, panel.width - 32f, 18f);
+        string modeLine = $"Current Plant Mode: {(engine.plantMode == 5 ? "MODE 5 Cold Shutdown" : $"MODE {engine.plantMode}")}";
+        GUI.Label(modeRect, modeLine, _statusLabelStyle);
+
+        Rect listRect = new Rect(panel.x + 16f, panel.y + 76f, panel.width - 32f, panel.height - 142f);
+        GUI.Box(listRect, GUIContent.none, _graphBgStyle);
+
+        if (_scenarioDescriptors == null || _scenarioDescriptors.Length == 0)
+        {
+            Rect emptyRect = new Rect(listRect.x + 10f, listRect.y + 10f, listRect.width - 20f, 24f);
+            GUI.Label(emptyRect, "No scenarios are currently registered.", _statusLabelStyle);
+        }
+        else
+        {
+            float rowH = 56f;
+            Rect viewRect = new Rect(0f, 0f, listRect.width - 20f, _scenarioDescriptors.Length * rowH);
+            _scenarioMenuScroll = GUI.BeginScrollView(listRect, _scenarioMenuScroll, viewRect);
+
+            for (int i = 0; i < _scenarioDescriptors.Length; i++)
+            {
+                ScenarioDescriptor descriptor = _scenarioDescriptors[i];
+                Rect rowRect = new Rect(4f, i * rowH + 2f, viewRect.width - 8f, rowH - 6f);
+                GUI.Box(rowRect, GUIContent.none, _gaugeBgStyle);
+
+                Rect nameRect = new Rect(rowRect.x + 8f, rowRect.y + 4f, rowRect.width - 180f, 22f);
+                GUI.Label(nameRect, descriptor.DisplayName, _headerLabelStyle);
+
+                Rect metaRect = new Rect(rowRect.x + 8f, rowRect.y + 24f, rowRect.width - 180f, 18f);
+                GUI.Label(metaRect, $"ID={descriptor.Id}  Domain={descriptor.DomainOwner}", _statusLabelStyle);
+
+                Rect startBtnRect = new Rect(rowRect.x + rowRect.width - 128f, rowRect.y + 12f, 112f, 28f);
+                bool previousEnabled = GUI.enabled;
+                GUI.enabled = !engine.isRunning;
+                if (GUI.Button(startBtnRect, "START"))
+                {
+                    bool started = engine.StartScenarioById(descriptor.Id);
+                    if (started)
+                    {
+                        _scenarioMenuStatus = $"Started: {descriptor.DisplayName} ({descriptor.Id})";
+                        _scenarioMenuVisible = false;
+                    }
+                    else
+                    {
+                        _scenarioMenuStatus = $"Failed to start {descriptor.Id}. Check event log for details.";
+                    }
+                }
+                GUI.enabled = previousEnabled;
+            }
+
+            GUI.EndScrollView();
+        }
+
+        Rect footerRect = new Rect(panel.x + 16f, panel.y + panel.height - 56f, panel.width - 32f, 44f);
+        GUI.Box(footerRect, GUIContent.none, _gaugeBgStyle);
+
+        string statusText = string.IsNullOrWhiteSpace(_scenarioMenuStatus)
+            ? (engine.isRunning ? "Simulation running: stop current run before starting another scenario." : "Ready.")
+            : _scenarioMenuStatus;
+        Rect statusRect = new Rect(footerRect.x + 8f, footerRect.y + 12f, footerRect.width - 120f, 20f);
+        GUI.Label(statusRect, statusText, _statusValueStyle);
+
+        Rect closeRect = new Rect(footerRect.x + footerRect.width - 96f, footerRect.y + 8f, 84f, 28f);
+        if (GUI.Button(closeRect, "CLOSE"))
+        {
+            _scenarioMenuVisible = false;
+            _scenarioMenuStatus = string.Empty;
+        }
+    }
+
+    void RefreshScenarioSelectorDescriptors()
+    {
+        if (engine == null)
+        {
+            _scenarioDescriptors = Array.Empty<ScenarioDescriptor>();
+            return;
+        }
+
+        _scenarioDescriptors = engine.GetAvailableScenarioDescriptors();
     }
 
     private static string GetModeStringFromPlantMode(int mode)

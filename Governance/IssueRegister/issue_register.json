@@ -1,13 +1,13 @@
 {
     "version":  "1.0.0",
-    "generated_at":  "2026-02-18T02:20:11Z",
+    "generated_at":  "2026-02-18T11:00:00Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-    "active_issue_count":  5,
+    "active_issue_count":  4,
     "issues":  [
                    {
                        "id":  "CS-0102",
                        "title":  "Establish scenario system framework with registry and scenario abstraction",
-                       "domain":  "Operator Interface \u0026 Scenarios",
+                       "domain":  "Operator Interface & Scenarios",
                        "severity":  "HIGH",
                        "status":  "READY",
                        "created_at":  "2026-02-17T12:47:30Z",
@@ -50,7 +50,7 @@
                    {
                        "id":  "CS-0103",
                        "title":  "Add in-simulator scenario selection overlay with keybind trigger",
-                       "domain":  "Operator Interface \u0026 Scenarios",
+                       "domain":  "Operator Interface & Scenarios",
                        "severity":  "MEDIUM",
                        "status":  "READY",
                        "created_at":  "2026-02-17T12:47:30Z",
@@ -91,52 +91,9 @@
                        "resolution_type":  null
                    },
                    {
-                       "id":  "CS-0104",
-                       "title":  "Wrap existing validation runner as selectable Validation Scenario",
-                       "domain":  "Validation \u0026 Diagnostics",
-                       "severity":  "HIGH",
-                       "status":  "OPEN",
-                       "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-18T02:11:51Z",
-                       "stage_detected":  "User-Request-2026-02-17",
-                       "assigned_dp":  "DP-0013",
-                       "assigned_ip":  "IP-0049",
-                       "observations":  [
-                                            "Existing validation entrypoint is not scenario-selectable.",
-                                            "Validation path must be invokable through scenario system without semantic changes."
-                                        ],
-                       "evidence":  [
-                                        {
-                                            "ref":  "Governance/Issues/CS-0104_Investigation_Report_2026-02-17_124730.md",
-                                            "notes":  "Validation-scenario wrapping requirements and equivalence expectations."
-                                        },
-                                        {
-                                            "ref":  "Assets/Scripts/Validation/HeatupSimEngine.cs",
-                                            "notes":  "Current validation execution surface."
-                                        }
-                                    ],
-                       "hypotheses":  [
-                                          "A wrapper boundary can expose validation as a scenario while preserving behavior equivalence."
-                                      ],
-                       "root_cause":  null,
-                       "resolution_candidate":  "Expose current validation runner through scenario registry/start path with strict equivalence verification.",
-                       "links":  [
-                                     "Likely impacted: Assets/Scripts/Validation/HeatupSimEngine.cs",
-                                     "Likely impacted: Assets/Scripts/ScenarioSystem/ (new path)"
-                                 ],
-                       "tags":  [
-                                    "Validation-Scenario",
-                                    "Scenario-Compatibility",
-                                    "Behavior-Equivalence",
-                                    "User-Request-2026-02-17"
-                                ],
-                       "closed_at":  null,
-                       "resolution_type":  null
-                   },
-                   {
                        "id":  "CS-0109",
                        "title":  "PZR Mode 5 pre-heater pressurization: validate net +1 gpm charging imbalance vs documented expectations",
-                       "domain":  "Pressurizer \u0026 Startup Control",
+                       "domain":  "Pressurizer & Startup Control",
                        "severity":  "HIGH",
                        "status":  "READY",
                        "created_at":  "2026-02-17T19:05:15Z",
@@ -156,7 +113,7 @@
                                         },
                                         {
                                             "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:21",
-                                            "notes":  "Sequence: charging\u003eletdown pressurization to 400-425 psig, then heater energization."
+                                            "notes":  "Sequence: charging>letdown pressurization to 400-425 psig, then heater energization."
                                         },
                                         {
                                             "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:25",
@@ -177,7 +134,7 @@
                        "root_cause":  "Solid-plant HEATER_PRESSURIZE logic limits CVCS net trim to +/-1 gpm while early heater participation contributes to pressure rise, yielding a mechanism/rate mismatch versus documented startup expectations.",
                        "resolution_candidate":  "Define explicit Mode 5 pre-heater policy boundary: parameterized CVCS imbalance/rate envelope aligned to documentation, heater-sequencing handoff at documented transition, and clear controller ownership separation.",
                        "links":  [
-                                     "Assigned DP: DP-0012 - Pressurizer \u0026 Startup Control",
+                                     "Assigned DP: DP-0012 - Pressurizer & Startup Control",
                                      "No implementation under CS; create an IP before code changes."
                                  ],
                        "tags":  [
@@ -191,49 +148,46 @@
                        "resolution_type":  null
                    },
                    {
-                       "id":  "CS-0117",
-                       "title":  "Validation dashboard compile regression: unresolved IDX_NET_HEAT blocks IP-0049 Stage E build validation",
-                       "domain":  "Validation \u0026 Diagnostics",
-                       "severity":  "HIGH",
-                       "status":  "OPEN",
-                       "created_at":  "2026-02-18T02:19:47Z",
-                       "updated_at":  "2026-02-18T02:20:11Z",
-                       "stage_detected":  "IP-0049-StageE-2026-02-18",
-                       "assigned_dp":  "DP-0013",
-                       "assigned_ip":  "IP-0049",
+                       "id":  "CS-0120",
+                       "title":  "F2 scenario selector keybind only functional in Validator view, not Operator Screens view",
+                       "domain":  "Operator Interface & Scenarios",
+                       "severity":  "LOW",
+                       "status":  "READY",
+                       "created_at":  "2026-02-18T11:00:00Z",
+                       "updated_at":  "2026-02-18T11:00:00Z",
+                       "stage_detected":  "User-Request-2026-02-18",
+                       "assigned_dp":  "DP-0008",
+                       "assigned_ip":  null,
                        "observations":  [
-                                            "IP-0049 Stage E system regression fails because ValidationDashboard sparklines reference an unresolved IDX_NET_HEAT symbol.",
-                                            "Failure is outside CS-0104 scenario bridge deltas but blocks closure until compile baseline is restored."
+                                            "F2 keybind for scenario selector only handled in Validator view case in SceneBridge.Update().",
+                                            "Operator Screens view (default) has no F2 handling, so pressing F2 does nothing.",
+                                            "Scenario selector overlay and infrastructure fully functional when accessed via V then F2."
                                         ],
                        "evidence":  [
                                         {
-                                            "ref":  "Governance/Issues/CS-0117_Investigation_Report_2026-02-18_021900.md",
-                                            "notes":  "Blocking compile regression disposition and corrective scope for IP-0049 Stage E."
+                                            "ref":  "Governance/Issues/CS-0120_Investigation_Report_2026-02-18_110000.md",
+                                            "notes":  "Full root cause analysis and proposed resolution options."
                                         },
                                         {
-                                            "ref":  "Governance/ImplementationPlans/IP-0049/Reports/IP-0049_StageE_SystemRegression_2026-02-18_020900.md",
-                                            "notes":  "Stage E build gate failed with IDX_NET_HEAT unresolved in ValidationDashboard.Sparklines.cs."
-                                        },
-                                        {
-                                            "ref":  "Assets/Scripts/Validation/ValidationDashboard.Sparklines.cs:489-495,522",
-                                            "notes":  "IDX_NET_HEAT references present without a matching constant/definition in current workspace state."
+                                            "ref":  "Assets/Scripts/Core/SceneBridge.cs:122-149",
+                                            "notes":  "F2 only handled in ActiveView.Validator case, missing from OperatorScreens case."
                                         }
                                     ],
                        "hypotheses":  [
-                                          "Sparkline metric index constants changed in a parallel track and IDX_NET_HEAT references were not updated."
+                                          "F2 was added as Validator-view feature in IP-0049 without considering Operator Screens accessibility."
                                       ],
-                       "root_cause":  null,
-                       "resolution_candidate":  "Restore compile integrity by reconciling sparkline metric index definitions and references (reintroduce IDX_NET_HEAT or migrate callsites to the canonical index), then rerun IP-0049 Stage E.",
+                       "root_cause":  "SceneBridge.Update() switch statement handles F2 only in Validator case; OperatorScreens case lacks F2 input routing.",
+                       "resolution_candidate":  "Add F2 handling to OperatorScreens case that switches to Validator view and opens scenario selector, with appropriate async scene load handling.",
                        "links":  [
-                                     "Blocked IP stage: IP-0049 Stage E - System Regression",
-                                     "Likely impacted: Assets/Scripts/Validation/ValidationDashboard.Sparklines.cs"
+                                     "Assigned DP: DP-0008 - Operator Interface & Scenarios",
+                                     "Related: CS-0103 (scenario overlay keybind), CS-0119 (F2 overlay implementation)"
                                  ],
                        "tags":  [
-                                    "Build-Break",
-                                    "ValidationDashboard",
-                                    "IDX_NET_HEAT",
-                                    "IP-0049-Blocker",
-                                    "Blocking-Dependency",
+                                    "Scenario-Selection",
+                                    "F2-Keybind",
+                                    "SceneBridge",
+                                    "Input-Routing",
+                                    "Low-Priority",
                                     "User-Request-2026-02-18"
                                 ],
                        "closed_at":  null,

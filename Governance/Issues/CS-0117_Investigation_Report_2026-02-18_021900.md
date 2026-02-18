@@ -15,10 +15,12 @@ IP-0049 execution for `CS-0104` completed, but Stage E regression is blocked by 
 ## Evidence
 
 1. `Governance/ImplementationPlans/IP-0049/Reports/IP-0049_StageE_SystemRegression_2026-02-18_020900.md`  
-   Stage E records build gate failure due to unresolved `IDX_NET_HEAT` in sparklines.
-2. `Assets/Scripts/Validation/ValidationDashboard.Sparklines.cs:489-495`  
+   Initial Stage E recorded build gate failure due to unresolved `IDX_NET_HEAT` in sparklines.
+2. `Governance/ImplementationPlans/IP-0049/Reports/IP-0049_StageE_SystemRegression_2026-02-18_022300.md`  
+   Stage E rerun recorded PASS with compile baseline restored.
+3. `Assets/Scripts/Validation/ValidationDashboard.Sparklines.cs:489-495`  
    Sparkline update path reads `IDX_NET_HEAT`.
-3. `Assets/Scripts/Validation/ValidationDashboard.Sparklines.cs:522`  
+4. `Assets/Scripts/Validation/ValidationDashboard.Sparklines.cs:522`  
    Additional `IDX_NET_HEAT` usage appears in metric mapping path.
 
 ## Root Cause Hypothesis
@@ -35,5 +37,11 @@ A parallel-track change altered metric index constants/mappings, but `IDX_NET_HE
 
 ## Dependency Disposition
 
-- `CS-0117` blocks closure of `IP-0049`.
+- `CS-0117` blocked closure of `IP-0049` until Stage E rerun.
 - `CS-0117` is scoped under `DP-0013`/`IP-0049` for blocking-traceability.
+
+## Resolution Update (2026-02-18 02:23 UTC)
+
+- Stage E rerun evidence (`dotnet build Critical.slnx`) passed with `0` errors.
+- `IDX_NET_HEAT` unresolved-symbol compile failure is no longer reproducible in current workspace baseline.
+- Disposition: `CLOSED` with `resolution_type = CLOSE_NO_CODE` (baseline restored without additional IP-0049 code changes in this pass).

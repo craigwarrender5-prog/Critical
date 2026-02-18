@@ -21,6 +21,7 @@
 //   1-8/Tab    â†’ Unload Validator, show operator Canvas (ScreenManager handles screen selection)
 //   Esc        â†’ If Validator active: return to operator screens
 //                 If operator screens active: no action (reserved for future)
+//   F2         â†’ Toggle validator scenario selector overlay (routed via SceneBridge)
 //   F1         â†’ Toggle Validator dashboard visibility (handled by HeatupValidationVisual)
 //   F5-F9      â†’ Time acceleration (handled by HeatupValidationVisual)
 //
@@ -99,6 +100,9 @@ namespace Critical.Core
         /// <summary>Reference to the persistent HeatupSimEngine.</summary>
         private HeatupSimEngine _engine;
 
+        /// <summary>Cached validator dashboard component for routed input actions.</summary>
+        private HeatupValidationVisual _validatorVisual;
+
         // ====================================================================
         // SINGLETON ACCESS
         // ====================================================================
@@ -164,8 +168,13 @@ namespace Critical.Core
                     break;
 
                 case ActiveView.Validator:
+                    // F2 â†’ toggle validator scenario selector overlay
+                    if (kb.f2Key.wasPressedThisFrame)
+                    {
+                        ToggleValidatorScenarioSelector();
+                    }
                     // Any screen key â†’ return to operator screens
-                    if (IsScreenKeyPressed(kb))
+                    else if (IsScreenKeyPressed(kb))
                     {
                         SwitchToOperatorScreens();
                     }
@@ -225,6 +234,7 @@ namespace Critical.Core
                     IsValidatorLoaded = true;
                     CurrentView = ActiveView.Validator;
                     _sceneTransitionInProgress = false;
+                    _validatorVisual = FindObjectOfType<HeatupValidationVisual>();
 
                     // Re-resolve ScreenDataBridge sources now that both scenes are loaded
                     ResolveDataBridgeSources();
@@ -283,6 +293,7 @@ namespace Critical.Core
                     IsValidatorLoaded = false;
                     CurrentView = ActiveView.OperatorScreens;
                     _sceneTransitionInProgress = false;
+                    _validatorVisual = null;
 
                     if (debugLogging)
                         Debug.Log("[SceneBridge] Validator unloaded â€” Operator Screens active");
@@ -292,6 +303,7 @@ namespace Critical.Core
             {
                 CurrentView = ActiveView.OperatorScreens;
                 _sceneTransitionInProgress = false;
+                _validatorVisual = null;
             }
         }
 
@@ -425,6 +437,26 @@ namespace Critical.Core
                    kb.digit7Key.wasPressedThisFrame ||
                    kb.digit8Key.wasPressedThisFrame ||
                    kb.tabKey.wasPressedThisFrame;
+        }
+
+        /// <summary>
+        /// Route F2 selector toggle to the validator dashboard component.
+        /// </summary>
+        private void ToggleValidatorScenarioSelector()
+        {
+            if (_validatorVisual == null)
+            {
+                _validatorVisual = FindObjectOfType<HeatupValidationVisual>();
+            }
+
+            if (_validatorVisual == null)
+            {
+                if (debugLogging)
+                    Debug.LogWarning("[SceneBridge] F2 selector toggle ignored: HeatupValidationVisual not found.");
+                return;
+            }
+
+            _validatorVisual.ToggleScenarioSelector();
         }
     }
 }
