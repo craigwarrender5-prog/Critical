@@ -1,8 +1,8 @@
 {
     "version":  "1.0.0",
-    "generated_at":  "2026-02-18T11:00:00Z",
+    "generated_at":  "2026-02-18T11:15:00Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-    "active_issue_count":  4,
+    "active_issue_count":  5,
     "issues":  [
                    {
                        "id":  "CS-0102",
@@ -187,6 +187,52 @@
                                     "F2-Keybind",
                                     "SceneBridge",
                                     "Input-Routing",
+                                    "Low-Priority",
+                                    "User-Request-2026-02-18"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0121",
+                       "title":  "SOLID PZR indicator not illuminated despite pressurizer being in solid condition",
+                       "domain":  "Operator Interface & Scenarios",
+                       "severity":  "LOW",
+                       "status":  "READY",
+                       "created_at":  "2026-02-18T11:15:00Z",
+                       "updated_at":  "2026-02-18T11:15:00Z",
+                       "stage_detected":  "User-Request-2026-02-18",
+                       "assigned_dp":  "DP-0008",
+                       "assigned_ip":  null,
+                       "observations":  [
+                                            "SOLID PZR indicator in Overview tab Pressurizer panel is not illuminated.",
+                                            "Header shows 'SOLID PZR - HEATING TO TSAT (358f)' confirming solid state.",
+                                            "PZR WATER=1800, STEAM=0, level gauge at 100% - clearly solid."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Governance/Issues/CS-0121_Investigation_Report_2026-02-18_111500.md",
+                                            "notes":  "Screenshot evidence and root cause analysis."
+                                        },
+                                        {
+                                            "ref":  "User screenshot 2026-02-18",
+                                            "notes":  "Shows SOLID PZR checkbox not lit while header confirms solid state."
+                                        }
+                                    ],
+                       "hypotheses":  [
+                                          "Indicator bound to wrong variable or has inverted logic.",
+                                          "May be checking hasBubble instead of !hasBubble."
+                                      ],
+                       "root_cause":  null,
+                       "resolution_candidate":  "Locate SOLID PZR indicator in TabOverview, verify conditional logic checks for !hasBubble or equivalent solid-state condition.",
+                       "links":  [
+                                     "Assigned DP: DP-0008 - Operator Interface & Scenarios",
+                                     "Likely impacted: Assets/Scripts/Validation/HeatupValidationVisual.TabOverview.cs"
+                                 ],
+                       "tags":  [
+                                    "Dashboard-Indicator",
+                                    "PZR-Solid-State",
+                                    "Visual-Bug",
                                     "Low-Priority",
                                     "User-Request-2026-02-18"
                                 ],
