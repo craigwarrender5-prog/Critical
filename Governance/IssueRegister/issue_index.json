@@ -1,7 +1,7 @@
 ﻿{
     "version":  "1.0.0",
     "generated_at":  "2026-02-18T18:10:00Z",
-    "entry_count":  126,
+    "entry_count":  127,
     "entries":  [
                     {
                         "id":  "CS-0001",
@@ -2242,12 +2242,33 @@
                                      "Stage1-Complete",
                                      "User-Request-2026-02-18"
                                  ]
+                    },
+                    {
+                        "id":  "CS-0127",
+                        "title":  "Validation Dashboard Complete Overhaul Using Unity UI Toolkit",
+                        "domain":  "Operator Interface & Scenarios",
+                        "severity":  "HIGH",
+                        "status":  "IN_PROGRESS",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0008",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-18T14:00:00Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "ValidationDashboard",
+                                     "UI-Toolkit",
+                                     "Painter2D",
+                                     "Animation",
+                                     "Dashboard-Overhaul",
+                                     "User-Request-2026-02-18"
+                                 ]
                     }
                 ],
     "registry_role":  "AUTHORITATIVE_FULL_HISTORY",
     "registry_scope":  "Contains full lifecycle history (OPEN + CLOSED). Historical entries must remain in this file.",
     "active_working_set_file":  "Governance/IssueRegister/issue_register.json",
     "closed_issue_count":  121,
-    "active_issue_count":  5,
-    "entry_count":  126
+    "active_issue_count":  6,
+    "entry_count":  127
 }

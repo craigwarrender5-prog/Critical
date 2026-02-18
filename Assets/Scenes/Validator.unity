@@ -144,7 +144,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 582758273}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 0aa58d8b4f792264fb58f8355d5d0e17, type: 3}
   m_Name: 
@@ -271,6 +271,441 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &944039189
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 944039191}
+  - component: {fileID: 944039190}
+  m_Layer: 0
+  m_Name: Engine
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &944039190
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 944039189}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: ca0b68f1bdef6154d983bff52450cacc, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Critical.Validation.HeatupSimEngine
+  runOnStart: 0
+  startTemperature: 100
+  startPressure: 114.7
+  startPZRLevel: 100
+  coldShutdownStart: 1
+  targetTemperature: 557
+  targetPressure: 2235
+  enableAsyncLogWriter: 1
+  enableHighFrequencyPerfLogs: 0
+  enableWorkerThreadStepping: 0
+  enableModularCoordinatorPath: 0
+  enablePzrBubbleDiagnostics: 0
+  pzrBubbleDiagnosticsLabel: DEFAULT
+  pzrBubbleDiagnosticsResidualTolerance_ft3: 10
+  pzrBubbleDiagnosticsMaxIterations: 8
+  enablePzrOrificeDiagnostics: 0
+  pzrOrificeDiagnosticsSampleStrideTicks: 30
+  simTime: 0
+  T_avg: 0
+  pressure: 0
+  pzrLevel: 0
+  T_sat: 0
+  subcooling: 0
+  rcpHeat: 0
+  pzrHeaterPower: 0
+  rcpCount: 0
+  gridEnergy: 0
+  heatupRate: 0
+  plantMode: 0
+  isRunning: 0
+  statusMessage: 
+  wallClockTime: 0
+  currentSpeedIndex: 0
+  isAccelerated: 0
+  T_cold: 0
+  T_hot: 0
+  T_pzr: 0
+  T_rcs: 0
+  T_sg_secondary: 0
+  sgHeatTransfer_MW: 0
+  sgTopNodeTemp: 0
+  sgBottomNodeTemp: 0
+  sgStratificationDeltaT: 0
+  sgCirculationFraction: 0
+  sgCirculationActive: 0
+  sgThermoclineHeight: 0
+  sgActiveAreaFraction: 0
+  sgBoilingActive: 0
+  sgSecondaryPressure_psia: 0
+  sgSaturationTemp_F: 0
+  sgMaxSuperheat_F: 0
+  sgNitrogenIsolated: 0
+  sgBoilingIntensity: 0
+  sgBoundaryMode: OPEN
+  sgPressureSourceBranch: floor
+  sgSteamInventory_lb: 0
+  sgStartupBoundaryState: OPEN_PREHEAT
+  sgStartupBoundaryStateTicks: 0
+  sgStartupBoundaryStateTime_hr: 0
+  sgHoldTargetPressure_psia: 0
+  sgHoldPressureDeviation_pct: 0
+  sgHoldNetLeakage_pct: 0
+  sgPressurizationWindowActive: 0
+  sgPressurizationWindowStartTime_hr: 0
+  sgPressurizationWindowNetPressureRise_psia: 0
+  sgPressurizationWindowTsatDelta_F: 0
+  sgPressurizationConsecutivePressureRiseIntervals: 0
+  sgPressurizationConsecutiveTsatRiseIntervals: 0
+  sgPreBoilTempApproachToTsat_F: 0
+  dp0003ValidationProfile: IP-0018 deterministic startup profile
+  dp0003BaselineSignature: 
+  stageE_PrimaryHeatInput_MW: 0
+  stageE_TotalPrimaryEnergy_MJ: 0
+  stageE_TotalSGEnergyRemoved_MJ: 0
+  stageE_PercentMismatch: 0
+  stageE_EnergySampleCount: 0
+  stageE_DynamicActiveHeatingIntervalCount: 0
+  stageE_DynamicPrimaryRiseCheckCount: 0
+  stageE_DynamicPrimaryRisePassCount: 0
+  stageE_DynamicPrimaryRiseFailCount: 0
+  stageE_DynamicTempDelta3WindowCount: 0
+  stageE_DynamicTempDelta3Last_F: 0
+  stageE_DynamicTempDelta3Min_F: 0
+  stageE_DynamicTempDelta3Max_F: 0
+  stageE_DynamicTempDelta3Above5Count: 0
+  stageE_DynamicTempDelta3Below2Count: 0
+  stageE_DynamicPressureFlatline3Count: 0
+  stageE_DynamicHardClampViolationCount: 0
+  stageE_DynamicHardClampStreak: 0
+  stageE_DynamicLastPressureDelta_psia: 0
+  stageE_DynamicLastTopToTsatDelta_F: 0
+  stageE_EnergyWindowActive: 0
+  stageE_LastSGHeatRemoval_MW: 0
+  stageE_EnergyNegativeViolationCount: 0
+  stageE_EnergyOverPrimaryViolationCount: 0
+  stageE_EnergyMaxOverPrimaryPct: 0
+  sgDrainingActive: 0
+  sgDrainingComplete: 0
+  sgDrainingRate_gpm: 0
+  sgTotalMassDrained_lb: 0
+  sgSecondaryMass_lb: 0
+  sgWideRangeLevel_pct: 0
+  sgNarrowRangeLevel_pct: 0
+  rhrNetHeat_MW: 0
+  rhrHXRemoval_MW: 0
+  rhrPumpHeat_MW: 0
+  rhrActive: 0
+  rhrModeString: 
+  pzrWaterVolume: 0
+  pzrSteamVolume: 0
+  pzrTotalEnthalpy_BTU: 0
+  pzrSpecificEnthalpy_BTU_lb: 0
+  pzrClosureVolumeResidual_ft3: 0
+  pzrClosureEnergyResidual_BTU: 0
+  pzrClosureConverged: 0
+  pzrClosureSolveAttempts: 0
+  pzrClosureSolveConverged: 0
+  pzrClosureConvergencePct: 0
+  pzrClosureLastIterationCount: 0
+  pzrClosureLastFailureReason: NONE
+  pzrClosureLastConvergencePattern: UNSET
+  pzrClosureLastPhaseFraction: 0
+  pzrClosureBracketMassTarget_lbm: 0
+  pzrClosureBracketEnthalpyTarget_BTU: 0
+  pzrClosureBracketVolumeTarget_ft3: 0
+  pzrClosureBracketPressureGuess_psia: 0
+  pzrClosureBracketOperatingMin_psia: 0
+  pzrClosureBracketOperatingMax_psia: 0
+  pzrClosureBracketHardMin_psia: 0
+  pzrClosureBracketHardMax_psia: 0
+  pzrClosureBracketLastLow_psia: 0
+  pzrClosureBracketLastHigh_psia: 0
+  pzrClosureBracketResidualLow_ft3: 0
+  pzrClosureBracketResidualHigh_ft3: 0
+  pzrClosureBracketResidualSignLow: 0
+  pzrClosureBracketResidualSignHigh: 0
+  pzrClosureBracketRegimeLow: UNSET
+  pzrClosureBracketRegimeHigh: UNSET
+  pzrClosureBracketWindowsTried: 0
+  pzrClosureBracketValidEvaluations: 0
+  pzrClosureBracketInvalidEvaluations: 0
+  pzrClosureBracketNanEvaluations: 0
+  pzrClosureBracketOutOfRangeEvaluations: 0
+  pzrClosureBracketFound: 0
+  pzrClosureBracketSearchTrace: 
+  rcsWaterMass: 0
+  chargingFlow: 0
+  letdownFlow: 0
+  surgeFlow: 0
+  pressureRate: 0
+  pzrHeatRate: 0
+  rcsHeatRate: 0
+  rvlisDynamic: 0
+  rvlisFull: 0
+  rvlisUpper: 0
+  rvlisDynamicValid: 0
+  rvlisFullValid: 0
+  rvlisUpperValid: 0
+  rcsBoronConcentration: 0
+  massConservationError: 0
+  initialSystemMass_lbm: 0
+  totalSystemMass_lbm: 0
+  externalNetMass_lbm: 0
+  massError_lbm: 0
+  plantExternalIn_gal: 0
+  plantExternalOut_gal: 0
+  plantExternalNet_gal: 0
+  primaryMassLedger_lb: 0
+  primaryMassComponents_lb: 0
+  primaryMassDrift_lb: 0
+  primaryMassDrift_pct: 0
+  primaryMassExpected_lb: 0
+  primaryMassBoundaryError_lb: 0
+  primaryMassConservationOK: 0
+  primaryMassAlarm: 0
+  primaryMassStatus: NOT_CHECKED
+  pbocEventCount: 0
+  pbocPairingAssertionFailures: 0
+  steamDumpHeat_MW: 0
+  steamPressure_psig: 0
+  steamDumpActive: 0
+  hzpStable: 0
+  hzpReadyForStartup: 0
+  hzpProgress: 0
+  heaterPIDActive: 0
+  heaterPIDOutput: 0
+  sprayFlow_GPM: 0
+  sprayValvePosition: 0
+  sprayActive: 0
+  spraySteamCondensed_lbm: 0
+  netPlantHeat_MW: 0
+  sgSteaming: 0
+  sgSecondaryPressure_psig: 0
+  handoffInitiated: 0
+  condenserVacuum_inHg: 0
+  condenserBackpressure_psia: 0
+  condenserC9Available: 0
+  condenserPulldownPhase: 
+  hotwellLevel_pct: 0
+  cstLevel_pct: 0
+  feedwaterReturnFlow_lbhr: 0
+  steamDumpBridgeState: 
+  steamDumpPermitted: 0
+  permissiveStatusMessage: 
+  condenserStartupCommanded: 0
+  p12BypassCommanded: 0
+  condenserStartupTime_hr: 0
+  vctLevelLow: 0
+  vctLevelHigh: 0
+  vctDivertActive: 0
+  vctMakeupActive: 0
+  vctRWSTSuction: 0
+  cvcsIntegralError: 0
+  letdownViaRHR: 1
+  letdownViaOrifice: 0
+  letdownIsolatedFlag: 0
+  orificeLetdownFlow: 0
+  rhrLetdownFlow: 0
+  pzrLevelSetpointDisplay: 25
+  chargingToRCS: 0
+  totalCCPOutput: 0
+  divertFraction: 0
+  cvcsThermalMixing_MW: 0
+  cvcsThermalMixingDeltaF: 0
+  pzrHeatersOn: 0
+  pzrLevelLow: 0
+  pzrLevelHigh: 0
+  rcsFlowLow: 0
+  chargingActive: 0
+  letdownActive: 0
+  steamBubbleOK: 0
+  sealInjectionOK: 0
+  ccwRunning: 0
+  rcpRunning: 00000000
+  heatupInProgress: 0
+  pressureLow: 0
+  pressureHigh: 0
+  sgSecondaryPressureHigh: 0
+  subcoolingLow: 0
+  modePermissive: 0
+  smmLowMargin: 0
+  smmNoMargin: 0
+  rvlisLevelLow: 0
+  solidPressurizer: 1
+  bubbleFormed: 0
+  bubbleFormationTemp: 0
+  bubbleFormationTime: 0
+  startupHoldActive: 0
+  startupHoldReleaseTime_hr: 0
+  startupHoldReleaseLogged: 0
+  startupHoldActivationLogged: 0
+  startupHoldStartTime_hr: 0
+  startupHoldElapsedTime_hr: 0
+  startupHoldPressureRateAbs_psi_hr: 0
+  startupHoldTimeGatePassed: 0
+  startupHoldPressureRateGatePassed: 0
+  startupHoldStateQualityGatePassed: 0
+  startupHoldReleaseBlockReason: NONE
+  heaterAuthorityState: AUTO
+  heaterAuthorityReason: INIT
+  heaterLimiterReason: NONE
+  heaterLimiterDetail: NONE
+  heaterPressureRateClampActive: 0
+  heaterRampRateClampActive: 0
+  heaterManualDisabled: 0
+  heaterAutoDemandComputeSuppressed: 0
+  bubblePhase: 0
+  bubblePhaseStartTime: 0
+  bubbleDrainStartLevel: 0
+  ccpStarted: 0
+  ccpStartTime: 0
+  ccpStartLevel: 0
+  currentHeaterMode: 0
+  bubbleHeaterSmoothedOutput: 1
+  auxSprayActive: 0
+  auxSprayStartTime: 0
+  auxSprayPressureBefore: 0
+  auxSprayPressureDrop: 0
+  auxSprayTestPassed: 0
+  drainSteamDisplacement_lbm: 0
+  drainCvcsTransfer_lbm: 0
+  drainDuration_hr: 0
+  drainExitPressure_psia: 0
+  drainExitLevel_pct: 0
+  drainHardGateTriggered: 0
+  drainPressureBandMaintained: 0
+  drainTransitionReason: NONE
+  drainCvcsPolicyMode: LEGACY_FIXED
+  drainLetdownFlow_gpm: 0
+  drainLetdownDemand_gpm: 0
+  drainChargingFlow_gpm: 0
+  drainNetOutflowFlow_gpm: 0
+  drainLineupDemandIndex: 1
+  drainHydraulicCapacity_gpm: 0
+  drainHydraulicDeltaP_psi: 0
+  drainHydraulicDensity_lbm_ft3: 0
+  drainHydraulicQuality: 0
+  drainLetdownSaturated: 0
+  drainLineupEventThisStep: 0
+  drainLineupEventCount: 0
+  drainLastLineupEventTime_hr: -1
+  drainLastLineupPrevIndex: 1
+  drainLastLineupNewIndex: 1
+  drainLastLineupTrigger: NONE
+  drainLastLineupReason: NONE
+  solidPlantPressureSetpoint: 0
+  solidPlantPressureLow: 0
+  solidPlantPressureHigh: 0
+  solidPlantPressureError: 0
+  solidPlantPressureInBand: 0
+  bubbleTargetTemp: 0
+  timeToBubble: 0
+  heatupPhaseDesc: 
+  pzrHeatRateDisplay: 0
+  estimatedTotalHeatupTime: 0
+  longHoldPressureAuditActive: 0
+  longHoldPressureWriteCount: 0
+  longHoldPressureStateDerivedWriteCount: 0
+  longHoldPressureOverrideAttemptCount: 0
+  longHoldPressureBlockedOverrideCount: 0
+  longHoldPressureInvariantFailed: 0
+  longHoldPressureInvariantReason: 
+  longHoldLastPressureBefore: 0
+  longHoldLastPressureAfter: 0
+  longHoldLastPressureSource: NONE
+  longHoldLastPressureStack: 
+  longHoldPressureTickCount: 0
+  longHoldPressureRegime: UNSET
+  longHoldPressureEquationBranch: UNSET
+  longHoldPressureUsesSaturation: 0
+  longHoldPressureSaturationPsia: 0
+  longHoldPressureModelDensity: 0
+  longHoldPressureModelCompressibility: 0
+  longHoldPressureModelDeltaPsi: 0
+  rtccTransitionCount: 0
+  rtccAssertionFailureCount: 0
+  rtccMaxRawDeltaAbs_lbm: 0
+  rtccLastPreMass_lbm: 0
+  rtccLastReconstructedMass_lbm: 0
+  rtccLastRawDelta_lbm: 0
+  rtccLastPostMass_lbm: 0
+  rtccLastAssertDelta_lbm: 0
+  rtccLastTransition: NONE
+  rtccLastAuthorityFrom: UNSET
+  rtccLastAuthorityTo: UNSET
+  rtccLastAssertPass: 1
+  rtccTelemetryPresent: 0
+  tempHistory: []
+  pressHistory: []
+  timeHistory: []
+  pzrLevelHistory: []
+  subcoolHistory: []
+  heatRateHistory: []
+  chargingHistory: []
+  letdownHistory: []
+  vctLevelHistory: []
+  surgeFlowHistory: []
+  tHotHistory: []
+  tColdHistory: []
+  tSgSecondaryHistory: []
+  brsHoldupHistory: []
+  brsDistillateHistory: []
+  tPzrHistory: []
+  tSatHistory: []
+  pressureRateHistory: []
+  steamDumpHeatHistory: []
+  steamPressureHistory: []
+  heaterPIDOutputHistory: []
+  hzpProgressHistory: []
+  sprayFlowHistory: []
+  effectiveRCPHeat: 0
+  enableMassDiagnostics: 0
+  diagSampleIntervalFrames: 10
+  noRcpTransportFactor: 1
+  thermoStateWriter: UNSET
+  hotPathWarningSuppressedCount: 0
+  orifice75Count: 1
+  orifice45Open: 0
+  orificeLineupDesc: "1\xC3\u201475 gpm"
+  logCount: 0
+  lastLogSimTime: 0
+  asyncLogDroppedCount: 0
+  asyncLogQueueHighWatermark: 0
+  asyncLogWriteErrorCount: 0
+  asyncLogLastFlushMs: 0
+  asyncLogMaxDispatchMs: 0
+  workerThreadSteppingLastStepUsed: 0
+  modularCoordinatorPathLastStepUsed: 0
+  useScenarioStartPath: 0
+  startupScenarioId: validation.heatup.baseline
+  activeScenarioId: 
+--- !u!4 &944039191
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 944039189}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 1046.5448, y: 588.25806, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1415653385
 GameObject:
   m_ObjectHideFlags: 0
@@ -320,6 +755,78 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &2090137677
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 2090137680}
+  - component: {fileID: 2090137679}
+  - component: {fileID: 2090137678}
+  m_Layer: 5
+  m_Name: UIDocument
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &2090137678
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2090137677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4292b4e05c6eac34dae43aeec5d84f45, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Critical.UI.UIToolkit.ValidationDashboard.UITKDashboardController
+  engine: {fileID: 944039190}
+  uiDocument: {fileID: 2090137679}
+  dataRefreshRate: 5
+  enableDebugLogging: 0
+--- !u!114 &2090137679
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2090137677}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 19102, guid: 0000000000000000e000000000000000, type: 0}
+  m_Name: 
+  m_EditorClassIdentifier: UnityEngine.dll::UnityEngine.UIElements.UIDocument
+  m_PanelSettings: {fileID: 11400000, guid: c3e52357f2491cf4f89c1126aff73a50, type: 2}
+  m_ParentUI: {fileID: 0}
+  sourceAsset: {fileID: 0}
+  m_SortingOrder: 0
+  m_Position: 0
+  m_WorldSpaceSizeMode: 1
+  m_WorldSpaceWidth: 1920
+  m_WorldSpaceHeight: 1080
+  m_PivotReferenceSize: 0
+  m_Pivot: 0
+  m_WorldSpaceCollider: {fileID: 0}
+--- !u!4 &2090137680
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2090137677}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -327,3 +834,5 @@ SceneRoots:
   - {fileID: 619394802}
   - {fileID: 1415653387}
   - {fileID: 582758276}
+  - {fileID: 2090137680}
+  - {fileID: 944039191}

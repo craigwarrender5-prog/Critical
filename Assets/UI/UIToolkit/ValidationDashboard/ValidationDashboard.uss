@@ -1,0 +1,405 @@
+/* ============================================================================
+   CRITICAL: Master the Atom — UI Toolkit Validation Dashboard
+   ValidationDashboard.uss — Master Stylesheet
+   ============================================================================
+   
+   PURPOSE:
+     Centralized styling for the UI Toolkit Validation Dashboard.
+     Follows Westinghouse 4-Loop PWR control room color conventions.
+   
+   COLOR PALETTE:
+     - Background: Near-black with blue tint (#0F1118)
+     - Normal/Safe: Bright green (#2ED940)
+     - Warning: Bright amber (#FFC700)
+     - Alarm: Bright red (#FF2E2E)
+     - Info: Cyan (#00D9F2)
+     - Text Primary: Near-white (#EBEDF2)
+     - Text Secondary: Gray (#8C94A6)
+   
+   VERSION: 1.0.0
+   DATE: 2026-02-18
+   CS: CS-0127 Stage 1
+   ============================================================================ */
+
+/* ========================================================================
+   ROOT & CONTAINER
+   ======================================================================== */
+
+.validation-dashboard {
+    background-color: rgb(15, 17, 24);
+    flex-grow: 1;
+    padding: 8px;
+}
+
+.validation-dashboard__header {
+    background-color: rgb(12, 14, 20);
+    height: 48px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding-left: 16px;
+    padding-right: 16px;
+    margin-bottom: 8px;
+    border-radius: 4px;
+}
+
+.validation-dashboard__header-title {
+    font-size: 18px;
+    color: rgb(235, 237, 242);
+    -unity-font-style: bold;
+}
+
+.validation-dashboard__header-status {
+    font-size: 12px;
+    color: rgb(0, 217, 242);
+}
+
+.validation-dashboard__tab-bar {
+    flex-direction: row;
+    height: 36px;
+    margin-bottom: 8px;
+}
+
+.validation-dashboard__tab {
+    background-color: rgb(23, 26, 36);
+    padding-left: 16px;
+    padding-right: 16px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    margin-right: 2px;
+    border-top-left-radius: 4px;
+    border-top-right-radius: 4px;
+}
+
+.validation-dashboard__tab:hover {
+    background-color: rgb(35, 40, 55);
+}
+
+.validation-dashboard__tab--active {
+    background-color: rgb(51, 128, 255);
+}
+
+.validation-dashboard__tab-label {
+    font-size: 11px;
+    color: rgb(140, 148, 166);
+    -unity-font-style: bold;
+}
+
+.validation-dashboard__tab--active .validation-dashboard__tab-label {
+    color: rgb(235, 237, 242);
+}
+
+.validation-dashboard__content {
+    flex-grow: 1;
+    background-color: rgb(23, 26, 36);
+    border-radius: 4px;
+    padding: 12px;
+}
+
+/* ========================================================================
+   PANELS & SECTIONS
+   ======================================================================== */
+
+.dashboard-panel {
+    background-color: rgb(23, 26, 36);
+    border-radius: 4px;
+    padding: 8px;
+    margin: 4px;
+}
+
+.dashboard-panel__header {
+    flex-direction: row;
+    align-items: center;
+    height: 28px;
+    background-color: rgb(30, 35, 50);
+    margin-bottom: 8px;
+    padding-left: 8px;
+    border-radius: 2px;
+}
+
+.dashboard-panel__title {
+    font-size: 11px;
+    color: rgb(140, 148, 166);
+    -unity-font-style: bold;
+    letter-spacing: 1px;
+}
+
+.dashboard-section {
+    margin-bottom: 12px;
+}
+
+.dashboard-row {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 4px;
+}
+
+/* ========================================================================
+   ARC GAUGE ELEMENT
+   ======================================================================== */
+
+.arc-gauge {
+    min-width: 100px;
+    min-height: 120px;
+    align-items: center;
+    margin: 4px;
+    
+    /* Custom properties for styling */
+    --track-color: rgb(38, 41, 51);
+    --normal-color: rgb(46, 217, 64);
+    --warning-color: rgb(255, 199, 0);
+    --alarm-color: rgb(255, 46, 46);
+    --needle-color: rgb(255, 255, 255);
+    --arc-width: 10;
+}
+
+.arc-gauge__value {
+    font-size: 16px;
+    color: rgb(46, 217, 64);
+    -unity-text-align: middle-center;
+    margin-top: 4px;
+}
+
+.arc-gauge__label {
+    font-size: 10px;
+    color: rgb(140, 148, 166);
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+    letter-spacing: 0.5px;
+}
+
+/* Compact variant */
+.arc-gauge--compact {
+    min-width: 80px;
+    min-height: 100px;
+}
+
+.arc-gauge--compact .arc-gauge__value {
+    font-size: 14px;
+}
+
+.arc-gauge--compact .arc-gauge__label {
+    font-size: 9px;
+}
+
+/* Large variant */
+.arc-gauge--large {
+    min-width: 140px;
+    min-height: 160px;
+}
+
+.arc-gauge--large .arc-gauge__value {
+    font-size: 20px;
+}
+
+/* ========================================================================
+   LED INDICATOR ELEMENT
+   ======================================================================== */
+
+.led-indicator {
+    flex-direction: row;
+    align-items: center;
+    min-height: 20px;
+    padding: 2px;
+    
+    --on-color: rgb(46, 217, 64);
+    --off-color: rgb(60, 62, 70);
+    --led-size: 12;
+}
+
+.led-indicator__label {
+    font-size: 11px;
+    color: rgb(190, 195, 205);
+    margin-left: 6px;
+}
+
+/* Color variants */
+.led-indicator--green {
+    --on-color: rgb(46, 217, 64);
+}
+
+.led-indicator--amber {
+    --on-color: rgb(255, 199, 0);
+}
+
+.led-indicator--red {
+    --on-color: rgb(255, 46, 46);
+}
+
+.led-indicator--cyan {
+    --on-color: rgb(0, 217, 242);
+}
+
+.led-indicator--blue {
+    --on-color: rgb(51, 128, 255);
+}
+
+/* ========================================================================
+   DIGITAL READOUT ELEMENT
+   ======================================================================== */
+
+.digital-readout {
+    flex-direction: column;
+    align-items: center;
+    padding: 4px 8px;
+    min-width: 80px;
+    
+    --normal-color: rgb(46, 217, 64);
+    --warning-color: rgb(255, 199, 0);
+    --alarm-color: rgb(255, 46, 46);
+}
+
+.digital-readout__value {
+    font-size: 16px;
+    color: rgb(46, 217, 64);
+    -unity-text-align: middle-center;
+}
+
+.digital-readout__trend {
+    font-size: 12px;
+    color: rgb(46, 217, 64);
+    margin-left: 4px;
+}
+
+.digital-readout__label {
+    font-size: 10px;
+    color: rgb(140, 148, 166);
+    -unity-text-align: middle-center;
+    -unity-font-style: bold;
+    margin-top: 2px;
+}
+
+/* Compact variant */
+.digital-readout--compact {
+    padding: 2px 4px;
+}
+
+.digital-readout--compact .digital-readout__value {
+    font-size: 14px;
+}
+
+/* Large variant */
+.digital-readout--large .digital-readout__value {
+    font-size: 20px;
+}
+
+/* ========================================================================
+   GAUGE GROUP LAYOUTS
+   ======================================================================== */
+
+.gauge-row {
+    flex-direction: row;
+    justify-content: space-around;
+    align-items: flex-start;
+    margin-bottom: 8px;
+}
+
+.gauge-grid {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+/* ========================================================================
+   STATUS INDICATORS GROUP
+   ======================================================================== */
+
+.status-group {
+    flex-direction: column;
+    padding: 4px;
+}
+
+.status-group__title {
+    font-size: 10px;
+    color: rgb(100, 105, 120);
+    -unity-font-style: bold;
+    margin-bottom: 4px;
+    letter-spacing: 0.5px;
+}
+
+.status-row {
+    flex-direction: row;
+    align-items: center;
+    height: 22px;
+    margin-bottom: 2px;
+}
+
+/* ========================================================================
+   ALARMS & ANNUNCIATOR PREVIEW
+   ======================================================================== */
+
+.alarm-banner {
+    background-color: rgb(50, 8, 8);
+    border-color: rgb(255, 46, 46);
+    border-width: 1px;
+    border-radius: 4px;
+    padding: 8px;
+    margin: 4px;
+}
+
+.alarm-banner--warning {
+    background-color: rgb(50, 40, 0);
+    border-color: rgb(255, 199, 0);
+}
+
+.alarm-banner__text {
+    font-size: 12px;
+    color: rgb(255, 46, 46);
+    -unity-font-style: bold;
+}
+
+.alarm-banner--warning .alarm-banner__text {
+    color: rgb(255, 199, 0);
+}
+
+/* ========================================================================
+   UTILITY CLASSES
+   ======================================================================== */
+
+.text-normal {
+    color: rgb(46, 217, 64);
+}
+
+.text-warning {
+    color: rgb(255, 199, 0);
+}
+
+.text-alarm {
+    color: rgb(255, 46, 46);
+}
+
+.text-info {
+    color: rgb(0, 217, 242);
+}
+
+.text-primary {
+    color: rgb(235, 237, 242);
+}
+
+.text-secondary {
+    color: rgb(140, 148, 166);
+}
+
+.text-dim {
+    color: rgb(80, 85, 100);
+}
+
+.bg-panel {
+    background-color: rgb(23, 26, 36);
+}
+
+.bg-section {
+    background-color: rgb(30, 35, 50);
+}
+
+.bg-dark {
+    background-color: rgb(15, 17, 24);
+}
+
+.spacer {
+    flex-grow: 1;
+}
+
+.hidden {
+    display: none;
+}

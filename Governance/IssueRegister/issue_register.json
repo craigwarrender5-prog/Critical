@@ -2,8 +2,63 @@
     "version":  "1.0.0",
     "generated_at":  "2026-02-18T18:10:00Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-    "active_issue_count":  5,
+    "active_issue_count":  6,
     "issues":  [
+                   {
+                       "id":  "CS-0127",
+                       "title":  "Validation Dashboard Complete Overhaul Using Unity UI Toolkit",
+                       "domain":  "Operator Interface & Scenarios",
+                       "severity":  "HIGH",
+                       "status":  "IN_PROGRESS",
+                       "created_at":  "2026-02-18T14:00:00Z",
+                       "updated_at":  "2026-02-18T15:30:00Z",
+                       "current_stage":  "Stage 1 Complete",
+                       "stage_detected":  "User-Request-2026-02-18",
+                       "assigned_dp":  "DP-0008",
+                       "assigned_ip":  null,
+                       "observations":  [
+                                            "Two parallel OnGUI-based dashboards exist (HeatupValidationVisual and ValidationDashboard).",
+                                            "OnGUI cannot achieve modern professional aesthetics or smooth animations.",
+                                            "UI Toolkit POC documentation validates arc gauges and strip charts are viable in Unity 6.3.",
+                                            "HeatupSimEngine exposes 200+ parameters suitable for dashboard binding."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Governance/Issues/CS-0127_ValidationDashboard_UIToolkit_Overhaul_2026-02-18.md",
+                                            "notes":  "Full specification with tab structure, animation requirements, and implementation stages."
+                                        },
+                                        {
+                                            "ref":  "Documentation/UI_Documentation/UIToolkit_Feasibility_Analysis.md",
+                                            "notes":  "POC validation confirming Painter2D arc gauges and strip charts work."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/HeatupSimEngine.cs",
+                                            "notes":  "Source of all telemetry parameters for dashboard binding."
+                                        }
+                                    ],
+                       "hypotheses":  [
+                                          "UI Toolkit with Painter2D can deliver professional animated dashboard with <2ms update cost at 5Hz."
+                                      ],
+                       "root_cause":  "Legacy OnGUI technology limits visual quality and prevents implementation of animated visualizations required for professional operator training interface.",
+                       "resolution_candidate":  "Implement complete UI Toolkit-based dashboard with animated pressurizer vessel, arc gauges, strip charts, and drill-down tab structure. Replace both legacy dashboards.",
+                       "links":  [
+                                     "Assigned DP: DP-0008 - Operator Interface & Scenarios",
+                                     "Supersedes: CS-0118 (condenser telemetry), CS-0121 (visual bugs)",
+                                     "Related: Documentation/UI_Documentation/ (POC materials)"
+                                 ],
+                       "tags":  [
+                                    "ValidationDashboard",
+                                    "UI-Toolkit",
+                                    "Painter2D",
+                                    "Animation",
+                                    "Arc-Gauge",
+                                    "Strip-Chart",
+                                    "Dashboard-Overhaul",
+                                    "User-Request-2026-02-18"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
                    {
                        "id":  "CS-0113",
                        "title":  "Pressurizer system audit - PlantConstants.Pressurizer parameter governance gaps",

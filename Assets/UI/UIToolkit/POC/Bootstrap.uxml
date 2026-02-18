@@ -1,0 +1,23 @@
+<ui:UXML xmlns:ui="UnityEngine.UIElements" xmlns:uie="UnityEditor.UIElements" 
+    xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    engine="UnityEngine.UIElements" 
+    editor="UnityEditor.UIElements" 
+    noNamespaceSchemaLocation="../../../UIElementsSchema/UIElements.xsd" 
+    editor-extension-mode="False">
+    
+    <!-- 
+    Bootstrap.uxml — Minimal UXML for programmatic UI
+    
+    PURPOSE:
+    UIDocument requires a Source Asset to initialize rootVisualElement.
+    This empty container serves as the bootstrap - our C# code clears it
+    and builds the actual UI programmatically.
+    
+    USAGE:
+    Assign this to UIDocument's Source Asset field when using
+    ArcGaugePOCController or ExtendedPOCController.
+    -->
+    
+    <ui:VisualElement name="root" style="flex-grow: 1;" />
+    
+</ui:UXML>
