@@ -1,4 +1,4 @@
-// CRITICAL: Master the Atom - Phase 1 Core Physics Engine
+﻿// CRITICAL: Master the Atom - Phase 1 Core Physics Engine
 // CVCSController.cs - CVCS Charging/Letdown Flow Control
 //
 // File: Assets/Scripts/Physics/CVCSController.cs
@@ -202,7 +202,7 @@ namespace Critical.Physics
     /// Tracks spray valve position and thermodynamic effects.
     /// Persists between timesteps for valve dynamics.
     ///
-    /// Source: NRC HRTD 10.2 — Pressurizer spray system modulates between
+    /// Source: NRC HRTD 10.2 â€” Pressurizer spray system modulates between
     /// 2260 psig (start opening) and 2310 psig (fully open), providing
     /// cold-leg water to condense PZR steam and reduce pressure.
     /// </summary>
@@ -229,7 +229,7 @@ namespace Critical.Physics
         /// <summary>True if spray valve is open beyond bypass</summary>
         public bool IsActive;
         
-        /// <summary>Delta-T between PZR and spray water (°F)</summary>
+        /// <summary>Delta-T between PZR and spray water (Â°F)</summary>
         public float SprayDeltaT;
         
         /// <summary>Human-readable status</summary>
@@ -247,7 +247,7 @@ namespace Critical.Physics
     /// The engine should call Initialize() once when transitioning to two-phase,
     /// then Update() each timestep, reading flows from the returned state.
     /// </summary>
-    public static class CVCSController
+    public static partial class CVCSController
     {
         #region Initialization
         
@@ -294,12 +294,12 @@ namespace Critical.Physics
         /// Letdown flow is calculated based on orifice path and RCS conditions.
         /// 
         /// v4.4.0: Added orifice lineup parameters for multi-orifice letdown model.
-        /// When num75Open >= 0, uses the new mixed-orifice model (2×75 + 1×45 gpm)
+        /// When num75Open >= 0, uses the new mixed-orifice model (2Ã—75 + 1Ã—45 gpm)
         /// with ion exchanger flow limit. Legacy callers default to single 75-gpm orifice.
         /// </summary>
         /// <param name="state">Controller state (modified in place)</param>
         /// <param name="currentLevel">Current PZR level (%)</param>
-        /// <param name="T_avg">Average RCS temperature (°F)</param>
+        /// <param name="T_avg">Average RCS temperature (Â°F)</param>
         /// <param name="pressure_psia">RCS pressure (psia)</param>
         /// <param name="rcpCount">Number of RCPs running</param>
         /// <param name="dt_hr">Timestep in hours</param>
@@ -321,8 +321,8 @@ namespace Critical.Physics
             // LEVEL SETPOINT FROM PROGRAM
             // PZR level setpoint varies with T_avg per the level program
             // ================================================================
-            // v0.4.0 Issue #2 fix: Was GetPZRLevelProgram (at-power only, clamps to 25% below 557°F).
-            // Unified function uses heatup program below 557°F, at-power program above.
+            // v0.4.0 Issue #2 fix: Was GetPZRLevelProgram (at-power only, clamps to 25% below 557Â°F).
+            // Unified function uses heatup program below 557Â°F, at-power program above.
             state.LevelSetpoint = PlantConstants.GetPZRLevelSetpointUnified(T_avg);
             
             // ================================================================
@@ -370,8 +370,8 @@ namespace Critical.Physics
             state.LevelError = currentLevel - state.LevelSetpoint;
             
             // Proportional term: immediate response to level error
-            // Negative error (level low) → increase charging
-            // Positive error (level high) → decrease charging
+            // Negative error (level low) â†’ increase charging
+            // Positive error (level high) â†’ decrease charging
             float pCorrection = PlantConstants.CVCS_LEVEL_KP * (-state.LevelError);
             
             // Integral term: accumulated error drives steady-state correction
@@ -441,656 +441,7 @@ namespace Critical.Physics
         
         #endregion
         
-        #region Seal Flow Calculations
-        
-        /// <summary>
-        /// Calculate all RCP seal system flows.
-        /// 
-        /// Per NRC IN 93-84 and HRTD 3.2:
-        ///   - Seal injection: 8 gpm per RCP (from charging)
-        ///   - Seal leakoff to VCT: 3 gpm per RCP (#1 seal leakoff)
-        ///   - Seal return to RCS: 5 gpm per RCP (past #1 seal to RCS)
-        ///   - CBO loss: 1 gpm total when RCPs running
-        /// 
-        /// The seal injection is supplied by the charging pumps, so it
-        /// represents a demand on the CVCS that does not reach the RCS.
-        /// </summary>
-        /// <param name="rcpCount">Number of RCPs currently running (0-4)</param>
-        /// <returns>SealFlowState with all seal system flows</returns>
-        public static SealFlowState CalculateSealFlows(int rcpCount)
-        {
-            var state = new SealFlowState();
-            state.RCPCount = rcpCount;
-            
-            // Per-pump flows from PlantConstants
-            state.SealInjection = rcpCount * PlantConstants.SEAL_INJECTION_PER_PUMP_GPM;
-            state.SealReturnToVCT = rcpCount * PlantConstants.SEAL_LEAKOFF_PER_PUMP_GPM;
-            state.SealReturnToRCS = rcpCount * PlantConstants.SEAL_FLOW_TO_RCS_PER_PUMP_GPM;
-            
-            // CBO is a small constant loss when any RCPs are running
-            state.CBOLoss = rcpCount > 0 ? PlantConstants.CBO_LOSS_GPM : 0f;
-            
-            // Net seal demand = injection - returns
-            // This is the net flow "lost" from charging that doesn't reach RCS
-            state.NetSealDemand = state.SealInjection - state.SealReturnToRCS;
-            
-            return state;
-        }
-        
-        #endregion
-        
-        #region Letdown Path Selection
-        
-        /// <summary>
-        /// Determine the active letdown flow path based on plant conditions.
-        /// 
-        /// Per NRC HRTD 19.0 and Section 4.1:
-        ///   - At low RCS temperature (< 350°F): Letdown via RHR-CVCS crossconnect (HCV-128)
-        ///     because the normal orifice path produces negligible flow at low ΔP
-        ///   - At high RCS temperature (≥ 350°F): Letdown via normal orifice path
-        ///   - If low-level interlock active: Letdown is isolated regardless of temp
-        ///   - During solid PZR ops: RHR path is used (temp will be < 350°F)
-        /// 
-        /// The 350°F threshold corresponds to RHR letdown isolation temperature
-        /// per NRC HRTD Section 19.2.2.
-        /// </summary>
-        /// <param name="T_rcs">RCS temperature (°F)</param>
-        /// <param name="pressure">RCS pressure (psia) - reserved for future use</param>
-        /// <param name="solidPressurizer">True if in solid pressurizer operations</param>
-        /// <param name="letdownIsolated">True if low-level interlock has isolated letdown</param>
-        /// <returns>LetdownPathState with path selection and reasoning</returns>
-        public static LetdownPathState GetLetdownPath(
-            float T_rcs, 
-            float pressure, 
-            bool solidPressurizer, 
-            bool letdownIsolated)
-        {
-            var state = new LetdownPathState();
-            
-            // Priority 1: Low-level interlock isolates letdown
-            if (letdownIsolated)
-            {
-                state.Path = LetdownPath.ISOLATED;
-                state.ViaRHR = false;
-                state.ViaOrifice = false;
-                state.IsIsolated = true;
-                state.Reason = "Low PZR level interlock";
-                return state;
-            }
-            
-            // Priority 2: Temperature-based path selection
-            // Per NRC HRTD 19.0: RHR crossconnect used below 350°F
-            bool useRHR = (T_rcs < PlantConstants.RHR_LETDOWN_ISOLATION_TEMP_F);
-            
-            if (useRHR)
-            {
-                state.Path = LetdownPath.RHR_CROSSCONNECT;
-                state.ViaRHR = true;
-                state.ViaOrifice = false;
-                state.IsIsolated = false;
-                state.Reason = solidPressurizer 
-                    ? "Solid PZR ops - RHR crossconnect" 
-                    : $"T_rcs < {PlantConstants.RHR_LETDOWN_ISOLATION_TEMP_F}°F";
-            }
-            else
-            {
-                state.Path = LetdownPath.ORIFICE;
-                state.ViaRHR = false;
-                state.ViaOrifice = true;
-                state.IsIsolated = false;
-                state.Reason = "Normal orifice path";
-            }
-            
-            return state;
-        }
-        
-        #endregion
-        
-        #region Heater Control
-        
-        /// <summary>
-        /// Calculate pressurizer heater control state based on plant conditions and mode.
-        /// 
-        /// Multi-mode heater controller per NRC HRTD 6.1 / 10.2:
-        /// 
-        /// Mode 1 (STARTUP_FULL_POWER): All groups at full 1800 kW, no feedback.
-        ///   Used during solid plant ops to heat PZR water to T_sat.
-        ///   Per NRC HRTD 19.2.2: "All heater groups energized manually."
-        /// 
-        /// Mode 2 (BUBBLE_FORMATION_AUTO): Continuously variable with pressure-rate
-        ///   feedback. During bubble formation drain. If dP/dt exceeds max rate,
-        ///   power is reduced proportionally. Minimum power floor prevents stalling.
-        ///   Per design decision v0.2.0: automatic modulation, future adds manual.
-        /// 
-        /// Mode 3 (PRESSURIZE_AUTO): Same auto controller as Mode 2, but targeting
-        ///   >= 400 psig for RCP startup permissive. Pressure-rate feedback active.
-        /// 
-        /// Mode 4 (AUTOMATIC_PID): Future scope — proportional + backup groups
-        ///   with automatic PID on pressure at 2235 psig setpoint.
-        /// 
-        /// Low-level interlock: Trips ALL heaters when level < 17% (all modes).
-        /// </summary>
-        /// <param name="pzrLevel">Current pressurizer level (%)</param>
-        /// <param name="pzrLevelSetpoint">Current level setpoint from program (%)</param>
-        /// <param name="letdownIsolated">True if low-level interlock is active</param>
-        /// <param name="solidPressurizer">True if in solid pressurizer operations</param>
-        /// <param name="baseHeaterPower_MW">Base heater power when enabled (MW)</param>
-        /// <param name="mode">Current heater operating mode</param>
-        /// <param name="pressureRate_psi_hr">Current pressure rate of change (psi/hr)</param>
-        /// <returns>HeaterControlState with heater commands and status</returns>
-        public static HeaterControlState CalculateHeaterState(
-            float pzrLevel,
-            float pzrLevelSetpoint,
-            bool letdownIsolated,
-            bool solidPressurizer,
-            float baseHeaterPower_MW,
-            HeaterMode mode = HeaterMode.STARTUP_FULL_POWER,
-            float pressureRate_psi_hr = 0f,
-            float dt_hr = 0f,
-            float smoothedOutput = 1.0f)
-        {
-            var state = new HeaterControlState();
-            
-            // Default: heaters on at full power
-            state.ProportionalOn = true;
-            state.BackupOn = false;
-            state.TrippedByInterlock = false;
-            state.HeaterPower_MW = baseHeaterPower_MW;
-            state.HeaterFraction = 1.0f;
-            state.HeatersEnabled = true;
-            state.Mode = mode;
-            state.PressureRateLimited = false;
-            state.RampRateLimited = false;
-            state.TargetFraction = 1.0f;
-            state.PressureRateAbsPsiHr = Math.Abs(pressureRate_psi_hr);
-            
-            // ================================================================
-            // PRIORITY 1: Low-level interlock trips ALL heaters (all modes)
-            // Per NRC HRTD 10.3: PZR level < 17% trips heaters to protect elements
-            // ================================================================
-            if (letdownIsolated)
-            {
-                state.HeatersEnabled = false;
-                state.HeaterPower_MW = 0f;
-                state.HeaterFraction = 0f;
-                state.ProportionalOn = false;
-                state.BackupOn = false;
-                state.TrippedByInterlock = true;
-                state.Mode = HeaterMode.OFF;
-                state.StatusReason = "TRIPPED - Low level interlock";
-                state.TargetFraction = 0f;
-                state.PressureRateLimited = false;
-                state.RampRateLimited = false;
-                return state;
-            }
-            
-            // ================================================================
-            // MODE-SPECIFIC HEATER CONTROL
-            // ================================================================
-            switch (mode)
-            {
-                // ============================================================
-                // STARTUP: Full power, no feedback
-                // Per NRC HRTD 19.2.2: All groups manually energized
-                // ============================================================
-                case HeaterMode.STARTUP_FULL_POWER:
-                    state.HeaterPower_MW = baseHeaterPower_MW;
-                    state.HeaterFraction = 1.0f;
-                    state.ProportionalOn = true;
-                    state.BackupOn = true;  // All groups energized
-                    state.TargetFraction = 1.0f;
-                    state.StatusReason = solidPressurizer 
-                        ? "Solid PZR - heating to Tsat (all groups)"
-                        : "Startup - full power (all groups)";
-                    break;
-                
-                // ============================================================
-                // BUBBLE FORMATION: Pressure-rate modulated
-                // If dP/dt > max rate, reduce power proportionally.
-                // Minimum floor prevents heaters from completely stalling.
-                // ============================================================
-                case HeaterMode.BUBBLE_FORMATION_AUTO:
-                {
-                    // v2.0.10: Rate-limited heater control replaces stateless bang-bang.
-                    // Calculate target fraction from pressure rate (same formula as before)
-                    float targetFraction = 1.0f;
-                    float maxRate = PlantConstants.HEATER_STARTUP_MAX_PRESSURE_RATE;
-                    float minFraction = PlantConstants.HEATER_STARTUP_MIN_POWER_FRACTION;
-                    
-                    float absPressureRate = Math.Abs(pressureRate_psi_hr);
-                    state.PressureRateAbsPsiHr = absPressureRate;
-                    
-                    if (absPressureRate > maxRate && maxRate > 0f)
-                    {
-                        targetFraction = 1.0f - (absPressureRate - maxRate) / maxRate;
-                        targetFraction = Math.Max(minFraction, Math.Min(targetFraction, 1.0f));
-                    }
-                    state.TargetFraction = targetFraction;
-                    state.PressureRateLimited = absPressureRate > maxRate && maxRate > 0f;
-                    
-                    // v2.0.10: Rate-limit the output change per timestep.
-                    // Max change of 6.0 per hour (matches HEATER_RATE_LIMIT_PER_HR).
-                    // At 10-sec timesteps (dt=1/360 hr), max change ≈ 1.67% per step.
-                    // Full travel 20%→100% takes ~2.9 minutes — realistic valve travel.
-                    float currentSmoothed = smoothedOutput;
-                    if (dt_hr > 0f)
-                    {
-                        float maxChangePerHr = PlantConstants.HEATER_RATE_LIMIT_PER_HR;
-                        float maxStep = maxChangePerHr * dt_hr;
-                        float delta = targetFraction - currentSmoothed;
-                        state.RampRateLimited = Math.Abs(delta) > maxStep + 1e-6f;
-                        delta = Math.Max(-maxStep, Math.Min(delta, maxStep));
-                        currentSmoothed += delta;
-                        currentSmoothed = Math.Max(minFraction, Math.Min(currentSmoothed, 1.0f));
-                    }
-                    else
-                    {
-                        // No dt provided — fall back to instantaneous (backward compat)
-                        currentSmoothed = targetFraction;
-                    }
-                    
-                    state.HeaterFraction = currentSmoothed;
-                    state.HeaterPower_MW = baseHeaterPower_MW * currentSmoothed;
-                    state.SmoothedOutput = currentSmoothed;
-                    state.ProportionalOn = true;
-                    state.BackupOn = (currentSmoothed > 0.5f);  // Backup groups shed first
-                    state.StatusReason = currentSmoothed < 0.99f
-                        ? $"Bubble auto - {currentSmoothed * 100:F0}% ({absPressureRate:F0} psi/hr)"
-                        : "Bubble auto - full power";
-                    break;
-                }
-                
-                // ============================================================
-                // PRESSURIZE: Same as bubble formation auto
-                // Target >= 400 psig for RCP startup permissive
-                // ============================================================
-                case HeaterMode.PRESSURIZE_AUTO:
-                {
-                    // v2.0.10: Rate-limited heater control (same as BUBBLE_FORMATION_AUTO)
-                    float targetFraction = 1.0f;
-                    float maxRate = PlantConstants.HEATER_STARTUP_MAX_PRESSURE_RATE;
-                    float minFraction = PlantConstants.HEATER_STARTUP_MIN_POWER_FRACTION;
-                    
-                    float absPressureRate = Math.Abs(pressureRate_psi_hr);
-                    state.PressureRateAbsPsiHr = absPressureRate;
-                    
-                    if (absPressureRate > maxRate && maxRate > 0f)
-                    {
-                        targetFraction = 1.0f - (absPressureRate - maxRate) / maxRate;
-                        targetFraction = Math.Max(minFraction, Math.Min(targetFraction, 1.0f));
-                    }
-                    state.TargetFraction = targetFraction;
-                    state.PressureRateLimited = absPressureRate > maxRate && maxRate > 0f;
-                    
-                    // v2.0.10: Rate-limit the output change per timestep
-                    float currentSmoothed = smoothedOutput;
-                    if (dt_hr > 0f)
-                    {
-                        float maxChangePerHr = PlantConstants.HEATER_RATE_LIMIT_PER_HR;
-                        float maxStep = maxChangePerHr * dt_hr;
-                        float delta = targetFraction - currentSmoothed;
-                        state.RampRateLimited = Math.Abs(delta) > maxStep + 1e-6f;
-                        delta = Math.Max(-maxStep, Math.Min(delta, maxStep));
-                        currentSmoothed += delta;
-                        currentSmoothed = Math.Max(minFraction, Math.Min(currentSmoothed, 1.0f));
-                    }
-                    else
-                    {
-                        currentSmoothed = targetFraction;
-                    }
-                    
-                    state.HeaterFraction = currentSmoothed;
-                    state.HeaterPower_MW = baseHeaterPower_MW * currentSmoothed;
-                    state.SmoothedOutput = currentSmoothed;
-                    state.ProportionalOn = true;
-                    state.BackupOn = (currentSmoothed > 0.5f);
-                    state.StatusReason = currentSmoothed < 0.99f
-                        ? $"Pressurize auto - {currentSmoothed * 100:F0}% ({absPressureRate:F0} psi/hr)"
-                        : "Pressurize auto - full power";
-                    break;
-                }
-                
-                // ============================================================
-                // AUTOMATIC PID: Future scope (Phase 3+)
-                // Proportional + backup group staging at 2235 psig setpoint
-                // Constants defined in PlantConstants, logic deferred
-                // ============================================================
-                case HeaterMode.AUTOMATIC_PID:
-                {
-                    // Placeholder: proportional heaters only, backup off
-                    // Full implementation deferred to Phase 3+
-                    float propPower_MW = PlantConstants.HEATER_POWER_PROP / 1000f;
-                    state.HeaterPower_MW = propPower_MW;
-                    state.HeaterFraction = propPower_MW / baseHeaterPower_MW;
-                    state.ProportionalOn = true;
-                    state.BackupOn = false;
-                    
-                    // Backup heater actuation on level rise (existing logic)
-                    float backupThreshold = pzrLevelSetpoint + PlantConstants.PZR_BACKUP_HEATER_LEVEL_OFFSET;
-                    if (pzrLevel > backupThreshold)
-                    {
-                        state.BackupOn = true;
-                        state.HeaterPower_MW = baseHeaterPower_MW;
-                        state.HeaterFraction = 1.0f;
-                        state.StatusReason = $"Auto PID - backup ON (level {pzrLevel:F1}%)";
-                    }
-                    else
-                    {
-                        state.StatusReason = "Auto PID - proportional only";
-                    }
-                    state.TargetFraction = state.HeaterFraction;
-                    break;
-                }
-                
-                // ============================================================
-                // OFF: Heaters de-energized
-                // ============================================================
-                case HeaterMode.OFF:
-                    state.HeatersEnabled = false;
-                    state.HeaterPower_MW = 0f;
-                    state.HeaterFraction = 0f;
-                    state.ProportionalOn = false;
-                    state.BackupOn = false;
-                    state.TargetFraction = 0f;
-                    state.StatusReason = "Heaters OFF";
-                    break;
-            }
-            
-            return state;
-        }
-        
-        #endregion
-        
-        #region Heater PID Controller — v1.1.0 Stage 4
-        
-        // =====================================================================
-        // PID-based heater controller for normal (two-phase) operations.
-        // Replaces bang-bang control with smooth pressure-based modulation.
-        //
-        // Per NRC HRTD 10.2: "The pressurizer pressure control system maintains
-        // RCS pressure at 2235 psig by controlling pressurizer heaters and spray."
-        //
-        // Features:
-        //   - PID control on pressure error
-        //   - Deadband to prevent hunting
-        //   - Rate limiting for smooth output changes
-        //   - First-order lag modeling heater thermal inertia
-        //   - Proportional/backup heater staging
-        // =====================================================================
-        
-        /// <summary>
-        /// Initialize the Heater PID controller state.
-        /// Called when transitioning to HZP operations.
-        /// </summary>
-        /// <param name="currentPressure_psig">Current RCS pressure (psig)</param>
-        /// <returns>Initialized PID state</returns>
-        public static HeaterPIDState InitializeHeaterPID(float currentPressure_psig)
-        {
-            var state = new HeaterPIDState
-            {
-                Integral = 0f,
-                PreviousError = PlantConstants.PZR_OPERATING_PRESSURE_PSIG - currentPressure_psig,
-                OutputCommand = 0.5f,  // Start at 50%
-                SmoothedOutput = 0.5f,
-                ProportionalFraction = 0.5f,
-                BackupOn = false,
-                IsActive = true,
-                InDeadband = false,
-                PressureSetpoint = PlantConstants.PZR_OPERATING_PRESSURE_PSIG,
-                PressureError = 0f,
-                HeaterPower_MW = PlantConstants.HEATER_TOTAL_CAPACITY_KW / 1000f * 0.5f,
-                StatusMessage = "PID Heater Control Active"
-            };
-            
-            return state;
-        }
-        
-        /// <summary>
-        /// Update the Heater PID controller for one timestep.
-        /// 
-        /// Implements smooth PID control with:
-        /// - Proportional: Immediate response to pressure error
-        /// - Integral: Eliminates steady-state offset
-        /// - Derivative: Anticipatory action on pressure trends
-        /// - Deadband: Prevents hunting near setpoint
-        /// - Rate limiting: Smooth output changes
-        /// - Thermal lag: Models heater element inertia
-        /// </summary>
-        /// <param name="state">PID state (modified in place)</param>
-        /// <param name="pressure_psig">Current RCS pressure (psig)</param>
-        /// <param name="pzrLevel">Current PZR level (%) for interlock check</param>
-        /// <param name="dt_hr">Timestep in hours</param>
-        /// <returns>Heater power in MW</returns>
-        public static float UpdateHeaterPID(
-            ref HeaterPIDState state,
-            float pressure_psig,
-            float pzrLevel,
-            float dt_hr)
-        {
-            if (!state.IsActive)
-            {
-                state.HeaterPower_MW = 0f;
-                state.StatusMessage = "PID Inactive";
-                return 0f;
-            }
-            
-            // ================================================================
-            // LOW-LEVEL INTERLOCK CHECK
-            // Trips heaters if PZR level < 17% to protect heater elements
-            // ================================================================
-            if (pzrLevel < PlantConstants.PZR_LOW_LEVEL_ISOLATION)
-            {
-                state.HeaterPower_MW = 0f;
-                state.SmoothedOutput = 0f;
-                state.OutputCommand = 0f;
-                state.ProportionalFraction = 0f;
-                state.BackupOn = false;
-                state.StatusMessage = "TRIPPED - Low Level Interlock";
-                return 0f;
-            }
-            
-            // ================================================================
-            // PRESSURE ERROR CALCULATION
-            // Positive error = pressure below setpoint = need more heat
-            // ================================================================
-            state.PressureError = state.PressureSetpoint - pressure_psig;
-            
-            // ================================================================
-            // DEADBAND CHECK
-            // Within deadband, hold output steady (integral still accumulates slowly)
-            // ================================================================
-            state.InDeadband = Math.Abs(state.PressureError) < PlantConstants.HEATER_DEADBAND_PSI;
-            
-            float pidOutput;
-            
-            if (state.InDeadband)
-            {
-                // In deadband: hold current output, slow integral accumulation
-                pidOutput = state.OutputCommand;
-                
-                // Very slow integral action to correct any offset over time
-                state.Integral += state.PressureError * dt_hr * 0.1f;  // 10% rate
-                state.StatusMessage = $"PID: Deadband ({state.PressureError:+0.0;-0.0;0} psi)";
-            }
-            else
-            {
-                // ============================================================
-                // FULL PID CALCULATION
-                // ============================================================
-                
-                // Proportional term
-                float pTerm = PlantConstants.HEATER_PID_KP * state.PressureError;
-                
-                // Integral term (with anti-windup)
-                state.Integral += state.PressureError * dt_hr;
-                state.Integral = Math.Max(-PlantConstants.HEATER_INTEGRAL_LIMIT,
-                    Math.Min(state.Integral, PlantConstants.HEATER_INTEGRAL_LIMIT));
-                float iTerm = PlantConstants.HEATER_PID_KI * state.Integral;
-                
-                // Derivative term (on error change)
-                float dError = (state.PressureError - state.PreviousError) / dt_hr;
-                float dTerm = PlantConstants.HEATER_PID_KD * dError;
-                
-                // Combine PID terms
-                pidOutput = 0.5f + pTerm + iTerm + dTerm;  // Bias at 50%
-                
-                state.StatusMessage = state.PressureError > 0
-                    ? $"PID: Heating (P err={state.PressureError:+0.0} psi)"
-                    : $"PID: Reducing (P err={state.PressureError:+0.0;-0.0} psi)";
-            }
-            
-            // Clamp raw output to 0-1
-            pidOutput = Math.Max(PlantConstants.HEATER_MIN_OUTPUT, Math.Min(pidOutput, 1.0f));
-            state.OutputCommand = pidOutput;
-            
-            // ================================================================
-            // RATE LIMITING
-            // Prevent rapid output changes
-            // ================================================================
-            float maxChange = PlantConstants.HEATER_RATE_LIMIT_PER_HR * dt_hr;
-            float delta = pidOutput - state.SmoothedOutput;
-            delta = Math.Max(-maxChange, Math.Min(delta, maxChange));
-            state.SmoothedOutput += delta;
-            
-            // ================================================================
-            // THERMAL LAG (first-order filter)
-            // Models thermal inertia of heater elements
-            // ================================================================
-            float tau = PlantConstants.HEATER_LAG_TAU_HR;
-            if (tau > 0f && dt_hr > 0f)
-            {
-                float alpha = dt_hr / (tau + dt_hr);
-                state.SmoothedOutput = state.SmoothedOutput + alpha * (pidOutput - state.SmoothedOutput);
-            }
-            
-            // Clamp final output
-            state.SmoothedOutput = Math.Max(PlantConstants.HEATER_MIN_OUTPUT, 
-                Math.Min(state.SmoothedOutput, 1.0f));
-            
-            // ================================================================
-            // HEATER STAGING
-            // Proportional heaters: continuously modulated
-            // Backup heaters: on/off based on pressure thresholds
-            // ================================================================
-            
-            // Proportional heaters track smoothed output
-            state.ProportionalFraction = state.SmoothedOutput;
-            
-            // Backup heaters: energize if pressure drops significantly below setpoint
-            if (pressure_psig < PlantConstants.HEATER_BACKUP_ON_PSIG)
-            {
-                state.BackupOn = true;
-            }
-            else if (pressure_psig > PlantConstants.HEATER_BACKUP_OFF_PSIG)
-            {
-                state.BackupOn = false;
-            }
-            // Otherwise maintain current state (hysteresis)
-            
-            // ================================================================
-            // CALCULATE TOTAL HEATER POWER
-            // ================================================================
-            float propPower_MW = (PlantConstants.HEATER_PROPORTIONAL_CAPACITY_KW / 1000f) * state.ProportionalFraction;
-            float backupPower_MW = state.BackupOn ? (PlantConstants.HEATER_BACKUP_CAPACITY_KW / 1000f) : 0f;
-            
-            state.HeaterPower_MW = propPower_MW + backupPower_MW;
-            
-            // ================================================================
-            // HEATER CUTOFF AT HIGH PRESSURE
-            // All heaters off if pressure exceeds cutoff
-            // ================================================================
-            if (pressure_psig > PlantConstants.HEATER_PROP_CUTOFF_PSIG)
-            {
-                state.HeaterPower_MW = 0f;
-                state.ProportionalFraction = 0f;
-                state.BackupOn = false;
-                state.StatusMessage = "PID: Heaters OFF (High Pressure)";
-            }
-            
-            // Update previous error for next derivative calculation
-            state.PreviousError = state.PressureError;
-            
-            return state.HeaterPower_MW;
-        }
-        
-        /// <summary>
-        /// Reset the Heater PID controller integral term.
-        /// Call after large transients or mode changes.
-        /// </summary>
-        public static void ResetHeaterPIDIntegral(ref HeaterPIDState state)
-        {
-            state.Integral = 0f;
-        }
-        
-        /// <summary>
-        /// Enable or disable the Heater PID controller.
-        /// </summary>
-        public static void SetHeaterPIDActive(ref HeaterPIDState state, bool active)
-        {
-            state.IsActive = active;
-            if (!active)
-            {
-                state.HeaterPower_MW = 0f;
-                state.StatusMessage = "PID Disabled";
-            }
-        }
-        
-        /// <summary>
-        /// Validate Heater PID controller calculations.
-        /// </summary>
-        public static bool ValidateHeaterPID()
-        {
-            bool valid = true;
-            float dt = 1f / 360f;  // 10-second timestep
-            
-            // Test 1: Initialization should produce reasonable state
-            var state = InitializeHeaterPID(2235f);
-            if (!state.IsActive) valid = false;
-            if (state.SmoothedOutput < 0.4f || state.SmoothedOutput > 0.6f) valid = false;
-            
-            // Test 2: Low pressure should increase heater output
-            state = InitializeHeaterPID(2235f);
-            UpdateHeaterPID(ref state, 2215f, 60f, dt);  // 20 psi below setpoint
-            if (state.OutputCommand <= 0.5f) valid = false;  // Should increase
-            
-            // Test 3: High pressure should decrease heater output
-            state = InitializeHeaterPID(2235f);
-            UpdateHeaterPID(ref state, 2250f, 60f, dt);  // 15 psi above setpoint
-            if (state.OutputCommand >= 0.5f) valid = false;  // Should decrease
-            
-            // Test 4: Pressure at setpoint should be in deadband
-            state = InitializeHeaterPID(2235f);
-            UpdateHeaterPID(ref state, 2235f, 60f, dt);
-            if (!state.InDeadband) valid = false;
-            
-            // Test 5: Low level should trip heaters
-            state = InitializeHeaterPID(2235f);
-            UpdateHeaterPID(ref state, 2215f, 15f, dt);  // Level below 17%
-            if (state.HeaterPower_MW > 0f) valid = false;
-            
-            // Test 6: Backup heaters should energize at low pressure
-            state = InitializeHeaterPID(2235f);
-            UpdateHeaterPID(ref state, 2200f, 60f, dt);  // Below 2210 psig
-            if (!state.BackupOn) valid = false;
-            
-            // Test 7: High pressure cutoff
-            state = InitializeHeaterPID(2235f);
-            UpdateHeaterPID(ref state, 2260f, 60f, dt);  // Above cutoff
-            if (state.HeaterPower_MW > 0f) valid = false;
-            
-            // Test 8: Rate limiting should prevent instant changes
-            state = InitializeHeaterPID(2235f);
-            state.SmoothedOutput = 0.2f;
-            UpdateHeaterPID(ref state, 2200f, 60f, dt);  // Demand high output
-            // Output should increase but not jump instantly to 1.0
-            if (state.SmoothedOutput > 0.5f) valid = false;  // Rate limited
-            
-            return valid;
-        }
-        
-        #endregion
-        
-        #region Post-Bubble Heatup Control — NRC HRTD 10.2/10.3 Philosophy
+        #region Post-Bubble Heatup Control â€” NRC HRTD 10.2/10.3 Philosophy
         
         /// <summary>
         /// Update CVCS controller for post-bubble heatup phase using NRC HRTD
@@ -1103,24 +454,24 @@ namespace Critical.Physics
         /// This differs from the general Update() method which allows letdown
         /// to vary with orifice lineup and pressure. During post-bubble heatup,
         /// the control philosophy is deliberately simpler:
-        ///   - Letdown: FIXED at 75 gpm (via RHR crossconnect below 350°F,
-        ///     or via operator-adjusted orifice lineup above 350°F)
+        ///   - Letdown: FIXED at 75 gpm (via RHR crossconnect below 350Â°F,
+        ///     or via operator-adjusted orifice lineup above 350Â°F)
         ///   - Charging: VARIABLE via PI controller (20-130 gpm)
         ///   - Level setpoint: from unified level program
         ///   - Seal injection: added to charging demand
         ///
         /// The ~30,000 gallons of excess inventory from thermal expansion
-        /// during heatup (100→557°F) is removed via the VCT divert system
-        /// (LCV-112A → BRS holdup tanks). The PI controller keeps level
+        /// during heatup (100â†’557Â°F) is removed via the VCT divert system
+        /// (LCV-112A â†’ BRS holdup tanks). The PI controller keeps level
         /// on-program by reducing charging below letdown, allowing the net
         /// negative CVCS flow to drain excess inventory through the VCT.
         ///
-        /// Source: NRC HRTD Section 10.3 — Pressurizer Level Control
-        ///         NRC HRTD Section 4.1 — CVCS Operations
+        /// Source: NRC HRTD Section 10.3 â€” Pressurizer Level Control
+        ///         NRC HRTD Section 4.1 â€” CVCS Operations
         /// </summary>
         /// <param name="state">Controller state (modified in place)</param>
         /// <param name="currentLevel">Current PZR level (%)</param>
-        /// <param name="T_avg">Average RCS temperature (°F)</param>
+        /// <param name="T_avg">Average RCS temperature (Â°F)</param>
         /// <param name="pressure_psia">RCS pressure (psia)</param>
         /// <param name="rcpCount">Number of RCPs running</param>
         /// <param name="dt_hr">Timestep in hours</param>
@@ -1136,8 +487,8 @@ namespace Critical.Physics
             
             // ================================================================
             // LEVEL SETPOINT FROM UNIFIED PROGRAM
-            // Heatup: 25% at 200°F → 60% at 557°F
-            // At-power: 25% at 557°F → 61.5% at 584.7°F
+            // Heatup: 25% at 200Â°F â†’ 60% at 557Â°F
+            // At-power: 25% at 557Â°F â†’ 61.5% at 584.7Â°F
             // ================================================================
             state.LevelSetpoint = PlantConstants.GetPZRLevelSetpointUnified(T_avg);
             
@@ -1159,11 +510,11 @@ namespace Critical.Physics
             }
             
             // ================================================================
-            // LETDOWN FLOW — FIXED at 75 gpm
+            // LETDOWN FLOW â€” FIXED at 75 gpm
             // Per NRC HRTD 10.3: Constant letdown during heatup.
-            // Below 350°F: RHR crossconnect provides 75 gpm.
-            // Above 350°F: Operator adjusts orifice lineup to maintain ~75 gpm
-            // at the current pressure (not modeled in detail — held at 75 gpm).
+            // Below 350Â°F: RHR crossconnect provides 75 gpm.
+            // Above 350Â°F: Operator adjusts orifice lineup to maintain ~75 gpm
+            // at the current pressure (not modeled in detail â€” held at 75 gpm).
             // ================================================================
             if (state.LetdownIsolated)
             {
@@ -1181,7 +532,7 @@ namespace Critical.Physics
             // ================================================================
             state.LevelError = currentLevel - state.LevelSetpoint;
             
-            // Proportional: negative error (level low) → increase charging
+            // Proportional: negative error (level low) â†’ increase charging
             float pCorrection = PlantConstants.CVCS_LEVEL_KP * (-state.LevelError);
             
             // Integral: accumulated error drives steady-state correction
@@ -1237,7 +588,7 @@ namespace Critical.Physics
         /// </summary>
         /// <param name="state">Controller state to pre-seed</param>
         /// <param name="currentLevel">Current PZR level (%)</param>
-        /// <param name="T_avg">Current average temperature (°F)</param>
+        /// <param name="T_avg">Current average temperature (Â°F)</param>
         /// <param name="rcpCount">Number of RCPs about to run</param>
         public static void PreSeedForRCPStart(
             ref CVCSControllerState state,
@@ -1246,28 +597,28 @@ namespace Critical.Physics
             int rcpCount)
         {
             // Calculate what the steady-state integral should be
-            // At equilibrium: charging = letdown + seal, so integral ≈ 0
+            // At equilibrium: charging = letdown + seal, so integral â‰ˆ 0
             // But pre-seed with small positive value to bias toward recovery
             // from the expected level drop at RCP start
             float sealDemand = rcpCount * PlantConstants.SEAL_INJECTION_PER_PUMP_GPM;
             float expectedBase = state.LetdownFlow + sealDemand;
             
             // v0.4.0 Issue #3 Part C: Scale pre-seed with temperature differential.
-            // A larger ΔT between PZR (~Tsat) and RCS (~T_avg) means a bigger
+            // A larger Î”T between PZR (~Tsat) and RCS (~T_avg) means a bigger
             // expected transient from thermal mixing, needing a stronger
             // initial charging bias for faster level recovery.
-            // Proxy: At low T_avg the PZR-RCS ΔT is large; at higher T_avg it shrinks.
-            // At typical first RCP start (T_avg ~200°F, ΔT ~360°F): ~14 gpm pre-seed.
-            // At subsequent starts (T_avg ~300°F, ΔT ~250°F): ~11 gpm pre-seed.
-            float deltaT_proxy = Math.Max(0f, 400f - T_avg);  // Rough estimate of PZR-RCS ΔT
+            // Proxy: At low T_avg the PZR-RCS Î”T is large; at higher T_avg it shrinks.
+            // At typical first RCP start (T_avg ~200Â°F, Î”T ~360Â°F): ~14 gpm pre-seed.
+            // At subsequent starts (T_avg ~300Â°F, Î”T ~250Â°F): ~11 gpm pre-seed.
+            float deltaT_proxy = Math.Max(0f, 400f - T_avg);  // Rough estimate of PZR-RCS Î”T
             float preSeedCharging_gpm = 5f + 10f * deltaT_proxy / 400f;
             if (PlantConstants.CVCS_LEVEL_KI > 0f)
             {
                 state.IntegralError = preSeedCharging_gpm / PlantConstants.CVCS_LEVEL_KI;
             }
             
-            // v0.4.0 Issue #2 fix: Was GetPZRLevelProgram (at-power only, clamps to 25% below 557°F).
-            // Unified function uses heatup program below 557°F, at-power program above.
+            // v0.4.0 Issue #2 fix: Was GetPZRLevelProgram (at-power only, clamps to 25% below 557Â°F).
+            // Unified function uses heatup program below 557Â°F, at-power program above.
             state.LevelSetpoint = PlantConstants.GetPZRLevelSetpointUnified(T_avg);
             state.LastLevelError = currentLevel - state.LevelSetpoint;
         }
@@ -1294,13 +645,13 @@ namespace Critical.Physics
         
         // ====================================================================
         // PRESSURIZER SPRAY SYSTEM
-        // Source: NRC HRTD 10.2 — Pressurizer Pressure Control
+        // Source: NRC HRTD 10.2 â€” Pressurizer Pressure Control
         //
         // Two spray valves fed from cold legs (Loops B and C).
         // Modulated by the master pressure controller:
         //   - Open linearly from 2260 psig (start) to 2310 psig (full open)
         //   - Continuous bypass flow of ~1.5 gpm
-        //   - Maximum spray flow ~600 gpm at rated ΔP
+        //   - Maximum spray flow ~600 gpm at rated Î”P
         //   - Spray water at T_cold condenses PZR steam, reducing pressure
         //
         // Per NRC HRTD 10.2 Section 10.2.2:
@@ -1344,9 +695,9 @@ namespace Critical.Physics
         /// </summary>
         /// <param name="state">Spray controller state (persists between timesteps)</param>
         /// <param name="pressure_psig">Current PZR pressure in psig</param>
-        /// <param name="T_pzr">Current PZR temperature (°F) — should be T_sat</param>
-        /// <param name="T_cold">Cold leg temperature (°F) — spray water source</param>
-        /// <param name="pzrSteamVolume_ft3">Current PZR steam volume (ft³)</param>
+        /// <param name="T_pzr">Current PZR temperature (Â°F) â€” should be T_sat</param>
+        /// <param name="T_cold">Cold leg temperature (Â°F) â€” spray water source</param>
+        /// <param name="pzrSteamVolume_ft3">Current PZR steam volume (ftÂ³)</param>
         /// <param name="pressure_psia">Current PZR pressure in psia</param>
         /// <param name="rcpCount">Number of running RCPs (spray requires RCPs)</param>
         /// <param name="dt_hr">Timestep in hours</param>
@@ -1361,7 +712,7 @@ namespace Critical.Physics
             int rcpCount,
             float dt_hr)
         {
-            // Spray requires at least one RCP for ΔP driving force
+            // Spray requires at least one RCP for Î”P driving force
             state.IsEnabled = (rcpCount > 0);
             
             if (!state.IsEnabled)
@@ -1423,21 +774,21 @@ namespace Critical.Physics
             // Energy absorbed heats spray water from T_cold to T_sat,
             // condensing an equivalent mass of steam.
             //
-            // Q_absorbed = m_spray × Cp × (T_sat - T_spray) × efficiency
+            // Q_absorbed = m_spray Ã— Cp Ã— (T_sat - T_spray) Ã— efficiency
             // m_condensed = Q_absorbed / h_fg
             // ==============================================================
             float T_sat = T_pzr;  // PZR water/steam at saturation
             float deltaT = T_sat - T_cold;
             state.SprayDeltaT = deltaT;
             
-            // Safety check: don’t spray if deltaT exceeds thermal shock limit
+            // Safety check: donâ€™t spray if deltaT exceeds thermal shock limit
             // Real plant would alarm but continue; we log and reduce flow
             float effectiveFlow = state.SprayFlow_GPM;
             if (deltaT > PlantConstants.MAX_PZR_SPRAY_DELTA_T)
             {
                 // Limit spray to bypass only to prevent thermal shock
                 effectiveFlow = PlantConstants.SPRAY_BYPASS_FLOW_GPM;
-                state.StatusMessage = $"SPRAY ΔT ALARM: {deltaT:F0}°F > {PlantConstants.MAX_PZR_SPRAY_DELTA_T:F0}°F limit";
+                state.StatusMessage = $"SPRAY Î”T ALARM: {deltaT:F0}Â°F > {PlantConstants.MAX_PZR_SPRAY_DELTA_T:F0}Â°F limit";
             }
             
             // Guard: no condensation if deltaT <= 0 or no steam space
@@ -1450,7 +801,7 @@ namespace Critical.Physics
                 else if (!state.IsActive)
                     state.StatusMessage = $"Spray bypass only ({PlantConstants.SPRAY_BYPASS_FLOW_GPM:F1} gpm)";
                 else
-                    state.StatusMessage = $"Spray: {state.SprayFlow_GPM:F0} gpm (no ΔT)";
+                    state.StatusMessage = $"Spray: {state.SprayFlow_GPM:F0} gpm (no Î”T)";
                 return;
             }
             
@@ -1459,8 +810,8 @@ namespace Critical.Physics
             float rho_spray = WaterProperties.WaterDensity(T_cold, pressure_psia);
             float sprayMass_lbm = effectiveFlow * dt_sec * PlantConstants.GPM_TO_FT3_SEC * rho_spray;
             
-            // Heat absorbed by spray water: Q = m × Cp × ΔT × efficiency
-            // Cp ≈ 1.0 BTU/(lbm·°F) for subcooled water (conservative)
+            // Heat absorbed by spray water: Q = m Ã— Cp Ã— Î”T Ã— efficiency
+            // Cp â‰ˆ 1.0 BTU/(lbmÂ·Â°F) for subcooled water (conservative)
             float Q_absorbed = sprayMass_lbm * 1.0f * deltaT * PlantConstants.SPRAY_EFFICIENCY;
             state.HeatRemoved_BTU = Q_absorbed;
             
@@ -1479,7 +830,7 @@ namespace Critical.Physics
             float steamMass = pzrSteamVolume_ft3 * WaterProperties.SaturatedSteamDensity(pressure_psia);
             if (state.SteamCondensed_lbm > steamMass * 0.5f)
             {
-                // Don’t condense more than half the steam in one timestep
+                // Donâ€™t condense more than half the steam in one timestep
                 state.SteamCondensed_lbm = steamMass * 0.5f;
             }
             
@@ -1487,7 +838,7 @@ namespace Critical.Physics
             if (state.IsActive)
             {
                 state.StatusMessage = $"Spray: {state.SprayFlow_GPM:F0} gpm, valve {state.ValvePosition * 100:F0}%, "
-                    + $"ΔT={deltaT:F0}°F, condensed={state.SteamCondensed_lbm:F1} lbm";
+                    + $"Î”T={deltaT:F0}Â°F, condensed={state.SteamCondensed_lbm:F1} lbm";
             }
             else
             {
@@ -1552,3 +903,8 @@ namespace Critical.Physics
         #endregion
     }
 }
+
+
+
+
+

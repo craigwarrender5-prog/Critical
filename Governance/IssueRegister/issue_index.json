@@ -1,6 +1,6 @@
 ﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-18T14:10:00Z",
+    "generated_at":  "2026-02-18T18:10:00Z",
     "entry_count":  126,
     "entries":  [
                     {
@@ -2180,18 +2180,22 @@
                         "title":  "Large file refactoring analysis - multiple files exceed 50KB threshold",
                         "domain":  "Project Governance",
                         "severity":  "MEDIUM",
-                        "status":  "READY",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0010",
                         "assigned_ip":  "IP-0055",
-                        "updated_at":  "2026-02-18T14:15:00Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "updated_at":  "2026-02-18T18:10:00Z",
+                        "closed_at":  "2026-02-18T18:10:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "Project-Governance",
                                      "File-Size-Governance",
                                      "Refactoring",
                                      "Maintainability",
+                                     "Stage2-Partial",
+                                     "Stage2-Complete",
+                                     "Stage3-Complete",
+                                     "Stage4-Complete-Waiver",
                                      "User-Request-2026-02-18"
                                  ]
                     },
@@ -2222,19 +2226,20 @@
                         "title":  "Restructure governance documentation trail with hierarchical CS-folder organization under Implementation Plans",
                         "domain":  "Project Governance",
                         "severity":  "MEDIUM",
-                        "status":  "READY",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0010",
                         "assigned_ip":  "IP-0055",
-                        "updated_at":  "2026-02-18T14:15:00Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "updated_at":  "2026-02-18T18:10:00Z",
+                        "closed_at":  "2026-02-18T18:10:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "Project-Governance",
                                      "Documentation-Trail",
                                      "Folder-Structure",
                                      "Constitution-Amendment",
                                      "Traceability",
+                                     "Stage1-Complete",
                                      "User-Request-2026-02-18"
                                  ]
                     }
@@ -2242,7 +2247,7 @@
     "registry_role":  "AUTHORITATIVE_FULL_HISTORY",
     "registry_scope":  "Contains full lifecycle history (OPEN + CLOSED). Historical entries must remain in this file.",
     "active_working_set_file":  "Governance/IssueRegister/issue_register.json",
-    "closed_issue_count":  119,
-    "active_issue_count":  7,
+    "closed_issue_count":  121,
+    "active_issue_count":  5,
     "entry_count":  126
 }

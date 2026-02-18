@@ -1,10 +1,10 @@
 ﻿# CRITICAL SIMULATOR CONSTITUTION
 
-## Version 1.7.0.0
+## Version 1.8.0.0
 
 ### Binding Governance Framework
 
-**Effective Date: 2026-02-17**
+**Effective Date: 2026-02-18**
 
 ---
 
@@ -57,8 +57,8 @@ The following artifacts are mandatory and authoritative at these repository-rela
 
 3. **Implementation Plans (IP)**
 
-   * Active bundle location: `Governance/ImplementationPlans/IP-XXXX/`
-   * Closed bundle location: `Governance/ImplementationPlans/Closed/IP-XXXX/`
+   * Active bundle location: `Governance/ImplementationPlans/IP-XXXX <Domain Name>/`
+   * Closed bundle location: `Governance/ImplementationPlans/Closed/IP-XXXX <Domain Name>/`
    * Required controlling plan file: `IP-XXXX.md`
 
 4. **Governance and roadmap indexes**
@@ -68,8 +68,11 @@ The following artifacts are mandatory and authoritative at these repository-rela
 
 5. **Investigation artifacts**
 
-   * Location: `Governance/Issues/`
-   * Naming: `CS-XXXX_Investigation_Report_YYYY-MM-DD_HHMMSS.md`
+   * Pre-IP investigation location: `Governance/Issues/CS-XXXX/`
+   * Investigation report naming inside CS folder: `Investigation_Report_YYYY-MM-DD_HHMMSS.md`
+   * When a CS is assigned to an active IP: CS folder location is `Governance/ImplementationPlans/IP-XXXX <Domain Name>/CS-XXXX/`
+   * When an IP closes: CS folders move with the IP bundle to `Governance/ImplementationPlans/Closed/IP-XXXX <Domain Name>/CS-XXXX/`
+   * Legacy flat investigation files under `Governance/Issues/` are grandfathered and not back-migrated by default (forward-only migration policy).
 
 No authoritative process record SHALL be maintained outside these locations.
 
@@ -376,7 +379,7 @@ Partial amendments are not permitted.
 
 ---
 
-## Migration Requirement (v1.7.0.0)
+## Migration Requirement (v1.8.0.0)
 
 Upon constitution upgrade:
 
@@ -387,6 +390,8 @@ Upon constitution upgrade:
 5. Cross-domain execution MUST use explicit inclusion request and approval artifacts.
 6. IP closure workflow MUST initiate a changelog entry in the same closure transaction.
 7. Version increment selection MUST follow Article XII Section 3 with explicit rationale.
+8. Investigation artifact governance SHALL use CS-folder hierarchy for all newly created or newly assigned CS items.
+9. Migration policy is forward-only by default: existing legacy flat investigation files are preserved unless a specific migration CS/IP authorizes back-migration.
 
 ---
 

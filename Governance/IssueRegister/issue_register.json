@@ -1,8 +1,8 @@
 {
     "version":  "1.0.0",
-    "generated_at":  "2026-02-18T14:10:00Z",
+    "generated_at":  "2026-02-18T18:10:00Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-    "active_issue_count":  7,
+    "active_issue_count":  5,
     "issues":  [
                    {
                        "id":  "CS-0113",
@@ -187,59 +187,6 @@
                        "resolution_type":  null
                    },
                    {
-                       "id":  "CS-0124",
-                       "title":  "Large file refactoring analysis - multiple files exceed 50KB threshold",
-                       "domain":  "Project Governance",
-                       "severity":  "MEDIUM",
-                       "status":  "READY",
-                       "created_at":  "2026-02-18T04:41:14Z",
-                       "updated_at":  "2026-02-18T14:15:00Z",
-                       "stage_detected":  "User-Request-2026-02-18",
-                       "assigned_dp":  "DP-0010",
-                       "assigned_ip":  "IP-0055",
-                       "observations":  [
-                                            "Multiple source files exceed a 50KB file-size governance threshold, including several files above 100KB.",
-                                            "Key oversized modules include MultiScreenBuilder.cs, HeatupSimEngine.cs, SGMultiNodeThermal.cs, CVCSController.cs, and SolidPlantPressure.cs.",
-                                            "Current state indicates post-IP-0047 code growth without equivalent structural decomposition."
-                                        ],
-                       "evidence":  [
-                                        {
-                                            "ref":  "Governance/Issues/CS-0124_Investigation_Report_2026-02-18_120000.md",
-                                            "notes":  "Full investigation, file-size inventory, remediation options, and risk assessment."
-                                        },
-                                        {
-                                            "ref":  "Assets/Scripts/UI/MultiScreenBuilder.cs",
-                                            "notes":  "Largest oversized file identified in investigation."
-                                        },
-                                        {
-                                            "ref":  "Assets/Scripts/Validation/HeatupSimEngine.cs",
-                                            "notes":  "Core runtime file with substantial growth despite partial split."
-                                        },
-                                        {
-                                            "ref":  "Assets/Scripts/Physics/SGMultiNodeThermal.cs",
-                                            "notes":  "Large physics model candidate for subsystem extraction."
-                                        }
-                                    ],
-                       "hypotheses":  [
-                                          "Recent feature delivery added substantial logic across governance-critical modules without corresponding file-boundary refactoring."
-                                      ],
-                       "root_cause":  "Post-IP-0047 functionality growth accumulated in existing large modules while separation-of-concerns extraction was deferred, causing renewed file-size governance drift.",
-                       "resolution_candidate":  "Execute staged partial-class extraction and subsystem decomposition for oversized modules, preserving behavior and API contracts while reducing per-file complexity.",
-                       "links":  [
-                                     "Assigned DP: DP-0010 - Project Governance",
-                                     "Likely impacted: Assets/Scripts/UI/MultiScreenBuilder.cs, Assets/Scripts/Validation/HeatupSimEngine*.cs, Assets/Scripts/Physics/SGMultiNodeThermal.cs, Assets/Scripts/Physics/CVCSController.cs, Assets/Scripts/Physics/SolidPlantPressure.cs"
-                                 ],
-                       "tags":  [
-                                    "Project-Governance",
-                                    "File-Size-Governance",
-                                    "Refactoring",
-                                    "Maintainability",
-                                    "User-Request-2026-02-18"
-                                ],
-                       "closed_at":  null,
-                       "resolution_type":  null
-                   },
-                   {
                        "id":  "CS-0125",
                        "title":  "Rotary selector switch UI control plan viability and integration risk assessment",
                        "domain":  "Pressurizer & Startup Control",
@@ -289,54 +236,6 @@
                                     "Startup-Control",
                                     "2D-UI-Component",
                                     "Preliminary-Assessment",
-                                    "User-Request-2026-02-18"
-                                ],
-                       "closed_at":  null,
-                       "resolution_type":  null
-                   },
-                   {
-                       "id":  "CS-0126",
-                       "title":  "Restructure governance documentation trail with hierarchical CS-folder organization under Implementation Plans",
-                       "domain":  "Project Governance",
-                       "severity":  "MEDIUM",
-                       "status":  "READY",
-                       "created_at":  "2026-02-18T14:00:00Z",
-                       "updated_at":  "2026-02-18T14:15:00Z",
-                       "stage_detected":  "User-Request-2026-02-18",
-                       "assigned_dp":  "DP-0010",
-                       "assigned_ip":  "IP-0055",
-                       "observations":  [
-                                            "Current investigation reports are flat files in Governance/Issues/ directory with no physical co-location to IPs.",
-                                            "Mixed content in Issues folder includes both CS investigations AND IP checkpoint files.",
-                                            "When an IP closes, related investigation artifacts do not travel with it to the Closed archive.",
-                                            "Traceability requires searching multiple locations to find all artifacts for a specific IP."
-                                        ],
-                       "evidence":  [
-                                        {
-                                            "ref":  "Governance/Issues/CS-0126/Investigation_Report_2026-02-18_140000.md",
-                                            "notes":  "Full investigation with proposed folder structure, lifecycle rules, migration strategy, and Constitution amendment requirements."
-                                        },
-                                        {
-                                            "ref":  "PROJECT_CONSTITUTION.md",
-                                            "notes":  "Article III Section 5 defines current investigation artifact locations requiring amendment."
-                                        }
-                                    ],
-                       "hypotheses":  [
-                                          "Flat file structure was adequate for early project phases but does not scale for audit trail requirements."
-                                      ],
-                       "root_cause":  "Original governance structure used flat investigation files without anticipating the need for physical co-location with Implementation Plan bundles.",
-                       "resolution_candidate":  "Implement hierarchical CS-folder structure: each CS gets its own subfolder in Issues/, which migrates into IP folder when assigned, and travels with IP to Closed archive on completion.",
-                       "links":  [
-                                     "Assigned DP: DP-0010 - Project Governance",
-                                     "Requires: Constitution Article III amendment",
-                                     "Impacted: All future CS and IP creation workflows"
-                                 ],
-                       "tags":  [
-                                    "Project-Governance",
-                                    "Documentation-Trail",
-                                    "Folder-Structure",
-                                    "Constitution-Amendment",
-                                    "Traceability",
                                     "User-Request-2026-02-18"
                                 ],
                        "closed_at":  null,
