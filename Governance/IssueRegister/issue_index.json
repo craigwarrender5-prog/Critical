@@ -1,7 +1,7 @@
 ﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-18T04:30:44Z",
-    "entry_count":  118,
+    "generated_at":  "2026-02-18T04:41:14Z",
+    "entry_count":  120,
     "entries":  [
                     {
                         "id":  "CS-0001",
@@ -2077,11 +2077,51 @@
                                      "High-Priority",
                                      "User-Request-2026-02-18"
                                  ]
+                    },
+                    {
+                        "id":  "CS-0123",
+                        "title":  "Update PROJECT_TREE.md to reflect new modular architecture modules",
+                        "domain":  "Project Governance",
+                        "severity":  "LOW",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
+                        "assigned_dp":  "DP-0010",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-18T04:41:14Z",
+                        "closed_at":  "2026-02-18T04:41:14Z",
+                        "resolution_type":  "FIXED",
+                        "tags":  [
+                                     "Project-Structure",
+                                     "Documentation-Alignment",
+                                     "Modular-Architecture",
+                                     "PROJECT_TREE",
+                                     "User-Request-2026-02-18"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0124",
+                        "title":  "Large file refactoring analysis - multiple files exceed 50KB threshold",
+                        "domain":  "Project Governance",
+                        "severity":  "MEDIUM",
+                        "status":  "READY",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0010",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-18T04:41:14Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "Project-Governance",
+                                     "File-Size-Governance",
+                                     "Refactoring",
+                                     "Maintainability",
+                                     "User-Request-2026-02-18"
+                                 ]
                     }
                 ],
     "registry_role":  "AUTHORITATIVE_FULL_HISTORY",
     "registry_scope":  "Contains full lifecycle history (OPEN + CLOSED). Historical entries must remain in this file.",
     "active_working_set_file":  "Governance/IssueRegister/issue_register.json",
-    "closed_issue_count":  114,
-    "active_issue_count":  4
+    "closed_issue_count":  115,
+    "active_issue_count":  5
 }

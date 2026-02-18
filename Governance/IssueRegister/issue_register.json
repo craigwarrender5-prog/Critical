@@ -1,8 +1,8 @@
 ﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-18T04:30:44Z",
+    "generated_at":  "2026-02-18T04:41:14Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-    "active_issue_count":  4,
+    "active_issue_count":  5,
     "issues":  [
                    {
                        "id":  "CS-0102",
@@ -180,6 +180,59 @@
                                     "Character-Encoding",
                                     "Visual-Bug",
                                     "Low-Priority",
+                                    "User-Request-2026-02-18"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0124",
+                       "title":  "Large file refactoring analysis - multiple files exceed 50KB threshold",
+                       "domain":  "Project Governance",
+                       "severity":  "MEDIUM",
+                       "status":  "READY",
+                       "created_at":  "2026-02-18T04:41:14Z",
+                       "updated_at":  "2026-02-18T04:41:14Z",
+                       "stage_detected":  "User-Request-2026-02-18",
+                       "assigned_dp":  "DP-0010",
+                       "assigned_ip":  null,
+                       "observations":  [
+                                            "Multiple source files exceed a 50KB file-size governance threshold, including several files above 100KB.",
+                                            "Key oversized modules include MultiScreenBuilder.cs, HeatupSimEngine.cs, SGMultiNodeThermal.cs, CVCSController.cs, and SolidPlantPressure.cs.",
+                                            "Current state indicates post-IP-0047 code growth without equivalent structural decomposition."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Governance/Issues/CS-0124_Investigation_Report_2026-02-18_120000.md",
+                                            "notes":  "Full investigation, file-size inventory, remediation options, and risk assessment."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/UI/MultiScreenBuilder.cs",
+                                            "notes":  "Largest oversized file identified in investigation."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/HeatupSimEngine.cs",
+                                            "notes":  "Core runtime file with substantial growth despite partial split."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Physics/SGMultiNodeThermal.cs",
+                                            "notes":  "Large physics model candidate for subsystem extraction."
+                                        }
+                                    ],
+                       "hypotheses":  [
+                                          "Recent feature delivery added substantial logic across governance-critical modules without corresponding file-boundary refactoring."
+                                      ],
+                       "root_cause":  "Post-IP-0047 functionality growth accumulated in existing large modules while separation-of-concerns extraction was deferred, causing renewed file-size governance drift.",
+                       "resolution_candidate":  "Execute staged partial-class extraction and subsystem decomposition for oversized modules, preserving behavior and API contracts while reducing per-file complexity.",
+                       "links":  [
+                                     "Assigned DP: DP-0010 - Project Governance",
+                                     "Likely impacted: Assets/Scripts/UI/MultiScreenBuilder.cs, Assets/Scripts/Validation/HeatupSimEngine*.cs, Assets/Scripts/Physics/SGMultiNodeThermal.cs, Assets/Scripts/Physics/CVCSController.cs, Assets/Scripts/Physics/SolidPlantPressure.cs"
+                                 ],
+                       "tags":  [
+                                    "Project-Governance",
+                                    "File-Size-Governance",
+                                    "Refactoring",
+                                    "Maintainability",
                                     "User-Request-2026-02-18"
                                 ],
                        "closed_at":  null,
