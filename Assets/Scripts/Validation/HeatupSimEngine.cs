@@ -480,6 +480,34 @@ public partial class HeatupSimEngine : MonoBehaviour
 
     #endregion
 
+    #region IP-0046 Condenser/Feedwater/Permissives (CS-0115)
+
+    // Condenser Physics State
+    [HideInInspector] public CondenserState condenserState;
+    [HideInInspector] public float condenserVacuum_inHg;           // Current vacuum (in. Hg)
+    [HideInInspector] public float condenserBackpressure_psia;     // Condenser backpressure (psia)
+    [HideInInspector] public bool condenserC9Available;             // C-9 interlock satisfied
+    [HideInInspector] public string condenserPulldownPhase;        // Vacuum pulldown phase string
+
+    // Feedwater System State
+    [HideInInspector] public FeedwaterState feedwaterState;
+    [HideInInspector] public float hotwellLevel_pct;               // Hotwell level (%)
+    [HideInInspector] public float cstLevel_pct;                   // CST level (%)
+    [HideInInspector] public float feedwaterReturnFlow_lbhr;       // Total FW return flow (lb/hr)
+
+    // Startup Permissives State
+    [HideInInspector] public PermissiveState permissiveState;
+    [HideInInspector] public string steamDumpBridgeState;          // Bridge FSM state string
+    [HideInInspector] public bool steamDumpPermitted;              // Final permissive authority
+    [HideInInspector] public string permissiveStatusMessage;       // Status for display
+
+    // CS-0116: Condenser startup orchestration tracking
+    [HideInInspector] public bool condenserStartupCommanded;       // CW + vacuum pulldown initiated
+    [HideInInspector] public bool p12BypassCommanded;              // P-12 bypass engaged per startup procedure
+    [HideInInspector] public float condenserStartupTime_hr;        // Sim time when condenser startup was commanded
+
+    #endregion
+
     #region VCT Annunciators
 
     [HideInInspector] public bool vctLevelLow;
@@ -1476,7 +1504,118 @@ public partial class HeatupSimEngine : MonoBehaviour
         }
 
         // ================================================================
-        // 2. PHYSICS CALCULATIONS â€” Using actual modules
+        // 1D. CONDENSER / FEEDWATER / PERMISSIVES (IP-0046 CS-0115)
+        //     Condenser vacuum dynamics, feedwater return path, and
+        //     startup permissive evaluation (C-9/P-12/bridge FSM).
+        //     Uses previous-timestep steam dump flow to avoid circularity.
+        // ================================================================
+        {
+            // ================================================================
+            // CS-0116 ORCHESTRATION: Condenser startup trigger policy
+            // Avoid single-threshold deadlock by allowing multiple startup paths:
+            //   - Mode 5 -> Mode 4 entry (state-based arm)
+            //   - All required RCPs running
+            //   - SG steam onset observed
+            //   - Legacy temperature fallback (325F)
+            // ================================================================
+            int startupMode = GetMode(T_rcs);
+            bool mode4OrHotter = startupMode <= 4;
+            bool allRcpsRunningForStartup = rcpCount >= PlantConstants.RCP_COUNT;
+            bool sgSteamOnsetObserved = sgSteaming
+                || string.Equals(sgPressureSourceBranch, "P_sat", StringComparison.Ordinal);
+            bool prepTempReached = T_rcs >= PlantConstants.Condenser.CONDENSER_PREP_TEMP_F;
+
+            if (!condenserStartupCommanded
+                && (mode4OrHotter
+                    || allRcpsRunningForStartup
+                    || sgSteamOnsetObserved
+                    || prepTempReached))
+            {
+                List<string> startupTriggers = new List<string>();
+                if (mode4OrHotter) startupTriggers.Add($"mode={startupMode}");
+                if (allRcpsRunningForStartup) startupTriggers.Add("all_rcps_running");
+                if (sgSteamOnsetObserved) startupTriggers.Add("sg_steam_onset");
+                if (prepTempReached) startupTriggers.Add($"temp>={PlantConstants.Condenser.CONDENSER_PREP_TEMP_F:F0}F");
+
+                CondenserPhysics.StartVacuumPulldown(ref condenserState, simTime);
+                FeedwaterSystem.StartCondensatePump(ref feedwaterState);
+                condenserStartupCommanded = true;
+                condenserStartupTime_hr = simTime;
+                LogEvent(EventSeverity.ACTION,
+                    $"CONDENSER STARTUP — CW pumps started, vacuum pulldown initiated at T_rcs={T_rcs:F1} F; " +
+                    $"mode={startupMode}, rcps={rcpCount}, trigger={string.Join("+", startupTriggers)}");
+            }
+
+            // Steam flow from dump valves (previous timestep value breaks circularity)
+            float steamDumpFlow_lbhr = SteamDumpController.GetSteamMassFlow(steamDumpHeat_MW);
+
+            // Convert steam mass flow to heat load for condenser (BTU/hr)
+            // Q = m_dot * h_fg
+            float steamLoad_BTUhr = steamDumpFlow_lbhr
+                * PlantConstants.SteamDump.STEAM_ENTHALPY_HFG_BTU_LB;
+
+            // Condenser: vacuum dynamics based on steam load vs CW heat rejection
+            CondenserPhysics.Update(ref condenserState, steamLoad_BTUhr, simTime, dt);
+            condenserVacuum_inHg = condenserState.Vacuum_inHg;
+            condenserBackpressure_psia = condenserState.Backpressure_psia;
+            condenserC9Available = condenserState.C9_CondenserAvailable;
+            condenserPulldownPhase = condenserState.PulldownPhase.ToString();
+
+            // Feedwater: hotwell mass balance, pump flows, CST tracking
+            // All dumped steam condenses in hotwell; no atmospheric venting during normal ops
+            float hotwellTemp_F = CondenserPhysics.GetHotwellSatTemp(condenserState.Backpressure_psia);
+            FeedwaterSystem.Update(ref feedwaterState, steamDumpFlow_lbhr, 0f, hotwellTemp_F, dt);
+            hotwellLevel_pct = feedwaterState.HotwellLevel_in
+                / PlantConstants.Condenser.HOTWELL_LEVEL_SPAN_IN * 100f;
+            cstLevel_pct = FeedwaterSystem.GetCSTLevelPercent(feedwaterState);
+            feedwaterReturnFlow_lbhr = feedwaterState.TotalReturnFlow_lbhr;
+
+            // Startup permissives: C-9/P-12 evaluation and bridge FSM
+            bool dumpModeSelected = (steamDumpState.Mode != SteamDumpMode.OFF);
+            StartupPermissives.Evaluate(
+                ref permissiveState,
+                in condenserState,
+                T_avg,
+                dumpModeSelected,
+                steamPressure_psig,
+                PlantConstants.SteamDump.STEAM_PRESSURE_SETPOINT_PSIG,
+                PlantConstants.SteamDump.STEAM_DUMP_DEADBAND_PSI);
+
+            // ================================================================
+            // CS-0116 ORCHESTRATION: P-12 bypass policy
+            // Per startup procedure, operator bypasses P-12 when condenser
+            // vacuum is established (C-9 satisfied) and T_avg is above the
+            // procedural threshold. This ensures steam dumps can be armed
+            // before they are needed for HZP temperature control.
+            // ================================================================
+            if (!p12BypassCommanded
+                && condenserState.C9_CondenserAvailable
+                && T_avg >= PlantConstants.Condenser.P12_BYPASS_ENGAGE_TEMP_F)
+            {
+                StartupPermissives.SetP12Bypass(ref permissiveState, true);
+                p12BypassCommanded = true;
+                LogEvent(EventSeverity.ACTION,
+                    $"P-12 BYPASS ENGAGED — C-9 satisfied, T_avg={T_avg:F1} F");
+
+                // Re-evaluate permissives immediately after bypass so bridge
+                // state updates this timestep (avoids 1-step lag)
+                StartupPermissives.Evaluate(
+                    ref permissiveState,
+                    in condenserState,
+                    T_avg,
+                    dumpModeSelected,
+                    steamPressure_psig,
+                    PlantConstants.SteamDump.STEAM_PRESSURE_SETPOINT_PSIG,
+                    PlantConstants.SteamDump.STEAM_DUMP_DEADBAND_PSI);
+            }
+
+            steamDumpBridgeState = permissiveState.BridgeState.ToString();
+            steamDumpPermitted = permissiveState.SteamDumpPermitted;
+            permissiveStatusMessage = permissiveState.StatusMessage;
+        }
+
+        // ================================================================
+        // 2. PHYSICS CALCULATIONS — Using actual modules
         // ================================================================
         float pzrWaterMass_lb = pzrWaterVolume * WaterProperties.WaterDensity(T_pzr, pressure);
         float pzrHeatCap = ThermalMass.FluidHeatCapacity(pzrWaterMass_lb, T_pzr, pressure);
@@ -1521,7 +1660,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             // Heat transfer is negligible (HTC_NO_RCPS â‰ˆ 8), but this keeps
             // thermocline and boiling state current for the dashboard.
             ApplySGBoundaryAuthority();
-            var sgResult_r1 = SGMultiNodeThermal.Update(ref sgMultiNodeState, T_rcs, 0, pressure, dt);
+            var sgResult_r1 = SGMultiNodeThermal.Update(ref sgMultiNodeState, T_rcs, 0, pressure, dt, steamDumpPermitted);
             T_sg_secondary = sgMultiNodeState.BulkAverageTemp_F;
             sgHeatTransfer_MW = sgMultiNodeState.TotalHeatAbsorption_MW;
             sgTopNodeTemp = sgMultiNodeState.TopNodeTemp_F;
@@ -1768,7 +1907,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             // v1.3.0: Update multi-node SG model BEFORE RCS physics step
             ApplySGBoundaryAuthority();
             var sgResult_r2 = SGMultiNodeThermal.Update(
-                ref sgMultiNodeState, T_rcs, rcpCount, pressure, dt);
+                ref sgMultiNodeState, T_rcs, rcpCount, pressure, dt, steamDumpPermitted);
 
             // ============================================================
             // v0.1.0.0 Phase A: Rebase canonical ledger BEFORE any CVCS mutation (initial authority seed)
@@ -1961,7 +2100,7 @@ public partial class HeatupSimEngine : MonoBehaviour
             // v1.3.0: Update multi-node SG model BEFORE RCS physics step
             ApplySGBoundaryAuthority();
             var sgResult_r3 = SGMultiNodeThermal.Update(
-                ref sgMultiNodeState, T_rcs, rcpCount, pressure, dt);
+                ref sgMultiNodeState, T_rcs, rcpCount, pressure, dt, steamDumpPermitted);
 
             // ============================================================
             // v0.1.0.0 Phase A: Rebase canonical ledger BEFORE any CVCS mutation (initial authority seed)

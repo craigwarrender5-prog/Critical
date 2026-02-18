@@ -97,3 +97,53 @@ As a result, startup pressure-source behavior and steam-dump authority are under
 - `CS-0078` remains **BLOCKED** by `CS-0115`.
 - Corrective action requires execution under `IP-0046`.
 - Governance: no implementation changes under this CS without corresponding IP execution authority.
+
+## Post-Implementation Validation Addendum (2026-02-17)
+
+Validation rerun executed via:
+- Unity batch method: `Critical.Validation.IP0046ValidationRunner.RunStageDValidation`
+- Artifacts: `HeatupLogs/IP-0046_StageD_20260217_215436/`
+
+### What Passed
+
+1. Condenser/feedwater/permissive telemetry is now present in interval logs.
+2. Runtime contains implemented modules:
+   - `Assets/Scripts/Physics/CondenserPhysics.cs`
+   - `Assets/Scripts/Physics/FeedwaterSystem.cs`
+   - `Assets/Scripts/Physics/StartupPermissives.cs`
+
+### What Failed / Remains Inconsistent
+
+1. Condenser startup never actuates in the rerun:
+   - `HeatupLogs/IP-0046_StageD_20260217_215436/Heatup_Interval_081_20.00hr.txt:93`
+   - `HeatupLogs/IP-0046_StageD_20260217_215436/Heatup_Interval_081_20.00hr.txt:95`
+   - `HeatupLogs/IP-0046_StageD_20260217_215436/Heatup_Interval_081_20.00hr.txt:96`
+2. P-12 remains blocking and dump permissive stays false through run:
+   - `HeatupLogs/IP-0046_StageD_20260217_215436/Heatup_Interval_081_20.00hr.txt:100`
+   - `HeatupLogs/IP-0046_StageD_20260217_215436/Heatup_Interval_081_20.00hr.txt:101`
+   - `HeatupLogs/IP-0046_StageD_20260217_215436/Heatup_Interval_081_20.00hr.txt:103`
+3. SG still uses open-system `P_sat` outflow behavior while dumps are unavailable:
+   - `HeatupLogs/IP-0046_StageD_20260217_215436/Heatup_Interval_070_17.25hr.txt:104`
+   - `HeatupLogs/IP-0046_StageD_20260217_215436/Heatup_Interval_070_17.25hr.txt:208`
+   - `HeatupLogs/IP-0046_StageD_20260217_215436/Heatup_Interval_070_17.25hr.txt:249`
+4. `CS-0078` remains fail in rerun summary:
+   - `HeatupLogs/IP-0046_StageD_20260217_215436/IP-0046_StageD_Summary.md:22`
+
+### Orchestration Gap (Code Trace)
+
+1. Engine updates condenser and permissives each tick:
+   - `Assets/Scripts/Validation/HeatupSimEngine.cs:1517`
+   - `Assets/Scripts/Validation/HeatupSimEngine.cs:1534`
+2. Engine does not invoke condenser pulldown or P-12 bypass command path:
+   - `Assets/Scripts/Physics/CondenserPhysics.cs:223` (`StartVacuumPulldown` exists)
+   - `Assets/Scripts/Physics/StartupPermissives.cs:262` (`SetP12Bypass` exists)
+
+### Updated Recommendation
+
+- **Do not close `CS-0115` yet.**
+- Implementation is **partial**: subsystem modules are present, but startup actuation and sink-authority coupling remain incomplete.
+- Keep `CS-0078` blocked until:
+  1. condenser startup and C-9 path are actuated in runtime sequence,
+  2. P-12 bypass policy is implemented per startup procedure,
+  3. SG steam outflow/sink path is constrained by actual permissive availability,
+  4. Stage D/E rerun clears CS-0078 pressure-response acceptance.

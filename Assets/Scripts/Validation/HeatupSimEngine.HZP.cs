@@ -172,20 +172,22 @@ public partial class HeatupSimEngine
         // ================================================================
         // 2. STEAM DUMP CONTROLLER
         // Auto-enable when approaching HZP and SG is steaming
+        // IP-0046 (CS-0115): Gated by startup permissives (C-9/P-12)
         // ================================================================
-        if (SteamDumpController.ShouldAutoEnable(T_avg, steamPressure_psig) && 
+        if (SteamDumpController.ShouldAutoEnable(T_avg, steamPressure_psig, in permissiveState) &&
             steamDumpState.Mode == SteamDumpMode.OFF)
         {
             SteamDumpController.EnableSteamPressureMode(ref steamDumpState, simTime);
             LogEvent(EventSeverity.ACTION, $"STEAM DUMP AUTO-ENABLED at T_avg={T_avg:F1}Â°F, P_steam={steamPressure_psig:F0} psig");
         }
         
-        // Update steam dump controller
+        // Update steam dump controller with permissive gating (IP-0046 CS-0115)
         steamDumpHeat_MW = SteamDumpController.Update(
             ref steamDumpState,
             steamPressure_psig,
             T_avg,
-            dt_hr);
+            dt_hr,
+            steamDumpPermitted);
         
         steamDumpActive = steamDumpState.IsActive && steamDumpHeat_MW > 0.1f;
         

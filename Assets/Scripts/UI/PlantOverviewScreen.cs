@@ -378,11 +378,20 @@ namespace Critical.UI
                 SetGaugeText(text_SteamPressure, _data.GetSGSecondaryPressure_psig(), "F0", " psig");
             }
 
-            // PLACEHOLDER â€” Feedwater Flow
+            // IP-0046 (CS-0115): Live feedwater return flow from FeedwaterSystem
             if (text_FeedwaterFlow != null)
             {
-                text_FeedwaterFlow.text = "---";
-                text_FeedwaterFlow.color = COLOR_PLACEHOLDER;
+                float fwFlow = _data.GetFeedwaterReturnFlow_lbhr();
+                if (float.IsNaN(fwFlow) || fwFlow < 1f)
+                {
+                    text_FeedwaterFlow.text = "0";
+                    text_FeedwaterFlow.color = COLOR_PLACEHOLDER;
+                }
+                else
+                {
+                    text_FeedwaterFlow.text = $"{fwFlow / 1000f:F0}k lb/hr";
+                    text_FeedwaterFlow.color = Color.white;
+                }
             }
 
             // PLACEHOLDER â€” Turbine Power
@@ -399,18 +408,40 @@ namespace Critical.UI
                 text_GeneratorOutput.color = COLOR_PLACEHOLDER;
             }
 
-            // PLACEHOLDER â€” Condenser Vacuum
+            // IP-0046 (CS-0115): Live condenser vacuum from CondenserPhysics
             if (text_CondenserVacuum != null)
             {
-                text_CondenserVacuum.text = "---";
-                text_CondenserVacuum.color = COLOR_PLACEHOLDER;
+                float vacuum = _data.GetCondenserVacuum_inHg();
+                if (float.IsNaN(vacuum) || vacuum < 0.1f)
+                {
+                    text_CondenserVacuum.text = "ATM";
+                    text_CondenserVacuum.color = COLOR_PLACEHOLDER;
+                }
+                else
+                {
+                    text_CondenserVacuum.text = $"{vacuum:F1} in.Hg";
+                    text_CondenserVacuum.color = _data.GetC9CondenserAvailable()
+                        ? Color.green : Color.yellow;
+                }
             }
 
-            // PLACEHOLDER â€” Feedwater Temperature
+            // IP-0046 (CS-0115): Feedwater temperature from hotwell saturation
             if (text_FeedwaterTemp != null)
             {
-                text_FeedwaterTemp.text = "---";
-                text_FeedwaterTemp.color = COLOR_PLACEHOLDER;
+                float vacuum = _data.GetCondenserVacuum_inHg();
+                if (float.IsNaN(vacuum) || vacuum < 0.1f)
+                {
+                    text_FeedwaterTemp.text = "---";
+                    text_FeedwaterTemp.color = COLOR_PLACEHOLDER;
+                }
+                else
+                {
+                    float bpPsia = _data.GetCondenserBackpressure_psia();
+                    float hotwellTemp = float.IsNaN(bpPsia) ? 100f
+                        : Critical.Physics.WaterProperties.SaturationTemperature(bpPsia);
+                    text_FeedwaterTemp.text = $"{hotwellTemp:F0} F";
+                    text_FeedwaterTemp.color = Color.white;
+                }
             }
 
             // PLACEHOLDER â€” Main Steam Flow

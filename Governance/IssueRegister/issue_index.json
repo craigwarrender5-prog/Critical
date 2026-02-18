@@ -1,7 +1,7 @@
-﻿{
+{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-17T21:20:00Z",
-    "entry_count":  112,
+    "generated_at":  "2026-02-18T02:01:53Z",
+    "entry_count":  113,
     "entries":  [
                     {
                         "id":  "CS-0001",
@@ -16,7 +16,7 @@
                         "closed_at":  "2026-02-14T00:00:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Mass Conservation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Authority Enforcement"
+                                     "Mass Conservation ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Authority Enforcement"
                                  ]
                     },
                     {
@@ -32,7 +32,7 @@
                         "closed_at":  "2026-02-14T00:00:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Mass Conservation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Ledger Integrity"
+                                     "Mass Conservation ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Ledger Integrity"
                                  ]
                     },
                     {
@@ -48,7 +48,7 @@
                         "closed_at":  "2026-02-14T00:00:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Mass Conservation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Boundary Accounting"
+                                     "Mass Conservation ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Boundary Accounting"
                                  ]
                     },
                     {
@@ -64,7 +64,7 @@
                         "closed_at":  "2026-02-14T00:00:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Mass Conservation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â State Ownership"
+                                     "Mass Conservation ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â State Ownership"
                                  ]
                     },
                     {
@@ -80,7 +80,7 @@
                         "closed_at":  "2026-02-14T00:00:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Mass Conservation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Order of Operations"
+                                     "Mass Conservation ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Order of Operations"
                                  ]
                     },
                     {
@@ -112,7 +112,7 @@
                         "closed_at":  "2026-02-16T20:58:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Diagnostic Enforcement ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Observability"
+                                     "Diagnostic Enforcement ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Observability"
                                  ]
                     },
                     {
@@ -128,7 +128,7 @@
                         "closed_at":  "2026-02-14T00:00:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Mass Conservation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Runtime Validation"
+                                     "Mass Conservation ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Runtime Validation"
                                  ]
                     },
                     {
@@ -144,7 +144,7 @@
                         "closed_at":  "2026-02-14T19:20:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Energy Conservation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â SG Boundary"
+                                     "Energy Conservation ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â SG Boundary"
                                  ]
                     },
                     {
@@ -160,7 +160,7 @@
                         "closed_at":  "2026-02-17T17:29:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Plant Protection ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â SG Boundary"
+                                     "Plant Protection ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â SG Boundary"
                                  ]
                     },
                     {
@@ -208,7 +208,7 @@
                         "closed_at":  "2026-02-14T16:27:40Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Mass Conservation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Session Integrity"
+                                     "Mass Conservation ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Session Integrity"
                                  ]
                     },
                     {
@@ -224,7 +224,7 @@
                         "closed_at":  "2026-02-14T16:33:37Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "SG Secondary Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Pressure Boundary"
+                                     "SG Secondary Physics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Pressure Boundary"
                                  ]
                     },
                     {
@@ -240,7 +240,7 @@
                         "closed_at":  "2026-02-14T16:33:37Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "SG Secondary Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Compressible Volume"
+                                     "SG Secondary Physics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Compressible Volume"
                                  ]
                     },
                     {
@@ -256,7 +256,7 @@
                         "closed_at":  "2026-02-14T16:33:37Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "SG Secondary Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Heat Balance"
+                                     "SG Secondary Physics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Heat Balance"
                                  ]
                     },
                     {
@@ -272,12 +272,12 @@
                         "closed_at":  "2026-02-14T19:20:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "SG Secondary Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Startup Procedure"
+                                     "SG Secondary Physics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Startup Procedure"
                                  ]
                     },
                     {
                         "id":  "CS-0018",
-                        "title":  "NÃƒÂ¢Ã¢â‚¬Å¡Ã¢â‚¬Å¡ blanket treated as pressure clamp, not compressible cushion",
+                        "title":  "NÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€¦Ã‚Â¡ blanket treated as pressure clamp, not compressible cushion",
                         "domain":  "Steam Generator Secondary Physics",
                         "severity":  "HIGH",
                         "status":  "CLOSED",
@@ -288,7 +288,7 @@
                         "closed_at":  "2026-02-14T16:33:37Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "SG Secondary Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Gas Volume Model"
+                                     "SG Secondary Physics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Gas Volume Model"
                                  ]
                     },
                     {
@@ -304,7 +304,7 @@
                         "closed_at":  "2026-02-14T19:20:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "SG Secondary Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Temperature Progression"
+                                     "SG Secondary Physics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Temperature Progression"
                                  ]
                     },
                     {
@@ -320,7 +320,7 @@
                         "closed_at":  "2026-02-14T19:20:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "SG Secondary Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Dynamic Response"
+                                     "SG Secondary Physics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Dynamic Response"
                                  ]
                     },
                     {
@@ -336,7 +336,7 @@
                         "closed_at":  "2026-02-15T08:50:52Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Solid Regime"
+                                     "Primary Thermodynamics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Solid Regime"
                                  ]
                     },
                     {
@@ -352,7 +352,7 @@
                         "closed_at":  "2026-02-15T08:50:52Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Controller Coupling"
+                                     "Primary Thermodynamics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Controller Coupling"
                                  ]
                     },
                     {
@@ -368,7 +368,7 @@
                         "closed_at":  "2026-02-15T08:50:52Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Solid Regime"
+                                     "Primary Thermodynamics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Solid Regime"
                                  ]
                     },
                     {
@@ -384,7 +384,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "CLOSE_NO_CODE",
                         "tags":  [
-                                     "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PZR State Machine"
+                                     "Primary Thermodynamics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â PZR State Machine"
                                  ]
                     },
                     {
@@ -400,7 +400,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "CLOSE_NO_CODE",
                         "tags":  [
-                                     "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Bubble Detection"
+                                     "Primary Thermodynamics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Bubble Detection"
                                  ]
                     },
                     {
@@ -416,7 +416,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Two-Phase Energy Balance"
+                                     "Primary Thermodynamics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Two-Phase Energy Balance"
                                  ]
                     },
                     {
@@ -432,7 +432,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â State Machine Logic"
+                                     "Primary Thermodynamics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â State Machine Logic"
                                  ]
                     },
                     {
@@ -448,7 +448,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â State Machine Timing"
+                                     "Primary Thermodynamics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â State Machine Timing"
                                  ]
                     },
                     {
@@ -464,7 +464,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Two-Phase Energy Balance"
+                                     "Primary Thermodynamics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Two-Phase Energy Balance"
                                  ]
                     },
                     {
@@ -480,7 +480,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Mass-Pressure Coupling"
+                                     "Primary Thermodynamics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Mass-Pressure Coupling"
                                  ]
                     },
                     {
@@ -496,7 +496,7 @@
                         "closed_at":  "2026-02-15T08:50:52Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Thermal Inertia"
+                                     "Primary Thermodynamics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Thermal Inertia"
                                  ]
                     },
                     {
@@ -528,7 +528,7 @@
                         "closed_at":  "2026-02-15T08:50:52Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Core Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Primary Energy Balance"
+                                     "Core Physics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Primary Energy Balance"
                                  ]
                     },
                     {
@@ -544,7 +544,7 @@
                         "closed_at":  "2026-02-15T08:50:52Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Core Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Primary Energy Balance"
+                                     "Core Physics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Primary Energy Balance"
                                  ]
                     },
                     {
@@ -560,12 +560,12 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "CVCS ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Primary Energy Balance Boundary"
+                                     "CVCS ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Primary Energy Balance Boundary"
                                  ]
                     },
                     {
                         "id":  "CS-0036",
-                        "title":  "DRAIN phase duration excessive ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â PZR requires ~4 hours to reach 25% level",
+                        "title":  "DRAIN phase duration excessive ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â PZR requires ~4 hours to reach 25% level",
                         "domain":  "Pressurizer \u0026 Two-Phase Physics",
                         "severity":  "HIGH",
                         "status":  "CLOSED",
@@ -576,7 +576,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Bubble Formation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Phase Controller / CVCS Flow Balance"
+                                     "Bubble Formation ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Phase Controller / CVCS Flow Balance"
                                  ]
                     },
                     {
@@ -592,7 +592,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "INVALID",
                         "tags":  [
-                                     "Observability ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Operator/Visual Enhancement"
+                                     "Observability ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Operator/Visual Enhancement"
                                  ]
                     },
                     {
@@ -608,7 +608,7 @@
                         "closed_at":  "2026-02-15T08:50:52Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Primary Thermodynamics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Regime Transition Stability"
+                                     "Primary Thermodynamics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Regime Transition Stability"
                                  ]
                     },
                     {
@@ -624,7 +624,7 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "CVCS ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â VCT Flow Boundary Accounting"
+                                     "CVCS ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â VCT Flow Boundary Accounting"
                                  ]
                     },
                     {
@@ -640,7 +640,7 @@
                         "closed_at":  "2026-02-16T12:33:37Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Mass Conservation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Indicator Integrity"
+                                     "Mass Conservation ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Indicator Integrity"
                                  ]
                     },
                     {
@@ -656,7 +656,7 @@
                         "closed_at":  "2026-02-16T20:58:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Validation / Diagnostic Display ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Conservation Metric Integrity"
+                                     "Validation / Diagnostic Display ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Conservation Metric Integrity"
                                  ]
                     },
                     {
@@ -672,12 +672,12 @@
                         "closed_at":  "2026-02-15T10:02:07Z",
                         "resolution_type":  "INVALID",
                         "tags":  [
-                                     "Operator \u0026 Scenario Framework ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Dashboard Visualization"
+                                     "Operator \u0026 Scenario Framework ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Dashboard Visualization"
                                  ]
                     },
                     {
                         "id":  "CS-0043",
-                        "title":  "Pressurizer pressure boundary failure during bubble formation ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â runaway depressurization spiral",
+                        "title":  "Pressurizer pressure boundary failure during bubble formation ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â runaway depressurization spiral",
                         "domain":  "Pressurizer \u0026 Two-Phase Physics",
                         "severity":  "CRITICAL",
                         "status":  "CLOSED",
@@ -688,12 +688,12 @@
                         "closed_at":  "2026-02-15T14:07:20Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "Core Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Two-Phase Pressurizer Energy Partition"
+                                     "Core Physics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Two-Phase Pressurizer Energy Partition"
                                  ]
                     },
                     {
                         "id":  "CS-0044",
-                        "title":  "Async log writer ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â move synchronous file I/O to background thread",
+                        "title":  "Async log writer ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â move synchronous file I/O to background thread",
                         "domain":  "Performance \u0026 Runtime",
                         "severity":  "LOW",
                         "status":  "CLOSED",
@@ -709,7 +709,7 @@
                     },
                     {
                         "id":  "CS-0045",
-                        "title":  "Physics snapshot boundary ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â decouple physics compute from UI rendering",
+                        "title":  "Physics snapshot boundary ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â decouple physics compute from UI rendering",
                         "domain":  "Performance \u0026 Runtime",
                         "severity":  "LOW",
                         "status":  "CLOSED",
@@ -725,7 +725,7 @@
                     },
                     {
                         "id":  "CS-0046",
-                        "title":  "Physics parallelization ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â move simulation step to worker thread or Unity Jobs",
+                        "title":  "Physics parallelization ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â move simulation step to worker thread or Unity Jobs",
                         "domain":  "Performance \u0026 Runtime",
                         "severity":  "LOW",
                         "status":  "CLOSED",
@@ -865,7 +865,7 @@
                         "closed_at":  "2026-02-14T19:20:00Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
-                                     "SG Secondary Physics ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â Dynamic Response",
+                                     "SG Secondary Physics ÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â¢ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â€šÂ¬Ã…Â¡Ãƒâ€šÃ‚Â¬ÃƒÆ’Ã‚Â¢ÃƒÂ¢Ã¢â‚¬Å¡Ã‚Â¬Ãƒâ€šÃ‚Â Dynamic Response",
                                      "Stage E Failure Follow-up"
                                  ]
                     },
@@ -909,12 +909,12 @@
                         "title":  "SG startup draining contract at ~200F is not wired into runtime execution path",
                         "domain":  "Steam Generator Secondary Physics",
                         "severity":  "HIGH",
-                        "status":  "READY",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0011",
                         "assigned_ip":  "IP-0046",
-                        "updated_at":  "2026-02-17T16:11:03Z",
-                        "closed_at":  "2026-02-17T16:11:03Z",
+                        "updated_at":  "2026-02-18T01:41:29Z",
+                        "closed_at":  "2026-02-18T01:41:29Z",
                         "resolution_type":  "FIXED",
                         "tags":  [
                                      "Technical Documentation Mismatch",
@@ -1268,13 +1268,13 @@
                         "title":  "SG secondary pressure response does not begin at RCP circulation onset; rise is delayed until near-boiling",
                         "domain":  "Steam Generator Secondary Physics",
                         "severity":  "HIGH",
-                        "status":  "BLOCKED",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0011",
                         "assigned_ip":  "IP-0046",
-                        "updated_at":  "2026-02-17T21:10:00Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "updated_at":  "2026-02-18T01:41:29Z",
+                        "closed_at":  "2026-02-18T01:41:29Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "SG Secondary Physics - Warmup Pressurization",
                                      "Pre-Boil Pressure Response",
@@ -1344,13 +1344,13 @@
                         "title":  "SG startup boundary behavior is modeled isolated where references indicate steam-line warmup/open-path behavior.",
                         "domain":  "Steam Generator Secondary Physics",
                         "severity":  "HIGH",
-                        "status":  "READY",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0011",
                         "assigned_ip":  "IP-0046",
-                        "updated_at":  "2026-02-17T14:59:27Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "updated_at":  "2026-02-18T01:41:29Z",
+                        "closed_at":  "2026-02-18T01:41:29Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "NCR-Migration",
                                      "Audit-2026-02-15",
@@ -1670,7 +1670,7 @@
                     },
                     {
                         "id":  "CS-0099",
-                        "title":  "Governance Hardening v3 – Mandatory CS Lifecycle, Persistent Domain Model, Dependency Hierarchy Enforcement, Cross-Domain Protocol, CS Persistence Rule, and IP Revision Control",
+                        "title":  "Governance Hardening v3 Ã¢â‚¬â€œ Mandatory CS Lifecycle, Persistent Domain Model, Dependency Hierarchy Enforcement, Cross-Domain Protocol, CS Persistence Rule, and IP Revision Control",
                         "domain":  "Project Governance",
                         "severity":  "CRITICAL",
                         "status":  "CLOSED",
@@ -1849,13 +1849,13 @@
                         "title":  "PZR temperature monitoring missing for bubble formation readiness during cold startup",
                         "domain":  "Operator Interface \u0026 Scenarios",
                         "severity":  "MEDIUM",
-                        "status":  "CLOSED",
-                        "location":  "ARCHIVE",
+                        "status":  "READY",
+                        "location":  "ACTIVE",
                         "assigned_dp":  "DP-0008",
-                        "assigned_ip":  "IP-0050",
-                        "updated_at":  "2026-02-17T19:30:00Z",
-                        "closed_at":  "2026-02-17T19:30:00Z",
-                        "resolution_type":  "FIXED",
+                        "assigned_ip":  "IP-0051",
+                        "updated_at":  "2026-02-18T02:01:53Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
                         "tags":  [
                                      "PZR-Temperature-Monitoring",
                                      "Bubble-Formation",
@@ -1906,7 +1906,7 @@
                     },
                     {
                         "id":  "CS-0111",
-                        "title":  "PZR temperature (T_pzr) lacks primary visualization \u2014 no arc gauge or trend display",
+                        "title":  "PZR temperature (T_pzr) lacks primary visualization Ã¢â‚¬â€ no arc gauge or trend display",
                         "domain":  "Operator Interface \u0026 Scenarios",
                         "severity":  "MEDIUM",
                         "status":  "READY",
@@ -1929,13 +1929,13 @@
                         "title":  "Missing condenser + feedwater return module and startup permissive boundary contract (C-9/P-12) for steam-dump integration",
                         "domain":  "Steam Generator Secondary Physics",
                         "severity":  "CRITICAL",
-                        "status":  "READY",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0011",
                         "assigned_ip":  "IP-0046",
-                        "updated_at":  "2026-02-17T23:05:00Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "updated_at":  "2026-02-18T01:41:29Z",
+                        "closed_at":  "2026-02-18T01:41:29Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "Condenser-Module",
                                      "Steam-Dump-Permissives",
@@ -1945,6 +1945,30 @@
                                      "Feedwater-Return-Path",
                                      "Blocking-Dependency",
                                      "Disposition-INCONSISTENT",
+                                     "Validation-Rerun-2026-02-17",
+                                     "User-Request-2026-02-17"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0116",
+                        "title":  "Condenser startup orchestration and SG sink-authority coupling incomplete after CS-0115 staged implementation",
+                        "domain":  "Steam Generator Secondary Physics",
+                        "severity":  "CRITICAL",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
+                        "assigned_dp":  "DP-0011",
+                        "assigned_ip":  "IP-0046",
+                        "updated_at":  "2026-02-18T01:41:29Z",
+                        "closed_at":  "2026-02-18T01:41:29Z",
+                        "resolution_type":  "FIXED",
+                        "tags":  [
+                                     "Condenser-Orchestration",
+                                     "P12-Bypass-Orchestration",
+                                     "Steam-Sink-Authority",
+                                     "C-9",
+                                     "P-12",
+                                     "SG-Startup-Boundary",
+                                     "Blocking-Dependency",
                                      "User-Request-2026-02-17"
                                  ]
                     }
@@ -1952,6 +1976,6 @@
     "registry_role":  "AUTHORITATIVE_FULL_HISTORY",
     "registry_scope":  "Contains full lifecycle history (OPEN + CLOSED). Historical entries must remain in this file.",
     "active_working_set_file":  "Governance/IssueRegister/issue_register.json",
-    "closed_issue_count":  103,
-    "active_issue_count":  9
+    "closed_issue_count":  107,
+    "active_issue_count":  6
 }

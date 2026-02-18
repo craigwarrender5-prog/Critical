@@ -1074,6 +1074,26 @@ public partial class HeatupSimEngine
         sb.AppendLine($"  Closure Hit Rate: {pzrClosureConvergencePct,10:F1} % ({pzrClosureSolveConverged}/{pzrClosureSolveAttempts})");
         sb.AppendLine($"  PZR H Total:      {pzrTotalEnthalpy_BTU,10:F1} BTU");
         sb.AppendLine();
+        sb.AppendLine("CONDENSER / FEEDWATER / PERMISSIVES (IP-0046 CS-0115):");
+        sb.AppendLine($"  Vacuum Phase:     {condenserPulldownPhase,10}");
+        sb.AppendLine($"  Vacuum:           {condenserVacuum_inHg,10:F1} in.Hg");
+        sb.AppendLine($"  Backpressure:     {condenserBackpressure_psia,10:F2} psia");
+        sb.AppendLine($"  C-9 Available:    {(condenserC9Available ? "YES" : "NO"),10}");
+        sb.AppendLine($"  CW Pumps:         {condenserState.CW_PumpsRunning,10}");
+        sb.AppendLine($"  Hotwell Level:    {hotwellLevel_pct,10:F1} %");
+        sb.AppendLine($"  CST Level:        {cstLevel_pct,10:F1} %");
+        sb.AppendLine($"  FW Return Flow:   {feedwaterReturnFlow_lbhr,10:F0} lb/hr");
+        sb.AppendLine($"  P-12 Active:      {(permissiveState.P12_Active ? "YES" : "NO"),10}");
+        sb.AppendLine($"  P-12 Bypassed:    {(permissiveState.P12_Bypassed ? "YES" : "NO"),10}");
+        sb.AppendLine($"  P-12 Blocking:    {(permissiveState.P12_Blocking ? "YES" : "NO"),10}");
+        sb.AppendLine($"  Dump Permitted:   {(steamDumpPermitted ? "YES" : "NO"),10}");
+        sb.AppendLine($"  Bridge State:     {steamDumpBridgeState,10}");
+        sb.AppendLine($"  Permissive Msg:   {permissiveStatusMessage}");
+        sb.AppendLine($"  Cond Startup Cmd: {(condenserStartupCommanded ? "YES" : "NO"),10}");
+        sb.AppendLine($"  P-12 Bypass Cmd:  {(p12BypassCommanded ? "YES" : "NO"),10}");
+        if (condenserStartupCommanded)
+            sb.AppendLine($"  Cond Start Time:  {condenserStartupTime_hr,10:F2} hr");
+        sb.AppendLine();
         sb.AppendLine("RCP (Reactor Coolant Pump) STATE:");
         sb.AppendLine($"  RCPs Running:     {rcpCount,10} / 4");
         sb.AppendLine($"  Total RCP Heat:   {rcpHeat,10:F2} MW (input to RCS)");

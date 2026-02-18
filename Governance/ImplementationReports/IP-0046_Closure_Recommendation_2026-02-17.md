@@ -2,27 +2,30 @@
 
 - IP: `IP-0046`
 - DP: `DP-0011`
-- Final Stage E evidence: `Governance/ImplementationPlans/IP-0046/Reports/IP-0046_StageE_SystemRegression_2026-02-17_200800.md`
-- Execution complete timestamp reference: `2026-02-17T18:56:00Z`
+- Final Stage D evidence: `Governance/ImplementationPlans/Closed/IP-0046/Reports/IP-0046_StageD_DomainValidation_2026-02-17_231000.md`
+- Final Stage E evidence: `Governance/ImplementationPlans/Closed/IP-0046/Reports/IP-0046_StageE_SystemRegression_2026-02-17_231100.md`
+- Execution complete timestamp reference: `2026-02-17T23:11:00Z`
 
 ## Scope Result
 Current execution outcome by scoped CS:
-1. `CS-0082`: PASS
-2. `CS-0057`: PASS
-3. `CS-0078`: FAIL
+1. `CS-0115`: PASS
+2. `CS-0116`: PASS
+3. `CS-0082`: PASS
+4. `CS-0057`: PASS
+5. `CS-0078`: PASS
 
 ## Exit Criteria Check
 1. Startup SG boundary open-path behavior (`CS-0082`): `PASS`.
 2. Startup SG draining trigger wiring at `~200F` (`CS-0057`): `PASS`.
-3. SG post-circulation pressure-response behavior (`CS-0078`): `FAIL` (pressure remains floor-dominant and reverts to floor before sustained pre-boil rise).
-4. Build/runtime validation integrity: `PASS` (`0` compile errors, no PBOC runtime exception in final deterministic run).
+3. SG post-circulation pressure-response behavior (`CS-0078`): `PASS` (inventory-derived pre-boil branch established with no floor reversion before first boiling sample).
+4. Build/runtime validation integrity: `PASS` (`0` compile errors, deterministic Stage D/E rerun complete).
 
 ## Residual Risk
-1. Closing IP-0046 now would leave a known high-severity DP-0011 behavior (`CS-0078`) unresolved.
-2. Pressure-response acceptance is currently not satisfied for sustained pre-boil startup behavior.
+1. IP-0046 scoped risks are closed by validated Stage D/E evidence and archived CS dispositions.
+2. Pre-existing issue-register parity mismatch for unrelated closed items (`CS-0108`, `CS-0110`) remains outside IP-0046 scope.
 
 ## Recommendation
-`DO NOT CLOSE IP-0046`.
+`CLOSE IP-0046` (approved).
 
 Required next action:
-1. Continue remediation for `CS-0078` under IP-0046 (or split to a dedicated successor IP), then rerun Stage D/E and reissue closure recommendation.
+1. None for IP-0046 scope.

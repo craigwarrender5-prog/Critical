@@ -11,7 +11,9 @@
       "Bash(dotnet build:*)",
       "Bash(dotnet run:*)",
       "Bash(del \"C:\\\\Users\\\\craig\\\\Projects\\\\Critical\\\\PhaseA_Validation.cs\")",
-      "Bash(del \"C:\\\\Users\\\\craig\\\\Projects\\\\Critical\\\\PhaseA_Validation.csproj\")"
+      "Bash(del \"C:\\\\Users\\\\craig\\\\Projects\\\\Critical\\\\PhaseA_Validation.csproj\")",
+      "Bash(powershell:*)",
+      "Bash(xxd:*)"
     ]
   }
 }

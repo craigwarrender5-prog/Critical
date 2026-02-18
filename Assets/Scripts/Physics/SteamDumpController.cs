@@ -208,10 +208,8 @@ namespace Critical.Physics
         // ============================================================================
         
         /// <summary>
-        /// Update steam dump controller for one timestep.
-        /// 
-        /// Calculates dump demand based on operating mode, applies valve dynamics,
-        /// and computes resulting heat removal rate.
+        /// Update steam dump controller for one timestep (backward-compatible).
+        /// Assumes steam dump is always permitted (no permissive gating).
         /// </summary>
         /// <param name="state">Controller state (modified in place)</param>
         /// <param name="steamPressure_psig">Current steam header pressure in psig</param>
@@ -224,12 +222,69 @@ namespace Critical.Physics
             float T_avg,
             float dt_hr)
         {
+            return Update(ref state, steamPressure_psig, T_avg, dt_hr, steamDumpPermitted: true);
+        }
+
+        /// <summary>
+        /// Update steam dump controller for one timestep with permissive gating.
+        ///
+        /// When steamDumpPermitted is false (C-9 not satisfied or P-12 blocking),
+        /// dump demand is forced to zero and valve dynamics drive the valve closed.
+        /// The controller mode is NOT changed — only the demand signal is overridden.
+        /// This allows immediate resumption when permissives clear.
+        /// </summary>
+        /// <param name="state">Controller state (modified in place)</param>
+        /// <param name="steamPressure_psig">Current steam header pressure in psig</param>
+        /// <param name="T_avg">Current RCS average temperature in °F</param>
+        /// <param name="dt_hr">Timestep in hours</param>
+        /// <param name="steamDumpPermitted">True if startup permissives allow dump operation</param>
+        /// <returns>Heat removal rate in MW</returns>
+        public static float Update(
+            ref SteamDumpState state,
+            float steamPressure_psig,
+            float T_avg,
+            float dt_hr,
+            bool steamDumpPermitted)
+        {
+            // ================================================================
+            // PERMISSIVE GATE
+            // ================================================================
+            // When not permitted, force demand to zero. Valve dynamics will
+            // drive the valve closed naturally (respecting stroke time).
+            // Mode is preserved so controller resumes when permissives clear.
+
+            if (!steamDumpPermitted)
+            {
+                state.DumpDemand = 0f;
+                state.PressureError_psi = 0f;
+                state.StatusMessage = "BLOCKED — Permissives not satisfied";
+
+                // Valve dynamics still run (drive toward 0)
+                state.ValvePosition = ApplyValveDynamics(
+                    state.ValvePosition, 0f, dt_hr);
+
+                // Heat removal only if valve still closing
+                if (steamPressure_psig < PlantConstants.SteamDump.STEAM_DUMP_MIN_PRESSURE_PSIG
+                    || state.ValvePosition < PlantConstants.SteamDump.STEAM_DUMP_DEADBAND)
+                {
+                    state.HeatRemoval_MW = 0f;
+                    state.IsActive = false;
+                }
+                else
+                {
+                    state.HeatRemoval_MW = state.ValvePosition * PlantConstants.SteamDump.STEAM_DUMP_MAX_MW;
+                    state.IsActive = true;
+                }
+
+                return state.HeatRemoval_MW;
+            }
+
             // ================================================================
             // DEMAND CALCULATION (mode-dependent)
             // ================================================================
-            
+
             float demand = 0f;
-            
+
             switch (state.Mode)
             {
                 case SteamDumpMode.OFF:
@@ -237,7 +292,7 @@ namespace Critical.Physics
                     state.PressureError_psi = 0f;
                     state.StatusMessage = "Steam Dump OFF";
                     break;
-                    
+
                 case SteamDumpMode.STEAM_PRESSURE:
                     demand = CalculateSteamPressureDemand(
                         steamPressure_psig,
@@ -248,7 +303,7 @@ namespace Critical.Physics
                         ? $"Pressure Mode: {steamPressure_psig:F0} psig (err={pressureError:+0;-0;0})"
                         : $"Pressure Mode: {steamPressure_psig:F0} psig (at setpoint)";
                     break;
-                    
+
                 case SteamDumpMode.TAVG:
                     demand = CalculateTavgDemand(
                         T_avg,
@@ -260,22 +315,22 @@ namespace Critical.Physics
                         : $"T_avg Mode: {T_avg:F1}°F (at setpoint)";
                     break;
             }
-            
+
             state.DumpDemand = demand;
-            
+
             // ================================================================
             // VALVE DYNAMICS (first-order lag)
             // ================================================================
-            
+
             state.ValvePosition = ApplyValveDynamics(
                 state.ValvePosition,
                 demand,
                 dt_hr);
-            
+
             // ================================================================
             // HEAT REMOVAL CALCULATION
             // ================================================================
-            
+
             // Below minimum pressure, steam dump ineffective
             if (steamPressure_psig < PlantConstants.SteamDump.STEAM_DUMP_MIN_PRESSURE_PSIG)
             {
@@ -287,7 +342,7 @@ namespace Critical.Physics
                 state.HeatRemoval_MW = state.ValvePosition * PlantConstants.SteamDump.STEAM_DUMP_MAX_MW;
                 state.IsActive = state.ValvePosition > PlantConstants.SteamDump.STEAM_DUMP_DEADBAND;
             }
-            
+
             return state.HeatRemoval_MW;
         }
         
@@ -460,11 +515,32 @@ namespace Critical.Physics
         {
             // Temperature above HZP approach threshold
             bool tempOK = T_avg >= PlantConstants.SteamDump.HZP_APPROACH_TEMP_F;
-            
+
             // Steam pressure above minimum for dump operation
             bool pressureOK = steamPressure_psig >= PlantConstants.SteamDump.STEAM_DUMP_MIN_PRESSURE_PSIG;
-            
+
             return tempOK && pressureOK;
+        }
+
+        /// <summary>
+        /// Check if conditions are met to automatically enable steam dump,
+        /// including startup permissive gating.
+        ///
+        /// Adds the requirement that startup permissives (C-9 condenser
+        /// available, P-12 not blocking) must be satisfied before auto-enable.
+        /// </summary>
+        /// <param name="T_avg">Current RCS average temperature in °F</param>
+        /// <param name="steamPressure_psig">Current steam header pressure in psig</param>
+        /// <param name="permissives">Current startup permissive state</param>
+        /// <returns>True if steam dump should be enabled</returns>
+        public static bool ShouldAutoEnable(float T_avg, float steamPressure_psig, in PermissiveState permissives)
+        {
+            // Base conditions must be met
+            if (!ShouldAutoEnable(T_avg, steamPressure_psig))
+                return false;
+
+            // Startup permissives must allow dump operation
+            return permissives.SteamDumpPermitted;
         }
         
         // ============================================================================

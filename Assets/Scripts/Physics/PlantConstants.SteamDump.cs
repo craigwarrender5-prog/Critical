@@ -146,6 +146,16 @@ namespace Critical.Physics
             /// Prevents hunting at very low demands.
             /// </summary>
             public const float STEAM_DUMP_DEADBAND = 0.02f;
+
+            /// <summary>
+            /// Pressure deadband for steam dump bridge FSM in psi.
+            /// Steam dumps transition from Armed to Modulating when
+            /// steam pressure exceeds setpoint + deadband.
+            /// Prevents chatter at the setpoint boundary.
+            ///
+            /// Source: Typical PWR steam dump controller design
+            /// </summary>
+            public const float STEAM_DUMP_DEADBAND_PSI = 5f;
             
             #endregion
             

@@ -873,7 +873,85 @@ namespace Critical.UI
         #endregion
 
         // ====================================================================
-        // UTILITY â€” Placeholder Value Handling
+        // CONDENSER / FEEDWATER / PERMISSIVES (IP-0046 CS-0115)
+        // ====================================================================
+
+        #region Condenser / Feedwater / Permissives
+
+        /// <summary>Condenser vacuum in inches of mercury.</summary>
+        public float GetCondenserVacuum_inHg()
+        {
+            if (heatupEngine != null) return heatupEngine.condenserVacuum_inHg;
+            return float.NaN;
+        }
+
+        /// <summary>Condenser backpressure in psia.</summary>
+        public float GetCondenserBackpressure_psia()
+        {
+            if (heatupEngine != null) return heatupEngine.condenserBackpressure_psia;
+            return float.NaN;
+        }
+
+        /// <summary>C-9 (Condenser Available) interlock status.</summary>
+        public bool GetC9CondenserAvailable()
+        {
+            if (heatupEngine != null) return heatupEngine.condenserC9Available;
+            return false;
+        }
+
+        /// <summary>Condenser vacuum pulldown phase string.</summary>
+        public string GetCondenserPulldownPhase()
+        {
+            if (heatupEngine != null) return heatupEngine.condenserPulldownPhase;
+            return "N/A";
+        }
+
+        /// <summary>Hotwell level in percent.</summary>
+        public float GetHotwellLevel_pct()
+        {
+            if (heatupEngine != null) return heatupEngine.hotwellLevel_pct;
+            return float.NaN;
+        }
+
+        /// <summary>CST level in percent.</summary>
+        public float GetCSTLevel_pct()
+        {
+            if (heatupEngine != null) return heatupEngine.cstLevel_pct;
+            return float.NaN;
+        }
+
+        /// <summary>Total feedwater return flow in lb/hr.</summary>
+        public float GetFeedwaterReturnFlow_lbhr()
+        {
+            if (heatupEngine != null) return heatupEngine.feedwaterReturnFlow_lbhr;
+            return float.NaN;
+        }
+
+        /// <summary>Steam dump bridge state string.</summary>
+        public string GetSteamDumpBridgeState()
+        {
+            if (heatupEngine != null) return heatupEngine.steamDumpBridgeState;
+            return "N/A";
+        }
+
+        /// <summary>Whether startup permissives allow steam dump operation.</summary>
+        public bool GetSteamDumpPermitted()
+        {
+            if (heatupEngine != null) return heatupEngine.steamDumpPermitted;
+            return false;
+        }
+
+        /// <summary>Permissive status message for display.</summary>
+        public string GetPermissiveStatusMessage()
+        {
+            if (heatupEngine != null) return heatupEngine.permissiveStatusMessage;
+            return "N/A";
+        }
+
+        #endregion
+
+        // ====================================================================
+        // UTILITY — Placeholder Value Handling
         // ====================================================================
 
         #region Utility

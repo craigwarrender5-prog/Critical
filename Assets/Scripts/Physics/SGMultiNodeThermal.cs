@@ -874,12 +874,43 @@ namespace Critical.Physics
         /// <param name="pressurePsia">System pressure (psia)</param>
         /// <param name="dt_hr">Timestep in hours</param>
         /// <returns>Result struct with total heat removal and diagnostics</returns>
+        /// <summary>
+        /// Backward-compatible Update (assumes condenser sink always available).
+        /// </summary>
         public static SGMultiNodeResult Update(
             ref SGMultiNodeState state,
             float T_rcs,
             int rcpsRunning,
             float pressurePsia,
             float dt_hr)
+        {
+            return Update(ref state, T_rcs, rcpsRunning, pressurePsia, dt_hr,
+                condenserSinkAvailable: true);
+        }
+
+        /// <summary>
+        /// Update the multi-node SG thermal model for one timestep.
+        ///
+        /// IP-0046 (CS-0116): The condenserSinkAvailable parameter controls
+        /// whether steam produced during boiling can exit the SG to the
+        /// condenser via dump valves. When false, steam accumulates in the
+        /// SG secondary (inventory-derived pressure). When true, steam exits
+        /// freely (saturation pressure tracking).
+        /// </summary>
+        /// <param name="state">SG state (modified in place)</param>
+        /// <param name="T_rcs">Current RCS bulk temperature (°F)</param>
+        /// <param name="rcpsRunning">Number of RCPs operating (0-4)</param>
+        /// <param name="pressurePsia">System pressure (psia)</param>
+        /// <param name="dt_hr">Timestep in hours</param>
+        /// <param name="condenserSinkAvailable">True if condenser/dump path can accept steam</param>
+        /// <returns>Result struct with total heat removal and diagnostics</returns>
+        public static SGMultiNodeResult Update(
+            ref SGMultiNodeState state,
+            float T_rcs,
+            int rcpsRunning,
+            float pressurePsia,
+            float dt_hr,
+            bool condenserSinkAvailable)
         {
             var result = new SGMultiNodeResult();
             int N = state.NodeCount;
@@ -1476,15 +1507,24 @@ namespace Critical.Physics
                 state.SteamSpaceVolume_ft3 = ComputeGasCushionVolumeFt3(
                     state, state.BulkAverageTemp_F, state.SecondaryPressure_psia);
 
-                // Steam outflow rate depends on isolation state
+                // Steam outflow rate depends on isolation state and sink availability
                 if (state.SteamIsolated)
                 {
                     // Isolated SG: no steam outlet (MSIVs closed)
                     state.SteamOutflow_lbhr = 0f;
                 }
+                else if (!condenserSinkAvailable)
+                {
+                    // CS-0116: Open system but no condenser sink available.
+                    // Steam cannot exit via dump valves — accumulates in SG
+                    // secondary. Inventory-derived pressure will govern.
+                    // This is the correct behavior during early startup before
+                    // condenser vacuum is established (C-9 not yet satisfied).
+                    state.SteamOutflow_lbhr = 0f;
+                }
                 else
                 {
-                    // Open system: steam exits as fast as produced
+                    // Open system with condenser sink: steam exits as fast as produced
                     state.SteamOutflow_lbhr = state.SteamProductionRate_lbhr;
                 }
 
@@ -1503,10 +1543,12 @@ namespace Critical.Physics
                     out float n2Pressure_psia);
                 state.NitrogenPressure_psia = n2Pressure_psia;
 
-                // When isolated, use inventory-based pressure instead of sat tracking
-                // Note: This overrides the pressure set in UpdateSecondaryPressure()
-                // when SteamIsolated = true. Normal open heatup uses sat tracking.
-                if (state.SteamIsolated)
+                // When steam cannot exit (isolated OR no sink available), use
+                // inventory-based pressure instead of saturation tracking.
+                // CS-0116: This now also applies when the SG boundary is OPEN
+                // but the condenser/dump path is blocked (pre-C-9, P-12 blocking).
+                // Steam accumulates → inventory pressure rises naturally from floor.
+                if (state.SteamIsolated || (!condenserSinkAvailable && state.SteamInventory_lb > 0.1f))
                 {
                     state.SecondaryPressure_psia = state.InventoryPressure_psia;
                     state.SaturationTemp_F = WaterProperties.SaturationTemperature(
@@ -1595,11 +1637,12 @@ namespace Critical.Physics
         /// <param name="isolated">True to isolate SG (MSIV closed), false for open system</param>
         public static void SetSteamIsolation(ref SGMultiNodeState state, bool isolated)
         {
+            bool wasIsolated = state.SteamIsolated;
             state.SteamIsolated = isolated;
 
-            // If transitioning from isolated to open, reset steam inventory
-            // (steam "vents" when MSIVs open)
-            if (!isolated)
+            // Reset only on an actual isolated->open transition.
+            // Calling this each step with OPEN should not wipe inventory.
+            if (wasIsolated && !isolated)
             {
                 state.SteamInventory_lb = 0f;
             }
@@ -1969,10 +2012,22 @@ namespace Critical.Physics
                 // or all nodes are genuinely subcooled at near-atmospheric
                 // conditions (pressure has not risen above the Nâ‚‚ blanket).
                 state.SecondaryPressure_psia = state.InventoryPressure_psia;
-                state.PressureSourceMode =
-                    (state.SecondaryPressure_psia <= PlantConstants.SG_MIN_STEAMING_PRESSURE_PSIA + 0.1f)
-                    ? SGPressureSourceMode.Floor
-                    : SGPressureSourceMode.InventoryDerived;
+                bool nearFloor =
+                    state.SecondaryPressure_psia <= PlantConstants.SG_MIN_STEAMING_PRESSURE_PSIA + 0.1f;
+
+                // Avoid pressure-source label chatter at the floor threshold.
+                // Once inventory-derived mode has been reached during pre-boil
+                // startup, keep it latched until saturation tracking takes over.
+                if (nearFloor && state.PressureSourceMode == SGPressureSourceMode.InventoryDerived)
+                {
+                    state.PressureSourceMode = SGPressureSourceMode.InventoryDerived;
+                }
+                else
+                {
+                    state.PressureSourceMode = nearFloor
+                        ? SGPressureSourceMode.Floor
+                        : SGPressureSourceMode.InventoryDerived;
+                }
             }
             else
             {

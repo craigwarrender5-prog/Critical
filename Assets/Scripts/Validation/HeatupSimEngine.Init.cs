@@ -738,6 +738,30 @@ public partial class HeatupSimEngine
         // v1.1.1 FIX: Initialize inventory audit for comprehensive mass balance tracking
         // Without this call, Initial_Total_Mass_lbm remains 0, causing immediate conservation alarms
         InitializeInventoryAudit();
+
+        // IP-0046 (CS-0115): Initialize condenser, feedwater, and startup permissives
+        // Cold shutdown: condenser at atmospheric (no vacuum), no CW pumps, no FW pumps
+        condenserState = CondenserPhysics.Initialize();
+        condenserVacuum_inHg = 0f;
+        condenserBackpressure_psia = PlantConstants.P_ATM;
+        condenserC9Available = false;
+        condenserPulldownPhase = condenserState.PulldownPhase.ToString();
+
+        feedwaterState = FeedwaterSystem.Initialize();
+        hotwellLevel_pct = feedwaterState.HotwellLevel_in
+            / PlantConstants.Condenser.HOTWELL_LEVEL_SPAN_IN * 100f;
+        cstLevel_pct = FeedwaterSystem.GetCSTLevelPercent(feedwaterState);
+        feedwaterReturnFlow_lbhr = 0f;
+
+        permissiveState = StartupPermissives.Initialize();
+        steamDumpBridgeState = permissiveState.BridgeState.ToString();
+        steamDumpPermitted = false;
+        permissiveStatusMessage = permissiveState.StatusMessage;
+
+        // CS-0116: Condenser startup orchestration — not yet commanded at cold shutdown
+        condenserStartupCommanded = false;
+        p12BypassCommanded = false;
+        condenserStartupTime_hr = 0f;
     }
 }
 
