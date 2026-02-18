@@ -2782,6 +2782,54 @@
                                     "Blocking-Dependency",
                                     "User-Request-2026-02-17"
                                 ]
+                   },
+                   {
+                       "id":  "CS-0108",
+                       "title":  "PZR temperature monitoring missing for bubble formation readiness during cold startup",
+                       "domain":  "Operator Interface & Scenarios",
+                       "severity":  "MEDIUM",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-17T18:15:00Z",
+                       "closed_at":  "2026-02-18T12:00:00Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0051"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/Changelogs/CHANGELOG_v1.1.1.0.md"
+                                           ],
+                       "one_line_rca":  "Missing pre-bubble T_pzr visualization addressed by adding arc gauge and sparkline trend to dashboard.",
+                       "tags":  [
+                                    "PZR-Temperature-Monitoring",
+                                    "Bubble-Formation",
+                                    "Cold-Startup",
+                                    "ValidationDashboard",
+                                    "User-Request-2026-02-17"
+                                ]
+                   },
+                   {
+                       "id":  "CS-0111",
+                       "title":  "PZR temperature (T_pzr) lacks primary visualization - no arc gauge or trend display",
+                       "domain":  "Operator Interface & Scenarios",
+                       "severity":  "MEDIUM",
+                       "status":  "CLOSED",
+                       "created_at":  "2026-02-17T19:50:00Z",
+                       "closed_at":  "2026-02-18T12:00:00Z",
+                       "resolution_type":  "FIXED",
+                       "fix_refs":  [
+                                        "IP-0051"
+                                    ],
+                       "validation_refs":  [
+                                               "Governance/Changelogs/CHANGELOG_v1.1.1.0.md"
+                                           ],
+                       "one_line_rca":  "T_pzr arc gauge added to PZR column, T_pzr sparkline replaces NET HEAT, T_pzr readout removed from RCS column.",
+                       "tags":  [
+                                    "PZR-Temperature-Visualization",
+                                    "Dashboard-Arc-Gauge",
+                                    "Dashboard-Sparkline",
+                                    "Cold-Startup",
+                                    "User-Request-2026-02-17"
+                                ]
                    }
                ]
 }

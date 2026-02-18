@@ -935,7 +935,19 @@ public partial class HeatupSimEngine : MonoBehaviour
             ClearLogDirectory();  // v0.8.2: Clean up old logs on startup
 
         if (runOnStart)
-            StartSimulation();
+        {
+            bool startedByScenario = false;
+            if (useScenarioStartPath && !string.IsNullOrWhiteSpace(startupScenarioId))
+            {
+                startedByScenario = StartScenarioById(startupScenarioId);
+            }
+
+            if (!startedByScenario)
+            {
+                activeScenarioId = string.Empty;
+                StartSimulation();
+            }
+        }
         else
             InitializeIdleBaselineOnBoot();
     }
@@ -1034,6 +1046,7 @@ public partial class HeatupSimEngine : MonoBehaviour
         // Set flag FIRST so coroutine sees it immediately
         _shutdownRequested = true;
         isRunning = false;
+        activeScenarioId = string.Empty;
         _plantSimulationCoordinator?.Shutdown();
         // IP-0023: bounded best-effort flush avoids exit-time blocking spikes.
         FlushAsyncLogWriter(500);

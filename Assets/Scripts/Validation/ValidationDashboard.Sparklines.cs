@@ -393,7 +393,7 @@ namespace Critical.Validation
         public const int IDX_SUBCOOLING = 4;
         public const int IDX_NET_CVCS = 5;
         public const int IDX_SG_PRESSURE = 6;
-        public const int IDX_NET_HEAT = 7;
+        public const int IDX_T_PZR = 7;
 
         public const int SPARKLINE_COUNT = 8;
 
@@ -485,14 +485,13 @@ namespace Critical.Validation
             _units[IDX_SG_PRESSURE] = "psia";
             _colors[IDX_SG_PRESSURE] = ValidationDashboard._cCyanInfo;
 
-            // Net Heat: auto-range
-            _sparklines[IDX_NET_HEAT] = new SparklineRenderer(width, height);
-            _sparklines[IDX_NET_HEAT].EnableAutoRange();
-            _sparklines[IDX_NET_HEAT].SetLineColor(ValidationDashboard._cWarningAmber);
-            _labels[IDX_NET_HEAT] = "NET HEAT";
-            _formats[IDX_NET_HEAT] = "F2";
-            _units[IDX_NET_HEAT] = "MW";
-            _colors[IDX_NET_HEAT] = ValidationDashboard._cWarningAmber;
+            // T_pzr: 50-600°F (for bubble formation readiness monitoring)
+            _sparklines[IDX_T_PZR] = new SparklineRenderer(width, height, 50f, 600f);
+            _sparklines[IDX_T_PZR].SetLineColor(ValidationDashboard._cWarningAmber);
+            _labels[IDX_T_PZR] = "T_PZR";
+            _formats[IDX_T_PZR] = "F1";
+            _units[IDX_T_PZR] = "°F";
+            _colors[IDX_T_PZR] = ValidationDashboard._cWarningAmber;
 
             _initialized = true;
         }
@@ -516,10 +515,8 @@ namespace Critical.Validation
 
             _sparklines[IDX_SG_PRESSURE].Push(snapshot.SgSecondaryPressure);
 
-            // Net heat = RCP heat + PZR heaters - SG transfer - RHR removal
-            float netHeat = snapshot.RcpHeat + snapshot.PzrHeaterPower 
-                          - snapshot.SgHeatTransfer - snapshot.RhrNetHeat;
-            _sparklines[IDX_NET_HEAT].Push(netHeat);
+            // T_pzr for bubble formation readiness monitoring
+            _sparklines[IDX_T_PZR].Push(snapshot.T_pzr);
         }
 
         /// <summary>

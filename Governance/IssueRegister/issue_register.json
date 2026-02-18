@@ -1,8 +1,8 @@
 {
     "version":  "1.0.0",
-    "generated_at":  "2026-02-18T02:01:53Z",
+    "generated_at":  "2026-02-18T02:20:11Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-    "active_issue_count":  6,
+    "active_issue_count":  5,
     "issues":  [
                    {
                        "id":  "CS-0102",
@@ -95,9 +95,9 @@
                        "title":  "Wrap existing validation runner as selectable Validation Scenario",
                        "domain":  "Validation \u0026 Diagnostics",
                        "severity":  "HIGH",
-                       "status":  "READY",
+                       "status":  "OPEN",
                        "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T14:59:27Z",
+                       "updated_at":  "2026-02-18T02:11:51Z",
                        "stage_detected":  "User-Request-2026-02-17",
                        "assigned_dp":  "DP-0013",
                        "assigned_ip":  "IP-0049",
@@ -191,115 +191,53 @@
                        "resolution_type":  null
                    },
                    {
-                       "id":  "CS-0111",
-                       "title":  "PZR temperature (T_pzr) lacks primary visualization ÃƒÂ¢Ã¢â€šÂ¬Ã¢â‚¬Â no arc gauge or trend display",
-                       "domain":  "Operator Interface \u0026 Scenarios",
-                       "severity":  "MEDIUM",
-                       "status":  "READY",
-                       "created_at":  "2026-02-17T19:50:00Z",
-                       "updated_at":  "2026-02-17T20:00:00Z",
-                       "stage_detected":  "User-Request-2026-02-17",
-                       "assigned_dp":  "DP-0008",
-                       "assigned_ip":  "IP-0051",
+                       "id":  "CS-0117",
+                       "title":  "Validation dashboard compile regression: unresolved IDX_NET_HEAT blocks IP-0049 Stage E build validation",
+                       "domain":  "Validation \u0026 Diagnostics",
+                       "severity":  "HIGH",
+                       "status":  "OPEN",
+                       "created_at":  "2026-02-18T02:19:47Z",
+                       "updated_at":  "2026-02-18T02:20:11Z",
+                       "stage_detected":  "IP-0049-StageE-2026-02-18",
+                       "assigned_dp":  "DP-0013",
+                       "assigned_ip":  "IP-0049",
                        "observations":  [
-                                            "Pressurizer column has arc gauges for PRESSURE and LEVEL, but not T_pzr.",
-                                            "T_pzr readout is misplaced in RCS column instead of Pressurizer column.",
-                                            "No T_pzr sparkline trend exists - cannot observe heating trajectory over time.",
-                                            "Operators cannot visualize PZR heating trajectory toward saturation during cold startup.",
-                                            "Per NRC HRTD 17.0, T_pzr reaching T_sat is the key milestone for bubble formation."
+                                            "IP-0049 Stage E system regression fails because ValidationDashboard sparklines reference an unresolved IDX_NET_HEAT symbol.",
+                                            "Failure is outside CS-0104 scenario bridge deltas but blocks closure until compile baseline is restored."
                                         ],
                        "evidence":  [
                                         {
-                                            "ref":  "Governance/Issues/CS-0111_Investigation_Report_2026-02-17_195000.md",
-                                            "notes":  "Full investigation report with root cause and fix options."
+                                            "ref":  "Governance/Issues/CS-0117_Investigation_Report_2026-02-18_021900.md",
+                                            "notes":  "Blocking compile regression disposition and corrective scope for IP-0049 Stage E."
                                         },
                                         {
-                                            "ref":  "Assets/Scripts/Validation/Tabs/OverviewTab.cs:260-275",
-                                            "notes":  "PZR column has PRESSURE and LEVEL arc gauges, no T_pzr gauge."
+                                            "ref":  "Governance/ImplementationPlans/IP-0049/Reports/IP-0049_StageE_SystemRegression_2026-02-18_020900.md",
+                                            "notes":  "Stage E build gate failed with IDX_NET_HEAT unresolved in ValidationDashboard.Sparklines.cs."
                                         },
                                         {
-                                            "ref":  "Assets/Scripts/Validation/Tabs/OverviewTab.cs:205",
-                                            "notes":  "T_pzr displayed in RCS column, not PZR column."
+                                            "ref":  "Assets/Scripts/Validation/ValidationDashboard.Sparklines.cs:489-495,522",
+                                            "notes":  "IDX_NET_HEAT references present without a matching constant/definition in current workspace state."
                                         }
                                     ],
                        "hypotheses":  [
-                                          "Dashboard was designed with post-bubble operations as primary focus; pre-bubble PZR heating visualization was deprioritized."
+                                          "Sparkline metric index constants changed in a parallel track and IDX_NET_HEAT references were not updated."
                                       ],
-                       "root_cause":  "Missing primary T_pzr visualization (arc gauge) in Pressurizer column.",
-                       "resolution_candidate":  "Add T_pzr arc gauge to Pressurizer column, relocate T_pzr readout from RCS to PZR column, add T_pzr sparkline trend (replace NET HEAT).",
+                       "root_cause":  null,
+                       "resolution_candidate":  "Restore compile integrity by reconciling sparkline metric index definitions and references (reintroduce IDX_NET_HEAT or migrate callsites to the canonical index), then rerun IP-0049 Stage E.",
                        "links":  [
-                                     "Assigned DP: DP-0008 - Operator Interface \u0026 Scenarios",
-                                     "Related: CS-0108 (closed) - PZR subcooling added but T_pzr visualization gap remains"
+                                     "Blocked IP stage: IP-0049 Stage E - System Regression",
+                                     "Likely impacted: Assets/Scripts/Validation/ValidationDashboard.Sparklines.cs"
                                  ],
                        "tags":  [
-                                    "PZR-Temperature-Visualization",
-                                    "Dashboard-Arc-Gauge",
-                                    "Dashboard-Sparkline",
-                                    "Cold-Startup",
-                                    "User-Request-2026-02-17"
+                                    "Build-Break",
+                                    "ValidationDashboard",
+                                    "IDX_NET_HEAT",
+                                    "IP-0049-Blocker",
+                                    "Blocking-Dependency",
+                                    "User-Request-2026-02-18"
                                 ],
                        "closed_at":  null,
                        "resolution_type":  null
-                   },
-                   {
-                       "id":  "CS-0108",
-                       "title":  "PZR temperature monitoring missing for bubble formation readiness during cold startup",
-                       "domain":  "Operator Interface \u0026 Scenarios",
-                       "severity":  "MEDIUM",
-                       "status":  "READY",
-                       "created_at":  "2026-02-17T18:15:00Z",
-                       "updated_at":  "2026-02-18T02:01:53Z",
-                       "stage_detected":  "User-Request-2026-02-17",
-                       "assigned_dp":  "DP-0008",
-                       "assigned_ip":  "IP-0051",
-                       "closed_at":  null,
-                       "resolution_type":  null,
-                       "observations":  [
-                                            "ValidationDashboard displays T_pzr as numeric readout but provides no comparison to T_sat.",
-                                            "No annunciator exists for PZR approaching or reaching saturation temperature.",
-                                            "NRC HRTD 17.0 specifies bubble formation occurs when T_pzr reaches T_sat (450Ãƒâ€šÃ‚Â°F at 400 psig).",
-                                            "Operators cannot visually determine when pressurizer is ready for bubble draw."
-                                        ],
-                       "evidence":  [
-                                        {
-                                            "ref":  "Governance/Issues/CS-0108_Investigation_Report_2026-02-17_181500.md",
-                                            "notes":  "Full investigation report with root cause analysis and fix options."
-                                        },
-                                        {
-                                            "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:38",
-                                            "notes":  "Heat PZR to T_sat (450Ãƒâ€šÃ‚Â°F at 400 psig) as key sequencing step."
-                                        },
-                                        {
-                                            "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:53",
-                                            "notes":  "When pressurizer temperature reaches saturation temperature... a pressurizer bubble is established."
-                                        },
-                                        {
-                                            "ref":  "Assets/Scripts/Validation/ValidationDashboard.Snapshot.cs:108",
-                                            "notes":  "T_pzr captured but no PZR subcooling calculated."
-                                        },
-                                        {
-                                            "ref":  "Assets/Scripts/Validation/ValidationDashboard.Annunciators.cs",
-                                            "notes":  "No annunciator tile for PZR saturation approach."
-                                        }
-                                    ],
-                       "hypotheses":  [
-                                          "Dashboard was designed with post-bubble operations as primary focus; pre-bubble cold startup monitoring was not implemented."
-                                      ],
-                       "root_cause":  "Missing pre-bubble monitoring instrumentation for T_pzr approach to T_sat.",
-                       "resolution_candidate":  "Add PZR subcooling readout (T_sat - T_pzr) and PZR SAT annunciator tile (INFO severity, triggers when subcooling \u003c= 5Ãƒâ€šÃ‚Â°F).",
-                       "links":  [
-                                     "Assigned DP: DP-0008 - Operator Interface \u0026 Scenarios",
-                                     "Likely impacted: Assets/Scripts/Validation/ValidationDashboard.Snapshot.cs",
-                                     "Likely impacted: Assets/Scripts/Validation/ValidationDashboard.Annunciators.cs",
-                                     "Likely impacted: Assets/Scripts/Validation/Tabs/OverviewTab.cs"
-                                 ],
-                       "tags":  [
-                                    "PZR-Temperature-Monitoring",
-                                    "Bubble-Formation",
-                                    "Cold-Startup",
-                                    "ValidationDashboard",
-                                    "User-Request-2026-02-17"
-                                ]
                    }
                ]
 }

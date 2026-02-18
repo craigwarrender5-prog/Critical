@@ -192,10 +192,6 @@ namespace Critical.Validation
             y += 18f;
 
             d.DrawDigitalReadout(new Rect(_rcsCol.x + 4f, y, readoutW, 16f),
-                "T_PZR", s.T_pzr, "°F", "F1", ValidationDashboard._cTextPrimary);
-            y += 18f;
-
-            d.DrawDigitalReadout(new Rect(_rcsCol.x + 4f, y, readoutW, 16f),
                 "T_SAT", s.T_sat, "°F", "F1", ValidationDashboard._cTextSecondary);
             y += 24f;
 
@@ -262,6 +258,16 @@ namespace Critical.Validation
             Color levelColor = ValidationDashboard.GetThresholdColor(s.PzrLevel, 20f, 80f, 17f, 92f);
             d.DrawGaugeArc(levelCenter, 24f, s.PzrLevel, 0f, 100f, levelColor,
                 "LEVEL", $"{s.PzrLevel:F1}", "%");
+            y += 70f;
+
+            // T_pzr arc gauge (for bubble formation readiness monitoring)
+            // Per NRC HRTD 17.0: bubble forms when T_pzr reaches saturation temp
+            Vector2 tpzrCenter = new Vector2(centerX, y + 30f);
+            Color tpzrColor = s.PzrAtSaturation 
+                ? ValidationDashboard._cNormalGreen 
+                : ValidationDashboard._cCyanInfo;
+            d.DrawGaugeArc(tpzrCenter, 24f, s.T_pzr, 50f, 600f, tpzrColor,
+                "T_PZR", $"{s.T_pzr:F1}", "°F");
             y += 70f;
 
             // Volumes
@@ -498,7 +504,7 @@ namespace Critical.Validation
             {
                 // Fallback placeholder if manager not ready
                 string[] labels = { "RCS PRESS", "PZR LEVEL", "T_AVG", "HEATUP", 
-                                   "SUBCOOL", "NET CVCS", "SG PRESS", "NET HEAT" };
+                                   "SUBCOOL", "NET CVCS", "SG PRESS", "T_PZR" };
 
                 for (int i = 0; i < 8; i++)
                 {
