@@ -4,10 +4,17 @@ DP Reference: DP-0008
 Title: Scenario Runtime Accessibility and Dashboard Visual Correctness
 Status: OPEN
 Date: 2026-02-18
-Mode: PLANNED
+Mode: EXECUTED/PENDING_CLOSEOUT
 Source of Scope Truth: Governance/IssueRegister/issue_index.json
 Predecessor: IP-0049 (CLOSED), IP-0051 (CLOSED)
 Blocking Dependencies: CS-0102 before CS-0103 closeout
+Execution Start: 2026-02-18T05:00:00Z
+Execution Complete: 2026-02-18T05:09:00Z
+Stage A Report: Governance/ImplementationPlans/IP-0053/Reports/IP-0053_StageA_RootCause_2026-02-18_050900.md
+Stage B Report: Governance/ImplementationPlans/IP-0053/Reports/IP-0053_StageB_DesignFreeze_2026-02-18_050900.md
+Stage C Report: Governance/ImplementationPlans/IP-0053/Reports/IP-0053_StageC_ControlledRemediation_2026-02-18_050900.md
+Stage D Report: Governance/ImplementationPlans/IP-0053/Reports/IP-0053_StageD_DomainValidation_2026-02-18_050900.md
+Stage E Report: Governance/ImplementationPlans/IP-0053/Reports/IP-0053_StageE_SystemRegression_2026-02-18_050900.md
 ---
 
 # IP-0053 - DP-0008 - Scenario Runtime Accessibility and Dashboard Visual Correctness
@@ -90,3 +97,27 @@ Critical path:
 |---|---|---|---|---|
 | v0.1 | 2026-02-18 | Codex | Initial DP-0008 implementation plan covering open scenario/runtime UI issues and solid-indicator correctness. | Convert open-CS investigation set into an executable, dependency-ordered plan. |
 | v0.2 | 2026-02-18 | Codex | Added sequencing note to execute after DP-0001/DP-0012 high-impact thermal/policy plans. | Preserve priority alignment by severity and cross-domain impact. |
+| v0.3 | 2026-02-18 | Codex | Executed Stage A-E remediation package for CS-0102/CS-0103/CS-0120/CS-0121 with build regression evidence. | Complete implementation execution and produce closure-ready stage artifacts. |
+
+## 8) Execution Update (Completed - Pending Closure Approval)
+
+### Implemented Remediation
+- `CS-0102` scenario framework closure hardening:
+  - `Assets/Scripts/ScenarioSystem/ScenarioRegistry.cs`: added factory-based bootstrap surface (`RegisterFactory`, `BootstrapFromFactories`) and default-factory seeding.
+  - `Assets/Scripts/Validation/HeatupSimEngine.Scenarios.cs`: replaced engine-local hardcoded scenario registration with registry bootstrap invocation.
+  - `Assets/Scripts/ScenarioSystem/ValidationHeatupScenario.cs`: aligned descriptor ownership to `DP-0008` governance surface.
+- `CS-0103` and `CS-0120` selector accessibility and keybind routing:
+  - `Assets/Scripts/Core/SceneBridge.cs`: added operator-view `F2` handling and queued selector-open execution after validator load completion.
+- `CS-0121` dashboard visual correctness:
+  - `Assets/Scripts/Validation/Tabs/OverviewTab.cs`: solid/bubble status LED now lights for either solid-PZR or bubble-formed state.
+  - `Assets/Scripts/Validation/ValidationDashboard.cs`: replaced header alarm mojibake marker with ASCII-safe `[!]`.
+
+### Validation Evidence
+- Stage A: `PASS` (`Governance/ImplementationPlans/IP-0053/Reports/IP-0053_StageA_RootCause_2026-02-18_050900.md`)
+- Stage B: `PASS` (`Governance/ImplementationPlans/IP-0053/Reports/IP-0053_StageB_DesignFreeze_2026-02-18_050900.md`)
+- Stage C: `PASS` (`Governance/ImplementationPlans/IP-0053/Reports/IP-0053_StageC_ControlledRemediation_2026-02-18_050900.md`)
+- Stage D: `PASS` (`Governance/ImplementationPlans/IP-0053/Reports/IP-0053_StageD_DomainValidation_2026-02-18_050900.md`)
+- Stage E: `PASS` (`Governance/ImplementationPlans/IP-0053/Reports/IP-0053_StageE_SystemRegression_2026-02-18_050900.md`)
+- Build regression:
+  - Command: `dotnet build Critical.slnx`
+  - Result: `0` errors (`97` warnings, non-blocking/pre-existing).

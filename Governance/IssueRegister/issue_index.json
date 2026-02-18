@@ -1,7 +1,7 @@
 ﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-18T04:41:14Z",
-    "entry_count":  120,
+    "generated_at":  "2026-02-18T14:10:00Z",
+    "entry_count":  126,
     "entries":  [
                     {
                         "id":  "CS-0001",
@@ -1733,13 +1733,13 @@
                         "title":  "Establish scenario system framework with registry and scenario abstraction",
                         "domain":  "Operator Interface \u0026 Scenarios",
                         "severity":  "HIGH",
-                        "status":  "READY",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0008",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-17T14:26:21Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  "IP-0053",
+                        "updated_at":  "2026-02-18T14:05:00Z",
+                        "closed_at":  "2026-02-18T14:05:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "Scenario-System",
                                      "Scenario-Registry",
@@ -1752,13 +1752,13 @@
                         "title":  "Add in-simulator scenario selection overlay with keybind trigger",
                         "domain":  "Operator Interface \u0026 Scenarios",
                         "severity":  "MEDIUM",
-                        "status":  "READY",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0008",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-17T14:26:21Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  "IP-0053",
+                        "updated_at":  "2026-02-18T14:05:00Z",
+                        "closed_at":  "2026-02-18T14:05:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "Scenario-Overlay",
                                      "Keybind",
@@ -1925,6 +1925,64 @@
                                  ]
                     },
                     {
+                        "id":  "CS-0112",
+                        "title":  "Pressurizer module audit findings - heatup level-program interpretation conflict",
+                        "domain":  "Pressurizer \u0026 Startup Control",
+                        "severity":  "HIGH",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
+                        "assigned_dp":  "DP-0012",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-18T04:47:40Z",
+                        "closed_at":  "2026-02-18T04:47:40Z",
+                        "resolution_type":  "CLOSE_NO_CODE",
+                        "tags":  [
+                                     "Orphan-Triage-2026-02-18",
+                                     "Superseded-by-CS-0109",
+                                     "Pressurizer-Audit",
+                                     "Conflicting-Interpretation"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0113",
+                        "title":  "Pressurizer system audit - PlantConstants.Pressurizer parameter governance gaps",
+                        "domain":  "Pressurizer \u0026 Startup Control",
+                        "severity":  "MEDIUM",
+                        "status":  "READY",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0012",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-18T04:47:40Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "Pressurizer-Constants",
+                                     "Audit-Finding",
+                                     "Documentation-Alignment",
+                                     "Orphan-Triage-2026-02-18"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0114",
+                        "title":  "Pressurizer system audit - PressurizerPhysics engineering-basis and derivative fidelity gaps",
+                        "domain":  "Pressurizer \u0026 Startup Control",
+                        "severity":  "MEDIUM",
+                        "status":  "READY",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0012",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-18T04:47:40Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "PressurizerPhysics",
+                                     "Audit-Finding",
+                                     "Thermo-Derivative",
+                                     "Engineering-Basis",
+                                     "Orphan-Triage-2026-02-18"
+                                 ]
+                    },
+                    {
                         "id":  "CS-0115",
                         "title":  "Missing condenser + feedwater return module and startup permissive boundary contract (C-9/P-12) for steam-dump integration",
                         "domain":  "Steam Generator Secondary Physics",
@@ -1994,6 +2052,25 @@
                                  ]
                     },
                     {
+                        "id":  "CS-0118",
+                        "title":  "Validation dashboard missing condenser/feedwater telemetry coverage",
+                        "domain":  "Operator Interface \u0026 Scenarios",
+                        "severity":  "MEDIUM",
+                        "status":  "READY",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0008",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-18T04:47:40Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "ValidationDashboard",
+                                     "Condenser-Feedwater",
+                                     "Telemetry-Gap",
+                                     "Orphan-Triage-2026-02-18"
+                                 ]
+                    },
+                    {
                         "id":  "CS-0119",
                         "title":  "F2 scenario selection overlay missing for runtime scenario start from Cold Shutdown baseline",
                         "domain":  "Operator Interface \u0026 Scenarios",
@@ -2019,13 +2096,13 @@
                         "title":  "F2 scenario selector keybind only functional in Validator view, not Operator Screens view",
                         "domain":  "Operator Interface \u0026 Scenarios",
                         "severity":  "LOW",
-                        "status":  "READY",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0008",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-18T11:00:00Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "assigned_ip":  "IP-0053",
+                        "updated_at":  "2026-02-18T14:10:00Z",
+                        "closed_at":  "2026-02-18T14:10:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "Scenario-Selection",
                                      "F2-Keybind",
@@ -2106,8 +2183,8 @@
                         "status":  "READY",
                         "location":  "ACTIVE",
                         "assigned_dp":  "DP-0010",
-                        "assigned_ip":  null,
-                        "updated_at":  "2026-02-18T04:41:14Z",
+                        "assigned_ip":  "IP-0055",
+                        "updated_at":  "2026-02-18T14:15:00Z",
                         "closed_at":  null,
                         "resolution_type":  null,
                         "tags":  [
@@ -2117,11 +2194,55 @@
                                      "Maintainability",
                                      "User-Request-2026-02-18"
                                  ]
+                    },
+                    {
+                        "id":  "CS-0125",
+                        "title":  "Rotary selector switch UI control plan viability and integration risk assessment",
+                        "domain":  "Pressurizer \u0026 Startup Control",
+                        "severity":  "MEDIUM",
+                        "status":  "DEFERRED",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0012",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-18T05:18:24Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "Rotary-Switch",
+                                     "Operator-UI",
+                                     "PZR-Heater-Control",
+                                     "Startup-Control",
+                                     "2D-UI-Component",
+                                     "Preliminary-Assessment",
+                                     "User-Request-2026-02-18"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0126",
+                        "title":  "Restructure governance documentation trail with hierarchical CS-folder organization under Implementation Plans",
+                        "domain":  "Project Governance",
+                        "severity":  "MEDIUM",
+                        "status":  "READY",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0010",
+                        "assigned_ip":  "IP-0055",
+                        "updated_at":  "2026-02-18T14:15:00Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "Project-Governance",
+                                     "Documentation-Trail",
+                                     "Folder-Structure",
+                                     "Constitution-Amendment",
+                                     "Traceability",
+                                     "User-Request-2026-02-18"
+                                 ]
                     }
                 ],
     "registry_role":  "AUTHORITATIVE_FULL_HISTORY",
     "registry_scope":  "Contains full lifecycle history (OPEN + CLOSED). Historical entries must remain in this file.",
     "active_working_set_file":  "Governance/IssueRegister/issue_register.json",
-    "closed_issue_count":  115,
-    "active_issue_count":  5
+    "closed_issue_count":  119,
+    "active_issue_count":  7,
+    "entry_count":  126
 }

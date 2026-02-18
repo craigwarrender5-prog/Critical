@@ -103,6 +103,12 @@ namespace Critical.Core
         /// <summary>Cached validator dashboard component for routed input actions.</summary>
         private HeatupValidationVisual _validatorVisual;
 
+        /// <summary>
+        /// True when F2 was pressed before validator availability and the selector
+        /// should be opened immediately after validator load completes.
+        /// </summary>
+        private bool _openScenarioSelectorOnValidatorReady;
+
         // ====================================================================
         // SINGLETON ACCESS
         // ====================================================================
@@ -160,8 +166,13 @@ namespace Critical.Core
             switch (CurrentView)
             {
                 case ActiveView.OperatorScreens:
+                    // F2 from operator view should still open the scenario selector.
+                    if (kb.f2Key.wasPressedThisFrame)
+                    {
+                        RequestScenarioSelectorFromAnyView();
+                    }
                     // V key â†’ switch to Validator
-                    if (kb.vKey.wasPressedThisFrame)
+                    else if (kb.vKey.wasPressedThisFrame)
                     {
                         SwitchToValidator();
                     }
@@ -226,6 +237,7 @@ namespace Critical.Core
                                    "Is it in Build Settings?");
                     SetOperatorCanvasVisible(true); // Restore Canvas
                     _sceneTransitionInProgress = false;
+                    _openScenarioSelectorOnValidatorReady = false;
                     return;
                 }
 
@@ -238,6 +250,7 @@ namespace Critical.Core
 
                     // Re-resolve ScreenDataBridge sources now that both scenes are loaded
                     ResolveDataBridgeSources();
+                    ProcessPendingScenarioSelectorOpen();
 
                     if (debugLogging)
                         Debug.Log("[SceneBridge] Validator loaded â€” view active");
@@ -248,6 +261,7 @@ namespace Critical.Core
                 // Validator already loaded (shouldn't normally happen)
                 CurrentView = ActiveView.Validator;
                 _sceneTransitionInProgress = false;
+                ProcessPendingScenarioSelectorOpen();
 
                 if (debugLogging)
                     Debug.Log("[SceneBridge] Validator already loaded â€” view active");
@@ -437,6 +451,36 @@ namespace Critical.Core
                    kb.digit7Key.wasPressedThisFrame ||
                    kb.digit8Key.wasPressedThisFrame ||
                    kb.tabKey.wasPressedThisFrame;
+        }
+
+        /// <summary>
+        /// Request scenario selector from either view. If validator is not active yet,
+        /// queue the selector open and switch views first.
+        /// </summary>
+        private void RequestScenarioSelectorFromAnyView()
+        {
+            if (CurrentView == ActiveView.Validator)
+            {
+                ToggleValidatorScenarioSelector();
+                return;
+            }
+
+            _openScenarioSelectorOnValidatorReady = true;
+            SwitchToValidator();
+        }
+
+        /// <summary>
+        /// Execute queued scenario-selector open after validator becomes available.
+        /// </summary>
+        private void ProcessPendingScenarioSelectorOpen()
+        {
+            if (!_openScenarioSelectorOnValidatorReady)
+            {
+                return;
+            }
+
+            _openScenarioSelectorOnValidatorReady = false;
+            ToggleValidatorScenarioSelector();
         }
 
         /// <summary>

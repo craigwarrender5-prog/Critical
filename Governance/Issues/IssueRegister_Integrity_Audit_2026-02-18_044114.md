@@ -50,3 +50,7 @@
 ## Permanent ID Assignment Decision
 - Temporary `CS-0123-A` is assigned as **`CS-0124`**.
 - Rationale: `CS-0123` is now restored as a legitimate historical issue and therefore consumed.
+
+## Follow-up Note
+- Orphan-ID follow-up triage completed in `Governance/Issues/Orphan_ID_Triage_2026-02-18_044740.md`.
+- `CS-0112`, `CS-0113`, `CS-0114`, and `CS-0118` were dispositioned and lifecycle-indexed.

@@ -15,6 +15,9 @@ namespace Critical.ScenarioSystem
     {
         private static readonly Dictionary<string, ISimulationScenario> Scenarios =
             new Dictionary<string, ISimulationScenario>(StringComparer.OrdinalIgnoreCase);
+        private static readonly List<Func<ISimulationScenario>> ScenarioFactories =
+            new List<Func<ISimulationScenario>>();
+        private static bool _defaultFactoriesInitialized;
 
         public static bool Contains(string scenarioId)
         {
@@ -40,6 +43,52 @@ namespace Critical.ScenarioSystem
 
             Scenarios[scenario.Id] = scenario;
             return true;
+        }
+
+        /// <summary>
+        /// Register a scenario factory for future bootstrap passes.
+        /// </summary>
+        public static bool RegisterFactory(Func<ISimulationScenario> scenarioFactory)
+        {
+            if (scenarioFactory == null)
+            {
+                return false;
+            }
+
+            EnsureDefaultFactories();
+            ScenarioFactories.Add(scenarioFactory);
+            return true;
+        }
+
+        /// <summary>
+        /// Bootstrap all configured scenario factories into the active registry.
+        /// Returns number of new registrations applied.
+        /// </summary>
+        public static int BootstrapFromFactories(bool overwrite = false)
+        {
+            EnsureDefaultFactories();
+
+            int registered = 0;
+            foreach (Func<ISimulationScenario> factory in ScenarioFactories)
+            {
+                if (factory == null)
+                {
+                    continue;
+                }
+
+                ISimulationScenario scenario = factory();
+                if (scenario == null)
+                {
+                    continue;
+                }
+
+                if (Register(scenario, overwrite))
+                {
+                    registered++;
+                }
+            }
+
+            return registered;
         }
 
         public static bool TryGet(string scenarioId, out ISimulationScenario scenario)
@@ -72,6 +121,20 @@ namespace Critical.ScenarioSystem
             values.Sort((a, b) => string.Compare(a.Id, b.Id, StringComparison.OrdinalIgnoreCase));
             return values.ToArray();
         }
+
+        /// <summary>
+        /// Seed built-in scenario factories once. Other domains can append factories
+        /// through RegisterFactory() without modifying this registry core.
+        /// </summary>
+        private static void EnsureDefaultFactories()
+        {
+            if (_defaultFactoriesInitialized)
+            {
+                return;
+            }
+
+            _defaultFactoriesInitialized = true;
+            ScenarioFactories.Add(() => new ValidationHeatupScenario());
+        }
     }
 }
-

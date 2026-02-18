@@ -1,137 +1,138 @@
-﻿{
+{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-18T04:41:14Z",
+    "generated_at":  "2026-02-18T14:10:00Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
-    "active_issue_count":  5,
+    "active_issue_count":  7,
     "issues":  [
                    {
-                       "id":  "CS-0102",
-                       "title":  "Establish scenario system framework with registry and scenario abstraction",
-                       "domain":  "Operator Interface \u0026 Scenarios",
-                       "severity":  "HIGH",
-                       "status":  "READY",
-                       "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T14:26:21Z",
-                       "stage_detected":  "User-Request-2026-02-17",
-                       "assigned_dp":  "DP-0008",
-                       "assigned_ip":  null,
-                       "observations":  [
-                                            "Validation path is hardwired and not scenario-driven.",
-                                            "Multiple selectable scenarios require a minimal abstraction + registry boundary."
-                                        ],
-                       "evidence":  [
-                                        {
-                                            "ref":  "Governance/Issues/CS-0102_Investigation_Report_2026-02-17_124730.md",
-                                            "notes":  "Scenario abstraction/registry scope and acceptance criteria."
-                                        },
-                                        {
-                                            "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md",
-                                            "notes":  "Scenario flow expectation context for startup progression."
-                                        }
-                                    ],
-                       "hypotheses":  [
-                                          "Current lifecycle ownership ties startup and validation too tightly to support scenario selection cleanly."
-                                      ],
-                       "root_cause":  null,
-                       "resolution_candidate":  "Introduce minimal scenario abstraction and registry with deterministic start handoff.",
-                       "links":  [
-                                     "Likely impacted: Assets/Scripts/ScenarioSystem/ (new path)",
-                                     "Likely impacted: Assets/Scripts/Validation/HeatupSimEngine.cs, Assets/Scripts/Validation/HeatupSimEngine.Init.cs"
-                                 ],
-                       "tags":  [
-                                    "Scenario-System",
-                                    "Scenario-Registry",
-                                    "Scenario-Abstraction",
-                                    "User-Request-2026-02-17"
-                                ],
-                       "closed_at":  null,
-                       "resolution_type":  null
-                   },
-                   {
-                       "id":  "CS-0103",
-                       "title":  "Add in-simulator scenario selection overlay with keybind trigger",
-                       "domain":  "Operator Interface \u0026 Scenarios",
+                       "id":  "CS-0113",
+                       "title":  "Pressurizer system audit - PlantConstants.Pressurizer parameter governance gaps",
+                       "domain":  "Pressurizer & Startup Control",
                        "severity":  "MEDIUM",
                        "status":  "READY",
-                       "created_at":  "2026-02-17T12:47:30Z",
-                       "updated_at":  "2026-02-17T14:26:21Z",
-                       "stage_detected":  "User-Request-2026-02-17",
-                       "assigned_dp":  "DP-0008",
+                       "created_at":  "2026-02-17T20:30:00Z",
+                       "updated_at":  "2026-02-18T04:47:40Z",
+                       "stage_detected":  "Orphan-ID-Triage-2026-02-18",
+                       "assigned_dp":  "DP-0012",
                        "assigned_ip":  null,
                        "observations":  [
-                                            "No in-simulator UI exists for scenario selection.",
-                                            "A lightweight, isolated overlay with keybind toggle is required for non-destructive scenario start."
+                                            "Spray bypass flow constant remains at 1.5 gpm while referenced Westinghouse basis indicates 2.0 gpm total.",
+                                            "Pressurizer heater comments are stale/inconsistent with current authoritative baseline values.",
+                                            "Several pressurizer constants lack explicit source citations or engineering-basis annotations."
                                         ],
                        "evidence":  [
                                         {
-                                            "ref":  "Governance/Issues/CS-0103_Investigation_Report_2026-02-17_124730.md",
-                                            "notes":  "Overlay/keybind scope, non-scope, and acceptance criteria."
+                                            "ref":  "Governance/Issues/CS-0113_PZR_Audit_PlantConstants_Pressurizer_2026-02-17.md",
+                                            "notes":  "Full constant-by-constant audit findings and proposed actions."
                                         },
                                         {
-                                            "ref":  "Assets/InputSystem_Actions.inputactions",
-                                            "notes":  "Existing input action surface likely involved for keybind integration."
+                                            "ref":  "Assets/Scripts/Physics/PlantConstants.Pressurizer.cs",
+                                            "notes":  "Current constants/comments requiring governance alignment."
                                         }
                                     ],
                        "hypotheses":  [
-                                          "Current UI flow lacks an isolated runtime entrypoint for scenario selection."
+                                          "Pressurizer constant updates were partially applied across revisions without complete comment/source governance synchronization."
                                       ],
-                       "root_cause":  null,
-                       "resolution_candidate":  "Add isolated overlay/menu toggled by keybind (e.g., F1) to list and start scenarios.",
+                       "root_cause":  "Parameter and documentation governance drift in `PlantConstants.Pressurizer.cs` left several values/comments/source annotations inconsistent with cited technical authority.",
+                       "resolution_candidate":  "Execute bounded constants-governance remediation: reconcile values with approved authority, update stale comments, and add missing citations/engineering-basis notes.",
                        "links":  [
-                                     "Likely impacted: Assets/Scripts/ScenarioSystem/ (new path)",
-                                     "Likely impacted: Assets/Scripts/UI/ScreenManager.cs, Assets/InputSystem_Actions.inputactions"
+                                     "Assigned DP: DP-0012 - Pressurizer & Startup Control",
+                                     "Related audit artifact: Governance/Issues/CS-0112_Investigation_Report_2026-02-17_203000.md"
                                  ],
                        "tags":  [
-                                    "Scenario-Overlay",
-                                    "Keybind",
-                                    "Scenario-Selection",
-                                    "User-Request-2026-02-17"
+                                    "Pressurizer-Constants",
+                                    "Audit-Finding",
+                                    "Documentation-Alignment",
+                                    "Orphan-Triage-2026-02-18"
                                 ],
                        "closed_at":  null,
                        "resolution_type":  null
                    },
                    {
-                       "id":  "CS-0120",
-                       "title":  "F2 scenario selector keybind only functional in Validator view, not Operator Screens view",
-                       "domain":  "Operator Interface \u0026 Scenarios",
-                       "severity":  "LOW",
+                       "id":  "CS-0114",
+                       "title":  "Pressurizer system audit - PressurizerPhysics engineering-basis and derivative fidelity gaps",
+                       "domain":  "Pressurizer & Startup Control",
+                       "severity":  "MEDIUM",
                        "status":  "READY",
-                       "created_at":  "2026-02-18T11:00:00Z",
-                       "updated_at":  "2026-02-18T11:00:00Z",
-                       "stage_detected":  "User-Request-2026-02-18",
-                       "assigned_dp":  "DP-0008",
+                       "created_at":  "2026-02-17T20:30:00Z",
+                       "updated_at":  "2026-02-18T04:47:40Z",
+                       "stage_detected":  "Orphan-ID-Triage-2026-02-18",
+                       "assigned_dp":  "DP-0012",
                        "assigned_ip":  null,
                        "observations":  [
-                                            "F2 keybind for scenario selector only handled in Validator view case in SceneBridge.Update().",
-                                            "Operator Screens view (default) has no F2 handling, so pressing F2 does nothing.",
-                                            "Scenario selector overlay and infrastructure fully functional when accessed via V then F2."
+                                            "Flash evaporation currently uses fixed dTsat/dP=0.04 instead of pressure-dependent derivative behavior.",
+                                            "Solid pressurizer ambient-loss path uses hardcoded 50 kW reference while PlantConstants specifies 42.5 kW nominal.",
+                                            "Multiple engineering-estimate coefficients in PressurizerPhysics lack explicit design-basis citations."
                                         ],
                        "evidence":  [
                                         {
-                                            "ref":  "Governance/Issues/CS-0120_Investigation_Report_2026-02-18_110000.md",
-                                            "notes":  "Full root cause analysis and proposed resolution options."
+                                            "ref":  "Governance/Issues/CS-0114_PZR_Audit_PressurizerPhysics_2026-02-17.md",
+                                            "notes":  "Physics audit findings with prioritized remediation options."
                                         },
                                         {
-                                            "ref":  "Assets/Scripts/Core/SceneBridge.cs:122-149",
-                                            "notes":  "F2 only handled in ActiveView.Validator case, missing from OperatorScreens case."
+                                            "ref":  "Assets/Scripts/Physics/PressurizerPhysics.cs",
+                                            "notes":  "Current derivative/ambient-loss constants and phase-change paths."
                                         }
                                     ],
                        "hypotheses":  [
-                                          "F2 was added as Validator-view feature in IP-0049 without considering Operator Screens accessibility."
+                                          "Pressurizer physics model retained simplifications introduced during staged implementation and has not received a dedicated post-integration fidelity pass."
                                       ],
-                       "root_cause":  "SceneBridge.Update() switch statement handles F2 only in Validator case; OperatorScreens case lacks F2 input routing.",
-                       "resolution_candidate":  "Add F2 handling to OperatorScreens case that switches to Validator view and opens scenario selector, with appropriate async scene load handling.",
+                       "root_cause":  "Engineering simplifications and uncited coefficients persisted in `PressurizerPhysics.cs` after earlier stabilization milestones, creating traceability and fidelity gaps.",
+                       "resolution_candidate":  "Run targeted physics-governance remediation: replace fixed derivative approximation, align ambient-loss authority, and document engineering basis for retained estimates.",
                        "links":  [
-                                     "Assigned DP: DP-0008 - Operator Interface \u0026 Scenarios",
-                                     "Related: CS-0103 (scenario overlay keybind), CS-0119 (F2 overlay implementation)"
+                                     "Assigned DP: DP-0012 - Pressurizer & Startup Control",
+                                     "Likely impacted: Assets/Scripts/Physics/PressurizerPhysics.cs, Assets/Scripts/Physics/PlantConstants.Pressurizer.cs"
                                  ],
                        "tags":  [
-                                    "Scenario-Selection",
-                                    "F2-Keybind",
-                                    "SceneBridge",
-                                    "Input-Routing",
-                                    "Low-Priority",
-                                    "User-Request-2026-02-18"
+                                    "PressurizerPhysics",
+                                    "Audit-Finding",
+                                    "Thermo-Derivative",
+                                    "Engineering-Basis",
+                                    "Orphan-Triage-2026-02-18"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0118",
+                       "title":  "Validation dashboard missing condenser/feedwater telemetry coverage",
+                       "domain":  "Operator Interface & Scenarios",
+                       "severity":  "MEDIUM",
+                       "status":  "READY",
+                       "created_at":  "2026-02-18T10:30:00Z",
+                       "updated_at":  "2026-02-18T04:47:40Z",
+                       "stage_detected":  "Orphan-ID-Triage-2026-02-18",
+                       "assigned_dp":  "DP-0008",
+                       "assigned_ip":  null,
+                       "observations":  [
+                                            "Condenser/feedwater telemetry is available in HeatupSimEngine but not captured in ValidationDashboard snapshot paths.",
+                                            "Current SG/RHR tab lacks visibility for C-9/P-12 permissive chain and condenser vacuum progress indicators.",
+                                            "Startup secondary-side observability is incomplete for operator and validation workflows."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Governance/Issues/CS-0118_Investigation_Report_2026-02-18_103000.md",
+                                            "notes":  "Dashboard telemetry-gap investigation with candidate tab/snapshot remediations."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/ValidationDashboard.Snapshot.cs",
+                                            "notes":  "Snapshot capture path currently excludes condenser/feedwater fields."
+                                        }
+                                    ],
+                       "hypotheses":  [
+                                          "IP-0046 secondary-system physics integration completed before equivalent dashboard telemetry bindings were implemented."
+                                      ],
+                       "root_cause":  "Validation dashboard data-capture and tab-layout scopes did not expand with IP-0046 condenser/feedwater additions, leaving secondary-system telemetry unexposed.",
+                       "resolution_candidate":  "Extend dashboard snapshot/model bindings and tab rendering to include condenser/feedwater/permissive telemetry with deterministic status indicators.",
+                       "links":  [
+                                     "Assigned DP: DP-0008 - Operator Interface & Scenarios",
+                                     "Related: CS-0115, CS-0116 (secondary-system implementation), CS-0119 (operator screen follow-on investigation)"
+                                 ],
+                       "tags":  [
+                                    "ValidationDashboard",
+                                    "Condenser-Feedwater",
+                                    "Telemetry-Gap",
+                                    "Orphan-Triage-2026-02-18"
                                 ],
                        "closed_at":  null,
                        "resolution_type":  null
@@ -139,7 +140,7 @@
                    {
                        "id":  "CS-0121",
                        "title":  "Dashboard visual issues: SOLID PZR indicator not lit, alarm symbol incorrectly transcoded",
-                       "domain":  "Operator Interface \u0026 Scenarios",
+                       "domain":  "Operator Interface & Scenarios",
                        "severity":  "LOW",
                        "status":  "READY",
                        "created_at":  "2026-02-18T11:15:00Z",
@@ -149,9 +150,9 @@
                        "assigned_ip":  null,
                        "observations":  [
                                             "SOLID PZR indicator in Overview tab Pressurizer panel is not illuminated.",
-                                            "Header shows \u0027SOLID PZR - HEATING TO TSAT (358f)\u0027 confirming solid state.",
+                                            "Header shows 'SOLID PZR - HEATING TO TSAT (358f)' confirming solid state.",
                                             "PZR WATER=1800, STEAM=0, level gauge at 100% - clearly solid.",
-                                            "Alarm symbol next to \u00272 ALARMS\u0027 displays as garbled characters (section signs) instead of alarm icon."
+                                            "Alarm symbol next to '2 ALARMS' displays as garbled characters (section signs) instead of alarm icon."
                                         ],
                        "evidence":  [
                                         {
@@ -170,7 +171,7 @@
                        "root_cause":  null,
                        "resolution_candidate":  "Locate SOLID PZR indicator in TabOverview, verify conditional logic checks for !hasBubble or equivalent solid-state condition.",
                        "links":  [
-                                     "Assigned DP: DP-0008 - Operator Interface \u0026 Scenarios",
+                                     "Assigned DP: DP-0008 - Operator Interface & Scenarios",
                                      "Likely impacted: Assets/Scripts/Validation/HeatupValidationVisual.TabOverview.cs"
                                  ],
                        "tags":  [
@@ -192,10 +193,10 @@
                        "severity":  "MEDIUM",
                        "status":  "READY",
                        "created_at":  "2026-02-18T04:41:14Z",
-                       "updated_at":  "2026-02-18T04:41:14Z",
+                       "updated_at":  "2026-02-18T14:15:00Z",
                        "stage_detected":  "User-Request-2026-02-18",
                        "assigned_dp":  "DP-0010",
-                       "assigned_ip":  null,
+                       "assigned_ip":  "IP-0055",
                        "observations":  [
                                             "Multiple source files exceed a 50KB file-size governance threshold, including several files above 100KB.",
                                             "Key oversized modules include MultiScreenBuilder.cs, HeatupSimEngine.cs, SGMultiNodeThermal.cs, CVCSController.cs, and SolidPlantPressure.cs.",
@@ -233,6 +234,109 @@
                                     "File-Size-Governance",
                                     "Refactoring",
                                     "Maintainability",
+                                    "User-Request-2026-02-18"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0125",
+                       "title":  "Rotary selector switch UI control plan viability and integration risk assessment",
+                       "domain":  "Pressurizer & Startup Control",
+                       "severity":  "MEDIUM",
+                       "status":  "DEFERRED",
+                       "created_at":  "2026-02-18T04:52:11Z",
+                       "updated_at":  "2026-02-18T05:18:24Z",
+                       "stage_detected":  "User-Request-2026-02-18",
+                       "assigned_dp":  "DP-0012",
+                       "assigned_ip":  null,
+                       "observations":  [
+                                            "A revised rotary selector switch plan exists in `Updates/v2_RotarySelectorSwitch.md` defining a 2D UI control for PZR heater mode selection on Pressurizer screen.",
+                                            "Current operator-screen architecture is predominantly 2D uGUI mimic-based; recent RCS screen migration explicitly removed RenderTexture/3D path for consistency.",
+                                            "Scope is clarified: this selector is not simulator start/stop; OFF forces PZR heaters off while simulation continues, AUTO preserves current automatic heater behavior, MANUAL is reserved for future manual heater control."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Updates/v2_RotarySelectorSwitch.md",
+                                            "notes":  "Revised v5.1.0 2D implementation plan with OFF/AUTO/MANUAL heater-mode semantics."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/UI/PressurizerScreen.cs",
+                                            "notes":  "Current Screen 3 architecture and existing visual-only control surface."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/UI/RCSPrimaryLoopScreen.cs",
+                                            "notes":  "Explicit design decision to avoid RenderTexture/3D path in operator screens."
+                                        },
+                                        {
+                                            "ref":  "Assets/Scripts/Validation/HeatupSimEngine.cs",
+                                            "notes":  "Existing heater lifecycle/control authority path to map OFF/AUTO behavior without simulation shutdown."
+                                        }
+                                    ],
+                       "hypotheses":  [
+                                          "The concept is viable if scope is constrained to existing 2D operator-screen patterns and explicit PZR heater authority boundaries."
+                                      ],
+                       "root_cause":  null,
+                       "resolution_candidate":  "Perform full design investigation for 2D-native selector implementation and define deterministic heater-mode authority: OFF forces heater output to zero without stopping simulation, AUTO preserves current automatic behavior, MANUAL remains future-gated.",
+                       "links":  [
+                                     "Assigned DP: DP-0012 - Pressurizer & Startup Control",
+                                     "Related systems: PressurizerScreen control panel, ScreenDataBridge read model, HeatupSimEngine heater control path"
+                                 ],
+                       "tags":  [
+                                    "Rotary-Switch",
+                                    "Operator-UI",
+                                    "PZR-Heater-Control",
+                                    "Startup-Control",
+                                    "2D-UI-Component",
+                                    "Preliminary-Assessment",
+                                    "User-Request-2026-02-18"
+                                ],
+                       "closed_at":  null,
+                       "resolution_type":  null
+                   },
+                   {
+                       "id":  "CS-0126",
+                       "title":  "Restructure governance documentation trail with hierarchical CS-folder organization under Implementation Plans",
+                       "domain":  "Project Governance",
+                       "severity":  "MEDIUM",
+                       "status":  "READY",
+                       "created_at":  "2026-02-18T14:00:00Z",
+                       "updated_at":  "2026-02-18T14:15:00Z",
+                       "stage_detected":  "User-Request-2026-02-18",
+                       "assigned_dp":  "DP-0010",
+                       "assigned_ip":  "IP-0055",
+                       "observations":  [
+                                            "Current investigation reports are flat files in Governance/Issues/ directory with no physical co-location to IPs.",
+                                            "Mixed content in Issues folder includes both CS investigations AND IP checkpoint files.",
+                                            "When an IP closes, related investigation artifacts do not travel with it to the Closed archive.",
+                                            "Traceability requires searching multiple locations to find all artifacts for a specific IP."
+                                        ],
+                       "evidence":  [
+                                        {
+                                            "ref":  "Governance/Issues/CS-0126/Investigation_Report_2026-02-18_140000.md",
+                                            "notes":  "Full investigation with proposed folder structure, lifecycle rules, migration strategy, and Constitution amendment requirements."
+                                        },
+                                        {
+                                            "ref":  "PROJECT_CONSTITUTION.md",
+                                            "notes":  "Article III Section 5 defines current investigation artifact locations requiring amendment."
+                                        }
+                                    ],
+                       "hypotheses":  [
+                                          "Flat file structure was adequate for early project phases but does not scale for audit trail requirements."
+                                      ],
+                       "root_cause":  "Original governance structure used flat investigation files without anticipating the need for physical co-location with Implementation Plan bundles.",
+                       "resolution_candidate":  "Implement hierarchical CS-folder structure: each CS gets its own subfolder in Issues/, which migrates into IP folder when assigned, and travels with IP to Closed archive on completion.",
+                       "links":  [
+                                     "Assigned DP: DP-0010 - Project Governance",
+                                     "Requires: Constitution Article III amendment",
+                                     "Impacted: All future CS and IP creation workflows"
+                                 ],
+                       "tags":  [
+                                    "Project-Governance",
+                                    "Documentation-Trail",
+                                    "Folder-Structure",
+                                    "Constitution-Amendment",
+                                    "Traceability",
                                     "User-Request-2026-02-18"
                                 ],
                        "closed_at":  null,

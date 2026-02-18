@@ -351,7 +351,7 @@ namespace Critical.Validation
             int alarmCount = _annunciatorManager?.TotalActiveCount ?? 0;
             if (alarmCount > 0)
             {
-                string alarmStr = $"âš  {alarmCount} ALARM{(alarmCount > 1 ? "S" : "")}";
+                string alarmStr = $"[!] {alarmCount} ALARM{(alarmCount > 1 ? "S" : "")}";
                 Color alarmColor = (_annunciatorManager?.AlarmCount ?? 0) > 0 
                     ? _cAlarmRed 
                     : _cWarningAmber;

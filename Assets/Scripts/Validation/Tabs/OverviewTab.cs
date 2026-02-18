@@ -316,10 +316,12 @@ namespace Critical.Validation
                 "PZR ΔT_SAT", s.PzrSubcooling, "°F", "F1", pzrSubcoolColor);
             y += 20f;
 
-            // Bubble state
+            // Bubble/solid state
+            bool pzrStateLit = s.BubbleFormed || s.SolidPressurizer;
+            bool pzrStateAlarm = !s.BubbleFormed && !s.SolidPressurizer;
             d.DrawLED(new Rect(_pzrCol.x + 4f, y, colW - 8f, 18f), 
                 s.BubbleFormed ? "BUBBLE OK" : (s.SolidPressurizer ? "SOLID PZR" : s.BubblePhase),
-                s.BubbleFormed, !s.BubbleFormed && !s.SolidPressurizer);
+                pzrStateLit, pzrStateAlarm);
         }
 
         // ====================================================================

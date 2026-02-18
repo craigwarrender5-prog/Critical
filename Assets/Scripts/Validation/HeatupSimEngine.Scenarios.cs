@@ -78,10 +78,7 @@ namespace Critical.Validation
                 return;
             }
 
-            if (!ScenarioRegistry.Contains(ValidationHeatupScenario.ScenarioId))
-            {
-                ScenarioRegistry.Register(new ValidationHeatupScenario());
-            }
+            ScenarioRegistry.BootstrapFromFactories();
 
             _scenarioRegistryBootstrapped = true;
         }

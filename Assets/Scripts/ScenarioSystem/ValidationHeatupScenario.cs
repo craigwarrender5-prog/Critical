@@ -16,7 +16,8 @@ namespace Critical.ScenarioSystem
 
         public string Id => ScenarioId;
         public string DisplayName => "Validation Heatup Baseline";
-        public string DomainOwner => "DP-0013";
+        // Descriptor ownership follows the DP-0008 scenario-system surface.
+        public string DomainOwner => "DP-0008";
 
         public bool TryStart(in ScenarioExecutionContext context, out string reason)
         {
@@ -40,4 +41,3 @@ namespace Critical.ScenarioSystem
         }
     }
 }
-
