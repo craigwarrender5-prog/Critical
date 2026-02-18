@@ -653,6 +653,7 @@ public partial class HeatupSimEngine : MonoBehaviour
     private float startupHoldLastBlockedLogTime_hr = -1f;
     private string lastLoggedHeaterAuthorityState = "UNSET";
     private string lastLoggedHeaterLimiterReason = "UNSET";
+    private string lastLoggedSolidControlMode = "UNSET";
 
     // Pre-drain phase flag (DETECTION/VERIFICATION still use solid-plant CVCS)
     private bool bubblePreDrainPhase = false;
@@ -1376,6 +1377,19 @@ public partial class HeatupSimEngine : MonoBehaviour
                 heaterLimiterReason = "MANUAL_DISABLED";
                 heaterLimiterDetail = "Manual disable lockout";
             }
+            else if (solidPressurizer &&
+                     string.Equals(solidPlantState.ControlMode, "PREHEATER_CVCS", StringComparison.Ordinal))
+            {
+                heaterAutoDemandComputeSuppressed = true;
+                pzrHeaterPower = 0f;
+                pzrHeatersOn = false;
+                heaterPIDOutput = 0f;
+                heaterPIDActive = false;
+                heaterLimiterReason = "PREHEATER_CVCS_POLICY";
+                heaterLimiterDetail =
+                    $"Heaters locked out until P>={PlantConstants.PRESSURIZE_COMPLETE_PRESSURE_PSIA:F1} psia for " +
+                    $"{PlantConstants.PRESSURIZE_STABILITY_TIME_HR * 3600f:F0}s";
+            }
             else if (currentHeaterMode == HeaterMode.AUTOMATIC_PID)
             {
                 // v4.4.0: PID heater control for normal operations
@@ -1714,6 +1728,7 @@ public partial class HeatupSimEngine : MonoBehaviour
                     rhrState.Mode == RHRMode.Standby;
                 float solidBaseLetdown = explicitNoFlowHold ? 0f : 75f;
                 float solidBaseCharging = explicitNoFlowHold ? 0f : 75f;
+                string solidControlModeBeforeUpdate = solidPlantState.ControlMode ?? "UNSET";
                 SolidPlantPressure.Update(
                     ref solidPlantState,
                     pzrHeaterPower * 1000f,   // MW -> kW
@@ -1767,6 +1782,7 @@ public partial class HeatupSimEngine : MonoBehaviour
                 solidPlantPressureError = solidPlantState.PressureError;
                 solidPlantPressureInBand = solidPlantState.InControlBand;
                 timeToBubble = SolidPlantPressure.EstimateTimeToBubble(solidPlantState);
+                LogSolidControlModeTransition(solidControlModeBeforeUpdate, solidPlantState.ControlMode);
 
                 // Check for bubble formation (delegated to BubbleFormation partial)
                 ProcessBubbleDetection();
@@ -2418,6 +2434,27 @@ public partial class HeatupSimEngine : MonoBehaviour
             $"override={overrideReason} limiter={heaterLimiterReason} detail={heaterLimiterDetail}");
         lastLoggedHeaterAuthorityState = heaterAuthorityState;
         lastLoggedHeaterLimiterReason = heaterLimiterReason;
+    }
+
+    void LogSolidControlModeTransition(string previousMode, string currentMode)
+    {
+        string nextMode = string.IsNullOrEmpty(currentMode) ? "UNSET" : currentMode;
+        string priorMode = string.IsNullOrEmpty(previousMode) ? "UNSET" : previousMode;
+        if (string.Equals(lastLoggedSolidControlMode, "UNSET", StringComparison.Ordinal))
+        {
+            lastLoggedSolidControlMode = priorMode;
+        }
+
+        if (string.Equals(lastLoggedSolidControlMode, nextMode, StringComparison.Ordinal))
+            return;
+
+        string detail = nextMode == "PREHEATER_CVCS"
+            ? $"doc_target={solidPlantState.PreHeaterTargetNetCharging_gpm:F1}gpm eff_target={solidPlantState.PreHeaterEffectiveNetCharging_gpm:F2}gpm"
+            : $"hold_timer={solidPlantState.HoldEntryTimer_sec:F1}s handoff_timer={solidPlantState.PreHeaterHandoffTimer_sec:F1}s";
+        LogEvent(
+            EventSeverity.ACTION,
+            $"SOLID CONTROL MODE: {lastLoggedSolidControlMode} -> {nextMode} at P={pressure:F1} psia ({pressure - PlantConstants.PSIG_TO_PSIA:F1} psig), {detail}");
+        lastLoggedSolidControlMode = nextMode;
     }
 
     void UpdateStartupHoldState()

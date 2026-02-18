@@ -1304,7 +1304,17 @@ public partial class HeatupSimEngine
         float pressure_psig_v44 = pressure - PlantConstants.PSIG_TO_PSIA;
         sb.AppendLine("  v4.4.0 PRESSURE/LEVEL CONTROL VALIDATION:");
         sb.AppendLine($"    PZR Level within \u00b110%:  {(pzrLevelError_v44 <= 10f ? "PASS" : "FAIL")} (level={pzrLevel:F1}%, SP={pzrLevelSetpoint_v44:F1}%, err={pzrLevelError_v44:F1}%)");
-        if (solidPlantState.ControlMode == "HEATER_PRESSURIZE")
+        if (solidPlantState.ControlMode == "PREHEATER_CVCS")
+        {
+            bool preheaterRatePass =
+                Math.Abs(pressureRate) >= 50f &&
+                Math.Abs(pressureRate) <= 100f;
+            sb.AppendLine(
+                $"    Preheater dP/dt 50-100: {(preheaterRatePass ? "PASS" : "CHECK")} " +
+                $"({pressureRate:F1} psi/hr, target_net={solidPlantState.PreHeaterTargetNetCharging_gpm:F1} gpm, " +
+                $"eff_net={solidPlantState.PreHeaterEffectiveNetCharging_gpm:F2} gpm)");
+        }
+        else if (solidPlantState.ControlMode == "HEATER_PRESSURIZE")
         {
             float dpSP = Math.Abs(pressure - solidPlantState.PressureSetpoint);
             sb.AppendLine($"    P Rate (HTR):         HTR_PRESS ({pressureRate:F1} psi/hr, dist_SP={dpSP:F1} psi)");

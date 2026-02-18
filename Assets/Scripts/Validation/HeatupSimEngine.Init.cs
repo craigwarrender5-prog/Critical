@@ -186,6 +186,9 @@ public partial class HeatupSimEngine
         pzrOrificeDiagTickCounter = 0;
         pzrOrificeDiagLast75Count = -1;
         pzrOrificeDiagLast45Open = false;
+        lastLoggedHeaterAuthorityState = "UNSET";
+        lastLoggedHeaterLimiterReason = "UNSET";
+        lastLoggedSolidControlMode = "UNSET";
 
         // IP-0016 RTCC/session-scoped telemetry reset
         rtccTransitionCount = 0;

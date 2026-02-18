@@ -86,10 +86,13 @@ namespace Critical.Physics
         public float PressureError;         // psi (actual - ramped setpoint)
         public bool InControlBand;          // True if within 320-400 psig
 
-        // v5.4.1: Two-phase pressurization control state
-        public string ControlMode;          // HEATER_PRESSURIZE / HOLD_SOLID
+        // v5.5.0: Three-phase solid pressurization control state
+        public string ControlMode;          // PREHEATER_CVCS / HEATER_PRESSURIZE / HOLD_SOLID
+        public float PreHeaterHandoffTimer_sec; // seconds P has remained above pre-heater handoff pressure
         public float HoldEntryTimer_sec;    // seconds P has been within hold-entry band (0 if outside)
         public float PressurizationElapsed_sec; // total seconds since init (diagnostic)
+        public float PreHeaterTargetNetCharging_gpm;    // Diagnostic target command (documentation envelope)
+        public float PreHeaterEffectiveNetCharging_gpm; // Effective net charging applied to model
 
         // v5.4.2.0 Phase A: CVCS transport delay state
         public float[] TransportDelayBuffer;    // Ring buffer of past LetdownAdjustEff values
@@ -222,11 +225,52 @@ namespace Critical.Physics
         /// </summary>
         const float ANTIWINDUP_DEADTIME_THRESHOLD_GPM = 0.5f;
 
-        // â”€â”€ Two-Phase Pressurization Control â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-        // During cold-start, pressure rises via heater-driven thermal
-        // expansion (HEATER_PRESSURIZE). Once near setpoint, the controller
-        // transitions to fine PI hold (HOLD_SOLID). This separation ensures
-        // CVCS cannot become the primary pressurization actuator.
+        // Solid startup control policy:
+        //   PREHEATER_CVCS     -> CVCS-dominant pressurization (heaters locked out in engine)
+        //   HEATER_PRESSURIZE  -> heater-led rise with bounded CVCS trim
+        //   HOLD_SOLID         -> PI hold near setpoint
+
+        /// <summary>
+        /// Minimum documented pre-heater charging imbalance command (gpm).
+        /// This is tracked for policy traceability.
+        /// </summary>
+        const float PREHEATER_DOC_MIN_NET_CHARGING_GPM = 20f;
+
+        /// <summary>
+        /// Maximum documented pre-heater charging imbalance command (gpm).
+        /// </summary>
+        const float PREHEATER_DOC_MAX_NET_CHARGING_GPM = 40f;
+
+        /// <summary>
+        /// Target pre-heater pressure-rate envelope low bound (psi/hr).
+        /// </summary>
+        const float PREHEATER_TARGET_RATE_MIN_PSI_HR = 50f;
+
+        /// <summary>
+        /// Target pre-heater pressure-rate envelope high bound (psi/hr).
+        /// </summary>
+        const float PREHEATER_TARGET_RATE_MAX_PSI_HR = 100f;
+
+        /// <summary>
+        /// Effective net charging lower bound applied during PREHEATER_CVCS (gpm).
+        /// Bounded for the current compressibility model.
+        /// </summary>
+        const float PREHEATER_EFFECTIVE_MIN_NET_CHARGING_GPM = 0.25f;
+
+        /// <summary>
+        /// Effective net charging upper bound applied during PREHEATER_CVCS (gpm).
+        /// </summary>
+        const float PREHEATER_EFFECTIVE_MAX_NET_CHARGING_GPM = 0.50f;
+
+        /// <summary>
+        /// Pressure threshold (psia) for handoff from PREHEATER_CVCS to heater-led stage.
+        /// </summary>
+        const float PREHEATER_HANDOFF_PRESSURE_PSIA = PlantConstants.PRESSURIZE_COMPLETE_PRESSURE_PSIA;
+
+        /// <summary>
+        /// Dwell time above handoff threshold before enabling heater-led stage.
+        /// </summary>
+        const float PREHEATER_HANDOFF_DWELL_SEC = PlantConstants.PRESSURIZE_STABILITY_TIME_HR * 3600f;
 
         /// <summary>
         /// Maximum net CVCS trim (gpm) allowed during HEATER_PRESSURIZE.
@@ -348,14 +392,22 @@ namespace Critical.Physics
             state.InControlBand = (pressure_psia >= PlantConstants.SOLID_PLANT_P_LOW_PSIA &&
                                    pressure_psia <= PlantConstants.SOLID_PLANT_P_HIGH_PSIA);
 
-            // v5.4.1: Two-phase pressurization control.
-            // If below setpoint band, start in HEATER_PRESSURIZE (physics-led).
-            // If already near setpoint, start in HOLD_SOLID (PI hold).
+            // v5.5.0: Three-phase solid pressurization control.
+            // If below handoff pressure, start in PREHEATER_CVCS.
+            // If above handoff pressure but below setpoint band, start in HEATER_PRESSURIZE.
+            // If already near setpoint, start in HOLD_SOLID.
+            state.PreHeaterHandoffTimer_sec = 0f;
             state.HoldEntryTimer_sec = 0f;
             state.PressurizationElapsed_sec = 0f;
+            state.PreHeaterTargetNetCharging_gpm = PREHEATER_DOC_MIN_NET_CHARGING_GPM;
+            state.PreHeaterEffectiveNetCharging_gpm = PREHEATER_EFFECTIVE_MIN_NET_CHARGING_GPM;
             state.PressureSetpointRamped = state.PressureSetpoint;  // Always target final SP
 
-            if (Math.Abs(pressure_psia - state.PressureSetpoint) > HOLD_ENTRY_BAND_PSI)
+            if (pressure_psia < PREHEATER_HANDOFF_PRESSURE_PSIA)
+            {
+                state.ControlMode = "PREHEATER_CVCS";
+            }
+            else if (Math.Abs(pressure_psia - state.PressureSetpoint) > HOLD_ENTRY_BAND_PSI)
             {
                 state.ControlMode = "HEATER_PRESSURIZE";
             }
@@ -524,18 +576,10 @@ namespace Critical.Physics
             float dV_thermal_ft3 = dV_pzr_ft3 + dV_rcs_ft3;
             
             // ================================================================
-            // 4. CVCS PRESSURE CONTROLLER â€” Two-Phase Pressurization
-            //
-            //    Phase A: HEATER_PRESSURIZE (physics-led)
-            //      Heaters drive PZR temperature up â†’ thermal expansion â†’
-            //      pressure rises. CVCS trim authority is capped to a tiny
-            //      envelope so it cannot become the primary pressurization
-            //      actuator. Pressure rise rate emerges from plant physics.
-            //
-            //    Phase B: HOLD_SOLID (PI fine control)
-            //      Once within Â±5 psi of setpoint for 30s, normal PI hold
-            //      with actuator dynamics (lag/slew/filter) takes over.
-            //      CVCS makes small corrections to maintain setpoint.
+            // 4. SOLID PRESSURIZATION CONTROL POLICY
+            //    Phase A: PREHEATER_CVCS (CVCS-dominant, heaters locked out upstream)
+            //    Phase B: HEATER_PRESSURIZE (heater-led with bounded CVCS trim)
+            //    Phase C: HOLD_SOLID (PI fine hold near setpoint)
             // ================================================================
 
             state.PressurizationElapsed_sec += dt_sec;
@@ -545,6 +589,7 @@ namespace Critical.Physics
                 // Explicit no-flow hold: prevent PI/transport-delay logic from
                 // synthesizing CVCS-driven pressure changes when base flows are zero.
                 state.ControlMode = "ISOLATED_NO_FLOW";
+                state.PreHeaterHandoffTimer_sec = 0f;
                 state.HoldEntryTimer_sec = 0f;
                 state.ControllerIntegral = 0f;
                 state.LetdownAdjustCmd = 0f;
@@ -561,8 +606,25 @@ namespace Critical.Physics
             {
                 // Mode transition logic
                 float distToSetpoint = state.Pressure - state.PressureSetpoint;
-
-                if (state.ControlMode == "HEATER_PRESSURIZE")
+                if (state.ControlMode == "PREHEATER_CVCS")
+                {
+                    if (state.Pressure >= PREHEATER_HANDOFF_PRESSURE_PSIA)
+                    {
+                        state.PreHeaterHandoffTimer_sec += dt_sec;
+                        if (state.PreHeaterHandoffTimer_sec >= PREHEATER_HANDOFF_DWELL_SEC)
+                        {
+                            state.ControlMode = "HEATER_PRESSURIZE";
+                            state.PreHeaterHandoffTimer_sec = 0f;
+                            state.ControllerIntegral = 0f;
+                            state.HoldEntryTimer_sec = 0f;
+                        }
+                    }
+                    else
+                    {
+                        state.PreHeaterHandoffTimer_sec = 0f;
+                    }
+                }
+                else if (state.ControlMode == "HEATER_PRESSURIZE")
                 {
                     if (Math.Abs(distToSetpoint) <= HOLD_ENTRY_BAND_PSI)
                     {
@@ -599,90 +661,126 @@ namespace Critical.Physics
                     state.PressureFiltered = state.Pressure;
                 }
 
-                // PI controller
-                float pressureError_psi = state.PressureFiltered - state.PressureSetpoint;
-                float pTerm = KP_PRESSURE * pressureError_psi;
-                float provisionalCmd = pTerm + KI_PRESSURE * state.ControllerIntegral;
-                float deadTimeGap = Math.Abs(state.LetdownAdjustEff - state.DelayedLetdownAdjust);
-                bool actuatorClamped = state.SlewClampActive ||
-                    (state.ControlMode == "HEATER_PRESSURIZE" &&
-                     Math.Abs(provisionalCmd) > HEATER_PRESS_MAX_NET_TRIM_GPM);
-                bool deadTimeInhibit = deadTimeGap > ANTIWINDUP_DEADTIME_THRESHOLD_GPM;
-
-                state.AntiWindupActive = actuatorClamped || deadTimeInhibit;
-                if (!state.AntiWindupActive)
+                if (state.ControlMode == "PREHEATER_CVCS")
                 {
-                    state.ControllerIntegral += pressureError_psi * dt_sec;
-                }
-
-                float integralLimit = INTEGRAL_LIMIT_GPM / KI_PRESSURE;
-                state.ControllerIntegral = Math.Max(-integralLimit,
-                    Math.Min(state.ControllerIntegral, integralLimit));
-                float iTerm = KI_PRESSURE * state.ControllerIntegral;
-
-                float letdownAdjustCmd = pTerm + iTerm;
-                letdownAdjustCmd = Math.Max(-MAX_LETDOWN_ADJUSTMENT_GPM,
-                                    Math.Min(letdownAdjustCmd, MAX_LETDOWN_ADJUSTMENT_GPM));
-                state.LetdownAdjustCmd = letdownAdjustCmd;
-
-                if (state.ControlMode == "HEATER_PRESSURIZE")
-                {
-                    letdownAdjustCmd = Math.Max(-HEATER_PRESS_MAX_NET_TRIM_GPM,
-                        Math.Min(letdownAdjustCmd, HEATER_PRESS_MAX_NET_TRIM_GPM));
-                }
-
-                // CVCS actuator dynamics
-                float effAdj = state.LetdownAdjustEff;
-                if (CVCS_ACTUATOR_TAU_SEC > 0f && dt_sec > 0f)
-                {
-                    float alphaA = Math.Min(dt_sec / CVCS_ACTUATOR_TAU_SEC, 1f);
-                    effAdj += (letdownAdjustCmd - effAdj) * alphaA;
-                }
-                else
-                {
-                    effAdj = letdownAdjustCmd;
-                }
-
-                float maxDelta = CVCS_MAX_SLEW_GPM_PER_SEC * dt_sec;
-                float delta = effAdj - state.LetdownAdjustEff;
-                if (Math.Abs(delta) > maxDelta)
-                {
-                    effAdj = state.LetdownAdjustEff + Math.Sign(delta) * maxDelta;
-                    state.SlewClampActive = true;
-                }
-                else
-                {
-                    state.SlewClampActive = false;
-                }
-                state.LetdownAdjustEff = effAdj;
-
-                // CVCS transport delay
-                if (state.DelayBufferLength == 0 && dt_sec > 0f)
-                {
-                    state.DelayBufferLength = Math.Max(1,
-                        (int)Math.Ceiling(CVCS_TRANSPORT_DELAY_SEC / dt_sec));
-                    state.DelayBufferLength = Math.Min(state.DelayBufferLength,
-                        DELAY_BUFFER_MAX_SLOTS);
-                }
-
-                if (state.TransportDelayBuffer != null && state.DelayBufferLength > 0)
-                {
-                    state.DelayedLetdownAdjust = state.TransportDelayBuffer[state.DelayBufferHead];
-                    state.TransportDelayBuffer[state.DelayBufferHead] = state.LetdownAdjustEff;
-                    state.DelayBufferHead = (state.DelayBufferHead + 1) % state.DelayBufferLength;
-                    if (!state.TransportDelayActive && state.PressurizationElapsed_sec >= CVCS_TRANSPORT_DELAY_SEC)
+                    float pressureRate = state.PressureRate;
+                    float rateNorm = 0.5f;
+                    float rateSpan = PREHEATER_TARGET_RATE_MAX_PSI_HR - PREHEATER_TARGET_RATE_MIN_PSI_HR;
+                    if (rateSpan > 1e-6f)
                     {
-                        state.TransportDelayActive = true;
+                        rateNorm = (PREHEATER_TARGET_RATE_MAX_PSI_HR - pressureRate) / rateSpan;
                     }
+                    rateNorm = Math.Max(0f, Math.Min(rateNorm, 1f));
+
+                    float effectiveNetCharging = PREHEATER_EFFECTIVE_MIN_NET_CHARGING_GPM
+                        + rateNorm * (PREHEATER_EFFECTIVE_MAX_NET_CHARGING_GPM - PREHEATER_EFFECTIVE_MIN_NET_CHARGING_GPM);
+                    float docTargetNetCharging = PREHEATER_DOC_MIN_NET_CHARGING_GPM
+                        + rateNorm * (PREHEATER_DOC_MAX_NET_CHARGING_GPM - PREHEATER_DOC_MIN_NET_CHARGING_GPM);
+
+                    state.PreHeaterEffectiveNetCharging_gpm = effectiveNetCharging;
+                    state.PreHeaterTargetNetCharging_gpm = docTargetNetCharging;
+                    state.ControllerIntegral = 0f;
+                    state.AntiWindupActive = false;
+                    state.SlewClampActive = false;
+                    state.TransportDelayActive = false;
+                    state.LetdownAdjustCmd = -effectiveNetCharging;
+                    state.LetdownAdjustEff = -effectiveNetCharging;
+                    state.DelayedLetdownAdjust = -effectiveNetCharging;
+
+                    state.ChargingFlow = baseCharging_gpm;
+                    state.LetdownFlow = baseLetdown_gpm - effectiveNetCharging;
+                    state.LetdownFlow = Math.Max(MIN_LETDOWN_GPM, Math.Min(state.LetdownFlow, MAX_LETDOWN_GPM));
                 }
                 else
                 {
-                    state.DelayedLetdownAdjust = state.LetdownAdjustEff;
-                }
+                    state.PreHeaterTargetNetCharging_gpm = 0f;
+                    state.PreHeaterEffectiveNetCharging_gpm = 0f;
 
-                state.LetdownFlow = baseLetdown_gpm + state.DelayedLetdownAdjust;
-                state.LetdownFlow = Math.Max(MIN_LETDOWN_GPM, Math.Min(state.LetdownFlow, MAX_LETDOWN_GPM));
-                state.ChargingFlow = baseCharging_gpm;
+                    // PI controller
+                    float pressureError_psi = state.PressureFiltered - state.PressureSetpoint;
+                    float pTerm = KP_PRESSURE * pressureError_psi;
+                    float provisionalCmd = pTerm + KI_PRESSURE * state.ControllerIntegral;
+                    float deadTimeGap = Math.Abs(state.LetdownAdjustEff - state.DelayedLetdownAdjust);
+                    bool actuatorClamped = state.SlewClampActive ||
+                        (state.ControlMode == "HEATER_PRESSURIZE" &&
+                         Math.Abs(provisionalCmd) > HEATER_PRESS_MAX_NET_TRIM_GPM);
+                    bool deadTimeInhibit = deadTimeGap > ANTIWINDUP_DEADTIME_THRESHOLD_GPM;
+
+                    state.AntiWindupActive = actuatorClamped || deadTimeInhibit;
+                    if (!state.AntiWindupActive)
+                    {
+                        state.ControllerIntegral += pressureError_psi * dt_sec;
+                    }
+
+                    float integralLimit = INTEGRAL_LIMIT_GPM / KI_PRESSURE;
+                    state.ControllerIntegral = Math.Max(-integralLimit,
+                        Math.Min(state.ControllerIntegral, integralLimit));
+                    float iTerm = KI_PRESSURE * state.ControllerIntegral;
+
+                    float letdownAdjustCmd = pTerm + iTerm;
+                    letdownAdjustCmd = Math.Max(-MAX_LETDOWN_ADJUSTMENT_GPM,
+                                        Math.Min(letdownAdjustCmd, MAX_LETDOWN_ADJUSTMENT_GPM));
+                    state.LetdownAdjustCmd = letdownAdjustCmd;
+
+                    if (state.ControlMode == "HEATER_PRESSURIZE")
+                    {
+                        letdownAdjustCmd = Math.Max(-HEATER_PRESS_MAX_NET_TRIM_GPM,
+                            Math.Min(letdownAdjustCmd, HEATER_PRESS_MAX_NET_TRIM_GPM));
+                    }
+
+                    // CVCS actuator dynamics
+                    float effAdj = state.LetdownAdjustEff;
+                    if (CVCS_ACTUATOR_TAU_SEC > 0f && dt_sec > 0f)
+                    {
+                        float alphaA = Math.Min(dt_sec / CVCS_ACTUATOR_TAU_SEC, 1f);
+                        effAdj += (letdownAdjustCmd - effAdj) * alphaA;
+                    }
+                    else
+                    {
+                        effAdj = letdownAdjustCmd;
+                    }
+
+                    float maxDelta = CVCS_MAX_SLEW_GPM_PER_SEC * dt_sec;
+                    float delta = effAdj - state.LetdownAdjustEff;
+                    if (Math.Abs(delta) > maxDelta)
+                    {
+                        effAdj = state.LetdownAdjustEff + Math.Sign(delta) * maxDelta;
+                        state.SlewClampActive = true;
+                    }
+                    else
+                    {
+                        state.SlewClampActive = false;
+                    }
+                    state.LetdownAdjustEff = effAdj;
+
+                    // CVCS transport delay
+                    if (state.DelayBufferLength == 0 && dt_sec > 0f)
+                    {
+                        state.DelayBufferLength = Math.Max(1,
+                            (int)Math.Ceiling(CVCS_TRANSPORT_DELAY_SEC / dt_sec));
+                        state.DelayBufferLength = Math.Min(state.DelayBufferLength,
+                            DELAY_BUFFER_MAX_SLOTS);
+                    }
+
+                    if (state.TransportDelayBuffer != null && state.DelayBufferLength > 0)
+                    {
+                        state.DelayedLetdownAdjust = state.TransportDelayBuffer[state.DelayBufferHead];
+                        state.TransportDelayBuffer[state.DelayBufferHead] = state.LetdownAdjustEff;
+                        state.DelayBufferHead = (state.DelayBufferHead + 1) % state.DelayBufferLength;
+                        if (!state.TransportDelayActive && state.PressurizationElapsed_sec >= CVCS_TRANSPORT_DELAY_SEC)
+                        {
+                            state.TransportDelayActive = true;
+                        }
+                    }
+                    else
+                    {
+                        state.DelayedLetdownAdjust = state.LetdownAdjustEff;
+                    }
+
+                    state.LetdownFlow = baseLetdown_gpm + state.DelayedLetdownAdjust;
+                    state.LetdownFlow = Math.Max(MIN_LETDOWN_GPM, Math.Min(state.LetdownFlow, MAX_LETDOWN_GPM));
+                    state.ChargingFlow = baseCharging_gpm;
+                }
             }
             
             // ================================================================
@@ -761,7 +859,8 @@ namespace Critical.Physics
             bool pressureRising = state.PressureRate > 0.1f;
             bool bothZero = Math.Abs(state.SurgeFlow) < 0.01f && Math.Abs(state.PressureRate) < 0.1f;
             state.SurgePressureConsistent = bothZero || (surgePositive == pressureRising)
-                || state.ControlMode == "HOLD_SOLID";  // During hold, CVCS opposition is expected
+                || state.ControlMode == "HOLD_SOLID"
+                || state.ControlMode == "PREHEATER_CVCS";  // CVCS-dominant policy decouples surge/pressure trends
 
             // Pressure model diagnostics for engine-level long-hold tracing.
             state.PressureEquationBranch = state.IsolatedNoFlowHold
