@@ -1,79 +1,85 @@
-# CS-0121 Investigation Report
+# CS-0121 Investigation Report (2026-02-18_131500)
 
-**Title:** SOLID PZR indicator not illuminated despite pressurizer being in solid condition  
+**Title:** Dashboard visual issues: SOLID PZR indicator not lit, alarm symbol incorrectly transcoded  
 **Severity:** LOW  
 **Domain:** Operator Interface & Scenarios  
 **Status:** READY  
 **Created:** 2026-02-18T11:15:00Z  
-**Assigned DP:** DP-0008  
+**Updated:** 2026-02-18T13:15:00Z  
+**Assigned DP:** DP-0008
 
 ---
 
 ## 1. Problem Summary
 
-The "SOLID PZR" indicator in the Pressurizer panel on the Validation Dashboard Overview tab is not illuminated even when the pressurizer is clearly in a solid (water-solid) condition.
+Two dashboard visual defects are confirmed:
+
+1. **SOLID PZR indicator** is displayed as off in Overview while plant state is solid.
+2. **Alarm symbol** in dashboard header is mojibake/transcoded text instead of intended warning glyph.
 
 ---
 
-## 2. Evidence from Screenshot
+## 2. Root Cause Analysis
 
-| Parameter | Value | Interpretation |
-|-----------|-------|----------------|
-| Header | "SOLID PZR - HEATING TO TSAT (358f)" | System recognizes solid state |
-| Plant Mode | MODE 5 Cold SD | Cold shutdown, solid plant expected |
-| WATER | 1800.0 | Full water inventory |
-| STEAM | 0.0 | No steam space |
-| PZR Level Gauge | 100% (visual) | Fully water-solid |
-| SOLID PZR Indicator | NOT LIT | **Incorrect** |
+### Issue A: SOLID PZR indicator logic mismatch
 
-The phase description in the header explicitly states "SOLID PZR" yet the indicator checkbox is not illuminated.
+Code path in Overview tab uses bubble-formed flag as LED ON condition:
+- `Assets/Scripts/Validation/Tabs/OverviewTab.cs:321-322`
+
+Current logic:
+- Label shows `SOLID PZR` when `s.SolidPressurizer` is true.
+- LED ON flag uses `s.BubbleFormed`.
+
+Result: in solid state (`BubbleFormed=false`, `SolidPressurizer=true`), label is correct but LED remains unlit.
+
+Cross-check: Pressurizer tab has a dedicated SOLID PZR LED correctly bound to `s.SolidPressurizer`:
+- `Assets/Scripts/Validation/Tabs/PressurizerTab.cs:239-240`
+
+### Issue B: Alarm symbol mojibake in header
+
+Header alarm string contains corrupted symbol literal:
+- `Assets/Scripts/Validation/ValidationDashboard.cs:354`
+
+Current string literal contains `⚠` sequence rather than clean ASCII-safe marker or valid glyph for active font path, producing garbled display in runtime.
 
 ---
 
-## 3. Likely Root Cause
+## 3. Evidence
 
-The indicator is likely bound to the wrong state variable or has inverted logic. Possibilities include:
-
-1. **Wrong variable binding**: Indicator may be checking `hasBubble` instead of `!hasBubble` or similar
-2. **Threshold mismatch**: Indicator may use a different level threshold than the phase state machine
-3. **State not exposed**: The solid/bubble state may not be properly exposed to the dashboard telemetry snapshot
-4. **Drawing logic error**: The indicator drawing code may have incorrect conditional logic
+1. Overview visual behavior aligns with the code mismatch at `OverviewTab.cs:321-322`.
+2. Header alarm glyph corruption aligns with explicit mojibake literal at `ValidationDashboard.cs:354`.
 
 ---
 
-## 4. Files to Investigate
+## 4. Disposition
 
-| File | Likely Location | Purpose |
-|------|-----------------|---------|
-| `HeatupValidationVisual.TabOverview.cs` | PZR panel drawing | Where indicator is rendered |
-| `HeatupValidationVisual.Panels.cs` | Panel helpers | May contain indicator logic |
-| `HeatupSimEngine.cs` | `hasBubble` field | State variable |
-| `RuntimeTelemetrySnapshot` | Telemetry struct | May need to expose solid state |
+**Disposition: READY (full investigation complete).**
+
+Both defects are localized rendering-layer issues with clear code-level fixes.
 
 ---
 
 ## 5. Proposed Resolution
 
-1. Locate the SOLID PZR indicator drawing code in the Overview tab
-2. Verify the conditional logic for illumination
-3. Ensure it checks for `!hasBubble` or equivalent solid-state condition
-4. Validate against the telemetry snapshot or engine state
+1. Update Overview SOLID PZR indicator ON-state binding to match solid-state telemetry semantics.
+2. Replace header alarm symbol literal with encoding-safe output (ASCII-safe token or validated glyph path).
+3. Regression-check visual consistency across dashboard tabs.
 
 ---
 
 ## 6. Impact Assessment
 
-- **User Impact:** LOW — Cosmetic/informational only, header shows correct state
-- **Technical Debt:** LOW — Localized fix in dashboard rendering
-- **Blocking:** NONE — No simulation or physics impact
+- **User Impact:** LOW � UI correctness and operator trust issue.
+- **Technical Debt:** LOW � localized display logic corrections.
+- **Blocking:** NONE for physics behavior; should close within DP-0008 UI pass.
 
 ---
 
 ## 7. Acceptance Criteria
 
-1. SOLID PZR indicator illuminates when `hasBubble == false` and PZR level is at/near 100%
-2. SOLID PZR indicator is not illuminated when bubble has formed
-3. Indicator state matches the phase description in the header bar
+1. SOLID PZR indicator illuminates whenever solid-state telemetry indicates solid pressurizer.
+2. Bubble-state and solid-state indicators are mutually consistent across Overview and Pressurizer tabs.
+3. Header alarm marker renders without mojibake/garbled characters.
 
 ---
 
@@ -81,6 +87,8 @@ The indicator is likely bound to the wrong state variable or has inverted logic.
 
 - `Dashboard-Indicator`
 - `PZR-Solid-State`
+- `Alarm-Symbol`
+- `Character-Encoding`
 - `Visual-Bug`
 - `Low-Priority`
 - `User-Request-2026-02-18`

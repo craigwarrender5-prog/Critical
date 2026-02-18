@@ -850,7 +850,7 @@ public partial class HeatupSimEngine : MonoBehaviour
     const float RCP_START_INTERVAL = 0.5f;
     const float RCP_HEAT_DELIVERY_TAU_HR = 0.05f;   // 3 min thermal uptake smoothing
     const float NO_RCP_TRANSPORT_GAIN = 18f;        // Flow turnover to bulk-transport coupling
-    const float NO_RCP_NATURAL_FLOOR = 0.08f;       // Natural convection floor when no forced circulation
+    const float NO_RCP_BASELINE_COUPLING = 0f;      // IP-0054: no unconditional bulk coupling with zero forced flow
     const float RHR_ISOLATION_NEAR_TEMP_BAND_F = 5f;
     const float REGIME2_MAX_PZR_LEVEL_STEP_PCT = 0.5f;
     const float REGIME2_STARTUP_LEVEL_STEP_MIN_PCT = 0.02f;
@@ -2870,14 +2870,14 @@ public partial class HeatupSimEngine : MonoBehaviour
         float systemVolume_gal =
             (PlantConstants.RCS_WATER_VOLUME + PlantConstants.PZR_TOTAL_VOLUME) * PlantConstants.FT3_TO_GAL;
         if (systemVolume_gal <= 1f)
-            return NO_RCP_NATURAL_FLOOR;
+            return NO_RCP_BASELINE_COUPLING;
 
         float forcedFlow_gpm = (rhrState.SuctionValvesOpen && rhrState.FlowRate_gpm > 0f)
             ? rhrState.FlowRate_gpm
             : 0f;
         float turnoverFraction = forcedFlow_gpm * dt_hr * 60f / systemVolume_gal;
         float forcedFactor = Mathf.Clamp01(turnoverFraction * NO_RCP_TRANSPORT_GAIN);
-        return Mathf.Clamp01(Mathf.Max(NO_RCP_NATURAL_FLOOR, forcedFactor));
+        return Mathf.Clamp01(Mathf.Max(NO_RCP_BASELINE_COUPLING, forcedFactor));
     }
 
     float ComputeNoRcpHeatDeltaF(float heatMw, float rcsHeatCapBtuF, float dt_hr)

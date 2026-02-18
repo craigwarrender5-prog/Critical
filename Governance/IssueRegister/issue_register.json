@@ -1,13 +1,13 @@
-{
+﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-18T11:15:00Z",
+    "generated_at":  "2026-02-18T04:05:44Z",
     "source":  "Governance/IssueRegister/issue_index.json (ACTIVE_ONLY_WORKING_SET: non-CLOSED issues only)",
     "active_issue_count":  5,
     "issues":  [
                    {
                        "id":  "CS-0102",
                        "title":  "Establish scenario system framework with registry and scenario abstraction",
-                       "domain":  "Operator Interface & Scenarios",
+                       "domain":  "Operator Interface \u0026 Scenarios",
                        "severity":  "HIGH",
                        "status":  "READY",
                        "created_at":  "2026-02-17T12:47:30Z",
@@ -50,7 +50,7 @@
                    {
                        "id":  "CS-0103",
                        "title":  "Add in-simulator scenario selection overlay with keybind trigger",
-                       "domain":  "Operator Interface & Scenarios",
+                       "domain":  "Operator Interface \u0026 Scenarios",
                        "severity":  "MEDIUM",
                        "status":  "READY",
                        "created_at":  "2026-02-17T12:47:30Z",
@@ -93,7 +93,7 @@
                    {
                        "id":  "CS-0109",
                        "title":  "PZR Mode 5 pre-heater pressurization: validate net +1 gpm charging imbalance vs documented expectations",
-                       "domain":  "Pressurizer & Startup Control",
+                       "domain":  "Pressurizer \u0026 Startup Control",
                        "severity":  "HIGH",
                        "status":  "READY",
                        "created_at":  "2026-02-17T19:05:15Z",
@@ -113,7 +113,7 @@
                                         },
                                         {
                                             "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:21",
-                                            "notes":  "Sequence: charging>letdown pressurization to 400-425 psig, then heater energization."
+                                            "notes":  "Sequence: charging\u003eletdown pressurization to 400-425 psig, then heater energization."
                                         },
                                         {
                                             "ref":  "Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md:25",
@@ -134,7 +134,7 @@
                        "root_cause":  "Solid-plant HEATER_PRESSURIZE logic limits CVCS net trim to +/-1 gpm while early heater participation contributes to pressure rise, yielding a mechanism/rate mismatch versus documented startup expectations.",
                        "resolution_candidate":  "Define explicit Mode 5 pre-heater policy boundary: parameterized CVCS imbalance/rate envelope aligned to documentation, heater-sequencing handoff at documented transition, and clear controller ownership separation.",
                        "links":  [
-                                     "Assigned DP: DP-0012 - Pressurizer & Startup Control",
+                                     "Assigned DP: DP-0012 - Pressurizer \u0026 Startup Control",
                                      "No implementation under CS; create an IP before code changes."
                                  ],
                        "tags":  [
@@ -150,7 +150,7 @@
                    {
                        "id":  "CS-0120",
                        "title":  "F2 scenario selector keybind only functional in Validator view, not Operator Screens view",
-                       "domain":  "Operator Interface & Scenarios",
+                       "domain":  "Operator Interface \u0026 Scenarios",
                        "severity":  "LOW",
                        "status":  "READY",
                        "created_at":  "2026-02-18T11:00:00Z",
@@ -179,7 +179,7 @@
                        "root_cause":  "SceneBridge.Update() switch statement handles F2 only in Validator case; OperatorScreens case lacks F2 input routing.",
                        "resolution_candidate":  "Add F2 handling to OperatorScreens case that switches to Validator view and opens scenario selector, with appropriate async scene load handling.",
                        "links":  [
-                                     "Assigned DP: DP-0008 - Operator Interface & Scenarios",
+                                     "Assigned DP: DP-0008 - Operator Interface \u0026 Scenarios",
                                      "Related: CS-0103 (scenario overlay keybind), CS-0119 (F2 overlay implementation)"
                                  ],
                        "tags":  [
@@ -195,8 +195,8 @@
                    },
                    {
                        "id":  "CS-0121",
-                       "title":  "SOLID PZR indicator not illuminated despite pressurizer being in solid condition",
-                       "domain":  "Operator Interface & Scenarios",
+                       "title":  "Dashboard visual issues: SOLID PZR indicator not lit, alarm symbol incorrectly transcoded",
+                       "domain":  "Operator Interface \u0026 Scenarios",
                        "severity":  "LOW",
                        "status":  "READY",
                        "created_at":  "2026-02-18T11:15:00Z",
@@ -206,8 +206,9 @@
                        "assigned_ip":  null,
                        "observations":  [
                                             "SOLID PZR indicator in Overview tab Pressurizer panel is not illuminated.",
-                                            "Header shows 'SOLID PZR - HEATING TO TSAT (358f)' confirming solid state.",
-                                            "PZR WATER=1800, STEAM=0, level gauge at 100% - clearly solid."
+                                            "Header shows \u0027SOLID PZR - HEATING TO TSAT (358f)\u0027 confirming solid state.",
+                                            "PZR WATER=1800, STEAM=0, level gauge at 100% - clearly solid.",
+                                            "Alarm symbol next to \u00272 ALARMS\u0027 displays as garbled characters (section signs) instead of alarm icon."
                                         ],
                        "evidence":  [
                                         {
@@ -226,12 +227,14 @@
                        "root_cause":  null,
                        "resolution_candidate":  "Locate SOLID PZR indicator in TabOverview, verify conditional logic checks for !hasBubble or equivalent solid-state condition.",
                        "links":  [
-                                     "Assigned DP: DP-0008 - Operator Interface & Scenarios",
+                                     "Assigned DP: DP-0008 - Operator Interface \u0026 Scenarios",
                                      "Likely impacted: Assets/Scripts/Validation/HeatupValidationVisual.TabOverview.cs"
                                  ],
                        "tags":  [
                                     "Dashboard-Indicator",
                                     "PZR-Solid-State",
+                                    "Alarm-Symbol",
+                                    "Character-Encoding",
                                     "Visual-Bug",
                                     "Low-Priority",
                                     "User-Request-2026-02-18"

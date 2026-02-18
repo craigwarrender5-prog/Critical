@@ -1,52 +1,60 @@
-﻿# CS-0103 Investigation Report (2026-02-17_124730)
+# CS-0103 Investigation Report (2026-02-18_131500)
 
 - Issue ID: `CS-0103`
 - Title: `Add in-simulator scenario selection overlay with keybind trigger`
 - Initial Status at Creation: `INVESTIGATING`
-- Investigation State: `Preliminary`
-- Recommended Domain: `Operator Interface & Scenarios`
+- Investigation State: `Full`
+- Investigation Completed: `2026-02-18T13:15:00Z`
+- Recommended Next Status: `READY`
+- Assigned Domain Plan: `DP-0008 - Operator Interface & Scenarios`
 
-## Problem
+## 1) Problem Statement
 
-There is no in-simulator scenario selection mechanism, preventing runtime scenario switching/selection without code-level entrypoint changes.
+Scenario selector overlay must be runtime-accessible via keybind and support in-simulator scenario start without destructive UI behavior.
 
-## Scope
+## 2) Code Evidence Review
 
-Add a lightweight overlay/menu that is toggled by keybind (for example `F1`) and allows scenario selection/start.
+### Overlay and start behavior exist
+1. Selector visibility APIs are implemented:
+   - `Assets/Scripts/Validation/HeatupValidationVisual.cs:557-579`
+2. Overlay renders scenario list and START actions:
+   - `Assets/Scripts/Validation/HeatupValidationVisual.cs:583-651`
+3. START invokes engine scenario bridge:
+   - `Assets/Scripts/Validation/HeatupValidationVisual.cs:635-637`
+4. Engine supports descriptor listing/start by ID:
+   - `Assets/Scripts/Validation/HeatupSimEngine.Scenarios.cs:43-71`
 
-## Non-scope
+### Keybind accessibility gap remains
+1. Scene input routing handles `F2` only in Validator view:
+   - `Assets/Scripts/Core/SceneBridge.cs:170-175`
+2. Operator Screens branch has no `F2` handling:
+   - `Assets/Scripts/Core/SceneBridge.cs:162-168`
 
-- No operator screen redesign
-- No invasive UI architecture changes
-- No non-scenario UI rework
+## 3) Root Cause
 
-## Acceptance Criteria
+The selector overlay feature was implemented in the validator UI path, but scene-level input routing did not include an Operator Screens `F2` path, leaving default-view runtime accessibility incomplete.
 
-1. Keybind toggles scenario overlay visibility.
-2. Overlay presents registered scenario list.
-3. Selecting a scenario invokes the scenario start path.
-4. Overlay is isolated and non-destructive to existing UI stack.
+## 4) Disposition
 
-## Risks/Compatibility
+**Disposition: READY (functionality present but acceptance incomplete).**
 
-- Medium risk of input conflicts with existing UI/input actions.
-- Overlay layering/z-order conflicts possible if isolation boundaries are not explicit.
+Overlay and scenario start exist; closure requires full keybind accessibility behavior and regression evidence across view transitions.
 
-## Verification Evidence
+## 5) Corrective Scope for IP
 
-- Input trace showing toggle on/off behavior.
-- UI evidence (screen capture/log) showing scenario list rendering.
-- Start event evidence confirming scenario invocation from overlay selection.
+1. Finalize keybind routing semantics across both views (with async-safe scene transition behavior).
+2. Validate selector lifecycle (open/start/close) from default operator workflow.
+3. Verify no regressions to `V`, `Esc`, and `1-8/Tab` view controls.
 
-## Likely Impacted Areas/Files (Best-effort)
+## 6) Acceptance Criteria
 
-- `Assets/Scripts/ScenarioSystem/` (new target folder)
-- `Assets/Scripts/UI/ScreenManager.cs`
-- `Assets/Scripts/UI/OperatorScreen.cs`
-- `Assets/InputSystem_Actions.inputactions`
-- `Assets/Prefabs/Screens/` (if overlay prefab container is used)
+1. Keybind-driven selector flow works from active runtime workflow, not validator-only workaround.
+2. Selector lists descriptors and starts selected scenario through engine bridge.
+3. Existing scene navigation behavior remains stable.
 
-## Technical Documentation References
+## 7) Affected Files
 
-- `Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md` (scenario progression context)
-- `Technical_Documentation/Technical_Documentation_Index.md` (traceability)
+- `Assets/Scripts/Core/SceneBridge.cs`
+- `Assets/Scripts/Validation/HeatupValidationVisual.cs`
+- `Assets/Scripts/Validation/HeatupSimEngine.Scenarios.cs`
+- `Assets/Scripts/ScenarioSystem/ScenarioRegistry.cs`

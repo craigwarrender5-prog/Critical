@@ -1,50 +1,69 @@
-﻿# CS-0102 Investigation Report (2026-02-17_124730)
+# CS-0102 Investigation Report (2026-02-18_131500)
 
 - Issue ID: `CS-0102`
 - Title: `Establish scenario system framework with registry and scenario abstraction`
 - Initial Status at Creation: `INVESTIGATING`
-- Investigation State: `Preliminary`
-- Recommended Domain: `Operator Interface & Scenarios`
+- Investigation State: `Full`
+- Investigation Completed: `2026-02-18T13:15:00Z`
+- Recommended Next Status: `READY`
+- Assigned Domain Plan: `DP-0008 - Operator Interface & Scenarios`
 
-## Problem
+## 1) Problem Statement
 
-Validation execution is currently hardwired, limiting extensibility and making multi-scenario lifecycle control difficult.
+A durable scenario-system boundary is required so runtime scenario selection/start does not depend on hardwired validation-only entry points.
 
-## Scope
+## 2) Code Evidence Review
 
-Define a minimal scenario abstraction and scenario registry that can register and start multiple scenarios through a clean orchestration boundary.
+### Scenario contract and registry seam exists
+1. Contract exists with deterministic start interface:
+   - `Assets/Scripts/ScenarioSystem/ISimulationScenario.cs:44-50`
+2. Central registry exists with ID lookup and descriptor listing:
+   - `Assets/Scripts/ScenarioSystem/ScenarioRegistry.cs:14-74`
+3. Engine bridge exposes list/start APIs:
+   - `Assets/Scripts/Validation/HeatupSimEngine.Scenarios.cs:37-71`
 
-## Non-scope
+### Deterministic start handoff exists
+1. Scenario start path routes to `StartScenarioById` when enabled:
+   - `Assets/Scripts/Validation/HeatupSimEngine.cs:940-949`
+2. Baseline scenario wrapper delegates to canonical `StartSimulation()`:
+   - `Assets/Scripts/ScenarioSystem/ValidationHeatupScenario.cs:21-39`
 
-- No heavy content pipeline
-- No broad architecture rewrite outside minimal scenario boundary
-- No scenario-specific tuning work
+## 3) Residual Gap Keeping CS Open
 
-## Acceptance Criteria
+The framework is implemented, but domain ownership and extensibility boundaries remain incomplete for DP-0008 closure:
+1. Registry bootstrap currently hard-registers only one validation scenario:
+   - `Assets/Scripts/Validation/HeatupSimEngine.Scenarios.cs:81-84`
+2. Built-in scenario descriptor reports domain owner `DP-0013`, not DP-0008 scenario-system ownership:
+   - `Assets/Scripts/ScenarioSystem/ValidationHeatupScenario.cs:19`
 
-1. Scenario abstraction contract is defined and implementation-ready.
-2. Registry can register at least baseline scenario entries.
-3. Scenario start handoff path is defined and deterministic.
+This leaves DP-0008 without finalized governance evidence that the scenario framework is domain-neutral and reusable beyond a validation-specific bootstrap.
 
-## Risks/Compatibility
+## 4) Root Cause
 
-- Medium risk of lifecycle overlap with existing validation loop if ownership boundaries are unclear.
-- Requires compatibility with current initialization and update cadence.
+Initial implementation solved the minimum runtime bridge but anchored scenario registration/ownership to a validation-specific baseline wrapper, leaving DP-0008 framework governance acceptance incomplete.
 
-## Verification Evidence
+## 5) Disposition
 
-- Scenario registry listing evidence (at least one registered scenario).
-- Start-path evidence showing deterministic scenario activation handoff.
-- Non-regression evidence that existing simulator loop remains intact when no scenario is started.
+**Disposition: READY (partial implementation present, closure hardening required).**
 
-## Likely Impacted Areas/Files (Best-effort)
+Implementation exists and is functional; remaining work is closure hardening in DP-0008 scope (ownership boundary, registration model, and acceptance evidence).
 
-- `Assets/Scripts/ScenarioSystem/` (new target folder)
+## 6) Corrective Scope for IP
+
+1. Freeze DP-0008 ownership contract for scenario abstraction/registry behavior.
+2. Define domain-ownership semantics in scenario descriptors that align with DP-0008 governance.
+3. Provide closeout evidence that scenario registration/start remains deterministic and non-regressive.
+
+## 7) Acceptance Criteria
+
+1. Scenario abstraction and registry boundary are explicitly documented and validated in runtime path.
+2. Scenario descriptor ownership semantics are governance-consistent with DP-0008 scope.
+3. Start-path behavior is deterministic and preserves canonical startup fallback.
+
+## 8) Affected Files
+
+- `Assets/Scripts/ScenarioSystem/ISimulationScenario.cs`
+- `Assets/Scripts/ScenarioSystem/ScenarioRegistry.cs`
+- `Assets/Scripts/ScenarioSystem/ValidationHeatupScenario.cs`
+- `Assets/Scripts/Validation/HeatupSimEngine.Scenarios.cs`
 - `Assets/Scripts/Validation/HeatupSimEngine.cs`
-- `Assets/Scripts/Validation/HeatupSimEngine.Init.cs`
-- `Assets/Scripts/Core/` (orchestration boundary if required)
-
-## Technical Documentation References
-
-- `Technical_Documentation/NRC_HRTD_Startup_Pressurization_Reference.md` (scenario flow expectations for startup progression)
-- `Technical_Documentation/Technical_Documentation_Index.md` (traceability to existing technical references)
