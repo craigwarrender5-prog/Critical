@@ -5,18 +5,18 @@
 //
 // PURPOSE:
 //   Builds the lower half of the CRITICAL tab (Tab 0):
-//     - Strip Chart trends (T_avg, Pressure, PZR Level — 3 traces)
 //     - Process Meter Deck:
 //       · 3× EdgewiseMeter (Press Rate, Heatup Rate, Subcooling)
 //       · 2× TankLevel (VCT, Hotwell)
 //       · 1× BidirectionalGauge (Net CVCS flow)
 //       · 5× LinearGauge (SG Heat, Charging, Letdown, HZP Progress, Mass Error)
-//     - Compact Ops Log (alarm summary + last 28 event entries)
+//     - PZR Vessel Detail:
+//       · Animated PressurizerVesselPOC with phase and flow visualization
+//       · Compact critical PZR metrics (level, pressure, temp, heater/spray state)
 //
 // DATA BINDING:
 //   RefreshCriticalTabLower() is called from RefreshActiveTabData()
-//   at 5Hz when tab 0 is active. Strip chart traces are fed new values
-//   each refresh cycle.
+//   at 5Hz when tab 0 is active.
 //
 // IP: IP-0060 Stage 3
 // VERSION: 6.0.0
@@ -39,12 +39,6 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
         // CRITICAL TAB — LOWER HALF REFERENCES
         // ====================================================================
 
-        // Strip chart
-        private StripChartPOC _crit_chart;
-        private int _crit_traceTemp = -1;
-        private int _crit_tracePressure = -1;
-        private int _crit_traceLevel = -1;
-
         // Edgewise meters
         private EdgewiseMeterElement _crit_edgePressRate;
         private EdgewiseMeterElement _crit_edgeHeatup;
@@ -64,14 +58,16 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
         private LinearGaugePOC _crit_linHzp;
         private LinearGaugePOC _crit_linMass;
 
+        // Pressurizer vessel panel
+        private PressurizerVesselPOC _crit_pzrVessel;
+        private readonly Dictionary<string, Label> _crit_pzrMetricValues =
+            new Dictionary<string, Label>(12);
+
         // Process value labels (readouts next to linear gauges, tanks, edge meters)
         private readonly Dictionary<string, Label> _crit_processLabels =
             new Dictionary<string, Label>(16);
 
-        // Ops log
-        private Label _crit_alarmSummary;
-        private readonly List<Label> _crit_alarmRows = new List<Label>(4);
-        private readonly List<string> _crit_alarmMessages = new List<string>(16);
+        // Ops log (hosted under annunciator wall in upper section; refreshed here)
         private ScrollView _crit_logScroll;
         private int _crit_lastLogCount = -1;
 
@@ -85,40 +81,28 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
         /// </summary>
         private VisualElement BuildCriticalTabLower()
         {
-            // Slightly reduce lower-row share so upper gauge deck has room for all 3 rows.
-            var bottomRow = MakeRow(1.25f);
+            // Lower split: process deck on the left, detailed PZR vessel on the right.
+            var bottomRow = MakeRow(1.45f);
             bottomRow.style.minHeight = 0f;
+            bottomRow.style.flexShrink = 0f;
 
-            bottomRow.Add(BuildStripTrendsPanel());
-            bottomRow.Add(BuildProcessMeterDeck());
-            bottomRow.Add(BuildOpsLogPanel());
+            var processDeck = BuildProcessMeterDeck();
+            processDeck.style.flexGrow = 1.6f;
+            processDeck.style.flexBasis = 0f;
+            processDeck.style.flexShrink = 1f;
+            processDeck.style.minWidth = 0f;
+            bottomRow.Add(processDeck);
+
+            var pzrPanel = BuildCriticalPzrVesselPanel();
+            pzrPanel.style.flexGrow = 0.85f;
+            pzrPanel.style.flexBasis = 0f;
+            pzrPanel.style.flexShrink = 1f;
+            pzrPanel.style.minWidth = 320f;
+            pzrPanel.style.maxWidth = new Length(46f, LengthUnit.Percent);
+            pzrPanel.style.marginLeft = 10f;
+            bottomRow.Add(pzrPanel);
 
             return bottomRow;
-        }
-
-        // ====================================================================
-        // STRIP TRENDS PANEL (left)
-        // ====================================================================
-
-        private VisualElement BuildStripTrendsPanel()
-        {
-            var panel = MakePanel("STRIP TRENDS");
-            panel.style.flexGrow = 1.2f;
-            panel.style.minWidth = 0f;
-
-            _crit_chart = new StripChartPOC();
-            _crit_chart.style.flexGrow = 1f;
-            _crit_chart.style.minHeight = 260f;
-
-            _crit_traceTemp = _crit_chart.AddTrace("T AVG",
-                new Color(0f, 0.9f, 0.45f, 1f), 70f, 600f);
-            _crit_tracePressure = _crit_chart.AddTrace("PRESS",
-                new Color(1f, 0.75f, 0f, 1f), 0f, 2600f);
-            _crit_traceLevel = _crit_chart.AddTrace("PZR %",
-                new Color(0.3f, 0.8f, 1f, 1f), 0f, 100f);
-
-            panel.Add(_crit_chart);
-            return panel;
         }
 
         // ====================================================================
@@ -128,20 +112,20 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
         private VisualElement BuildProcessMeterDeck()
         {
             var panel = MakePanel("PROCESS METER DECK");
-            panel.style.flexGrow = 1.05f;
+            panel.style.flexGrow = 1f;
             panel.style.minWidth = 0f;
 
             // ── Edgewise meters row ─────────────────────────────────────
             var edgeRow = MakeRow();
             edgeRow.style.justifyContent = Justify.SpaceBetween;
-            edgeRow.style.marginBottom = 8f;
+            edgeRow.style.marginBottom = 12f;
 
             edgeRow.Add(MakeEdgeMeterCard("edge_press_rate", "PRESS RATE", "psi/hr",
                 -300f, 300f, out _crit_edgePressRate));
             edgeRow.Add(MakeEdgeMeterCard("edge_heatup", "HEATUP", "F/hr",
                 -120f, 120f, out _crit_edgeHeatup));
             edgeRow.Add(MakeEdgeMeterCard("edge_subcool", "SUBCOOL", "F",
-                0f, 120f, out _crit_edgeSubcool));
+                0f, 400f, out _crit_edgeSubcool));
 
             panel.Add(edgeRow);
 
@@ -158,9 +142,10 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
             panel.Add(tankRow);
 
             // ── CVCS net flow bidirectional gauge ────────────────────────
-            var netLabel = MakeLabel("NET CVCS (+ charging / - letdown)", 9f,
-                FontStyle.Normal, new Color(0.63f, 0.72f, 0.84f, 1f));
-            netLabel.style.marginBottom = 2f;
+            var netLabel = MakeLabel("NET CVCS FLOW (+CHG / -LTD)", 11f,
+                FontStyle.Bold, new Color(0.80f, 0.90f, 0.98f, 1f));
+            netLabel.style.marginTop = 2f;
+            netLabel.style.marginBottom = 6f;
             panel.Add(netLabel);
 
             _crit_cvcsNet = new BidirectionalGaugePOC
@@ -187,44 +172,52 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
             return panel;
         }
 
-        // ====================================================================
-        // OPS LOG PANEL (right)
-        // ====================================================================
-
-        private VisualElement BuildOpsLogPanel()
+        private VisualElement BuildCriticalPzrVesselPanel()
         {
-            var panel = MakePanel("OPS LOG");
-            panel.style.flexGrow = 0.95f;
+            var panel = MakePanel("PZR VESSEL");
             panel.style.minWidth = 0f;
 
-            // Alarm summary line
-            _crit_alarmSummary = MakeLabel("No active alarms", 11f,
-                FontStyle.Bold, UITKDashboardTheme.NormalGreen);
-            _crit_alarmSummary.style.marginBottom = 4f;
-            panel.Add(_crit_alarmSummary);
-
-            // 4 dedicated alarm slot rows
-            _crit_alarmRows.Clear();
-            for (int i = 0; i < 4; i++)
+            _crit_pzrVessel = new PressurizerVesselPOC
             {
-                var row = MakeLabel("--", 10f, FontStyle.Normal,
-                    UITKDashboardTheme.TextSecondary);
-                row.style.marginBottom = 1f;
-                _crit_alarmRows.Add(row);
-                panel.Add(row);
-            }
+                level = 100f,
+                levelSetpoint = 100f,
+                liquidTemperature = 120f,
+                pressure = 115f,
+                pressureTarget = 2249.7f,
+                heaterPower = 0f,
+                sprayActive = false,
+                showBubbleZone = false,
+                surgeFlow = 0f
+            };
+            _crit_pzrVessel.style.flexGrow = 1f;
+            _crit_pzrVessel.style.minHeight = 320f;
+            _crit_pzrVessel.style.marginBottom = 8f;
+            panel.Add(_crit_pzrVessel);
 
-            // Scrollable event log
-            _crit_logScroll = new ScrollView(ScrollViewMode.Vertical);
-            _crit_logScroll.style.flexGrow = 1f;
-            _crit_logScroll.style.marginTop = 6f;
-            _crit_logScroll.style.backgroundColor = new Color(0.032f, 0.043f, 0.07f, 1f);
-            SetCornerRadius(_crit_logScroll, 4f);
-            _crit_logScroll.style.paddingLeft = 4f;
-            _crit_logScroll.style.paddingRight = 4f;
-            _crit_logScroll.style.paddingTop = 2f;
-            _crit_logScroll.style.paddingBottom = 2f;
-            panel.Add(_crit_logScroll);
+            var metricsRow = MakeRow();
+            metricsRow.style.justifyContent = Justify.SpaceBetween;
+            metricsRow.style.alignItems = Align.FlexStart;
+            metricsRow.style.marginTop = 2f;
+
+            var leftCol = new VisualElement();
+            leftCol.style.width = new Length(49.2f, LengthUnit.Percent);
+            leftCol.style.flexDirection = FlexDirection.Column;
+            leftCol.Add(MakeCriticalPzrMetric("pzr_level", "LEVEL", "%"));
+            leftCol.Add(MakeCriticalPzrMetric("pzr_setpoint", "SETPOINT", "%"));
+            leftCol.Add(MakeCriticalPzrMetric("pzr_temp", "TEMP", "F"));
+            leftCol.Add(MakeCriticalPzrMetric("pzr_pressure", "PRESS", "psia"));
+
+            var rightCol = new VisualElement();
+            rightCol.style.width = new Length(49.2f, LengthUnit.Percent);
+            rightCol.style.flexDirection = FlexDirection.Column;
+            rightCol.Add(MakeCriticalPzrMetric("pzr_phase", "PHASE", ""));
+            rightCol.Add(MakeCriticalPzrMetric("pzr_heater", "HEATER", "%"));
+            rightCol.Add(MakeCriticalPzrMetric("pzr_spray", "SPRAY", ""));
+            rightCol.Add(MakeCriticalPzrMetric("pzr_flows", "CVCS", "gpm"));
+
+            metricsRow.Add(leftCol);
+            metricsRow.Add(rightCol);
+            panel.Add(metricsRow);
 
             return panel;
         }
@@ -241,12 +234,19 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
         {
             var card = new VisualElement();
             card.style.width = new Length(32.2f, LengthUnit.Percent);
+            card.style.minHeight = 96f;
             card.style.backgroundColor = new Color(0.045f, 0.059f, 0.094f, 1f);
             SetCornerRadius(card, 4f);
+            SetBorder(card, 1f, new Color(0.173f, 0.247f, 0.373f, 1f));
             card.style.paddingTop = 4f;
             card.style.paddingBottom = 4f;
             card.style.paddingLeft = 4f;
             card.style.paddingRight = 4f;
+
+            var titleLbl = MakeLabel(title, 10f, FontStyle.Bold,
+                new Color(0.73f, 0.8f, 0.9f, 1f));
+            titleLbl.style.unityTextAlign = TextAnchor.MiddleCenter;
+            card.Add(titleLbl);
 
             meter = new EdgewiseMeterElement
             {
@@ -255,15 +255,15 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
                 MaxValue = max,
                 CenterZero = min < 0f && max > 0f,
                 Unit = unit,
-                Title = title,
+                Title = string.Empty,
                 MajorTickInterval = Mathf.Max(5f, (max - min) / 4f),
                 MinorTicksPerMajor = 1
             };
             meter.style.width = new Length(100f, LengthUnit.Percent);
-            meter.style.height = 56f;
+            meter.style.height = 72f;
             card.Add(meter);
 
-            var valueLbl = MakeLabel("--", 10f, FontStyle.Bold,
+            var valueLbl = MakeLabel("--", 12f, FontStyle.Bold,
                 UITKDashboardTheme.InfoCyan);
             valueLbl.style.unityTextAlign = TextAnchor.MiddleCenter;
             valueLbl.style.marginTop = 2f;
@@ -281,6 +281,7 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
         {
             var card = new VisualElement();
             card.style.width = new Length(49f, LengthUnit.Percent);
+            card.style.minHeight = 124f;
             card.style.alignItems = Align.Center;
             card.style.paddingTop = 4f;
             card.style.paddingBottom = 4f;
@@ -312,29 +313,41 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
             return card;
         }
 
-        /// <summary>Linear gauge with title/value header and horizontal bar.</summary>
+        /// <summary>Linear gauge row with left label, center bar, and right value.</summary>
         private VisualElement MakeLinearGaugeRow(
             string key, string title,
             float min, float max, float warning, float alarm,
             out LinearGaugePOC gauge)
         {
             var row = new VisualElement();
-            row.style.marginBottom = 7f;
+            row.style.flexDirection = FlexDirection.Row;
+            row.style.alignItems = Align.Center;
+            row.style.marginBottom = 8f;
+            row.style.minHeight = 24f;
+            row.style.paddingLeft = 2f;
+            row.style.paddingRight = 2f;
 
-            // Header: title (left) + value (right)
-            var header = MakeRow();
-            header.style.justifyContent = Justify.SpaceBetween;
+            var titleLbl = MakeLabel(title, 11f, FontStyle.Bold,
+                new Color(0.80f, 0.90f, 0.98f, 1f));
+            titleLbl.style.width = 116f;
+            titleLbl.style.marginRight = 8f;
+            titleLbl.style.whiteSpace = WhiteSpace.NoWrap;
+            titleLbl.style.overflow = Overflow.Hidden;
+            row.Add(titleLbl);
 
-            var titleLbl = MakeLabel(title, 9f, FontStyle.Bold,
-                new Color(0.63f, 0.72f, 0.84f, 1f));
-            header.Add(titleLbl);
+            var barHost = new VisualElement();
+            barHost.style.flexGrow = 1f;
+            barHost.style.minWidth = 140f;
+            barHost.style.marginRight = 10f;
+            barHost.style.marginTop = 1f;
+            row.Add(barHost);
 
-            var valueLbl = MakeLabel("--", 10f, FontStyle.Bold,
-                UITKDashboardTheme.TextPrimary);
-            header.Add(valueLbl);
+            var valueLbl = MakeLabel("--", 12f, FontStyle.Bold,
+                UITKDashboardTheme.InfoCyan);
+            valueLbl.style.width = 108f;
+            valueLbl.style.unityTextAlign = TextAnchor.MiddleRight;
+            row.Add(valueLbl);
             _crit_processLabels[key] = valueLbl;
-
-            row.Add(header);
 
             // Gauge bar
             gauge = new LinearGaugePOC
@@ -345,9 +358,34 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
                 warningThreshold = warning,
                 alarmThreshold = alarm
             };
-            gauge.style.height = 14f;
-            gauge.style.marginTop = 2f;
-            row.Add(gauge);
+            gauge.style.height = 15f;
+            barHost.Add(gauge);
+
+            return row;
+        }
+
+        private VisualElement MakeCriticalPzrMetric(string key, string title, string unit)
+        {
+            var row = new VisualElement();
+            row.style.flexDirection = FlexDirection.Row;
+            row.style.justifyContent = Justify.SpaceBetween;
+            row.style.alignItems = Align.Center;
+            row.style.minHeight = 19f;
+            row.style.marginBottom = 2f;
+            row.style.paddingLeft = 4f;
+            row.style.paddingRight = 4f;
+            row.style.paddingTop = 1f;
+            row.style.paddingBottom = 1f;
+            row.style.backgroundColor = new Color(0.045f, 0.059f, 0.094f, 1f);
+            SetCornerRadius(row, 3f);
+
+            string titleText = string.IsNullOrEmpty(unit) ? title : $"{title} ({unit})";
+            row.Add(MakeLabel(titleText, 9f, FontStyle.Normal,
+                new Color(0.63f, 0.72f, 0.84f, 1f)));
+
+            var valueLbl = MakeLabel("--", 10f, FontStyle.Bold, UITKDashboardTheme.InfoCyan);
+            row.Add(valueLbl);
+            _crit_pzrMetricValues[key] = valueLbl;
 
             return row;
         }
@@ -427,64 +465,63 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
                 UITKDashboardTheme.InfoCyan);
             SetProcessLabel("lin_mass", $"{massErr:F1} lbm", massColor);
 
-            // ── Strip chart ─────────────────────────────────────────────
-            if (_crit_chart != null)
+            // Use the active setpoint from the simulator so arrow motion tracks
+            // real control state throughout startup transitions.
+            float pzrSetpointDisplay = engine.pzrLevelSetpointDisplay;
+            float heaterPct = Mathf.Clamp01(engine.pzrHeaterPower / 1.8f) * 100f;
+            if (_crit_pzrVessel != null)
             {
-                _crit_chart.AddValue(_crit_traceTemp, engine.T_avg);
-                _crit_chart.AddValue(_crit_tracePressure, engine.pressure);
-                _crit_chart.AddValue(_crit_traceLevel, engine.pzrLevel);
+                _crit_pzrVessel.level = engine.pzrLevel;
+                _crit_pzrVessel.levelSetpoint = pzrSetpointDisplay;
+                _crit_pzrVessel.pressure = engine.pressure;
+                _crit_pzrVessel.pressureTarget = engine.targetPressure + PlantConstants.PSIG_TO_PSIA;
+                _crit_pzrVessel.liquidTemperature = engine.T_pzr;
+                _crit_pzrVessel.heaterPower = heaterPct;
+                _crit_pzrVessel.sprayActive = engine.sprayActive;
+                _crit_pzrVessel.showBubbleZone = !engine.solidPressurizer;
+                _crit_pzrVessel.chargingFlow = engine.chargingFlow;
+                _crit_pzrVessel.letdownFlow = engine.letdownFlow;
+                _crit_pzrVessel.surgeFlow = engine.surgeFlow;
             }
 
-            // ── Alarms + Event log ──────────────────────────────────────
-            RefreshCriticalAlarms();
-            RefreshCriticalEventLog();
-        }
-
-        // ====================================================================
-        // ALARM SUMMARY
-        // ====================================================================
-
-        private void RefreshCriticalAlarms()
-        {
-            _crit_alarmMessages.Clear();
-
-            if (engine.pressureLow) _crit_alarmMessages.Add("RCS PRESSURE LOW");
-            if (engine.pressureHigh) _crit_alarmMessages.Add("RCS PRESSURE HIGH");
-            if (engine.pzrLevelLow) _crit_alarmMessages.Add("PZR LEVEL LOW");
-            if (engine.pzrLevelHigh) _crit_alarmMessages.Add("PZR LEVEL HIGH");
-            if (engine.subcoolingLow) _crit_alarmMessages.Add("SUBCOOLING LOW");
-            if (engine.vctLevelLow) _crit_alarmMessages.Add("VCT LEVEL LOW");
-            if (engine.vctLevelHigh) _crit_alarmMessages.Add("VCT LEVEL HIGH");
-            if (engine.rcsFlowLow) _crit_alarmMessages.Add("RCS FLOW LOW");
-            if (Mathf.Abs(engine.massConservationError) > 500f)
-                _crit_alarmMessages.Add("MASS CONSERVATION ALERT");
-            if (!engine.modePermissive)
-                _crit_alarmMessages.Add("MODE PERMISSIVE BLOCKED");
-
-            if (_crit_alarmSummary != null)
-            {
-                int count = _crit_alarmMessages.Count;
-                _crit_alarmSummary.text = count == 0
-                    ? "No active alarms"
-                    : $"{count} active alarm(s)";
-                _crit_alarmSummary.style.color = count == 0
+            string pzrPhase = engine.solidPressurizer
+                ? "SOLID"
+                : engine.bubbleFormed ? "TWO-PHASE" : "TRANSITION";
+            Color pzrPhaseColor = engine.solidPressurizer
+                ? UITKDashboardTheme.WarningAmber
+                : engine.bubbleFormed
                     ? UITKDashboardTheme.NormalGreen
                     : UITKDashboardTheme.AlarmRed;
-            }
 
-            for (int i = 0; i < _crit_alarmRows.Count; i++)
-            {
-                if (i < _crit_alarmMessages.Count)
-                {
-                    _crit_alarmRows[i].text = _crit_alarmMessages[i];
-                    _crit_alarmRows[i].style.color = UITKDashboardTheme.AlarmRed;
-                }
-                else
-                {
-                    _crit_alarmRows[i].text = "--";
-                    _crit_alarmRows[i].style.color = UITKDashboardTheme.TextSecondary;
-                }
-            }
+            SetCriticalPzrMetric("pzr_level", $"{engine.pzrLevel:F1}%",
+                engine.pzrLevelLow || engine.pzrLevelHigh
+                    ? UITKDashboardTheme.WarningAmber
+                    : UITKDashboardTheme.InfoCyan);
+            SetCriticalPzrMetric("pzr_setpoint", $"{pzrSetpointDisplay:F1}%",
+                UITKDashboardTheme.TextSecondary);
+            SetCriticalPzrMetric("pzr_temp", $"{engine.T_pzr:F1}", TempColor(engine.T_pzr));
+            SetCriticalPzrMetric("pzr_pressure", $"{engine.pressure:F0}",
+                engine.pressureLow || engine.pressureHigh
+                    ? UITKDashboardTheme.WarningAmber
+                    : UITKDashboardTheme.InfoCyan);
+            SetCriticalPzrMetric("pzr_phase", pzrPhase, pzrPhaseColor);
+            SetCriticalPzrMetric("pzr_heater", $"{heaterPct:F0}%",
+                engine.pzrHeatersOn
+                    ? UITKDashboardTheme.WarningAmber
+                    : UITKDashboardTheme.TextSecondary);
+            SetCriticalPzrMetric("pzr_spray", engine.sprayActive ? "ON" : "OFF",
+                engine.sprayActive
+                    ? UITKDashboardTheme.AccentBlue
+                    : UITKDashboardTheme.TextSecondary);
+            SetCriticalPzrMetric("pzr_flows",
+                $"C {engine.chargingFlow:F1} / L {engine.letdownFlow:F1}",
+                netCvcs >= 0f
+                    ? UITKDashboardTheme.NormalGreen
+                    : UITKDashboardTheme.WarningAmber);
+
+
+            // ── Event log ──────────────────────────────────────
+            RefreshCriticalEventLog();
         }
 
         // ====================================================================
@@ -531,5 +568,20 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
                 lbl.style.color = color;
             }
         }
+
+        private void SetCriticalPzrMetric(string key, string text, Color color)
+        {
+            if (_crit_pzrMetricValues.TryGetValue(key, out var lbl))
+            {
+                lbl.text = text;
+                lbl.style.color = color;
+            }
+        }
+
+        private void TickCriticalLowerAnimations(float dt)
+        {
+            _crit_pzrVessel?.UpdateFlowAnimation(dt);
+        }
     }
 }
+

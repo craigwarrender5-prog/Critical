@@ -63,7 +63,8 @@ namespace Critical.UI.POC
         // ====================================================================
         
         private float _level = 50f;           // 0-100%
-        private float _levelSetpoint = 60f;   // Target level
+        private float _levelSetpoint = 60f;   // Target level (requested)
+        private float _levelSetpointVisual = 60f; // Rendered level setpoint (smoothed)
         private float _pressure = 2235f;      // psia
         private float _heaterPower = 0f;      // 0-100%
         private bool _sprayActive = false;
@@ -72,27 +73,48 @@ namespace Critical.UI.POC
         private float _liquidTemperature = 120f; // degF
         private float _chargingFlow = 0f;     // gpm (0 = off)
         private float _letdownFlow = 0f;      // gpm (0 = off)
+        private float _surgeFlow = 0f;        // gpm (+ into PZR, - out of PZR)
+        private float _pressureTarget = 2249.7f; // psia (display context)
         private float _flowAnimPhase = 0f;    // Animation phase for flow dots
+        private const float SETPOINT_SLEW_RATE_PCT_PER_SEC = 42f;
+        private bool _setpointInitialized;
+
+        // Overlay labels to clarify side indicators and flow paths.
+        private readonly Label _leftSetpointLabel;
+        private readonly Label _leftPressureLabel;
+        private readonly Label _rightChargingLabel;
+        private readonly Label _rightLetdownLabel;
+        private readonly Label _surgeLabel;
         
         [UxmlAttribute]
         public float level 
         { 
             get => _level; 
-            set { _level = Mathf.Clamp(value, 0f, 100f); MarkDirtyRepaint(); } 
+            set { _level = Mathf.Clamp(value, 0f, 100f); MarkDirtyRepaint(); UpdateOverlayLabels(); } 
         }
         
         [UxmlAttribute]
         public float levelSetpoint 
         { 
             get => _levelSetpoint; 
-            set { _levelSetpoint = Mathf.Clamp(value, 0f, 100f); MarkDirtyRepaint(); } 
+            set
+            {
+                _levelSetpoint = Mathf.Clamp(value, 0f, 100f);
+                if (!_setpointInitialized)
+                {
+                    _levelSetpointVisual = _levelSetpoint;
+                    _setpointInitialized = true;
+                }
+                // Do not snap the marker; animation tick slews _levelSetpointVisual.
+                UpdateOverlayLabels();
+            }
         }
         
         [UxmlAttribute]
         public float pressure 
         { 
             get => _pressure; 
-            set { _pressure = value; MarkDirtyRepaint(); } 
+            set { _pressure = value; MarkDirtyRepaint(); UpdateOverlayLabels(); } 
         }
         
         [UxmlAttribute]
@@ -106,7 +128,7 @@ namespace Critical.UI.POC
         public bool sprayActive 
         { 
             get => _sprayActive; 
-            set { _sprayActive = value; MarkDirtyRepaint(); } 
+            set { _sprayActive = value; MarkDirtyRepaint(); UpdateOverlayLabels(); } 
         }
         
         [UxmlAttribute]
@@ -120,28 +142,48 @@ namespace Critical.UI.POC
         public float liquidTemperature
         {
             get => _liquidTemperature;
-            set { _liquidTemperature = value; MarkDirtyRepaint(); }
+            set { _liquidTemperature = value; MarkDirtyRepaint(); UpdateOverlayLabels(); }
         }
         
         [UxmlAttribute]
         public float chargingFlow 
         { 
             get => _chargingFlow; 
-            set { _chargingFlow = Mathf.Max(0f, value); MarkDirtyRepaint(); } 
+            set { _chargingFlow = Mathf.Max(0f, value); MarkDirtyRepaint(); UpdateOverlayLabels(); } 
         }
         
         [UxmlAttribute]
         public float letdownFlow 
         { 
             get => _letdownFlow; 
-            set { _letdownFlow = Mathf.Max(0f, value); MarkDirtyRepaint(); } 
+            set { _letdownFlow = Mathf.Max(0f, value); MarkDirtyRepaint(); UpdateOverlayLabels(); } 
+        }
+
+        [UxmlAttribute]
+        public float surgeFlow
+        {
+            get => _surgeFlow;
+            set { _surgeFlow = value; MarkDirtyRepaint(); UpdateOverlayLabels(); }
+        }
+
+        [UxmlAttribute]
+        public float pressureTarget
+        {
+            get => _pressureTarget;
+            set { _pressureTarget = value; MarkDirtyRepaint(); UpdateOverlayLabels(); }
         }
         
         public void UpdateFlowAnimation(float deltaTime)
         {
+            _levelSetpointVisual = Mathf.MoveTowards(
+                _levelSetpointVisual,
+                _levelSetpoint,
+                SETPOINT_SLEW_RATE_PCT_PER_SEC * Mathf.Max(0f, deltaTime));
+
             _flowAnimPhase += deltaTime * 2f;  // Speed of flow animation
             if (_flowAnimPhase > 1f) _flowAnimPhase -= 1f;
             MarkDirtyRepaint();
+            UpdateOverlayLabels();
         }
         
         // ====================================================================
@@ -152,8 +194,126 @@ namespace Critical.UI.POC
         {
             style.minWidth = 80;
             style.minHeight = 150;
-            
+            style.position = Position.Relative;
+
+            _leftSetpointLabel = CreateOverlayLabel(9, TextAnchor.MiddleLeft, COLOR_LEVEL_SETPOINT);
+            _leftPressureLabel = CreateOverlayLabel(9, TextAnchor.MiddleLeft, new Color(0.72f, 0.84f, 0.95f, 1f));
+            _rightChargingLabel = CreateOverlayLabel(9, TextAnchor.MiddleLeft, COLOR_CHARGING);
+            _rightLetdownLabel = CreateOverlayLabel(9, TextAnchor.MiddleLeft, COLOR_LETDOWN);
+            _surgeLabel = CreateOverlayLabel(9, TextAnchor.MiddleCenter, new Color(0.72f, 0.84f, 0.95f, 1f));
+
+            // Fixed pressure context tag in the upper-left corner of the panel.
+            _leftPressureLabel.style.backgroundColor = new Color(0.03f, 0.08f, 0.15f, 0.72f);
+            _leftPressureLabel.style.paddingLeft = 4f;
+            _leftPressureLabel.style.paddingRight = 4f;
+            _leftPressureLabel.style.paddingTop = 1f;
+            _leftPressureLabel.style.paddingBottom = 1f;
+            _leftPressureLabel.style.borderTopLeftRadius = 3f;
+            _leftPressureLabel.style.borderTopRightRadius = 3f;
+            _leftPressureLabel.style.borderBottomLeftRadius = 3f;
+            _leftPressureLabel.style.borderBottomRightRadius = 3f;
+
+            Add(_leftSetpointLabel);
+            Add(_leftPressureLabel);
+            Add(_rightChargingLabel);
+            Add(_rightLetdownLabel);
+            Add(_surgeLabel);
+
+            RegisterCallback<GeometryChangedEvent>(_ => UpdateOverlayLabels());
             generateVisualContent += OnGenerateVisualContent;
+        }
+
+        private static Label CreateOverlayLabel(float size, TextAnchor align, Color color)
+        {
+            var lbl = new Label("--");
+            lbl.pickingMode = PickingMode.Ignore;
+            lbl.style.position = Position.Absolute;
+            lbl.style.unityTextAlign = align;
+            lbl.style.fontSize = size;
+            lbl.style.unityFontStyleAndWeight = FontStyle.Bold;
+            lbl.style.color = color;
+            lbl.style.whiteSpace = WhiteSpace.NoWrap;
+            return lbl;
+        }
+
+        private void UpdateOverlayLabels()
+        {
+            if (!TryComputeVesselLayout(
+                contentRect.width, contentRect.height,
+                out float vesselX, out float vesselY, out float vesselWidth, out float vesselHeight,
+                out _, out _))
+                return;
+
+            const float markerInsetPx = 8f;
+            float setpointYRaw = vesselY + vesselHeight - (vesselHeight * _levelSetpointVisual / 100f);
+            float setpointY = Mathf.Clamp(setpointYRaw, vesselY + markerInsetPx, vesselY + vesselHeight - markerInsetPx);
+            float chargingY = vesselY + vesselHeight * 0.65f;
+            float letdownY = vesselY + vesselHeight * 0.80f;
+            float surgeY = vesselY + vesselHeight + 14f;
+            float labelBottomMax = contentRect.height - 16f;
+            float setpointLabelX = Mathf.Clamp(vesselX - 58f, 14f, contentRect.width - 122f);
+
+            _leftSetpointLabel.text = $"LVL SP {_levelSetpoint:F1}%";
+            _leftSetpointLabel.style.left = setpointLabelX;
+            _leftSetpointLabel.style.top = Mathf.Clamp(setpointY + 1f, 12f, labelBottomMax);
+            _leftSetpointLabel.style.width = 118f;
+
+            _leftPressureLabel.text = $"P/TGT {_pressure:F0}/{_pressureTarget:F0} psia";
+            _leftPressureLabel.style.left = 8f;
+            _leftPressureLabel.style.top = 8f;
+            _leftPressureLabel.style.width = 140f;
+
+            _rightChargingLabel.text = $"CHG {_chargingFlow:F1} -> IN";
+            _rightChargingLabel.style.left = vesselX + vesselWidth + 24f;
+            _rightChargingLabel.style.top = Mathf.Clamp(chargingY - 8f, 2f, contentRect.height - 16f);
+            _rightChargingLabel.style.width = 136f;
+
+            _rightLetdownLabel.text = $"LTD {_letdownFlow:F1} <- OUT";
+            _rightLetdownLabel.style.left = vesselX + vesselWidth + 24f;
+            _rightLetdownLabel.style.top = Mathf.Clamp(letdownY - 8f, 2f, contentRect.height - 16f);
+            _rightLetdownLabel.style.width = 136f;
+
+            string surgeDir = _surgeFlow >= 0f ? "-> PZR" : "<- RCS";
+            _surgeLabel.text = $"SURGE {_surgeFlow:+0.0;-0.0;0.0} gpm {surgeDir}";
+            _surgeLabel.style.left = Mathf.Clamp(vesselX - 8f, 6f, contentRect.width - 170f);
+            _surgeLabel.style.top = Mathf.Clamp(surgeY - 12f, 2f, contentRect.height - 16f);
+            _surgeLabel.style.width = 160f;
+
+            // Keep the actual level marker visible above overlays.
+            _leftSetpointLabel.BringToFront();
+            _leftPressureLabel.BringToFront();
+            _rightChargingLabel.BringToFront();
+            _rightLetdownLabel.BringToFront();
+            _surgeLabel.BringToFront();
+        }
+
+        private static bool TryComputeVesselLayout(
+            float width, float height,
+            out float vesselX, out float vesselY, out float vesselWidth, out float vesselHeight,
+            out float domeHeight, out float bodyHeight)
+        {
+            vesselX = vesselY = vesselWidth = vesselHeight = domeHeight = bodyHeight = 0f;
+            if (width < 40f || height < 80f) return false;
+
+            float vesselMargin = 10f;
+            vesselX = vesselMargin + 20f;
+            vesselY = vesselMargin + 15f;
+            float availableWidth = width - vesselMargin * 2f - 40f;
+            float availableHeight = height - vesselMargin * 2f - 30f;
+            if (availableWidth < 20f || availableHeight < 20f) return false;
+
+            const float bodyToWidth = 0.8f;
+            float widthByHeight = availableHeight / (1f + bodyToWidth);
+            vesselWidth = Mathf.Clamp(Mathf.Min(availableWidth, widthByHeight), 70f, availableWidth);
+            domeHeight = vesselWidth * 0.5f;
+            bodyHeight = vesselWidth * bodyToWidth;
+            vesselHeight = domeHeight * 2f + bodyHeight;
+
+            float extraX = availableWidth - vesselWidth;
+            float extraY = availableHeight - vesselHeight;
+            vesselX += Mathf.Max(0f, extraX * 0.35f);
+            vesselY += Mathf.Max(0f, extraY * 0.5f);
+            return true;
         }
         
         // ====================================================================
@@ -168,35 +328,17 @@ namespace Critical.UI.POC
             if (width < 40f || height < 80f) return;
             
             var painter = mgc.painter2D;
-            
-            // Vessel dimensions.
-            // Keep geometry valid even in short/wide layouts by constraining width
-            // from available height so top/bottom domes do not collapse into a blob.
-            float vesselMargin = 10f;
-            float vesselX = vesselMargin + 20f;  // Extra left margin for scale
-            float vesselY = vesselMargin + 15f;  // Extra top margin for spray nozzle
-            float availableWidth = width - vesselMargin * 2f - 40f;   // Extra right margin for labels
-            float availableHeight = height - vesselMargin * 2f - 30f;
-            if (availableWidth < 20f || availableHeight < 20f) return;
 
-            // Keep the classic cylindrical body + hemispherical domes.
-            // Height factor = 2*domeRadius + bodyHeight.
-            const float bodyToWidth = 0.8f;
-            float widthByHeight = availableHeight / (1f + bodyToWidth);
-            float vesselWidth = Mathf.Clamp(Mathf.Min(availableWidth, widthByHeight), 70f, availableWidth);
-            float domeHeight = vesselWidth * 0.5f;  // Hemisphere radius
-            float bodyHeight = vesselWidth * bodyToWidth;
-            float vesselHeight = domeHeight * 2f + bodyHeight;
-
-            // Center within available space while preserving label margins.
-            float extraX = availableWidth - vesselWidth;
-            float extraY = availableHeight - vesselHeight;
-            vesselX += Mathf.Max(0f, extraX * 0.35f);
-            vesselY += Mathf.Max(0f, extraY * 0.5f);
+            if (!TryComputeVesselLayout(width, height,
+                out float vesselX, out float vesselY, out float vesselWidth, out float vesselHeight,
+                out float domeHeight, out _))
+                return;
             
             // Calculate level position
             float levelY = vesselY + vesselHeight - (vesselHeight * _level / 100f);
-            float setpointY = vesselY + vesselHeight - (vesselHeight * _levelSetpoint / 100f);
+            const float markerInsetPx = 8f;
+            float setpointYRaw = vesselY + vesselHeight - (vesselHeight * _levelSetpointVisual / 100f);
+            float setpointY = Mathf.Clamp(setpointYRaw, vesselY + markerInsetPx, vesselY + vesselHeight - markerInsetPx);
             
             // ================================================================
             // Draw vessel background
@@ -519,6 +661,20 @@ namespace Critical.UI.POC
             painter.LineTo(new Vector2(surgeX, surgeY + 10f));
             painter.LineTo(new Vector2(surgeX - 15f, surgeY + 10f));
             painter.Stroke();
+
+            if (Mathf.Abs(_surgeFlow) > 0.05f)
+            {
+                bool intoVessel = _surgeFlow >= 0f;
+                Color surgeColor = intoVessel ? COLOR_CHARGING : COLOR_LETDOWN;
+                Vector2 surgeStart = intoVessel
+                    ? new Vector2(surgeX - 15f, surgeY + 10f)
+                    : new Vector2(surgeX, surgeY + 10f);
+                Vector2 surgeEnd = intoVessel
+                    ? new Vector2(surgeX, surgeY + 10f)
+                    : new Vector2(surgeX - 15f, surgeY + 10f);
+
+                DrawFlowArrows(painter, surgeStart, surgeEnd, surgeColor, _flowAnimPhase, intoVessel);
+            }
             
             // ================================================================
             // Draw charging line (right side - water entering)

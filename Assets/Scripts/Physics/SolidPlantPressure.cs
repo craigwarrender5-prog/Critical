@@ -91,7 +91,7 @@ namespace Critical.Physics
         public float PreHeaterHandoffTimer_sec; // seconds P has remained above pre-heater handoff pressure
         public float HoldEntryTimer_sec;    // seconds P has been within hold-entry band (0 if outside)
         public float PressurizationElapsed_sec; // total seconds since init (diagnostic)
-        public float PreHeaterTargetNetCharging_gpm;    // Diagnostic target command (documentation envelope)
+        public float PreHeaterTargetNetCharging_gpm;    // Diagnostic target command (rate-envelope mapped)
         public float PreHeaterEffectiveNetCharging_gpm; // Effective net charging applied to model
 
         // v5.4.2.0 Phase A: CVCS transport delay state
@@ -217,7 +217,7 @@ namespace Critical.Physics
             state.PreHeaterHandoffTimer_sec = 0f;
             state.HoldEntryTimer_sec = 0f;
             state.PressurizationElapsed_sec = 0f;
-            state.PreHeaterTargetNetCharging_gpm = PREHEATER_DOC_MIN_NET_CHARGING_GPM;
+            state.PreHeaterTargetNetCharging_gpm = PREHEATER_EFFECTIVE_MIN_NET_CHARGING_GPM;
             state.PreHeaterEffectiveNetCharging_gpm = PREHEATER_EFFECTIVE_MIN_NET_CHARGING_GPM;
             state.PressureSetpointRamped = state.PressureSetpoint;  // Always target final SP
 
@@ -492,11 +492,8 @@ namespace Critical.Physics
 
                     float effectiveNetCharging = PREHEATER_EFFECTIVE_MIN_NET_CHARGING_GPM
                         + rateNorm * (PREHEATER_EFFECTIVE_MAX_NET_CHARGING_GPM - PREHEATER_EFFECTIVE_MIN_NET_CHARGING_GPM);
-                    float docTargetNetCharging = PREHEATER_DOC_MIN_NET_CHARGING_GPM
-                        + rateNorm * (PREHEATER_DOC_MAX_NET_CHARGING_GPM - PREHEATER_DOC_MIN_NET_CHARGING_GPM);
-
                     state.PreHeaterEffectiveNetCharging_gpm = effectiveNetCharging;
-                    state.PreHeaterTargetNetCharging_gpm = docTargetNetCharging;
+                    state.PreHeaterTargetNetCharging_gpm = effectiveNetCharging;
                     state.ControllerIntegral = 0f;
                     state.AntiWindupActive = false;
                     state.SlewClampActive = false;

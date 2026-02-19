@@ -1165,7 +1165,11 @@ public partial class HeatupSimEngine
         sb.AppendLine($"    RCPs Running:     {rcpCount,10} / 4");
         sb.AppendLine($"    RCP Heat Input:   {rcpHeat,10:F2} MW");
         sb.AppendLine($"    PZR Heaters:      {pzrHeaterPower,10:F2} MW");
-        sb.AppendLine($"    Gross Heat Input: {rcpHeat + pzrHeaterPower,10:F2} MW");
+        sb.AppendLine($"    RHR Net Heat:     {rhrNetHeat_MW,10:F2} MW");
+        sb.AppendLine($"    No-RCP RHR Bulk:  {noRcpRhrBulkHeatApplied_MW,10:F3} MW");
+        sb.AppendLine($"    No-RCP RHR dT:    {noRcpRhrBulkHeatDeltaF,10:F3} F/step");
+        sb.AppendLine($"    No-RCP RHR Cpl:   {noRcpRhrBulkTransportFactor,10:F3}");
+        sb.AppendLine($"    Gross Heat Input: {rcpHeat + pzrHeaterPower + rhrNetHeat_MW,10:F2} MW");
         float currentHeatLoss = HeatTransfer.InsulationHeatLoss_MW(T_rcs);
         sb.AppendLine($"    Heat Losses:      {currentHeatLoss,10:F2} MW (temp dependent)");
         sb.AppendLine($"    SG Secondary Loss: {sgHeatTransfer_MW,10:F2} MW");  // v0.8.0 â€” Heat sink to SG secondary
@@ -1309,10 +1313,10 @@ public partial class HeatupSimEngine
             bool preheaterRatePass =
                 Math.Abs(pressureRate) >= 50f &&
                 Math.Abs(pressureRate) <= 100f;
-            sb.AppendLine(
-                $"    Preheater dP/dt 50-100: {(preheaterRatePass ? "PASS" : "CHECK")} " +
-                $"({pressureRate:F1} psi/hr, target_net={solidPlantState.PreHeaterTargetNetCharging_gpm:F1} gpm, " +
-                $"eff_net={solidPlantState.PreHeaterEffectiveNetCharging_gpm:F2} gpm)");
+                sb.AppendLine(
+                    $"    Preheater dP/dt 50-100: {(preheaterRatePass ? "PASS" : "CHECK")} " +
+                    $"({pressureRate:F1} psi/hr, net_cmd={solidPlantState.PreHeaterTargetNetCharging_gpm:F2} gpm, " +
+                    $"net_applied={solidPlantState.PreHeaterEffectiveNetCharging_gpm:F2} gpm)");
         }
         else if (solidPlantState.ControlMode == "HEATER_PRESSURIZE")
         {

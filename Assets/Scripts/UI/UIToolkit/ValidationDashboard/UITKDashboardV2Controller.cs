@@ -596,6 +596,9 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
 
             // RCS loop diagram flow animation
             TickRCSLoopAnimation(dt);
+
+            // CRITICAL lower deck PZR vessel flow animation
+            TickCriticalLowerAnimations(dt);
         }
 
         // ====================================================================

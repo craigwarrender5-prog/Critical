@@ -1,7 +1,7 @@
 ﻿{
     "version":  "1.0.0",
-    "generated_at":  "2026-02-18T18:10:00Z",
-    "entry_count":  127,
+    "generated_at":  "2026-02-18T20:55:00Z",
+    "entry_count":  128,
     "entries":  [
                     {
                         "id":  "CS-0001",
@@ -2056,19 +2056,20 @@
                         "title":  "Validation dashboard missing condenser/feedwater telemetry coverage",
                         "domain":  "Operator Interface \u0026 Scenarios",
                         "severity":  "MEDIUM",
-                        "status":  "READY",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0008",
                         "assigned_ip":  "IP-0056",
-                        "updated_at":  "2026-02-18T04:47:40Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "updated_at":  "2026-02-18T20:55:00Z",
+                        "closed_at":  "2026-02-18T20:55:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "ValidationDashboard",
                                      "Condenser-Feedwater",
                                      "Telemetry-Gap",
                                      "Orphan-Triage-2026-02-18",
-                                     "Supersession-Candidate-CS-0127"
+                                     "Supersession-Candidate-CS-0127",
+                                     "Implemented-NonStandard-Closure-2026-02-18"
                                  ]
                     },
                     {
@@ -2118,13 +2119,13 @@
                         "title":  "Dashboard visual issues: SOLID PZR indicator not lit, alarm symbol incorrectly transcoded",
                         "domain":  "Operator Interface \u0026 Scenarios",
                         "severity":  "LOW",
-                        "status":  "READY",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0008",
                         "assigned_ip":  "IP-0056",
-                        "updated_at":  "2026-02-18T11:15:00Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "updated_at":  "2026-02-18T20:55:00Z",
+                        "closed_at":  "2026-02-18T20:55:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "Dashboard-Indicator",
                                      "PZR-Solid-State",
@@ -2132,7 +2133,8 @@
                                      "Visual-Bug",
                                      "Low-Priority",
                                      "User-Request-2026-02-18",
-                                     "Supersession-Candidate-CS-0127"
+                                     "Supersession-Candidate-CS-0127",
+                                     "Implemented-NonStandard-Closure-2026-02-18"
                                  ]
                     },
                     {
@@ -2250,19 +2252,42 @@
                         "title":  "Validation Dashboard Complete Overhaul Using Unity UI Toolkit",
                         "domain":  "Operator Interface & Scenarios",
                         "severity":  "HIGH",
-                        "status":  "READY",
-                        "location":  "ACTIVE",
+                        "status":  "CLOSED",
+                        "location":  "ARCHIVE",
                         "assigned_dp":  "DP-0008",
                         "assigned_ip":  "IP-0056",
-                        "updated_at":  "2026-02-18T14:00:00Z",
-                        "closed_at":  null,
-                        "resolution_type":  null,
+                        "updated_at":  "2026-02-18T20:55:00Z",
+                        "closed_at":  "2026-02-18T20:55:00Z",
+                        "resolution_type":  "FIXED",
                         "tags":  [
                                      "ValidationDashboard",
                                      "UI-Toolkit",
                                      "Painter2D",
                                      "Animation",
                                      "Dashboard-Overhaul",
+                                     "User-Request-2026-02-18",
+                                     "Implemented-NonStandard-Closure-2026-02-18"
+                                 ]
+                    },
+                    {
+                        "id":  "CS-0128",
+                        "title":  "No-RCP RHR pressurization path over-couples thermal pump energy into bulk RCS during Mode 5 startup",
+                        "domain":  "Primary Thermodynamics",
+                        "severity":  "HIGH",
+                        "status":  "READY",
+                        "location":  "ACTIVE",
+                        "assigned_dp":  "DP-0001",
+                        "assigned_ip":  null,
+                        "updated_at":  "2026-02-18T20:30:00Z",
+                        "closed_at":  null,
+                        "resolution_type":  null,
+                        "tags":  [
+                                     "Primary-Thermodynamics",
+                                     "RHR-No-RCP-Coupling",
+                                     "Natural-Convection",
+                                     "Stratification",
+                                     "Startup-Pressure-Fidelity",
+                                     "High-Priority",
                                      "User-Request-2026-02-18"
                                  ]
                     }
@@ -2270,7 +2295,7 @@
     "registry_role":  "AUTHORITATIVE_FULL_HISTORY",
     "registry_scope":  "Contains full lifecycle history (OPEN + CLOSED). Historical entries must remain in this file.",
     "active_working_set_file":  "Governance/IssueRegister/issue_register.json",
-    "closed_issue_count":  121,
-    "active_issue_count":  6,
-    "entry_count":  127
+    "closed_issue_count":  124,
+    "active_issue_count":  4,
+    "entry_count":  128
 }

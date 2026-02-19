@@ -102,17 +102,6 @@ namespace Critical.Physics
         //   HOLD_SOLID         -> PI hold near setpoint
 
         /// <summary>
-        /// Minimum documented pre-heater charging imbalance command (gpm).
-        /// This is tracked for policy traceability.
-        /// </summary>
-        const float PREHEATER_DOC_MIN_NET_CHARGING_GPM = 20f;
-
-        /// <summary>
-        /// Maximum documented pre-heater charging imbalance command (gpm).
-        /// </summary>
-        const float PREHEATER_DOC_MAX_NET_CHARGING_GPM = 40f;
-
-        /// <summary>
         /// Target pre-heater pressure-rate envelope low bound (psi/hr).
         /// </summary>
         const float PREHEATER_TARGET_RATE_MIN_PSI_HR = 50f;
@@ -123,15 +112,16 @@ namespace Critical.Physics
         const float PREHEATER_TARGET_RATE_MAX_PSI_HR = 100f;
 
         /// <summary>
-        /// Effective net charging lower bound applied during PREHEATER_CVCS (gpm).
-        /// Bounded for the current compressibility model.
+        /// Pre-heater net charging lower bound (gpm).
+        /// Calibrated so the current compressibility model tracks the
+        /// 50-100 psi/hr startup pressure-rate envelope.
         /// </summary>
-        const float PREHEATER_EFFECTIVE_MIN_NET_CHARGING_GPM = 0.25f;
+        const float PREHEATER_EFFECTIVE_MIN_NET_CHARGING_GPM = 0.35f;
 
         /// <summary>
-        /// Effective net charging upper bound applied during PREHEATER_CVCS (gpm).
+        /// Pre-heater net charging upper bound (gpm).
         /// </summary>
-        const float PREHEATER_EFFECTIVE_MAX_NET_CHARGING_GPM = 0.50f;
+        const float PREHEATER_EFFECTIVE_MAX_NET_CHARGING_GPM = 0.70f;
 
         /// <summary>
         /// Pressure threshold (psia) for handoff from PREHEATER_CVCS to heater-led stage.

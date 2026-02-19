@@ -824,6 +824,9 @@ public partial class HeatupSimEngine : MonoBehaviour
     private int _diagFrameCounter = 0;
     private float deliveredRcpHeat_MW = 0f;
     [HideInInspector] public float noRcpTransportFactor = 1f;
+    [HideInInspector] public float noRcpRhrBulkTransportFactor = 0f;
+    [HideInInspector] public float noRcpRhrBulkHeatApplied_MW = 0f;
+    [HideInInspector] public float noRcpRhrBulkHeatDeltaF = 0f;
     [HideInInspector] public string thermoStateWriter = "UNSET";
     private float smoothedRegime2Alpha = 0f;
     private int previousPhysicsRegimeId = 0;
@@ -852,6 +855,12 @@ public partial class HeatupSimEngine : MonoBehaviour
     const float RCP_HEAT_DELIVERY_TAU_HR = 0.05f;   // 3 min thermal uptake smoothing
     const float NO_RCP_TRANSPORT_GAIN = 18f;        // Flow turnover to bulk-transport coupling
     const float NO_RCP_BASELINE_COUPLING = 0f;      // IP-0054: no unconditional bulk coupling with zero forced flow
+    const float NO_RCP_RHR_TRANSPORT_GAIN = 2.0f;   // RHR loop heat should not instantaneously homogenize bulk RCS in no-RCP regime
+    const float NO_RCP_RHR_MAX_BULK_COUPLING = 0.02f;
+    const float NO_RCP_RHR_STRATIFICATION_DT_SPAN_F = 250f;
+    const float NO_RCP_RHR_AMBIENT_BLEED_GAIN = 0.70f;
+    const float NO_RCP_RHR_MASS_DAMP_FLOOR = 0.50f;
+    const float NO_RCP_RHR_MASS_DAMP_CEIL = 1.00f;
     const float RHR_ISOLATION_NEAR_TEMP_BAND_F = 5f;
     const float REGIME2_MAX_PZR_LEVEL_STEP_PCT = 0.5f;
     const float REGIME2_STARTUP_LEVEL_STEP_MIN_PCT = 0.02f;
@@ -1502,6 +1511,9 @@ public partial class HeatupSimEngine : MonoBehaviour
         float prevT_pzr = T_pzr;
         float prevT_rcs = T_rcs;
         float prevPressure = pressure;
+        noRcpRhrBulkTransportFactor = 0f;
+        noRcpRhrBulkHeatApplied_MW = 0f;
+        noRcpRhrBulkHeatDeltaF = 0f;
 
         // ================================================================
         // 1C. RHR SYSTEM UPDATE (v3.0.0)
@@ -1745,7 +1757,7 @@ public partial class HeatupSimEngine : MonoBehaviour
                 // IP-0019 (CS-0055): no-RCP bulk transport gating for RHR thermal path.
                 if (rhrActive && rcsHeatCap > 1f)
                 {
-                    nextT_rcs += ComputeNoRcpHeatDeltaF(rhrNetHeat_MW, rcsHeatCap, dt);
+                    nextT_rcs += ComputeNoRcpRhrBulkHeatDeltaF(rhrNetHeat_MW, rcsHeatCap, dt);
                     solidPlantState.T_rcs = nextT_rcs;
                 }
 
@@ -1846,7 +1858,7 @@ public partial class HeatupSimEngine : MonoBehaviour
                 // IP-0019 (CS-0055): no-RCP bulk transport gating for RHR thermal path.
                 if (rhrActive && rcsHeatCap > 1f)
                 {
-                    nextT_rcs += ComputeNoRcpHeatDeltaF(rhrNetHeat_MW, rcsHeatCap, dt);
+                    nextT_rcs += ComputeNoRcpRhrBulkHeatDeltaF(rhrNetHeat_MW, rcsHeatCap, dt);
                 }
 
                 T_pzr = nextT_pzr;
@@ -2917,14 +2929,55 @@ public partial class HeatupSimEngine : MonoBehaviour
         return Mathf.Clamp01(Mathf.Max(NO_RCP_BASELINE_COUPLING, forcedFactor));
     }
 
-    float ComputeNoRcpHeatDeltaF(float heatMw, float rcsHeatCapBtuF, float dt_hr)
+    float ComputeNoRcpRhrBulkHeatDeltaF(float heatMw, float rcsHeatCapBtuF, float dt_hr)
     {
-        if (rcsHeatCapBtuF <= 1f)
+        if (rcsHeatCapBtuF <= 1f || dt_hr <= 1e-8f)
             return 0f;
 
-        float transportedHeatMw = heatMw * noRcpTransportFactor;
+        float systemVolume_gal =
+            (PlantConstants.RCS_WATER_VOLUME + PlantConstants.PZR_TOTAL_VOLUME) * PlantConstants.FT3_TO_GAL;
+        if (systemVolume_gal <= 1f)
+            return 0f;
+
+        float forcedFlow_gpm = (rhrState.SuctionValvesOpen && rhrState.FlowRate_gpm > 0f)
+            ? rhrState.FlowRate_gpm
+            : 0f;
+        if (forcedFlow_gpm <= 1e-3f)
+            return 0f;
+
+        // RHR recirculation exists, but without RCPs we should only allow limited
+        // bulk homogenization of that heat in the same timestep.
+        float turnoverFraction = forcedFlow_gpm * dt_hr * 60f / systemVolume_gal;
+        float forcedMix = Mathf.Clamp01(turnoverFraction * NO_RCP_RHR_TRANSPORT_GAIN);
+
+        // Large PZR-RCS delta-T implies stronger stratification and weaker bulk coupling.
+        float pzrRcsDeltaTF = Mathf.Abs(T_pzr - T_rcs);
+        float stratificationDamping = 1f - Mathf.Clamp01(pzrRcsDeltaTF / NO_RCP_RHR_STRATIFICATION_DT_SPAN_F);
+        float transportFactor = forcedMix * (0.25f + 0.75f * stratificationDamping);
+        transportFactor = Mathf.Clamp(transportFactor, 0f, NO_RCP_RHR_MAX_BULK_COUPLING);
+        noRcpRhrBulkTransportFactor = transportFactor;
+
+        float transportedHeatMw = heatMw * transportFactor;
+
+        // Ambient bleed represents local losses before full-bulk equilibration.
+        if (transportedHeatMw > 0f)
+        {
+            float ambientLossMw = HeatTransfer.InsulationHeatLoss_MW(T_rcs);
+            transportedHeatMw = Mathf.Max(0f, transportedHeatMw - ambientLossMw * NO_RCP_RHR_AMBIENT_BLEED_GAIN);
+        }
+
+        // Preserve inertia of large RCS inventory.
+        float referenceMass_lbm = Mathf.Max(1f, PlantConstants.RCS_WATER_VOLUME * 60f);
+        float liveMass_lbm = Mathf.Max(1f, physicsState.RCSWaterMass);
+        float massDamping = Mathf.Clamp(referenceMass_lbm / liveMass_lbm,
+            NO_RCP_RHR_MASS_DAMP_FLOOR, NO_RCP_RHR_MASS_DAMP_CEIL);
+        transportedHeatMw *= massDamping;
+
+        noRcpRhrBulkHeatApplied_MW = transportedHeatMw;
         float transportedHeatBtu = transportedHeatMw * PlantConstants.MW_TO_BTU_HR * dt_hr;
-        return transportedHeatBtu / rcsHeatCapBtuF;
+        float deltaF = transportedHeatBtu / rcsHeatCapBtuF;
+        noRcpRhrBulkHeatDeltaF = deltaF;
+        return deltaF;
     }
 
     float ClampRegime2PzrLevelStep(float previousLevelPct, float candidateLevelPct, float couplingAlpha)

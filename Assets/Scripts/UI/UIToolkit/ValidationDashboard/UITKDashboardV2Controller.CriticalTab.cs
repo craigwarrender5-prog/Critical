@@ -6,13 +6,13 @@
 // PURPOSE:
 //   Builds the upper half of the CRITICAL tab (Tab 0) — the "Core Flight
 //   Deck" for instant situational awareness. Contains:
-//     - 9× AnalogGauge cards (T_avg, Pressure, PZR Level, PZR Temp,
-//       Subcooling, SG Pressure, Heatup Rate, Press Rate, Cond Vacuum)
-//     - 3×10 Annunciator Wall with INFO / WARNING / ALARM tones
+//     - 6-card primary instrument deck:
+//       T_avg, PZR/RCS Pressure, PZR Level (tank), PZR Temp, Subcooling, SG Pressure
+//     - 3x10 Annunciator Wall with INFO / WARNING / ALARM tones
 //     - 4× RCP LED status row
 //     - Plant status banner (Mode, Phase, PZR State, Steam Dump)
 //
-//   The lower half (Strip Trends, Process Meters, Ops Log) is built
+//   The lower half (Process Meters) is built
 //   in UITKDashboardV2Controller.CriticalTab.Lower.cs (Stage 3).
 //
 // DATA BINDING:
@@ -28,6 +28,7 @@ using System;
 using System.Collections.Generic;
 using Critical.Physics;
 using Critical.UI.Elements;
+using Critical.UI.POC;
 using Critical.Validation;
 using UnityEngine;
 using UnityEngine.UIElements;
@@ -43,27 +44,31 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
         // Analog gauge cards
         private AnalogGaugeElement _crit_gaugeTAvg;
         private AnalogGaugeElement _crit_gaugePressure;
-        private AnalogGaugeElement _crit_gaugePzrLevel;
+        private AnalogGaugeElement _crit_gaugePressRate;
         private AnalogGaugeElement _crit_gaugePzrTemp;
         private AnalogGaugeElement _crit_gaugeSubcool;
         private AnalogGaugeElement _crit_gaugeSgPressure;
-        private AnalogGaugeElement _crit_gaugeHeatupRate;
-        private AnalogGaugeElement _crit_gaugePressRate;
-        private AnalogGaugeElement _crit_gaugeCondVac;
+        private const float PRESS_RATE_ABS_MAX = 300f;
+        private const float PRESS_RATE_ABS_WARN = 100f;
+        private const float PRESS_RATE_ABS_ALARM = 200f;
+        private const float HEAT_RATE_ABS_MAX = 120f;
+        private const float HEAT_RATE_ABS_WARN = 50f;
+        private const float HEAT_RATE_ABS_ALARM = 80f;
+
+        private sealed class GaugeTrendBinding
+        {
+            public TrendArrowPOC Arrow;
+            public Label Readout;
+            public float WarnAbs;
+            public float AlarmAbs;
+        }
+
+        private readonly Dictionary<string, GaugeTrendBinding> _crit_gaugeTrendBindings =
+            new Dictionary<string, GaugeTrendBinding>(6);
 
         // Digital readouts beneath each gauge card
         private readonly Dictionary<string, Label> _crit_gaugeReadouts =
             new Dictionary<string, Label>(12);
-
-        // RCP LEDs
-        private LEDIndicatorElement _crit_ledRcpA;
-        private LEDIndicatorElement _crit_ledRcpB;
-        private LEDIndicatorElement _crit_ledRcpC;
-        private LEDIndicatorElement _crit_ledRcpD;
-
-        // Status banner metric labels (Plant Mode, Heatup Phase, etc.)
-        private readonly Dictionary<string, Label> _crit_statusLabels =
-            new Dictionary<string, Label>(8);
 
         // ── Annunciator system ──────────────────────────────────────────
         private enum AnnunciatorTone { Info, Warning, Alarm }
@@ -75,11 +80,11 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
             public AnnunciatorTone Tone;
             public Func<HeatupSimEngine, bool> Condition;
             public bool IsActive;
+            public bool IsAcknowledged;
         }
 
         private readonly List<AnnunciatorBinding> _crit_annBindings =
             new List<AnnunciatorBinding>(32);
-        private Label _crit_annSummary;
         private float _crit_annFlashTimer;
         private bool _crit_annFlashOn = true;
 
@@ -100,9 +105,9 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
             _crit_tabRoot = MakeTabRoot("v2-tab-critical");
 
             // ── Upper row: Gauge Cluster (left) + Annunciator Wall (right) ──
-            // Give the upper "Core Flight Deck" more height so the 3rd gauge row
+            // Give the upper "Core Flight Deck" more height so the lower deck
             // does not get occluded by the LED/status strips on typical 16:9 layouts.
-            _crit_upperRow = MakeRow(2.45f);
+            _crit_upperRow = MakeRow(2.05f);
             _crit_upperRow.style.minHeight = 0f;
 
             _crit_upperRow.Add(BuildCoreFlightDeck());
@@ -110,14 +115,14 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
 
             _crit_tabRoot.Add(_crit_upperRow);
 
-            // Lower half — Strip Trends, Process Meter Deck, Ops Log
+            // Lower half — Process Meter Deck
             _crit_tabRoot.Add(BuildCriticalTabLower());
 
             return _crit_tabRoot;
         }
 
         // ====================================================================
-        // CORE FLIGHT DECK — Left panel with 9 gauge cards + LEDs + status
+        // CORE FLIGHT DECK — Left panel with primary instruments + LEDs + status
         // ====================================================================
 
         private VisualElement BuildCoreFlightDeck()
@@ -125,6 +130,7 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
             var panel = MakePanel("CORE FLIGHT DECK");
             panel.style.flexGrow = 1.55f;
             panel.style.minWidth = 0f;
+            _crit_gaugeTrendBindings.Clear();
 
             // ── Gauge grid (3 columns × 3 rows) ────────────────────────
             var gaugeGrid = new VisualElement();
@@ -135,55 +141,27 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
             gaugeGrid.style.marginBottom = 4f;
 
             gaugeGrid.Add(MakeGaugeCard("cg_tavg", "RCS AVG TEMP", "F",
-                70f, 600f, 100f, 4, out _crit_gaugeTAvg));
-            gaugeGrid.Add(MakeGaugeCard("cg_pressure", "RCS PRESSURE", "PSIA",
-                0f, 2600f, 500f, 4, out _crit_gaugePressure));
-            gaugeGrid.Add(MakeGaugeCard("cg_pzr_level", "PZR LEVEL", "%",
-                0f, 100f, 20f, 4, out _crit_gaugePzrLevel));
+                70f, 600f, 100f, 4, out _crit_gaugeTAvg,
+                trendBindingKey: "heatup_rate",
+                trendMaxMagnitude: HEAT_RATE_ABS_MAX,
+                trendWarnAbs: HEAT_RATE_ABS_WARN,
+                trendAlarmAbs: HEAT_RATE_ABS_ALARM));
+            gaugeGrid.Add(MakeGaugeCard("cg_pressure", "PZR / RCS PRESSURE", "PSIA",
+                0f, 2600f, 500f, 4, out _crit_gaugePressure,
+                trendBindingKey: "pressure_rate",
+                trendMaxMagnitude: PRESS_RATE_ABS_MAX,
+                trendWarnAbs: PRESS_RATE_ABS_WARN,
+                trendAlarmAbs: PRESS_RATE_ABS_ALARM));
+            gaugeGrid.Add(MakeGaugeCard("cg_press_rate", "PZR PRESS RATE", "PSI/HR",
+                -PRESS_RATE_ABS_MAX, PRESS_RATE_ABS_MAX, 100f, 2, out _crit_gaugePressRate));
             gaugeGrid.Add(MakeGaugeCard("cg_pzr_temp", "PZR TEMP", "F",
                 50f, 700f, 100f, 4, out _crit_gaugePzrTemp));
             gaugeGrid.Add(MakeGaugeCard("cg_subcool", "SUBCOOLING", "F",
-                0f, 120f, 20f, 4, out _crit_gaugeSubcool));
+                0f, 400f, 50f, 4, out _crit_gaugeSubcool));
             gaugeGrid.Add(MakeGaugeCard("cg_sg_pressure", "SG PRESSURE", "PSIA",
                 0f, 1400f, 200f, 4, out _crit_gaugeSgPressure));
-            gaugeGrid.Add(MakeGaugeCard("cg_heatup", "HEATUP RATE", "F/HR",
-                0f, 120f, 20f, 4, out _crit_gaugeHeatupRate));
-            gaugeGrid.Add(MakeGaugeCard("cg_press_rate", "PRESS RATE", "PSI/HR",
-                0f, 300f, 50f, 5, out _crit_gaugePressRate));
-            gaugeGrid.Add(MakeGaugeCard("cg_vac", "COND VACUUM", "inHg",
-                0f, 30f, 5f, 5, out _crit_gaugeCondVac));
 
             panel.Add(gaugeGrid);
-
-            // ── RCP LED row ─────────────────────────────────────────────
-            var ledRow = MakeRow();
-            ledRow.style.marginTop = 2f;
-            ledRow.style.marginBottom = 2f;
-
-            _crit_ledRcpA = MakeLED("RCP-A");
-            _crit_ledRcpB = MakeLED("RCP-B");
-            _crit_ledRcpC = MakeLED("RCP-C");
-            _crit_ledRcpD = MakeLED("RCP-D");
-
-            ledRow.Add(_crit_ledRcpA);
-            ledRow.Add(_crit_ledRcpB);
-            ledRow.Add(_crit_ledRcpC);
-            ledRow.Add(_crit_ledRcpD);
-            panel.Add(ledRow);
-
-            // ── Status banner (2×2 metric grid) ─────────────────────────
-            var statusGrid = new VisualElement();
-            statusGrid.style.flexDirection = FlexDirection.Row;
-            statusGrid.style.flexWrap = Wrap.Wrap;
-            statusGrid.style.justifyContent = Justify.SpaceBetween;
-            statusGrid.style.marginTop = 2f;
-
-            statusGrid.Add(MakeStatusMetric("crit_mode", "Plant Mode"));
-            statusGrid.Add(MakeStatusMetric("crit_phase", "Heatup Phase"));
-            statusGrid.Add(MakeStatusMetric("crit_pzr_state", "PZR State"));
-            statusGrid.Add(MakeStatusMetric("crit_steam_dump", "Steam Dump"));
-
-            panel.Add(statusGrid);
 
             return panel;
         }
@@ -289,23 +267,32 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
             while (tileIdx < 30)
                 Tile("SPARE", AnnunciatorTone.Info, _ => false);
 
+            // Use lower unused wall space for a compact, scrollable ops log.
+            var logHost = new VisualElement();
+            logHost.style.flexDirection = FlexDirection.Column;
+            logHost.style.flexGrow = 1f;
+            logHost.style.minHeight = 0f;
+            logHost.style.marginTop = 8f;
+
+            var logTitle = MakeLabel("OPS LOG", 9f, FontStyle.Bold,
+                new Color(0.63f, 0.72f, 0.84f, 1f));
+            logTitle.style.marginBottom = 4f;
+            logHost.Add(logTitle);
+
+            _crit_logScroll = new ScrollView(ScrollViewMode.Vertical);
+            _crit_logScroll.style.flexGrow = 1f;
+            _crit_logScroll.style.minHeight = 0f;
+            _crit_logScroll.style.backgroundColor = new Color(0.032f, 0.043f, 0.07f, 1f);
+            SetCornerRadius(_crit_logScroll, 4f);
+            _crit_logScroll.style.paddingLeft = 4f;
+            _crit_logScroll.style.paddingRight = 4f;
+            _crit_logScroll.style.paddingTop = 2f;
+            _crit_logScroll.style.paddingBottom = 2f;
+            logHost.Add(_crit_logScroll);
+            _crit_lastLogCount = -1;
+
+            matrix.Add(logHost);
             panel.Add(matrix);
-
-            // ── Summary line ────────────────────────────────────────────
-            var summaryRow = MakeRow();
-            summaryRow.style.justifyContent = Justify.SpaceBetween;
-            summaryRow.style.alignItems = Align.Center;
-            summaryRow.style.marginTop = 4f;
-
-            var matrixLabel = MakeLabel("3×10 MATRIX", 10f, FontStyle.Bold,
-                new Color(0.49f, 0.57f, 0.71f, 1f));
-            summaryRow.Add(matrixLabel);
-
-            _crit_annSummary = MakeLabel("0 active / 0 alarm", 11f, FontStyle.Bold,
-                UITKDashboardTheme.TextSecondary);
-            summaryRow.Add(_crit_annSummary);
-
-            panel.Add(summaryRow);
 
             return panel;
         }
@@ -321,7 +308,11 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
         private VisualElement MakeGaugeCard(
             string key, string title, string unit,
             float min, float max, float majorTick, int minorTicks,
-            out AnalogGaugeElement gauge)
+            out AnalogGaugeElement gauge,
+            string trendBindingKey = null,
+            float trendMaxMagnitude = 0f,
+            float trendWarnAbs = 0f,
+            float trendAlarmAbs = 0f)
         {
             var card = new VisualElement();
             card.style.width = new Length(32.2f, LengthUnit.Percent);
@@ -361,52 +352,132 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
             gauge.style.maxHeight = 96f;
             gauge.style.flexGrow = 0f;
             gauge.style.flexShrink = 0f;
-            card.Add(gauge);
+
+            if (!string.IsNullOrEmpty(trendBindingKey))
+            {
+                var gaugeRow = new VisualElement();
+                gaugeRow.style.flexDirection = FlexDirection.Row;
+                gaugeRow.style.alignItems = Align.Center;
+                gaugeRow.style.justifyContent = Justify.Center;
+                gaugeRow.style.marginTop = 1f;
+                gaugeRow.Add(gauge);
+
+                var rateCol = new VisualElement();
+                rateCol.style.flexDirection = FlexDirection.Column;
+                rateCol.style.alignItems = Align.Center;
+                rateCol.style.justifyContent = Justify.Center;
+                rateCol.style.marginLeft = 6f;
+                rateCol.style.width = 42f;
+
+                var arrowHost = new VisualElement();
+                arrowHost.style.width = 18f;
+                arrowHost.style.height = 62f;
+                arrowHost.style.backgroundColor = new Color(0.06f, 0.08f, 0.12f, 1f);
+                SetCornerRadius(arrowHost, 2f);
+
+                var trendArrow = new TrendArrowPOC
+                {
+                    maxMagnitude = Mathf.Max(0.001f, trendMaxMagnitude),
+                    deadband = 0.5f,
+                    elevatedThreshold = trendWarnAbs,
+                    alarmThreshold = trendAlarmAbs,
+                    value = 0f
+                };
+                trendArrow.style.width = new Length(100f, LengthUnit.Percent);
+                trendArrow.style.height = new Length(100f, LengthUnit.Percent);
+                arrowHost.Add(trendArrow);
+                rateCol.Add(arrowHost);
+
+                var trendReadout = MakeLabel("0.0", 9f, FontStyle.Bold, UITKDashboardTheme.NormalGreen);
+                trendReadout.style.unityTextAlign = TextAnchor.MiddleCenter;
+                trendReadout.style.marginTop = 2f;
+                trendReadout.style.whiteSpace = WhiteSpace.NoWrap;
+                rateCol.Add(trendReadout);
+
+                gaugeRow.Add(rateCol);
+                card.Add(gaugeRow);
+
+                RegisterGaugeTrendBinding(
+                    trendBindingKey, trendArrow, trendReadout, trendWarnAbs, trendAlarmAbs);
+            }
+            else
+            {
+                card.Add(gauge);
+            }
 
             // Digital readout
             var readout = MakeLabel("--", 12f, FontStyle.Bold, UITKDashboardTheme.InfoCyan);
-            readout.style.unityTextAlign = TextAnchor.MiddleCenter;
             readout.style.marginTop = 2f;
+            readout.style.unityTextAlign = TextAnchor.MiddleCenter;
             card.Add(readout);
+
             _crit_gaugeReadouts[key] = readout;
 
             return card;
         }
 
-        /// <summary>Create an LED indicator for the RCP status row.</summary>
-        private LEDIndicatorElement MakeLED(string label)
+        private void RegisterGaugeTrendBinding(
+            string bindingKey,
+            TrendArrowPOC arrow,
+            Label readout,
+            float warnAbs,
+            float alarmAbs)
         {
-            var led = new LEDIndicatorElement();
-            led.Configure(label, new Color(0.18f, 0.85f, 0.25f, 1f), false);
-            led.style.marginRight = 12f;
-            _allLEDs.Add(led);
-            return led;
+            _crit_gaugeTrendBindings[bindingKey] = new GaugeTrendBinding
+            {
+                Arrow = arrow,
+                Readout = readout,
+                WarnAbs = warnAbs,
+                AlarmAbs = alarmAbs
+            };
         }
 
-        /// <summary>Create a compact status metric tile (title + value).</summary>
-        private VisualElement MakeStatusMetric(string key, string title)
+        /// <summary>
+        /// Creates a tank-style card for inventory-like parameters (for example PZR level).
+        /// Width is ~32% so 3 cards fill a row.
+        /// </summary>
+        private VisualElement MakeTankGaugeCard(
+            string key, string title,
+            float min, float max, float lowAlarm, float highAlarm,
+            out TankLevelPOC tank)
         {
-            var tile = new VisualElement();
-            tile.style.width = new Length(48f, LengthUnit.Percent);
-            tile.style.minHeight = 32f;
-            tile.style.backgroundColor = new Color(0.055f, 0.071f, 0.106f, 1f);
-            SetCornerRadius(tile, 4f);
-            tile.style.marginBottom = 3f;
-            tile.style.paddingTop = 3f;
-            tile.style.paddingBottom = 3f;
-            tile.style.paddingLeft = 5f;
-            tile.style.paddingRight = 5f;
+            var card = new VisualElement();
+            card.style.width = new Length(32.2f, LengthUnit.Percent);
+            card.style.marginRight = 4f;
+            card.style.marginBottom = 4f;
+            card.style.paddingTop = 3f;
+            card.style.paddingBottom = 3f;
+            card.style.paddingLeft = 3f;
+            card.style.paddingRight = 3f;
+            card.style.alignItems = Align.Center;
+            card.style.backgroundColor = new Color(0.045f, 0.059f, 0.094f, 1f);
+            SetCornerRadius(card, 4f);
+            SetBorder(card, 1f, new Color(0.118f, 0.173f, 0.271f, 1f));
 
             var titleLbl = MakeLabel(title, 9f, FontStyle.Bold,
-                UITKDashboardTheme.TextSecondary);
-            tile.Add(titleLbl);
+                new Color(0.73f, 0.8f, 0.9f, 1f));
+            titleLbl.style.unityTextAlign = TextAnchor.MiddleCenter;
+            card.Add(titleLbl);
 
-            var valueLbl = MakeLabel("--", 12f, FontStyle.Bold,
-                UITKDashboardTheme.TextPrimary);
-            tile.Add(valueLbl);
-            _crit_statusLabels[key] = valueLbl;
+            tank = new TankLevelPOC
+            {
+                minValue = min,
+                maxValue = max,
+                lowAlarm = lowAlarm,
+                highAlarm = highAlarm
+            };
+            tank.style.width = 58f;
+            tank.style.height = 82f;
+            tank.style.marginTop = 4f;
+            card.Add(tank);
 
-            return tile;
+            var readout = MakeLabel("--", 12f, FontStyle.Bold, UITKDashboardTheme.InfoCyan);
+            readout.style.unityTextAlign = TextAnchor.MiddleCenter;
+            readout.style.marginTop = 3f;
+            card.Add(readout);
+            _crit_gaugeReadouts[key] = readout;
+
+            return card;
         }
 
         /// <summary>Create a single annunciator tile and register its binding.</summary>
@@ -429,14 +500,27 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
             tile.Add(text);
             parent.Add(tile);
 
-            _crit_annBindings.Add(new AnnunciatorBinding
+            var binding = new AnnunciatorBinding
             {
                 Root = tile,
                 Text = text,
                 Tone = tone,
                 Condition = condition,
-                IsActive = false
+                IsActive = false,
+                IsAcknowledged = false
+            };
+
+            // Alarm-tone annunciators can be acknowledged by clicking the tile.
+            tile.RegisterCallback<ClickEvent>(_ =>
+            {
+                if (!binding.IsActive || binding.Tone != AnnunciatorTone.Alarm)
+                    return;
+
+                binding.IsAcknowledged = true;
+                ApplyTileVisual(binding, false);
             });
+
+            _crit_annBindings.Add(binding);
         }
 
         /// <summary>Create a legend pill for the annunciator wall.</summary>
@@ -503,23 +587,27 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
         {
             if (engine == null) return;
 
-            float absPressRate = Mathf.Abs(engine.pressureRate);
-            Color pressRateColor = absPressRate < 100f ? UITKDashboardTheme.NormalGreen :
-                absPressRate < 200f ? UITKDashboardTheme.WarningAmber : UITKDashboardTheme.AlarmRed;
 
             // ── Gauge cards ─────────────────────────────────────────────
             SetGaugeCard(_crit_gaugeTAvg, "cg_tavg",
                 engine.T_avg, $"{engine.T_avg:F1} F", UITKDashboardTheme.InfoCyan);
+            SetGaugeTrendBindingValue("heatup_rate", engine.heatupRate);
 
             SetGaugeCard(_crit_gaugePressure, "cg_pressure",
                 engine.pressure, $"{engine.pressure:F0} psia",
                 engine.pressureHigh || engine.pressureLow
                     ? UITKDashboardTheme.AlarmRed : UITKDashboardTheme.InfoCyan);
 
-            SetGaugeCard(_crit_gaugePzrLevel, "cg_pzr_level",
-                engine.pzrLevel, $"{engine.pzrLevel:F1}%",
-                engine.pzrLevelLow || engine.pzrLevelHigh
-                    ? UITKDashboardTheme.WarningAmber : UITKDashboardTheme.InfoCyan);
+            float absPressRate = Mathf.Abs(engine.pressureRate);
+            Color pressRateGaugeColor = absPressRate > PRESS_RATE_ABS_ALARM
+                ? UITKDashboardTheme.AlarmRed
+                : absPressRate > PRESS_RATE_ABS_WARN
+                    ? UITKDashboardTheme.WarningAmber
+                    : UITKDashboardTheme.NormalGreen;
+            SetGaugeCard(_crit_gaugePressRate, "cg_press_rate",
+                engine.pressureRate, $"{engine.pressureRate:F1} psi/hr",
+                pressRateGaugeColor);
+            SetGaugeTrendBindingValue("pressure_rate", engine.pressureRate);
 
             SetGaugeCard(_crit_gaugePzrTemp, "cg_pzr_temp",
                 engine.T_pzr, $"{engine.T_pzr:F1} F", UITKDashboardTheme.InfoCyan);
@@ -534,36 +622,6 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
                 engine.sgSecondaryPressureHigh
                     ? UITKDashboardTheme.WarningAmber : UITKDashboardTheme.InfoCyan);
 
-            SetGaugeCard(_crit_gaugeHeatupRate, "cg_heatup",
-                Mathf.Abs(engine.heatupRate), $"{engine.heatupRate:F1} F/hr",
-                UITKDashboardTheme.InfoCyan);
-
-            SetGaugeCard(_crit_gaugePressRate, "cg_press_rate",
-                absPressRate, $"{engine.pressureRate:F1} psi/hr", pressRateColor);
-
-            SetGaugeCard(_crit_gaugeCondVac, "cg_vac",
-                engine.condenserVacuum_inHg, $"{engine.condenserVacuum_inHg:F1} inHg",
-                UITKDashboardTheme.InfoCyan);
-
-            // ── RCP LEDs ────────────────────────────────────────────────
-            if (_crit_ledRcpA != null) _crit_ledRcpA.isOn = RcpRunning(engine, 0);
-            if (_crit_ledRcpB != null) _crit_ledRcpB.isOn = RcpRunning(engine, 1);
-            if (_crit_ledRcpC != null) _crit_ledRcpC.isOn = RcpRunning(engine, 2);
-            if (_crit_ledRcpD != null) _crit_ledRcpD.isOn = RcpRunning(engine, 3);
-
-            // ── Status banner ───────────────────────────────────────────
-            SetStatusLabel("crit_mode", GetPlantModeString(engine.plantMode),
-                GetPlantModeColor(engine.plantMode));
-            SetStatusLabel("crit_phase", engine.heatupPhaseDesc,
-                UITKDashboardTheme.InfoCyan);
-            SetStatusLabel("crit_pzr_state",
-                engine.solidPressurizer ? "SOLID" : "BUBBLE",
-                engine.solidPressurizer
-                    ? UITKDashboardTheme.WarningAmber : UITKDashboardTheme.NormalGreen);
-            SetStatusLabel("crit_steam_dump",
-                engine.steamDumpPermitted ? "PERMITTED" : "BLOCKED",
-                engine.steamDumpPermitted
-                    ? UITKDashboardTheme.NormalGreen : UITKDashboardTheme.AlarmRed);
 
             // ── Annunciator wall ────────────────────────────────────────
             RefreshAnnunciators();
@@ -577,32 +635,21 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
         {
             if (engine == null || _crit_annBindings.Count == 0) return;
 
-            int activeCount = 0;
-            int alarmCount = 0;
-
             foreach (var tile in _crit_annBindings)
             {
                 bool active = tile.Condition != null && tile.Condition(engine);
+                if (!active)
+                    tile.IsAcknowledged = false;
+                else if (!tile.IsActive)
+                    tile.IsAcknowledged = false;
+
                 tile.IsActive = active;
 
                 bool flashOff = active &&
                                 tile.Tone == AnnunciatorTone.Alarm &&
+                                !tile.IsAcknowledged &&
                                 !_crit_annFlashOn;
                 ApplyTileVisual(tile, flashOff);
-
-                if (!active) continue;
-                activeCount++;
-                if (tile.Tone == AnnunciatorTone.Alarm) alarmCount++;
-            }
-
-            if (_crit_annSummary != null)
-            {
-                _crit_annSummary.text = $"{activeCount} active / {alarmCount} alarm";
-                _crit_annSummary.style.color = alarmCount > 0
-                    ? UITKDashboardTheme.AlarmRed
-                    : activeCount > 0
-                        ? UITKDashboardTheme.NormalGreen
-                        : UITKDashboardTheme.TextSecondary;
             }
         }
 
@@ -618,8 +665,12 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
 
             foreach (var tile in _crit_annBindings)
             {
-                if (tile.Tone == AnnunciatorTone.Alarm && tile.IsActive)
+                if (tile.Tone == AnnunciatorTone.Alarm &&
+                    tile.IsActive &&
+                    !tile.IsAcknowledged)
+                {
                     ApplyTileVisual(tile, !_crit_annFlashOn);
+                }
             }
         }
 
@@ -669,14 +720,40 @@ namespace Critical.UI.UIToolkit.ValidationDashboard
             }
         }
 
-        /// <summary>Set a status label's text and color.</summary>
-        private void SetStatusLabel(string key, string text, Color color)
+        /// <summary>Set a tank gauge card's value and readout text/color.</summary>
+        private void SetTankGaugeCard(TankLevelPOC tank, string readoutKey,
+            float value, string text, Color color)
         {
-            if (_crit_statusLabels.TryGetValue(key, out var lbl))
+            if (tank != null) tank.value = value;
+            if (_crit_gaugeReadouts.TryGetValue(readoutKey, out var lbl))
             {
                 lbl.text = text;
                 lbl.style.color = color;
             }
+        }
+
+        /// <summary>Set a gauge-side trend arrow value and matching readout color.</summary>
+        private void SetGaugeTrendBindingValue(string bindingKey, float rateValue)
+        {
+            if (string.IsNullOrEmpty(bindingKey) ||
+                !_crit_gaugeTrendBindings.TryGetValue(bindingKey, out var binding))
+                return;
+
+            if (binding.Arrow != null)
+                binding.Arrow.value = rateValue;
+
+            if (binding.Readout == null)
+                return;
+
+            float absRate = Mathf.Abs(rateValue);
+            Color trendColor = absRate > binding.AlarmAbs
+                ? UITKDashboardTheme.AlarmRed
+                : absRate > binding.WarnAbs
+                    ? UITKDashboardTheme.WarningAmber
+                    : UITKDashboardTheme.NormalGreen;
+
+            binding.Readout.text = $"{rateValue:+0.0;-0.0;0.0}";
+            binding.Readout.style.color = trendColor;
         }
 
         /// <summary>Safe RCP running check.</summary>
